@@ -239,6 +239,10 @@ def from_entity_info(e):
         and e.id != "floor" and "wall" not in e.id:
         super_types += ["furniture"]
 
+    if all([v in volumes for v in ["handle", "frame_left_point", "frame_right_point"]]):
+        super_types += ["door"]
+        super_types.remove("furniture")
+
     if 'possible_human' in e.flags:
         super_types += ["possible_human"]
 
