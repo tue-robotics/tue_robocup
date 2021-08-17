@@ -1,3 +1,6 @@
+# System
+import typing
+
 # ROS
 import rospy
 import smach
@@ -22,12 +25,17 @@ from robot_smach_states.util.designators import Designator, EdEntityDesignator, 
 from tue_msgs.msg import LocateDoorHandleGoal
 
 
+class Direction:
+    INWARD = "inward"
+    OUTWARD = "outward"
+
+
 class Door(Entity):
     HANDLE_ID = "handle"
     FRAME_LEFT_POINT_ID = "frame_left_point"
     FRAME_RIGHT_POINT_ID = "frame_right_point"
 
-    def __init__(self, entity):
+    def __init__(self, entity: Entity):
         super().__init__(
             identifier=entity.id,
             object_type=entity.type,
@@ -40,18 +48,47 @@ class Door(Entity):
         )
 
     @property
-    def handle_pose(self):
+    def handle_pose(self) -> kdl_con.VectorStamped:
+        """
+        Returns the pose of the handle in map frame
+        """
         return self._get_volume_center_point_in_map(self.HANDLE_ID)
 
     @property
-    def frame_points(self):
+    def frame_points(self) -> typing.List[kdl_con.VectorStamped]:
+        """
+        Returns the ground points of the door frame in map frame
+        """
         return [self._get_volume_center_point_in_map(self.FRAME_LEFT_POINT_ID),
                 self._get_volume_center_point_in_map(self.FRAME_RIGHT_POINT_ID)]
 
-    def _get_volume_center_point_in_map(self, volume_id):
+    def _get_volume_center_point_in_map(self, volume_id: str) -> kdl_con.VectorStamped:
+        """
+        Gets the center point of a volume (typically defined w.r.t. the entity frame) and converts this to map frame.
+
+        :param volume_id: id of the volume to get the center point from
+        :return: center point converted to map frame
+        """
         center_point_entity = self.volumes[volume_id].center_point
         center_point_map = self.pose.frame * center_point_entity
         return kdl_con.VectorStamped(center_point_map.x(), center_point_map.y(), center_point_map.z(), "map")
+
+    def get_direction(self, base_pose: kdl_con.FrameStamped) -> str:
+        """
+        Determines whether the open the door inward or outward.
+
+        In the current implementation, this is simply deduced from the fact if the robot is currently closer to the
+        'inward' or 'outward' volume
+
+        :param base_pose: pose of the base
+        :return: inward or outward
+        """
+        base_pos = base_pose.frame.p
+        inward_pos = self._get_volume_center_point_in_map(Direction.INWARD).vector
+        outward_pos = self._get_volume_center_point_in_map(Direction.OUTWARD).vector
+        delta_inward = (base_pos - inward_pos).Norm()
+        delta_outward = (base_pos - outward_pos).Norm()
+        return Direction.INWARD if delta_inward < delta_outward else Direction.OUTWARD
 
 
 class OpenDoor(smach.StateMachine):
