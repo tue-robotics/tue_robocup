@@ -10,6 +10,7 @@ from geometry_msgs.msg import PointStamped, Point
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.arm import arms
+from robot_skills.util.entity import Entity
 import robot_skills.util.kdl_conversions as kdl_con
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
@@ -19,6 +20,41 @@ from robot_smach_states.human_interaction.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, UnoccupiedArmDesignator
 from tue_msgs.msg import LocateDoorHandleGoal
+
+
+class Door(Entity):
+    HANDLE_ID = "handle"
+    FRAME_LEFT_POINT_ID = "frame_left_point"
+    FRAME_RIGHT_POINT_ID = "frame_right_point"
+
+    def __init__(self, entity):
+        super().__init__(
+            identifier=entity.id,
+            object_type=entity.type,
+            frame_id=entity.frame_id,
+            pose=entity.pose.frame,
+            shape=entity.shape,
+            volumes=entity.volumes,
+            super_types=entity.super_types,
+            last_update_time=entity.last_update_time,
+        )
+
+    @property
+    def handle_pose(self):
+        return self._get_volume_center_point_in_map(self.HANDLE_ID)
+        center_point_door = self.volumes[self.HANDLE].center_point
+        center_point_map = self.pose.frame * center_point_door
+        return kdl_con.VectorStamped(center_point_map.x(), center_point_map.y(), center_point_map.z(), "map")
+
+    @property
+    def frame_points(self):
+        return [self._get_volume_center_point_in_map(self.FRAME_LEFT_POINT_ID),
+                self._get_volume_center_point_in_map(self.FRAME_RIGHT_POINT_ID)]
+
+    def _get_volume_center_point_in_map(self, volume_id):
+        center_point_entity = self.volumes[volume_id].center_point
+        center_point_map = self.pose.frame * center_point_entity
+        return kdl_con.VectorStamped(center_point_map.x(), center_point_map.y(), center_point_map.z(), "map")
 
 
 class OpenDoor(smach.StateMachine):
@@ -463,104 +499,104 @@ class PassDoor(smach.StateMachine):
                 }
             )
 
-class Door(object):
-    def __init__(self):
-        """
-        Door object that contains all information about the door
-        """
-        self._handle = Handle()
-        self._hinge_direction = {"known": False, "value": None}
-        self._frame_points = {"known": True, "value": []}
-        self._direction = {"known": False, "value": None}
-
-    @property
-    def handle(self):
-        return self._handle
-
-    @property
-    def hinge_direction(self):
-        return self._hinge_direction
-
-    @property
-    def frame_points(self):
-        return self._frame_points
-
-    @property
-    def direction(self):
-        return self._direction
-
-    @hinge_direction.setter
-    def hinge_direction(self, hinge_direction):
-        """
-        :param hinge_direction: describes the direction by which to open the door
-        :type hinge_direction: str (either "left" or "right")
-        """
-        self._hinge_direction["known"] = True
-        self._hinge_direction["value"] = hinge_direction
-
-    @frame_points.setter
-    def frame_points(self, frame_points):
-        """
-        :param frame_points: describes the two bottom end points of the door frame
-        :type frame_points: list of two PointStamped
-        """
-        self._frame_points["known"] = True
-        self._frame_points["value"] = frame_points
-
-    @direction.setter
-    def direction(self, direction):
-        """
-        :param direction: describes the direction by which to open the door
-        :type direction: str (either "outward" or "inward")
-        """
-        self._direction["known"] = True
-        self._direction["value"] = direction
-
-
-class Handle(object):
-    def __init__(self):
-        """
-        Handle object
-        """
-        self._location = {"known": False, "value": PointStamped()}
-        self._direction = {"known": False, "value": None}
-        self._grasp_orientation = {"known": False, "value": None}
-
-    @property
-    def location(self):
-        return self._location
-
-    @property
-    def direction(self):
-        return self._direction
-
-    @property
-    def grasp_orientation(self):
-        return self._grasp_orientation
-
-    @location.setter
-    def location(self, point):
-        """
-        :param point: point in 3d space that estimates the handle location
-        :type point: PointStamped()
-        """
-        self._location["known"] = True
-        self._location["value"] = point
-
-    @direction.setter
-    def direction(self, direction):
-        """
-        :param direction: describes the direction by which to unlatch the handle
-        :type direction: str (either "up" or "down")
-        """
-        self._direction["known"] = True
-        self._direction["value"] = direction
-
-    @grasp_orientation.setter
-    def grasp_orientation(self, orientation):
-        """
-        :param orientation: describes the orientation the gripper should have to grasp the handle
-        :type orientation: str (either "horizontal" or "vertical")
-        """
-        self._grasp_orientation["known"] = True
-        self._grasp_orientation["value"] = orientation
+# class Door(object):
+#     def __init__(self):
+#         """
+#         Door object that contains all information about the door
+#         """
+#         self._handle = Handle()
+#         self._hinge_direction = {"known": False, "value": None}
+#         self._frame_points = {"known": True, "value": []}
+#         self._direction = {"known": False, "value": None}
+#
+#     @property
+#     def handle(self):
+#         return self._handle
+#
+#     @property
+#     def hinge_direction(self):
+#         return self._hinge_direction
+#
+#     @property
+#     def frame_points(self):
+#         return self._frame_points
+#
+#     @property
+#     def direction(self):
+#         return self._direction
+#
+#     @hinge_direction.setter
+#     def hinge_direction(self, hinge_direction):
+#         """
+#         :param hinge_direction: describes the direction by which to open the door
+#         :type hinge_direction: str (either "left" or "right")
+#         """
+#         self._hinge_direction["known"] = True
+#         self._hinge_direction["value"] = hinge_direction
+#
+#     @frame_points.setter
+#     def frame_points(self, frame_points):
+#         """
+#         :param frame_points: describes the two bottom end points of the door frame
+#         :type frame_points: list of two PointStamped
+#         """
+#         self._frame_points["known"] = True
+#         self._frame_points["value"] = frame_points
+#
+#     @direction.setter
+#     def direction(self, direction):
+#         """
+#         :param direction: describes the direction by which to open the door
+#         :type direction: str (either "outward" or "inward")
+#         """
+#         self._direction["known"] = True
+#         self._direction["value"] = direction
+#
+#
+# class Handle(object):
+#     def __init__(self):
+#         """
+#         Handle object
+#         """
+#         self._location = {"known": False, "value": PointStamped()}
+#         self._direction = {"known": False, "value": None}
+#         self._grasp_orientation = {"known": False, "value": None}
+#
+#     @property
+#     def location(self):
+#         return self._location
+#
+#     @property
+#     def direction(self):
+#         return self._direction
+#
+#     @property
+#     def grasp_orientation(self):
+#         return self._grasp_orientation
+#
+#     @location.setter
+#     def location(self, point):
+#         """
+#         :param point: point in 3d space that estimates the handle location
+#         :type point: PointStamped()
+#         """
+#         self._location["known"] = True
+#         self._location["value"] = point
+#
+#     @direction.setter
+#     def direction(self, direction):
+#         """
+#         :param direction: describes the direction by which to unlatch the handle
+#         :type direction: str (either "up" or "down")
+#         """
+#         self._direction["known"] = True
+#         self._direction["value"] = direction
+#
+#     @grasp_orientation.setter
+#     def grasp_orientation(self, orientation):
+#         """
+#         :param orientation: describes the orientation the gripper should have to grasp the handle
+#         :type orientation: str (either "horizontal" or "vertical")
+#         """
+#         self._grasp_orientation["known"] = True
+#         self._grasp_orientation["value"] = orientation
