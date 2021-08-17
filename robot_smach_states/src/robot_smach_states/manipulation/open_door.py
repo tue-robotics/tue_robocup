@@ -42,9 +42,6 @@ class Door(Entity):
     @property
     def handle_pose(self):
         return self._get_volume_center_point_in_map(self.HANDLE_ID)
-        center_point_door = self.volumes[self.HANDLE].center_point
-        center_point_map = self.pose.frame * center_point_door
-        return kdl_con.VectorStamped(center_point_map.x(), center_point_map.y(), center_point_map.z(), "map")
 
     @property
     def frame_points(self):
