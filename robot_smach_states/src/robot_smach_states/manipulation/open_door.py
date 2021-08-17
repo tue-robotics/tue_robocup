@@ -99,7 +99,7 @@ class OpenDoor(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
         # self.robot = robot
-        self._door = Door()
+        self.door = Door()
         point1 = PointStamped()
         point1.header.frame_id = "map"
         point1.point.x = 2.14
@@ -110,18 +110,15 @@ class OpenDoor(smach.StateMachine):
         point2.point.x = 2.14
         point2.point.y = -1.7
         point2.point.z = 0.0
-        self._door.frame_points = [point1, point2]
-        self._door.direction = "outward"
+        self.door.frame_points = [point1, point2]
 
-        handle_loc = PointStamped()
-        handle_loc.header.frame_id = "map"
-        handle_loc.point.x = 2.28
-        handle_loc.point.y = -0.96
-        handle_loc.point.z = 1.065
+        handle_pose = PointStamped()
+        handle_pose.header.frame_id = "map"
+        handle_pose.point.x = 2.28
+        handle_pose.point.y = -0.96
+        handle_pose.point.z = 1.065
         # ToDO: remove hardcoded door
-        self._door._handle.location = handle_loc
-        self._door._handle.direction = 'down'
-        self._door._handle.grasp_orientation = "horizontal"
+        self.door.handle_pose = handle_pose
 
         self._arm_des = UnoccupiedArmDesignator(robot, {"required_goals": ["reset", "handover"],
                                                         "force_sensor_required": True,
@@ -129,43 +126,43 @@ class OpenDoor(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add('NAVIGATE_TO_HANDLE', NavigateToHandle(robot, self._door, self._arm_des),
+            smach.StateMachine.add('NAVIGATE_TO_HANDLE', NavigateToHandle(robot, self.door, self._arm_des),
                                    transitions={'unreachable': 'failed',
                                                 'arrived': 'GET_DOOR_STATE',
                                                 'goal_not_defined': 'failed'})
 
-            smach.StateMachine.add('GET_DOOR_STATE', DetermineDoorState(robot, self._door),
+            smach.StateMachine.add('GET_DOOR_STATE', DetermineDoorState(robot, self.door),
                                    transitions={'open': 'NAVIGATE_THROUGH_DOOR',
                                                 'closed': 'UPDATE_HANDLE_LOCATION',
                                                 'intermediate': 'DETERMINE_DOOR_DIRECTION',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('UPDATE_HANDLE_LOCATION', UpdateHandleLocation(robot, self._door),
+            smach.StateMachine.add('UPDATE_HANDLE_LOCATION', UpdateHandleLocation(robot, self.door),
                                    transitions={'succeeded': 'GRASP_HANDLE',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('GRASP_HANDLE', GraspHandle(robot, self._door, self._arm_des),
+            smach.StateMachine.add('GRASP_HANDLE', GraspHandle(robot, self.door, self._arm_des),
                                    transitions={'succeeded': 'UNLATCH_HANDLE',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('UNLATCH_HANDLE', UnlatchHandle(robot, self._door, self._arm_des),
+            smach.StateMachine.add('UNLATCH_HANDLE', UnlatchHandle(robot, self.door, self._arm_des),
                                    transitions={'succeeded': 'DETERMINE_DOOR_DIRECTION',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('DETERMINE_DOOR_DIRECTION', DetermineDoorDirection(robot, self._door),
+            smach.StateMachine.add('DETERMINE_DOOR_DIRECTION', DetermineDoorDirection(robot, self.door),
                                    transitions={'forward': 'PUSH_DOOR_OPEN',
                                                 'backward': 'PULL_DOOR_OPEN',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('PUSH_DOOR_OPEN', PushDoorOpen(robot, self._door, self._arm_des),
+            smach.StateMachine.add('PUSH_DOOR_OPEN', PushDoorOpen(robot, self.door, self._arm_des),
                                    transitions={'succeeded': 'NAVIGATE_THROUGH_DOOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('PULL_DOOR_OPEN', PullDoorOpen(robot, self._door, self._arm_des),
+            smach.StateMachine.add('PULL_DOOR_OPEN', PullDoorOpen(robot, self.door, self._arm_des),
                                    transitions={'succeeded': 'NAVIGATE_THROUGH_DOOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_THROUGH_DOOR', NavigateThroughDoor(robot, self._door),
+            smach.StateMachine.add('NAVIGATE_THROUGH_DOOR', NavigateThroughDoor(robot, self.door),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'})
 
@@ -184,7 +181,7 @@ class NavigateToHandle(NavigateTo):
             rospy.logerr("Could not resolve arm")
             return "done"
 
-        handle_point = self._door.handle.location["value"]
+        handle_point = self._door.handle_pose
         angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
         radius = 0.75*math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
@@ -228,7 +225,7 @@ class UpdateHandleLocation(smach.State):
         self._door = door
 
     def execute(self, userdata=None):
-        handle_estimate = self._door._handle.location["value"]
+        handle_estimate = self._door.handle_pose
         self._robot.head.look_at_point(kdl_con.VectorStamped(x=handle_estimate.point.x, y=handle_estimate.point.y,
                                                              z=handle_estimate.point.z), timeout=0.0)
         self._robot.head.wait_for_motion_done()
@@ -249,7 +246,7 @@ class UpdateHandleLocation(smach.State):
             handle_loc.point.y = numpy.average([result.handle_edge_point1.point.y, result.handle_edge_point2.point.y])
             handle_loc.point.z = numpy.average([result.handle_edge_point1.point.z, result.handle_edge_point2.point.z])
             handle_loc_map = self._robot.tf_buffer.transform(handle_loc, "map")
-            self._door._handle.location = handle_loc
+            self._door.handle_pose = handle_loc
 
             return "succeeded"
         else:
@@ -275,7 +272,7 @@ class GraspHandle(smach.State):
 
         arm.send_gripper_goal("open")
 
-        handle_point = self._door.handle.location["value"]
+        handle_point = self._door.handle_pose
         # ToDo: calculate this value based on the current position? Then we do rely on localization...
         align_door = 0.0 # -0.3 This depends on the orientation of the door wrt the base link frame
 
@@ -331,37 +328,21 @@ class UnlatchHandle(smach.State):
 
         current_pose = self._robot.tf_buffer.lookup_transform('hero/base_link', 'grippoint', rospy.Time(0))
 
-        orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y, current_pose.transform.rotation.z, current_pose.transform.rotation.w)
+        orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y, 
+                                              current_pose.transform.rotation.z, current_pose.transform.rotation.w)
         (curr_r, curr_p, curr_y) = orientation.GetRPY()
         # curr_r, curr_p, curr_y = euler_from_quaternion(current_pose[1])
-        if self._door.handle.direction["value"] == "down":
-            next_z = current_pose.transform.translation.z - self._move_dist
-            # next_x, next_y, next_z = tuple(map(operator.sub, current_pose[0], move_vector))
-        elif self._door.handle.direction["value"] == "up":
-            next_z = current_pose.transform.translation.z + self._move_dist
-            # next_x, next_y, next_z = tuple(map(operator.add, current_pose[0], move_vector))
-        else:
-            rospy.logerr("Handle direction ({}) not recognized.".format(self._door.handle.direction["value"]))
-            return "succeeded"
+        next_z = current_pose.transform.translation.z - self._move_dist
 
-        next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(current_pose.transform.translation.x, current_pose.transform.translation.y, next_z, curr_r, curr_p, curr_y,
+
+        next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(current_pose.transform.translation.x, current_pose.transform.translation.y, 
+                                                          next_z, curr_r, curr_p, curr_y,
                                                           "hero/base_link")
-        #     next_x, next_y, next_z = tuple(map(operator.sub, [current_pose.transform.translation], [move_vector]))
-        # elif self._door.handle.direction["value"] == "up":
-        #     next_x, next_y, next_z = tuple(map(operator.add, [current_pose.transform.translation], [move_vector]))
-        # else:
-        #     rospy.logerr("Handle direction ({}) not recognized.".format(self._door.handle.direction["value"]))
-        #     return "succeeded"
-
-        # next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(next_x, next_y, next_z, curr_r, curr_p, curr_y,
-        #                                                   "/" + self._robot.robot_name + "/base_link")
 
         result = arm.send_goal(next_pose)
         if result:
-            rospy.loginfo("Successfully executed action.")
             return "succeeded"
-        rospy.loginfo("Failed action.")
-        return "succeeded"
+        return "failed"
 
 
 class DetermineDoorDirection(smach.State):
