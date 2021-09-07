@@ -31,7 +31,7 @@ class Hero(robot.Robot):
         hero_arm = arms.Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_center")
         hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
-        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'handover_detector'))
+        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'center'))
 
         self.add_arm_part('arm_center', hero_arm)
 
