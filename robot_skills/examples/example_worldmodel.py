@@ -6,8 +6,10 @@ import sys
 
 import rospy
 
-import robot_skills.util.kdl_conversions as kdl_conversions
-from robot_skills.util.robot_constructor import robot_constructor
+import PyKDL as kdl
+from pykdl_ros import VectorStamped
+
+from robot_skills import get_robot
 
 if len(sys.argv) < 2:
     print("Please specify a robot name")
@@ -17,7 +19,7 @@ robot_name = sys.argv[1]
 
 rospy.init_node("worldmodel_test")
 
-robot = robot_constructor(robot_name)
+robot = get_robot(robot_name)
 
 failed_actions = []
 
@@ -28,7 +30,7 @@ failed_actions = []
 all_entities = robot.ed.get_entities()
 robot.speech.speak("There are {count} entities in my world".format(count=len(all_entities)))
 
-robot_loc = robot.base.get_location().extractVectorStamped()
+robot_loc = VectorStamped.from_framestamped(robot.base.get_location())
 radius = 2
 close_entities = robot.ed.get_entities(center_point=robot_loc, radius=radius)  # Get all the entities within radius of the robot
 robot.speech.speak("There are {count} entities within {radius} meters of my base"
@@ -39,7 +41,7 @@ if not len(close_entities) < len(all_entities):
     failed_actions += ["get_entities with center_point and radius"]
 
 # Get all the entities of some type within radius of the robot
-robot_loc = robot.base.get_location().extractVectorStamped()
+robot_loc = VectorStamped.from_framestamped(robot.base.get_location())
 query_type = "trashbin"
 radius_2 = 10
 close_entities_of_type = robot.ed.get_entities(type=query_type, center_point=robot_loc, radius=radius_2)
@@ -51,11 +53,13 @@ robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
 #######################
 
 # TODO: center_point should also be a VectorStamped
-closest = robot.ed.get_closest_entity(center_point=kdl_conversions.VectorStamped(), radius=2.0)  # This is implicitly in map
+closest = robot.ed.get_closest_entity(center_point=VectorStamped(kdl.Vector(), rospy.Time.now(), "map"), radius=2.0)
 robot.speech.speak("The closest entity to the center of the arena is {id}, of type {type}"
                    .format(id=closest.id[:10], type=closest.type))
 
-closest2 = robot.ed.get_closest_entity(type=query_type, center_point=kdl_conversions.VectorStamped(), radius=10.0)
+closest2 = robot.ed.get_closest_entity(type=query_type,
+                                       center_point=VectorStamped(kdl.Vector(), rospy.Time.now(), "map"),
+                                       radius=10.0)
 robot.speech.speak("The closest {type} to the center of the arena is {id}".format(id=closest2.id, type=query_type))
 if closest2.type != query_type:
     failed_actions += ["get_closest_entity with type, center_point and radius"]

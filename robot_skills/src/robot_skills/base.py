@@ -7,9 +7,14 @@
 import math
 
 import geometry_msgs.msg
+import pykdl_ros
 import rospy
 import tf2_ros
-# ROS
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+
 from actionlib_msgs.msg import GoalStatus
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import LocalPlannerAction, LocalPlannerGoal, OrientationConstraint, PositionConstraint
@@ -18,7 +23,6 @@ from numpy import sign
 
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import nav_analyzer, transformations
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg, kdl_frame_stamped_to_pose_stamped_msg
 
 
 class LocalPlanner(RobotPart):
@@ -114,7 +118,7 @@ class GlobalPlanner(RobotPart):
         pcs = [position_constraint]
 
         start_time = rospy.Time.now()
-        start_pose = kdl_frame_stamped_to_pose_stamped_msg(get_location(self.robot_name, self.tf_buffer))
+        start_pose = tf2_ros.convert(get_location(self.robot_name, self.tf_buffer), geometry_msgs.msg.PoseStamped)
 
         try:
             resp = self._get_plan_client(start_pose, pcs)
@@ -349,14 +353,14 @@ def get_location(robot_name, tf_buffer):
         target_pose.pose.position = target_transform.transform.translation
         target_pose.pose.orientation = target_transform.transform.rotation
 
-        return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
+        return tf2_ros.convert(target_pose, pykdl_ros.FrameStamped)
 
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
         rospy.logerr("tf2 request failed!, {}".format(e))
         target_pose = geometry_msgs.msg.PoseStamped()
         target_pose.header.frame_id = "map"
         target_pose.header.stamp = time
-        return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
+        return tf2_ros.convert(target_pose, pykdl_ros.FrameStamped)
 
 
 def computePathLength(path):

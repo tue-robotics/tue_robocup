@@ -6,8 +6,9 @@ import sys
 
 import rospy
 
+from pykdl_ros import FrameStamped
+
 from robot_skills.get_robot import get_robot
-import robot_skills.util.kdl_conversions as kdl_conversions
 
 if len(sys.argv) < 2:
     print("Please specify a robot name")
@@ -34,7 +35,7 @@ for side, arm in robot._arms.items():
         rospy.logerr("{} arm is not operational".format(side))
         sys.exit(-1)
 
-    goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0, 0.748, 0, 0, 0, robot.base_link_frame)
+    goal1 = FrameStamped.from_xyz_rpy(0.342,  0, 0.748, 0, 0, 0, rospy.Time.now(), robot.base_link_frame)
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):

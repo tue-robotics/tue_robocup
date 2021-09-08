@@ -431,7 +431,7 @@ class Arm(RobotPart):
             rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
 
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
-        frame_in_baselink = frameStamped.projectToFrame(self.robot_name + "/base_link", self.tf_buffer)
+        frame_in_baselink = self.tf_buffer.transform(frameStamped, self.robot_name + "/base_link")
 
         self._publish_marker(frameStamped, [1, 0, 0], "grasp_point")
 

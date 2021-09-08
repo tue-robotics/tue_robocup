@@ -7,6 +7,8 @@ import actionlib
 # ROS
 import rospy
 
+from tf2_ros import Buffer
+
 # Determine simulation mode
 SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"
 
@@ -22,7 +24,7 @@ class RobotPart(object):
         :param tf_buffer: tf buffer object
         """
         self.robot_name = robot_name
-        self.tf_buffer = tf_buffer
+        self.tf_buffer = tf_buffer  # type: Buffer
 
         # Body parts
         self.parts = dict()
