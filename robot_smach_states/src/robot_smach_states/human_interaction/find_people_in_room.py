@@ -8,10 +8,11 @@ import numpy as np
 import rospy
 import smach
 
+from pykdl_ros import VectorStamped
+
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 
 
@@ -122,10 +123,11 @@ class FindPeople(smach.State):
 
         start_time = rospy.Time.now()
 
-        head_goals = [kdl_conversions.VectorStamped(x=self._look_distance * math.cos(angle),
-                                                    y=self._look_distance * math.sin(angle),
-                                                    z=1.5,
-                                                    frame_id=self._robot.base_link_frame)
+        head_goals = [VectorStamped.from_xyz(x=self._look_distance * math.cos(angle),
+                                             y=self._look_distance * math.sin(angle),
+                                             z=1.5,
+                                             stamp=start_time,
+                                             frame_id=self._robot.base_link_frame)
                       for angle in self._look_angles]
 
         i = 0
@@ -180,7 +182,7 @@ class FindPeople(smach.State):
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
-                    result_people = filter(lambda x: query_entity.in_volume(x.pose.extractVectorStamped(), 'in'),
+                    result_people = filter(lambda x: query_entity.in_volume(VectorStamped.from_framestamped(x.pose), 'in'),
                                            found_people)
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))
 
@@ -190,7 +192,7 @@ class FindPeople(smach.State):
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = filter(lambda x: x.in_volume(query_entity.pose.extractVectorStamped(), 'in'),
+                            result_people = filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
                                                    found_people)
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))

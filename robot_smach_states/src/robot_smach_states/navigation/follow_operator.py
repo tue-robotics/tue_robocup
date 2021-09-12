@@ -1,31 +1,36 @@
 # System
 import copy
+from functools import partial
 import math
 
 # ROS
-import geometry_msgs  # Only used for publishing markers
-import geometry_msgs.msg
+from geometry_msgs.msg import PointStamped, PoseStamped
 import PyKDL as kdl
+from pykdl_ros import FrameStamped, VectorStamped
 import smach
 import rospy
 import sys
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
 from visualization_msgs.msg import Marker
 
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from hmi import TimeoutException
-from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 from ..util.startup import startup
 from ..util.designators import VariableDesignator
 
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):
-    return map(kdl_conversions.kdl_vector_stamped_to_point_stamped, vector_stampeds)
+    return map(partial(tf2_ros.convert, b_type=PointStamped), vector_stampeds)
 
 
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
-    return map(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg, frame_stampeds)
+    return map(partial(tf2_ros.convert, b_type=PoseStamped), frame_stampeds)
 
 
 class FollowOperator(smach.State):
@@ -72,12 +77,12 @@ class FollowOperator(smach.State):
         self._operator_id_des = operator_id_des
         self._operator_distance = None
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
-                                             geometry_msgs.msg.PointStamped, queue_size=10)
+                                             PointStamped, queue_size=10)
         self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker,
                                                queue_size=10)
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
-                                             geometry_msgs.msg.PointStamped, queue_size=10)
+                                             PointStamped, queue_size=10)
 
         self._last_pose_stamped = None
         self._last_pose_stamped_time = None
@@ -102,7 +107,7 @@ class FollowOperator(smach.State):
         if not self._operator:
             return False
 
-        operator_current_fs = kdl_conversions.FrameStamped(self._operator._pose, "map", stamp=rospy.Time.now())
+        operator_current_fs = FrameStamped(self._operator._pose, rospy.Time.now(), "map")
         # rospy.loginfo("Operator position: %s" % self._operator.pose.position)
 
         if not self._last_operator_fs:
@@ -183,8 +188,7 @@ class FollowOperator(smach.State):
                     if answer.sentence == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(
                             radius=0.5,
-                            center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
-                                                                       frame_id=self._robot.base_link_frame))
+                            center_point=VectorStamped.from_xyz(1, 0, 1, rospy.Time.now(), self._robot.base_link_frame))
                         rospy.loginfo("Operator: {op}".format(op=operator))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
@@ -210,8 +214,7 @@ class FollowOperator(smach.State):
             else:
                 operator = self._robot.ed.get_closest_laser_entity(
                     radius=1,
-                    center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1,
-                                                               frame_id=self._robot.base_link_frame))
+                    center_point=VectorStamped(1.5, 0, 1, rospy.Time.now(), self._robot.base_link_frame))
                 if not operator:
                     rospy.sleep(1)
 
@@ -260,17 +263,15 @@ class FollowOperator(smach.State):
         """This only happens when the operator was just registered, and never tracked"""
         rospy.loginfo("Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1")
         self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-                                                                 center_point=kdl_conversions.VectorStamped(
-                                                                     x=1.5, y=0, z=1,
-                                                                     frame_id=self._robot.base_link_frame))
+            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time.now(), self._robot.base_link_frame))
         if self._operator:
             return True
         else:
             rospy.loginfo("Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1")
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-                                                                     center_point=kdl_conversions.VectorStamped(
-                                                                         x=1.5, y=0, z=1,
-                                                                         frame_id=self._robot.base_link_frame))
+                                                                     center_point=VectorStamped.from_xyz(
+                                                                         1.5, 0, 1, rospy.Time.now(),
+                                                                         self._robot.base_link_frame))
 
         if self._operator:
             return True
@@ -359,7 +360,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.action = Marker.ADD
 
         for crumb in self._breadcrumbs:
-            breadcrumbs_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
+            breadcrumbs_msg.points.append(tf2_ros.convert(crumb.pose, PointStamped).point)
 
         self._breadcrumb_pub.publish(breadcrumbs_msg)
 
@@ -401,7 +402,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = kdl_conversions.kdl_vector_to_point_msg(self._last_operator.pose.frame.p)
+            o.look_at = tf2_ros.convert(self._last_operator.pose, PointStamped).point
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -430,7 +431,7 @@ class FollowOperator(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    kdl_plan.append(kdl_conversions.kdl_frame_stamped_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
+                    kdl_plan.append(FrameStamped.from_xyz_rpy(x, y, 0, 0, 0, yaw, rospy.Time.now(), "map"))
 
             previous_point = copy.deepcopy(crumb._pose.p)
 
@@ -468,9 +469,8 @@ class FollowOperator(smach.State):
                        -math.pi/6,
                        -math.pi/4,
                        -math.pi/2.3]
-        head_goals = [kdl_conversions.VectorStamped(x=look_distance*math.cos(angle),
-                                                    y=look_distance*math.sin(angle), z=1.7,
-                                                    frame_id=self._robot.base_link_frame)
+        head_goals = [VectorStamped.from_xyz(look_distance*math.cos(angle), look_distance*math.sin(angle), 1.7,
+                                             rospy.Time.now(), self._robot.base_link_frame)
                       for angle in look_angles]
 
         i = 0
@@ -503,7 +503,7 @@ class FollowOperator(smach.State):
                 except Exception as e:
                     rospy.logerr("head.project_roi failed: %s", e)
                     return False
-                operator_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(operator_pos_kdl)
+                operator_pos_ros = tf2_ros.convert(operator_pos_kdl, PointStamped)
 
                 self._face_pos_pub.publish(operator_pos_ros)
 
@@ -541,14 +541,14 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = kdl_conversions.kdl_vector_to_point_msg(self._last_operator.pose.frame.p)
+            o.look_at = tf2_ros.convert(self._last_operator.pose, PointStamped).point
 
         dx = operator_position.x() - robot_position.x()
         dy = operator_position.y() - robot_position.y()
 
         yaw = math.atan2(dy, dx)
         # ToDo: make nice!
-        pose = geometry_msgs.msg.PoseStamped()
+        pose = PoseStamped()
         pose.header.frame_id = "map"
         pose.header.stamp = rospy.Time.now()
         pose.pose.position.x = robot_position.x()

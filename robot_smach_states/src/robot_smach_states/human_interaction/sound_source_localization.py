@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 
-from robot_skills.util import kdl_conversions
 import smach
 import math
 import rospy
+
+from pykdl_ros import VectorStamped
 
 
 # TODO: In order to let this state work smoothly, we should take timestamps into account
@@ -22,12 +23,14 @@ class SSLLookatAndRotate(smach.State):
         if yaw:
             rospy.loginfo("SSL Yaw: %.2f", yaw)
 
-            lookat_vector = kdl_conversions.VectorStamped(
+            lookat_vector = VectorStamped.from_xyz(
                 x=look_distance * math.cos(yaw),
                 y=look_distance * math.sin(yaw),
                 z=height,
+                stamp=rospy.Time.now(),
                 frame_id=self._robot.base_link_frame
-            ).projectToFrame("map", self._robot.tf_buffer)
+            )
+            lookat_vector = self._robot.tf_buffer.Transform(lookat_vector, "map")
 
             self._robot.head.look_at_point(lookat_vector, pan_vel=2.0)
 

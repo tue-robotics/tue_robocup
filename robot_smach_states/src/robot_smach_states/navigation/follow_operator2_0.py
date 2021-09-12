@@ -8,15 +8,19 @@ import random
 import hmi
 
 # ROS
-import geometry_msgs  # Only used for publishing markers
-import geometry_msgs.msg
+from geometry_msgs.msg import PointStamped, PoseStamped
+from pykdl_ros import FrameStamped, VectorStamped
 import rospy
 import smach
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
 from visualization_msgs.msg import Marker
 
 # TU/e
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
-from robot_skills.util import kdl_conversions
 from ..human_interaction.learn_operator import LearnOperator
 
 
@@ -45,7 +49,7 @@ class Track(smach.State):
         self.counter = 0
         self._period = 0.3  # fix this magic number
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
-                                             geometry_msgs.msg.PointStamped, queue_size=10)
+                                             PointStamped, queue_size=10)
         self._robot = robot
         self._breadcrumb_distance = 0.1
         self._operator = None
@@ -229,8 +233,8 @@ class FollowBread(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * self._resolution
                     y = previous_point.y() + i * dy_norm * self._resolution
-                    kdl_pose = kdl_conversions.kdl_frame_stamped_from_XYZRPY(x=x, y=y, z=0, yaw=yaw)
-                    crumb_waypoint.waypoint = kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg(kdl_pose)
+                    kdl_pose = FrameStamped.from_xyz_rpy(x, y, 0, o, o, yaw, rospy.Time.now(), "map")
+                    crumb_waypoint.waypoint = tf2_ros.convert(kdl_pose, PoseStamped)
             previous_point = copy.deepcopy(crumb._pose.p)
 
         if len(self._breadcrumb) > 0:
@@ -312,7 +316,7 @@ class Recovery(smach.State):
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
-                                             geometry_msgs.msg.PointStamped, queue_size=10)
+                                             PointStamped, queue_size=10)
 
     def execute(self, userdata):
         """
@@ -333,9 +337,11 @@ class Recovery(smach.State):
                        -math.pi / 6,
                        -math.pi / 4,
                        -math.pi / 2.3]
-        head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
-                                                    y=look_distance * math.sin(angle), z=1.7,
-                                                    frame_id=self._robot.base_link_frame)
+        head_goals = [VectorStamped.from_xyz(look_distance * math.cos(angle),
+                                             look_distance * math.sin(angle),
+                                             1.7,
+                                             rospy.Time.now(),
+                                             self._robot.base_link_frame)
                       for angle in look_angles]
 
         i = 0
@@ -359,7 +365,7 @@ class Recovery(smach.State):
                 except Exception as e:
                     rospy.logerr("head.project_roi failed: %s", e)
                     return 'Failed'
-                operator_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(operator_pos_kdl)
+                operator_pos_ros = tf2_ros.convert(operator_pos_kdl, PointStamped)
                 self._face_pos_pub.publish(operator_pos_ros)
 
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,

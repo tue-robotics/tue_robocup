@@ -12,7 +12,6 @@ import smach
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped
 
 # Robot Smach States
 from ..navigation.constraint_functions.symbolic_constraints import symbolic_constraint

@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 # ROS
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
@@ -59,8 +60,8 @@ class PointAt(smach.State):
             rospy.logerr("Could not resolve _arm_designator")
             return "failed"
         # TODO: make arm point at some pose
-        vs = point_at_ent.pose.extractVectorStamped()  # VectorStamped
-        vector_in_bs = vs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
+        vs = VectorStamped.from_framestamped(point_at_ent.pose)
+        vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame)
         # tan(angle) = dy / dx
         # angle = arctan(dy / dx)
         # Arm to position in a safe way
@@ -79,7 +80,7 @@ class PointAt(smach.State):
         arm.send_joint_goal('point_at', timeout=0)
         arm.wait_for_motion_done()
 
-        self._robot.head.look_at_point(look_at_ent.pose.extractVectorStamped())
+        self._robot.head.look_at_point(VectorStamped.from_framestamped(look_at_ent.pose))
         self._robot.head.wait_for_motion_done()
 
         return 'succeeded'

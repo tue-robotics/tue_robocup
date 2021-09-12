@@ -8,9 +8,9 @@ import math
 import rospy
 import smach
 import PyKDL as kdl
+from pykdl_ros import VectorStamped
 
 # Robot skills
-from robot_skills.util.kdl_conversions import VectorStamped
 from ..utility import WaitTime
 from ..util.designators import EdEntityDesignator
 
@@ -150,7 +150,7 @@ class TourGuide(object):
 
         # get initial entities
         r = math.hypot(self._x_threshold, self._y_threshold)
-        close_entities = self._robot.ed.get_entities(center_point=position.extractVectorStamped(), radius=r)
+        close_entities = self._robot.ed.get_entities(center_point=VectorStamped.from_framestamped(position), radius=r)
         close_furniture_entities = [entity for entity in close_entities if entity.is_a("furniture")]
         for entity in close_furniture_entities:
             self._passed_furniture_ids.append(entity.id)
@@ -176,7 +176,7 @@ class TourGuide(object):
         :raises: (RuntimeError)
         """
         for room in self._room_entities:
-            if room.in_volume(VectorStamped(vector=position), "in"):
+            if room.in_volume(VectorStamped(position, rospy.Time.now(), "map"), "in"):
                 return room
         raise RuntimeError("Position {} is not in any room".format(position))
 
@@ -205,7 +205,7 @@ class ExecutePlanGuidance(smach.State):
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
-        self.robot.head.look_at_point(VectorStamped(-1.0, 0.0, 1.75, self.robot.base_link_frame))
+        self.robot.head.look_at_point(VectorStamped(-1.0, 0.0, 1.75, rospy.Time.now(), self.robot.base_link_frame))
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0

@@ -8,13 +8,13 @@ import actionlib
 import math
 import numpy
 import PyKDL as kdl
+from pykdl_ros import FrameStamped, VectorStamped
 from geometry_msgs.msg import PointStamped, Point
 
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.arm import arms
 from robot_skills.util.entity import Entity
-import robot_skills.util.kdl_conversions as kdl_con
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 # Robot Smach States
@@ -48,32 +48,32 @@ class Door(Entity):
         )
 
     @property
-    def handle_pose(self) -> kdl_con.VectorStamped:
+    def handle_pose(self) -> VectorStamped:
         """
         Returns the pose of the handle in map frame
         """
         return self._get_volume_center_point_in_map(self.HANDLE_ID)
 
     @property
-    def frame_points(self) -> typing.List[kdl_con.VectorStamped]:
+    def frame_points(self) -> typing.List[VectorStamped]:
         """
         Returns the ground points of the door frame in map frame
         """
         return [self._get_volume_center_point_in_map(self.FRAME_LEFT_POINT_ID),
                 self._get_volume_center_point_in_map(self.FRAME_RIGHT_POINT_ID)]
 
-    def _get_volume_center_point_in_map(self, volume_id: str) -> kdl_con.VectorStamped:
+    def _get_volume_center_point_in_map(self, volume_id: str) -> VectorStamped:
         """
         Gets the center point of a volume (typically defined w.r.t. the entity frame) and converts this to map frame.
 
         :param volume_id: id of the volume to get the center point from
         :return: center point converted to map frame
         """
-        center_point_entity = self.volumes[volume_id].center_point
-        center_point_map = self.pose.frame * center_point_entity
-        return kdl_con.VectorStamped(center_point_map.x(), center_point_map.y(), center_point_map.z(), "map")
+        cp_entity = self.volumes[volume_id].center_point
+        cp_map = self.pose.frame * cp_entity
+        return VectorStamped.from_xyz(cp_map.x(), cp_map.y(), cp_map.z(), rospy.Time.now(),"map")
 
-    def get_direction(self, base_pose: kdl_con.FrameStamped) -> str:
+    def get_direction(self, base_pose: FrameStamped) -> str:
         """
         Determines whether the open the door inward or outward.
 
@@ -195,8 +195,8 @@ class LocateHandleVision(smach.State):
 
     def execute(self, userdata=None):
         handle_p = self._door._handle.location["value"]
-        self._robot.head.look_at_point(kdl_con.VectorStamped(x=handle_p.point.x, y=handle_p.point.y,
-                                                             z=handle_p.point.z), timeout=0.0)
+        self._robot.head.look_at_point(VectorStamped.from_xyz(handle_p.point.x, handle_p.point.y, handle_p.point.z,
+                                                              rospy.Time.now(), "map"), timeout=0.0)
         self._robot.head.wait_for_motion_done()
 
         goal = LocateDoorHandleGoal()
@@ -256,12 +256,12 @@ class GraspHandleMotionPlanningSkill(smach.State):
         if self._door.handle.grasp_orientation["value"] == "vertical":
             handle_orien = 0.0
 
-        handle_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(handle_orien, 0.0, align_door),
-                                                             kdl.Vector(handle_point.point.x, handle_point.point.y,
-                                                                        handle_point.point.z)),
-                                                   frame_id=handle_point.header.frame_id)
-        goal_bl = handle_framestamped.projectToFrame(self._robot.robot_name + '/base_link',
-                                                     tf_buffer=self._robot.tf_buffer)
+        handle_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(handle_orien, 0.0, align_door),
+                                                     kdl.Vector(handle_point.point.x, handle_point.point.y,
+                                                                handle_point.point.z)),
+                                           rospy.Time.now(),
+                                           frame_id=handle_point.header.frame_id)
+        goal_bl = self._robot.tf_buffer.transform(handle_framestamped, self._robot.base_link_frame)
 
         # ToDo: not sure about the orientation here, should be thoroughly tested.
         # move to in front of handle
@@ -274,12 +274,12 @@ class GraspHandleMotionPlanningSkill(smach.State):
 
 
         # move to handle
-        handle_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(handle_orien, 0.0, align_door),
-                                                             kdl.Vector(handle_point.point.x, handle_point.point.y,
-                                                                        handle_point.point.z)),
-                                                   frame_id=handle_point.header.frame_id)
-        goal_bl = handle_framestamped.projectToFrame(self._robot.robot_name + '/base_link',
-                                                     tf_buffer=self._robot.tf_buffer)
+        handle_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(handle_orien, 0.0, align_door),
+                                                     kdl.Vector(handle_point.point.x, handle_point.point.y,
+                                                                handle_point.point.z)),
+                                           rospy.Time.now(),
+                                           frame_id=handle_point.header.frame_id)
+        goal_bl = self._robot.tf_buffer.transform(handle_framestamped, self._robot.base_link_frame)
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.03)  # Retract
         goal_bl.frame.p.y(goal_bl.frame.p.y() + 0.02)  # Retract
@@ -291,7 +291,7 @@ class GraspHandleMotionPlanningSkill(smach.State):
             # arm._arm.force_sensor.wait_for_edge_up(5.0)  # timeout is 5 seconds
             # arm.cancel_goals()
             # felt_edge = True
-            # goal_bl = goal_bl.projectToFrame(self._robot.robot_name + '/base_link', tf_listener=self._robot.tf_listener)
+            # goal_bl = self._robot.tf_buffer.transform(goal_bl, self._robot.base_link_frame)
             # goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.03)  # Retract 3 cm
             # arm.send_goal(goal_bl, timeout=0.0)
         # except TimeOutException:  # no force detected
@@ -352,8 +352,9 @@ class UnlatchHandle(smach.State):
             rospy.logerr("Handle direction ({}) not recognized.".format(self._door.handle.direction["value"]))
             return "done"
 
-        next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(current_pose.transform.translation.x, current_pose.transform.translation.y, next_z, curr_r, curr_p, curr_y,
-                                                          "hero/base_link")
+        trans = current_pose.transform.translation
+        next_pose = FrameStamped.from_xyz_rpy(trans.x, trans.y, next_z, curr_r, curr_p, curr_y, rospy.Time.now(),
+                                              self._robot.base_link_frame)
         #     next_x, next_y, next_z = tuple(map(operator.sub, [current_pose.transform.translation], [move_vector]))
         # elif self._door.handle.direction["value"] == "up":
         #     next_x, next_y, next_z = tuple(map(operator.add, [current_pose.transform.translation], [move_vector]))
@@ -361,8 +362,8 @@ class UnlatchHandle(smach.State):
         #     rospy.logerr("Handle direction ({}) not recognized.".format(self._door.handle.direction["value"]))
         #     return "done"
 
-        # next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(next_x, next_y, next_z, curr_r, curr_p, curr_y,
-        #                                                   "/" + self._robot.robot_name + "/base_link")
+        # next_pose = FrameStamped.from_xyz_rpy(next_x, next_y, next_z, curr_r, curr_p, curr_y, rospy.Time.now(),
+        #                                       self._robot.base_link_frame)
 
         result = arm.send_goal(next_pose)
         if result:
@@ -398,12 +399,13 @@ class OpenDoorAndDrive(smach.State):
             # you want the roll in the gripper frame to be complient, but not the pitch and yaw.
             # ToDo: do sth with whole_body.end_effector_frame = 'base_link' ?
             # self._whole_body.impedance_config = 'compliance_soft'
-            next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
-                                                                    kdl.Vector(0.15, 0.0, 0.0)),
-                                                          frame_id="grippoint")
+            next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
+                                                            kdl.Vector(0.15, 0.0, 0.0)),
+                                                  rospy.Time.now(),
+                                                  frame_id="grippoint")
 
             # Lift
-            goal_bl = next_pose_framestamped.projectToFrame('hero/base_link', tf_buffer=self._robot.tf_buffer)
+            goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
 
             rospy.loginfo('Start opening door')
 
@@ -433,20 +435,23 @@ class OpenDoorAndDrive(smach.State):
             rospy.sleep(2.0)
             arm.send_gripper_goal('open')
             # Move back and to the left
-            next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
-                                                                    kdl.Vector(-0.05, 0.0, 0.15)),
-                                                          frame_id="grippoint")
-            goal_bl = next_pose_framestamped.projectToFrame('hero/base_link',
-                                                            tf_buffer=self._robot.tf_buffer)
+            next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
+                                                            kdl.Vector(-0.05, 0.0, 0.15)),
+                                                  rospy.Time.now(),
+                                                  frame_id="grippoint")
+
+            goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
+
 
             arm.send_goal(goal_bl, timeout=0.0)
             arm.wait_for_motion_done()
             # Move forward and twist
-            next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 1.0, 0.0),
-                                                                    kdl.Vector(0.1, 0.0, 0.0)),
-                                                          frame_id="grippoint")
-            goal_bl = next_pose_framestamped.projectToFrame('hero/base_link',
-                                                            tf_buffer=self._robot.tf_buffer)
+            next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 1.0, 0.0),
+                                                            kdl.Vector(0.1, 0.0, 0.0)),
+                                                  rospy.Time.now(),
+                                                  frame_id="grippoint")
+            goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
+
 
             arm.send_goal(goal_bl, timeout=0.0)
             arm.wait_for_motion_done()

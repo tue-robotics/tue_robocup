@@ -8,12 +8,12 @@ import math
 
 # ROS
 import PyKDL as kdl
+from pykdl_ros import FrameStamped, VectorStamped
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
 from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from ..util.designators import Designator, check_resolve_type
 from cb_base_navigation_msgs.msg import PositionConstraint
 from ..util.geometry_helpers import offsetConvexHull
@@ -66,14 +66,15 @@ class EmptySpotDesignator(Designator):
         :returns: FrameStamped
         """
         place_location = self.place_location_designator.resolve()
-        place_frame = FrameStamped(frame=place_location._pose, frame_id="map")
+        place_frame = FrameStamped(frame=place_location._pose, stamp=rospy.Time.now(), frame_id="map")
 
         # points_of_interest = []
         if self._area:
             vectors_of_interest = self._determine_points_of_interest_with_area(place_location, self._area)
         else:
-            vectors_of_interest = self._determine_points_of_interest(place_frame.frame, z_max=place_location.shape.z_max,
-                                                                    convex_hull=place_location.shape.convex_hull)
+            vectors_of_interest = self._determine_points_of_interest(place_frame.frame,
+                                                                     z_max=place_location.shape.z_max,
+                                                                     convex_hull=place_location.shape.convex_hull)
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
@@ -99,7 +100,7 @@ class EmptySpotDesignator(Designator):
         return None
 
     def _is_poi_unoccupied(self, frame_stamped, surface_entity):
-        entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
+        entities_at_poi = self.robot.ed.get_entities(center_point=VectorStamped.from_framestamped(frame_stamped),
                                                      radius=self._spacing)
         entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
         return not any(entities_at_poi)
@@ -241,10 +242,12 @@ class EmptySpotDesignator(Designator):
                 ys = ch[i].y() + d / length * dy
 
                 # Shift point inwards and fill message
-                fs = kdl_frame_stamped_from_XYZRPY(x=xs - dy / length * self._edge_distance,
-                                                   y=ys + dx / length * self._edge_distance,
-                                                   z=center_frame.p.z() + z_max,
-                                                   frame_id="map")
+                fs = FrameStamped.from_xyz_rpy(xs - dy / length * self._edge_distance,
+                                               ys + dx / length * self._edge_distance,
+                                               center_frame.p.z() + z_max,
+                                               0, 0, 0,
+                                               rospy.Time.now(),
+                                               frame_id="map")
 
                 # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
                 # prevent the robot from hitting the cabinet edges

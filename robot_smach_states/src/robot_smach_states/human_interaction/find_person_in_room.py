@@ -10,11 +10,12 @@ import geometry_msgs
 import rospy
 import smach
 
+from pykdl_ros import VectorStamped
+
 # TU/e Robotics
 from ..navigation.navigate_to_waypoint import NavigateToWaypoint
 from ..navigation.navigate_to_symbolic import NavigateToRoom
 from ..util.designators import check_type, EntityByIdDesignator, is_writeable
-from robot_skills.util import kdl_conversions
 
 
 class FindPerson(smach.State):
@@ -73,9 +74,8 @@ class FindPerson(smach.State):
         start_time = rospy.Time.now()
 
         look_distance = 2.0  # magic number 4
-        head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
-                                                    y=look_distance * math.sin(angle), z=1.3,
-                                                    frame_id=self._robot.base_link_frame)
+        head_goals = [VectorStamped.from_xyz(x=look_distance * math.cos(angle), y=look_distance * math.sin(angle),
+                                             z=1.3, stamp=rospy.Time.now(), frame_id=self._robot.base_link_frame)
                       for angle in self._look_angles]
 
         i = 0
@@ -116,14 +116,16 @@ class FindPerson(smach.State):
 
             if self._room:
                 room_entity = self._robot.ed.get_entity(id=self._room)
-                if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
+                if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in'):
                     # If the person is not in the room we are looking for, ignore the person
                     rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
                                   .format(found_person.id, room_entity.id))
                     found_person = None
 
             if found_person:
-                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
+                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label,
+                                                                           VectorStamped(found_person.pose),
+                                                                           block=False))
                 if self.speak_when_found:
                     self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()

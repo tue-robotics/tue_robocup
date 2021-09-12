@@ -4,13 +4,12 @@ from __future__ import absolute_import, print_function
 import sys
 
 # ROS
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
 # TU/e Robotics
 from robot_skills.util.entity import Entity
-
-from robot_skills.util.kdl_conversions import VectorStamped
 from .state import State
 from .util import designators as ds
 
@@ -32,7 +31,7 @@ class LookAtEntity(State):
         # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         # The added benefit is that the entity's frame actually moves because the entity is tracked.
         # This makes the head track the entity
-        vs = VectorStamped(frame_id=entity.id)
+        vs = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=entity.id)
         rospy.loginfo('Look at %s' % (repr(vs)))
         robot.head.look_at_point(vs)
         rospy.sleep(rospy.Duration(waittime))
@@ -69,7 +68,7 @@ class LookAtArea(State):
 
         if area in entity.volumes:
             cp = entity.volumes[area].center_point
-            vs = VectorStamped(cp.x(), cp.y(), cp.z(), frame_id)
+            vs = VectorStamped.from_xyz(cp.x(), cp.y(), cp.z(), rospy.Time.now(), frame_id)
 
             rospy.loginfo('Look at %s' % (repr(vs)))
 
