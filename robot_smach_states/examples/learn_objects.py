@@ -6,11 +6,11 @@ import sys
 
 import rospy
 import PyKDL as kdl
+from pykdl_ros import VectorStamped
 
 
 from robot_smach_states.util.designators import EntityByIdDesignator
-from robot_skills.util.kdl_conversions import VectorStamped
-from robot_skills.util.robot_constructor import robot_constructor
+from robot_skills import get_robot
 
 
 def look_at_entity(robot, location_des):
@@ -26,7 +26,7 @@ def look_at_entity(robot, location_des):
     y = lookat_pos_map.y()
     z = lookat_pos_map.z()
 
-    robot.head.look_at_point(VectorStamped(x, y, z, "map"), timeout=0)
+    robot.head.look_at_point(VectorStamped.from_xyz(x, y, z, rospy.Time.now(), "map"), timeout=0)
     rospy.loginfo("Looking at position ({}, {}, {})".format(x, y, z))
     robot.head.wait_for_motion_done()
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     if robot_name != "hero":
         rospy.logwarn("Learn_objects is designed to be used with hero. It is unknown how it works for other robots")
 
-    robot = robot_constructor(robot_name)
+    robot = get_robot(robot_name)
 
     location = "hero_case"
     location_des = EntityByIdDesignator(robot, location)

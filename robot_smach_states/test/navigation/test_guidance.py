@@ -1,12 +1,14 @@
 import unittest
 import PyKDL as kdl
+import rospy
+
+from pykdl_ros import FrameStamped
 import re
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
-from robot_skills.util.kdl_conversions import FrameStamped
 
 # Robot Smach States
 from robot_smach_states.navigation.guidance import TourGuide
@@ -45,6 +47,7 @@ class TestTourGuide(unittest.TestCase):
 
     def setUp(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(-1, -1, 0)),
+                                                            rospy.Time(),
                                                             "map")
         self.tour_guide.initialize()
 

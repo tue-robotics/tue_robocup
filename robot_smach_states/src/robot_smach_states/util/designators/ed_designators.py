@@ -8,8 +8,8 @@ import pprint
 import rospy
 
 # TU/e Robotics
+from pykdl_ros import VectorStamped
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped
 from .core import Designator
 from .checks import check_resolve_type
 
@@ -47,7 +47,7 @@ class EdEntityCollectionDesignator(Designator):
         if center_point is not None and center_point_designator is not None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point is None and center_point_designator is None:
-            center_point = VectorStamped()
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), "map")
         if id != "" and id_designator is not None:
             raise TypeError("Specify either id or id_designator, not both")
 
@@ -128,7 +128,7 @@ class EdEntityDesignator(Designator):
         self.ed = robot.ed
         self.type = type
         if center_point is None and center_point_designator is None:
-            center_point = VectorStamped()
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), "map")
         self.center_point = center_point
         self.radius = radius
         self.id = id

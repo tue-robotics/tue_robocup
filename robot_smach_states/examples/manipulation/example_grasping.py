@@ -6,16 +6,14 @@ import PyKDL as kdl
 import rospy
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import FrameStamped
+from pykdl_ros import FrameStamped
 from robot_skills.get_robot import get_robot
-from robot_skills.arm import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation import Grab
 from robot_skills.util.shape import RightPrism
 from robot_skills.util.entity import Entity
-import PyKDL as kdl
 
 
 if __name__ == "__main__":
@@ -34,6 +32,7 @@ if __name__ == "__main__":
 
     entity_id = "test_item"
     pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(args.x, args.y, args.z)),
+                        stamp=rospy.Time.now(),
                         frame_id="map")
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
     shape = RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)], -0.1, 0.1)

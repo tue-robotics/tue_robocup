@@ -2,7 +2,9 @@ import unittest
 
 # datatypes
 import PyKDL as kdl
-from robot_skills.util.kdl_conversions import VectorStamped
+import rospy
+
+from pykdl_ros import VectorStamped
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot
@@ -34,7 +36,7 @@ class TestLookAtEntity(unittest.TestCase):
 
         state.execute()
 
-        vs = VectorStamped(0, 0, 0, "12345")
+        vs = VectorStamped(0, 0, 0, rospy.Time(), "12345")
 
         self.robot.head.look_at_point.assert_called_with(vs)
 

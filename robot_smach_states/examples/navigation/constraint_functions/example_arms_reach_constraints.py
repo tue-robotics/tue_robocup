@@ -1,14 +1,18 @@
 import rospy
 import argparse
 
+import PyKDL as kdl
+from pykdl_ros import FrameStamped
+
 from robot_skills.get_robot import get_robot
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import frame_stamped, FrameStamped
+
 # Robot Smach States
 from robot_smach_states.navigation.constraint_functions.arms_reach_constraints import arms_reach_constraint
 from robot_smach_states.util.designators.arm import ArmDesignator
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.utility import AttrDesignator
+
 
 if __name__ == "__main__":
     """
@@ -25,7 +29,7 @@ if __name__ == "__main__":
 
     # get an armdesignator and a pose designator
     arm_designator = ArmDesignator(robot, {}, name="arm_designator")
-    pose = frame_stamped("map", 0, 0, 1.3)
+    pose = FrameStamped(kdl.Frame(kdl.Vector(0, 0, 1.3)), rospy.Time.now(), "map")
     pose_designator = Designator(pose, name="frame designator")
 
     # basic functionality

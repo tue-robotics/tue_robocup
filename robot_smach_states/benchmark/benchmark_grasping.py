@@ -8,6 +8,7 @@ import datetime
 
 # ROS
 import rospy
+from pykdl_ros import VectorStamped
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot
@@ -17,7 +18,6 @@ from robot_skills.arm import arms
 import robot_smach_states.util.designators as ds
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.manipulation import Grab, SetGripper
 from robot_smach_states.navigation import ForceDrive, NavigateToWaypoint
@@ -110,7 +110,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
                 entity = grasp_entity.resolve()  # type: Entity
                 if entity:
-                    vector_stamped = entity.pose.extractVectorStamped()  # type: VectorStamped
+                    vector_stamped = entity.pose  # type: VectorStamped
                     record['x'] = '{:.3f}'.format(vector_stamped.vector.x())
                     record['y'] = '{:.3f}'.format(vector_stamped.vector.y())
                     record['z'] = '{:.3f}'.format(vector_stamped.vector.z())

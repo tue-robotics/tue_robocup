@@ -5,10 +5,10 @@ import argparse
 
 # ROS
 import PyKDL as kdl
+from pykdl_ros import FrameStamped
 import rospy
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.get_robot import get_robot
 from robot_skills.util.entity import Entity
 from robot_skills.arm import arms
@@ -33,6 +33,7 @@ if __name__ == "__main__":
     robot = get_robot(args.robot)
 
     pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(args.x, args.y, args.z)),
+                        stamp=rospy.Time.now(),
                         frame_id="map")
     item = Entity("dummy_id", "dummy_type", None, None, None, None, None, None)
 

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import FrameStamped
+from pykdl_ros import FrameStamped
 from .navigation import NavigateTo
 from .constraint_functions import arms_reach_constraint
 from ..util.designators import  check_resolve_type
