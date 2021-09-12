@@ -27,7 +27,7 @@ class TestPickUp(unittest.TestCase):
                             frame_id="map")
         shape = RightPrism(
             [kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)], -0.1, 0.1)
-        item = Entity(entity_id, "test_type", pose.frame_id, pose.frame, shape, None, None, None)
+        item = Entity(entity_id, "test_type", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now())
 
         itemdes = ds.Designator(item)
         arm = ds.UnoccupiedArmDesignator(self.robot).lockable()

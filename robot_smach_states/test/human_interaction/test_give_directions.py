@@ -1,7 +1,7 @@
 import unittest
 
-# datatypes
 import PyKDL as kdl
+import rospy
 
 # Robot Skills
 from robot_skills.util.entity import Entity
@@ -25,17 +25,17 @@ class TestGetRoom(unittest.TestCase):
         entity1 = Entity("kitchen", "room", "map",
                          kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                    kdl.Vector(0, 0, 0)),
-                         None, {"in": box1}, None, 0)
+                         None, {"in": box1}, None, rospy.Time())
 
         entity2 = Entity("living_room", "room", "map",
                          kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                    kdl.Vector(1, 0, 0)),
-                         None, {"in": box1}, None, 0)
+                         None, {"in": box1}, None, rospy.Time())
 
         entity3 = Entity("hallway", "room", "map",
                          kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                    kdl.Vector(2, 0, 0)),
-                         None, {"in": box1}, None, 0)
+                         None, {"in": box1}, None, rospy.Time())
 
         self.room_entities = [entity1, entity2, entity3]
 

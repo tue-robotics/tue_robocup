@@ -47,7 +47,7 @@ class EdEntityCollectionDesignator(Designator):
         if center_point is not None and center_point_designator is not None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point is None and center_point_designator is None:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), "map")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), "map")
         if id != "" and id_designator is not None:
             raise TypeError("Specify either id or id_designator, not both")
 

@@ -176,7 +176,7 @@ class TourGuide(object):
         :raises: (RuntimeError)
         """
         for room in self._room_entities:
-            if room.in_volume(VectorStamped(position, rospy.Time.now(), "map"), "in"):
+            if room.in_volume(VectorStamped(position, room.last_update_time, "map"), "in"):
                 return room
         raise RuntimeError("Position {} is not in any room".format(position))
 

@@ -25,7 +25,7 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
 
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
-        frame = Designator(FrameStamped(kdl.Vector(x_coord, y_coord, z_coord), rospy.Time(), frame_id),
+        frame = Designator(FrameStamped(kdl.Frame(kdl.Vector(x_coord, y_coord, z_coord)), rospy.Time(), frame_id),
                            name="frame_designator")
 
         pc, oc = arms_reach_constraint(frame, arm)
@@ -57,7 +57,7 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
 
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
-        frame = Designator(FrameStamped(kdl.Vector(x_coord, y_coord, z_coord), rospy.Time(), frame_id),
+        frame = Designator(FrameStamped(kdl.Frame(kdl.Vector(x_coord, y_coord, z_coord)), rospy.Time(), frame_id),
                            name="frame_designator")
 
         pc, oc = arms_reach_constraint(frame, arm, look=False)

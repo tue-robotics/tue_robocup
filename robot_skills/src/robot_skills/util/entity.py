@@ -66,11 +66,11 @@ class Entity(object):
             return False
 
         # Transform the point
-        fid1 = point.frame_id if point.frame_id[0] != "/" else point.frame_id[1:]  # Remove slash for comparison
+        fid1 = point.header.frame_id if point.header.frame_id[0] != "/" else point.header.frame_id[1:]  # Remove slash for comparison
         fid2 = self.frame_id if self.frame_id[0] != "/" else self.frame_id[1:]  # Remove slash for comparison
         if fid1 != fid2:
             rospy.logerr("Cannot compute with volume and entity defined w.r.t. different frame: {} and {}".format(
-                point.frame_id, self.frame_id
+                point.header.frame_id, self.frame_id
             ))
             return False
         vector = self._pose.Inverse() * point.vector

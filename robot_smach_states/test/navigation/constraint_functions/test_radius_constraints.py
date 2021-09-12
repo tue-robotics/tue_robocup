@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 import unittest
 
+import rospy
+
 from robot_skills.util.entity import Entity
 from robot_skills.util.shape import Shape
 import PyKDL as kdl
@@ -21,7 +23,7 @@ class TestRadiusConstraintFunction(unittest.TestCase):
         frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
-        e = Entity("dummy", "dummy_type", frame_id, pose, Shape(), None, None, None)
+        e = Entity("dummy", "dummy_type", frame_id, pose, Shape(), None, None, rospy.Time())
         entity = Designator(e, name="entity designator")
 
         pc, oc = radius_constraint(entity, radius, margin)

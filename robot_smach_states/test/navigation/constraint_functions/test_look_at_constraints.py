@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 import unittest
 
+import rospy
+
 from robot_skills.util.entity import Entity
 import PyKDL as kdl
 from robot_smach_states.util.designators.core import Designator
@@ -17,7 +19,7 @@ class TestLookAtConstraintFunction(unittest.TestCase):
         frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
-        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
+        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, rospy.Time())
         entity = Designator(e, name="entity designator")
 
         pc, oc = look_at_constraint(entity)
@@ -41,7 +43,7 @@ class TestLookAtConstraintFunction(unittest.TestCase):
         offset = 1.57
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
-        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
+        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, rospy.Time())
         entity = Designator(e, name="entity designator")
 
         pc, oc = look_at_constraint(entity, offset)

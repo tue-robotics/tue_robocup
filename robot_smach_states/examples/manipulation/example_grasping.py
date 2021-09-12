@@ -36,7 +36,7 @@ if __name__ == "__main__":
                         frame_id="map")
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
     shape = RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)], -0.1, 0.1)
-    item = Entity(entity_id, "test_type", pose.frame_id, pose.frame, shape, None, None, None)
+    item = Entity(entity_id, "test_type", pose.header.frame_id, pose.frame, shape, None, None, None)
 
     item = ds.Designator(item)
 

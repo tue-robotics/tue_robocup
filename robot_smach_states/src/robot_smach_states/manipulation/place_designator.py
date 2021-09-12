@@ -135,7 +135,7 @@ class EmptySpotDesignator(Designator):
         radius -= 0.1
         ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
-        pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.frame_id)
+        pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.header.frame_id)
 
         plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
@@ -169,7 +169,7 @@ class EmptySpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
-        marker.header.frame_id = selected_pose.frame_id
+        marker.header.frame_id = selected_pose.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.pose.position.x = selected_pose.frame.p.x()
         marker.pose.position.y = selected_pose.frame.p.y()

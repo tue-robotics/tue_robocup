@@ -150,7 +150,7 @@ class GraspPointDeterminant(object):
         msg = MarkerArray()
         for i, c in enumerate(candidates):
             marker = Marker()
-            marker.header.frame_id = c['vector'].frame_id
+            marker.header.frame_id = c['vector'].header.frame_id
             marker.header.stamp = rospy.Time.now()
             marker.id = i
             marker.type = marker.ARROW

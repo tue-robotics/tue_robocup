@@ -36,7 +36,8 @@ def radius_constraint(entity, radius, margin):
 
     x = e.pose.frame.p.x()
     y = e.pose.frame.p.y()
-    assert e.pose.frame_id.strip("/") == "map", "radius constraint function assumes entities are defined w.r.t. map frame"
+    assert e.pose.header.frame_id.strip("/") == "map",\
+        "radius constraint function assumes entities are defined w.r.t. map frame"
 
     if len(ch) > 0:  # If a convex hull is present, use this to create the position constraint
         pci = ""  # Create an empty position constraint
