@@ -1,8 +1,8 @@
 # System
-import mock
 import unittest
 
 # TU/e Robotics
+from robot_skills import get_robot
 from topological_action_planner_msgs.msg import Edge, Node
 
 # Robot Smach States
@@ -16,19 +16,23 @@ SOURCE_NODE_ID = "SOURCE_NODE"
 SOURCE_NODE_AREA = "IN_FRONT_OF"
 DESTINATION_NODE_ID = "DESTINATION_NODE"
 DESTINATION_NODE_AREA = "IN_FRONT_OF"
-ROBOT = mock.Mock()
 
 
 class TestTopologicalNavigation(unittest.TestCase):
     """
     Tests the TopologicalNavigation smach state
     """
+    
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = get_robot("mockbot")
+    
     def test_drive(self):
         msg = Edge()
         msg.action_type = Edge.ACTION_DRIVE
         msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
         msg.destination = Node(DESTINATION_NODE_ID, DESTINATION_NODE_AREA)
-        actions = convert_msgs_to_actions(ROBOT, [msg])
+        actions = convert_msgs_to_actions(self.robot, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], NavigateToSymbolic), "Action should be a 'NavigateToSymbolic' action")
 
@@ -37,7 +41,7 @@ class TestTopologicalNavigation(unittest.TestCase):
         msg.action_type = Edge.ACTION_DRIVE
         msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
         msg.destination.entity = DESTINATION_NODE_ID
-        actions = convert_msgs_to_actions(ROBOT, [msg])
+        actions = convert_msgs_to_actions(self.robot, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], NavigateToWaypoint), "Action should be a 'NavigateToWaypoint' action")
 
@@ -47,7 +51,7 @@ class TestTopologicalNavigation(unittest.TestCase):
         entity_id = "door"
         msg.origin = Node(entity_id, SOURCE_NODE_AREA)
         msg.destination = Node(entity_id, DESTINATION_NODE_AREA)
-        actions = convert_msgs_to_actions(ROBOT, [msg])
+        actions = convert_msgs_to_actions(self.robot, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], PassDoor), "Action should be a 'OpenDoor' action")
 
@@ -57,7 +61,7 @@ class TestTopologicalNavigation(unittest.TestCase):
         entity_id = "door"
         msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
         msg.destination = Node(entity_id, DESTINATION_NODE_AREA)
-        self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, ROBOT, [msg])
+        self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, self.robot, [msg])
 
     def test_open_door_wrong_area(self):
         msg = Edge()
@@ -65,18 +69,18 @@ class TestTopologicalNavigation(unittest.TestCase):
         entity_id = "door"
         msg.origin = Node(entity_id, "")
         msg.destination = Node(entity_id, DESTINATION_NODE_AREA)
-        self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, ROBOT, [msg])
+        self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, self.robot, [msg])
 
     def test_push_object(self):
         msg = Edge()
         msg.action_type = Edge.ACTION_PUSH_OBJECT
         msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
         msg.destination.entity = DESTINATION_NODE_ID
-        actions = convert_msgs_to_actions(ROBOT, [msg])
+        actions = convert_msgs_to_actions(self.robot, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], PushObject), "Action should be a 'PushObject' action")
 
     def test_invalid_action(self):
         msg = Edge()
         msg.action_type = "foo"
-        self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, ROBOT, [msg])
+        self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, self.robot, [msg])
