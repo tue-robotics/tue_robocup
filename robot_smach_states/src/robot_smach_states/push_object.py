@@ -48,8 +48,8 @@ class PushObject(smach.StateMachine):
         self.arm = ArmDesignator(self.robot)
         self.original_pose_frame = self.robot.base.get_location().frame
 
-        self.op_x = self.original_pose_frame.p[0]
-        self.op_y = self.original_pose_frame.p[1]
+        self.op_x = self.original_pose_frame.p.x()
+        self.op_y = self.original_pose_frame.p.y()
         self.op_theta = self.original_pose_frame.M.GetRPY()[2]
         self.waypoint = EntityByIdDesignator(self.robot, final_waypoint)
 
