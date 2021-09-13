@@ -168,7 +168,8 @@ class NavAnalyzer:
         self.active = False
 
     def odomCallback(self, odom_msg):
-        current_position = tf2_ros.convert(odom_msg.pose.pose.position, kdl.Vector)
+        pose = odom_msg.pose.pose.position
+        current_position = kdl.Vector(pose.x, pose.y, pose.z)
         if self.active:
             self.distance_traveled += kdl.diff(current_position, self.previous_position).Norm()
 
