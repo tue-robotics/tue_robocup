@@ -1,7 +1,8 @@
 import smach
 import rospy
+from pykdl_ros import VectorStamped
+
 from robot_smach_states.util.designators import EntityByIdDesignator
-import robot_skills.util.kdl_conversions as kdl
 from robot_skills.util.entity import Entity
 
 from .self_cleanup import SelfCleanup  # , SelfCleanup2
@@ -72,7 +73,8 @@ class DetermineAction(smach.State):
             # Make sure the head looks at the entity
             rospy.loginfo("entity: {}".format(selected_entity))
             pos = selected_entity.pose.frame.p
-            self._robot.head.look_at_point(kdl.VectorStamped(pos.x(), pos.y(), 0.8, "map"), timeout=10)
+            self._robot.head.look_at_point(VectorStamped.from_xyz(pos.x(), pos.y(), 0.8, rospy.Time.now(), "map"),
+                                           timeout=10)
 
             # This is needed because the head is not entirely still when the look_at_point function finishes
             rospy.sleep(1)

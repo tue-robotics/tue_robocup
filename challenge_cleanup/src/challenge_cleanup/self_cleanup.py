@@ -2,16 +2,19 @@ import smach
 import rospy
 import hmi
 
+from pykdl_ros import FrameStamped
+
+from robot_skills.util.entity import Entity
+
 from robot_smach_states.human_interaction import AskYesNo, HearOptionsExtra, Say
 from robot_smach_states.manipulation import ArmToJointConfig, Grab, Place
 from robot_smach_states.navigation import NavigateToPlace, NavigateToRoom
 from robot_smach_states.utility import WaitTime
 from robot_smach_states.world_model import Inspect
-from robot_skills.util.kdl_conversions import FrameStamped
-from robot_skills.util.entity import Entity
 import robot_smach_states.util.designators as ds
-from robocup_knowledge import load_knowledge
 from robot_smach_states.utility import ResolveArm
+
+from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_cleanup')
 
@@ -37,7 +40,7 @@ class DropPoseDesignator(ds.Designator):
 
         frame.p.z(self._drop_height)
 
-        return FrameStamped(frame, "map")
+        return FrameStamped(frame, rospy.Time.now(), "map")
 
 
 class StorePlaceDesignator(ds.Designator):
@@ -166,9 +169,10 @@ class OperatorToCategory(smach.StateMachine):
                                    transitions={"waited": "ASK_WHICH_CATERGORY",
                                                 "preempted": "ASK_WHICH_CATERGORY"})
 
-            smach.StateMachine.add("ASK_WHICH_CATERGORY", AskWhichCategory(robot,
+            smach.StateMachine.add("ASK_WHICH_CATERGORY", AskWhichCategory(
+                robot,
                 ds.Designator(challenge_knowledge.category_grammar),
-                                                                           object_category_des),
+                object_category_des),
                                    transitions={"done": "done"})
 
 
