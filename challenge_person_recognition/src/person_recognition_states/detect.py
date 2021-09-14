@@ -1,13 +1,13 @@
-import robot_skills.util.msg_constructors as msgs
-from robot_skills.util.kdl_conversions import VectorStamped
-import time
-import smach
-import robot_smach_states as states
-import robot_smach_states.util.designators as ds
-import rospy
-from robocup_knowledge import load_knowledge
 import math
 import random
+import time
+
+from pykdl_ros import VectorStamped
+import rospy
+import smach
+
+import robot_smach_states as states
+from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge("challenge_speech_recognition")
 
@@ -30,7 +30,7 @@ class RecognizePersons(smach.State):
 
     def _get_detections(self, external_api_request):
         z = 1.5
-        self.robot.head.look_at_point(VectorStamped(100, 0, z, self.robot.robot_name + "/base_link"))
+        self.robot.head.look_at_point(VectorStamped.from_xyz(100, 0, z, rospy.Time.now(), self.robot.base_link_frame))
         self.robot.head.wait_for_motion_done()
         time.sleep(1)
 
@@ -56,7 +56,7 @@ class RecognizePersons(smach.State):
 
     def _recognize(self):
         z = 1.5
-        self.robot.head.look_at_point(VectorStamped(100, 0, z, self.robot.robot_name + "/base_link"))
+        self.robot.head.look_at_point(VectorStamped.from_xyz(100, 0, z, rospy.Time.now(), self.robot.base_link_frame))
         self.robot.speech.speak("I am looking for my operator", block=False)
 
         # 1) Check how many people in the crowd
