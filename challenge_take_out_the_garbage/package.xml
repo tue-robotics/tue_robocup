@@ -17,6 +17,7 @@
   <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
 
   <depend>geometry_msgs</depend>
+  <depend>pykdl_ros</depend>
   <depend>robot_skills</depend>
   <depend>robot_smach_states</depend>
   <depend>smach</depend>
