@@ -123,7 +123,7 @@ class EdEntityDesignator(Designator):
         self.ed = robot.ed
         self.type = type
         if center_point is None and center_point_designator is None:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), "map")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), "map")
         self.center_point = center_point
         self.radius = radius
         self.id = id
