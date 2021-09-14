@@ -3,13 +3,13 @@
 import rospy
 import smach
 import datetime
+from pykdl_ros import FrameStamped
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 from robocup_knowledge import load_knowledge
 from challenge_hmc_functions import hmc_states
-from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
@@ -43,9 +43,10 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                    name="place_position")
         # We don't actually grab something, so there is no need for an actual thing to grab
 
-        self.current_item = ds.VariableDesignator(Entity("dummy", "dummy", "/{}/base_link".format(robot.robot_name),
-                                                         kdl_conversions.kdl_frame_from_XYZRPY(0.6, 0, 0.5), None, {}, [],
-                                                         datetime.datetime.now()), name="current_item")
+        self.current_item = ds.VariableDesignator(Entity("dummy", "dummy", robot.base_link_frame,
+                                                         FrameStamped.from_xyz_rpy(0.6, 0, 0.5, 0, 0, 0,
+                                                                                   rospy.Time.now(), "map"),
+                                                         None, {}, [], rospy.Time.now()), name="current_item")
 
         with self:
             smach.StateMachine.add('INITIALIZE',
