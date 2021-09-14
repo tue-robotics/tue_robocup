@@ -6,8 +6,10 @@ from __future__ import print_function
 import random
 
 # ROS
+from pykdl_ros import VectorStamped
 import rospy
 import smach
+
 # TU/e Robotics
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
@@ -15,8 +17,6 @@ import robot_smach_states.util.designators as ds
 from robot_skills.util.entity import Entity
 
 # Knowledge
-from robot_skills.util.kdl_conversions import VectorStamped
-
 knowledge = knowledge_loader.load_knowledge("challenge_restaurant")
 
 
@@ -53,7 +53,7 @@ class TakeOrder(smach.State):
     def execute(self, userdata=None):
         person = self._entity_designator.resolve()
         if person:
-            self._robot.head.look_at_point(VectorStamped(vector=person.pose.frame.p, frame_id="map"), timeout=0.0)
+            self._robot.head.look_at_point(VectorStamped.from_framestamped(person.pose), timeout=0.0)
         else:
             rospy.logwarn("Could not resolve person, looking down ..")
             self._robot.head.look_at_ground_in_front_of_robot(3)

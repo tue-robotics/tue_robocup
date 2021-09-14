@@ -1,10 +1,19 @@
 #!/usr/bin/python
 
 import numpy as np
+
+from geometry_msgs.msg import PoseStamped
+from pykdl_ros import FrameStamped
 import robot_smach_states as states
 import rospy
 import smach
-from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_to_pose_msg
+
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+
 from visualization_msgs.msg import Marker
 
 
@@ -214,7 +223,8 @@ class StoreWaypoint(smach.State):
         rospy.set_param("/restaurant_locations/{name}".format(name=self._location_id), loc_dict)
 
         self._visualize_location(base_pose, self._location_id)
-        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, "map"),
+        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(),
+                                                                                      "map"),
                                      type="waypoint")
 
         return "done"
@@ -228,7 +238,8 @@ class StoreWaypoint(smach.State):
         :return:
         """
         # Convert KDL object to geometry message
-        base_pose = kdl_frame_to_pose_msg(base_pose)
+        base_pose = FrameStamped(base_pose, rospy.Time.now(), "map")
+        base_pose = tf2_ros.convert(base_pose, PoseStamped).pose
 
         # Create the marker
         m = Marker()
