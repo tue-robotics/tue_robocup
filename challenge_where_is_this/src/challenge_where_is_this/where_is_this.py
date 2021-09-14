@@ -2,6 +2,7 @@
 import math
 
 # ROS
+from pykdl_ros import FrameStamped
 import smach
 
 # TU/e Robotics
@@ -12,7 +13,6 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import Initialize, WaitTime
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
-from robot_skills.util.kdl_conversions import FrameStamped
 
 # Challenge where is this
 from .inform_machine import InformMachine
@@ -134,10 +134,9 @@ class WhereIsThis(smach.StateMachine):
             @smach.cb_interface(outcomes=["succeeded"])
             def store_pose(userdata=None):
                 base_loc = robot.base.get_location()
-                base_pose = base_loc.frame
                 location_id = INFORMATION_POINT_ID
                 robot.ed.update_entity(id=location_id,
-                                       frame_stamped=FrameStamped(base_pose, "map"),
+                                       frame_stamped=base_loc,
                                        type="waypoint")
 
                 return "succeeded"
