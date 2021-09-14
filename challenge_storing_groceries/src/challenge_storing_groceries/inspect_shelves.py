@@ -4,11 +4,10 @@ from __future__ import print_function
 import os
 
 # ROS
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
-# TU/e
-from robot_skills.util.kdl_conversions import VectorStamped
 
 # Challenge storing groceries
 import config
@@ -36,7 +35,7 @@ class InspectShelves(smach.State):
             if k in config.OBJECT_SHELVES:
                 rospy.loginfo("Adding {} to shelves".format(k))
                 vector = 0.5 * (v.min_corner + v.max_corner)
-                shelves.append({'ps': VectorStamped(frame_id=cabinet_entity.id, vector=vector), 'name': k})
+                shelves.append({'ps': VectorStamped(vector, rospy.Time.now(), cabinet_entity.id), 'name': k})
 
         # Sort the list in ascending order
         shelves = sorted(shelves, key=lambda x: x['ps'].vector.z())
