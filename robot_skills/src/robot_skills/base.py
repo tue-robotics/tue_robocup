@@ -7,7 +7,7 @@
 import math
 
 import geometry_msgs.msg
-import pykdl_ros
+from pykdl_ros import FrameStamped
 import rospy
 import tf2_ros
 # noinspection PyUnresolvedReferences
@@ -261,7 +261,7 @@ class Base(RobotPart):
 
         return True
 
-    def get_location(self):
+    def get_location(self) -> FrameStamped:
         """ Returns a FrameStamped with the robot pose
 
         :return: FrameStamped with robot pose
@@ -342,7 +342,7 @@ class Base(RobotPart):
     ########################################################
 
 
-def get_location(robot_name, tf_buffer):
+def get_location(robot_name, tf_buffer) -> FrameStamped:
 
     try:
         time = rospy.Time.now()
@@ -353,14 +353,14 @@ def get_location(robot_name, tf_buffer):
         target_pose.pose.position = target_transform.transform.translation
         target_pose.pose.orientation = target_transform.transform.rotation
 
-        return tf2_ros.convert(target_pose, pykdl_ros.FrameStamped)
+        return tf2_ros.convert(target_pose, FrameStamped)
 
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
         rospy.logerr("tf2 request failed!, {}".format(e))
         target_pose = geometry_msgs.msg.PoseStamped()
         target_pose.header.frame_id = "map"
         target_pose.header.stamp = time
-        return tf2_ros.convert(target_pose, pykdl_ros.FrameStamped)
+        return tf2_ros.convert(target_pose, FrameStamped)
 
 
 def computePathLength(path):
