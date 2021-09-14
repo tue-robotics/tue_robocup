@@ -23,6 +23,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>hmi</exec_depend>
   <exec_depend>image_recognition_msgs</exec_depend>
+  <exec_depend>pykdl_ros</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-rospkg</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-rospkg</exec_depend>
   <exec_depend>robot_skills</exec_depend>
