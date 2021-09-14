@@ -249,7 +249,7 @@ class Perception(MockedRobotPart):
         self.detect_faces = AlteredMagicMock()
         self.get_best_face_recognition = AlteredMagicMock()
         self.get_rgb_depth_caminfo = AlteredMagicMock()
-        self.project_roi = lambda *args, **kwargs: VectorStamped(random_kdl_frame(), rospy.Time(), "map")
+        self.project_roi = lambda *args, **kwargs: VectorStamped(random_kdl_vector(), rospy.Time(), "map")
         self.locate_handle_client = AlteredMagicMock()
 
 

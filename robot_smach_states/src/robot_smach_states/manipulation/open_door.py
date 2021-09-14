@@ -442,7 +442,6 @@ class OpenDoorAndDrive(smach.State):
 
             goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
 
-
             arm.send_goal(goal_bl, timeout=0.0)
             arm.wait_for_motion_done()
             # Move forward and twist
@@ -451,7 +450,6 @@ class OpenDoorAndDrive(smach.State):
                                                   rospy.Time.now(),
                                                   frame_id="grippoint")
             goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
-
 
             arm.send_goal(goal_bl, timeout=0.0)
             arm.wait_for_motion_done()
