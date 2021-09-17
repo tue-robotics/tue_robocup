@@ -2,13 +2,14 @@
 
 from __future__ import print_function
 
-import rospy
-import smach
 import sys
 import random
 import math
 import time
 
+from pykdl_ros import VectorStamped
+import rospy
+import smach
 
 import robot_smach_states as states
 
@@ -53,7 +54,7 @@ class Turn(smach.State):
         operator = None
         while not operator:
             operator = self.robot.ed.get_closest_entity(self, radius=1.9,
-                                                        center_point=self.robot.base.get_location().extractVectorStamped())
+                                                        center_point=VectorStamped.from_framestamped(self.robot.base.get_location()))
             print(operator)
             if not operator:
                 vth = 0.5
@@ -66,8 +67,8 @@ class Turn(smach.State):
         # Turn towards the operator
         current = self.robot.base.get_location()
         robot_th = current.frame.M.GetRPY()[2]  # Get the Yaw, rotation around Z
-        desired_th = math.atan2(operator._pose.p.y() - current.frame.p.y(),
-                                operator._pose.p.x() - current.frame.p.x())
+        desired_th = math.atan2(operator.pose.frame.p.y() - current.frame.p.y(),
+                                operator.pose.frame.p.x() - current.frame.p.x())
 
         # Calculate params
         th = desired_th - robot_th
