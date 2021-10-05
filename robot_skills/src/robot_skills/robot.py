@@ -177,11 +177,6 @@ class Robot(object):
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
-    def tf_transform_pose(self, ps, frame):
-        self.tf_buffer.can_transform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
-        output_pose = self.tf_buffer.transform(ps, frame)
-        return output_pose
-
     def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
                 required_goals=None, desired_goals=None,
                 required_trajectories=None, desired_trajectories=None,
