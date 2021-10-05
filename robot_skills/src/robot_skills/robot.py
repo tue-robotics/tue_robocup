@@ -174,16 +174,6 @@ class Robot(object):
 
             arm.selfreset()
 
-    def standby(self):
-        if not self.robot_name == 'amigo':
-            rospy.logerr('Standby only works for amigo')
-            return
-
-        self.reset_all_arms()
-        self.head.look_down()
-        self.torso.low()
-        self.lights.set_color(0, 0, 0)
-
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
