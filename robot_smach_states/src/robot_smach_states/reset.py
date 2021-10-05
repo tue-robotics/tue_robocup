@@ -51,7 +51,7 @@ class ResetArms(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        self.robot.reset_all_arms(timeout=self.timeout)
+        self.robot.reset_all_arms()
         return "done"
 
 
@@ -61,7 +61,7 @@ class ResetED(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        self.robot.lights.set_color(r=1.0, g=0.0, b=0.0, a=1.0) # Red
+        self.robot.lights.set_color(r=1.0, g=0.0, b=0.0, a=1.0)  # Red
         self.robot.ed.reset()                                   # Reset ed
         self.robot.lights.set_color(r=0.0, g=0.0, b=1.0, a=1.0) # Blue
         return 'done'
@@ -74,7 +74,7 @@ class ResetArmsTorso(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        self.robot.reset_all_arms(gripper_timeout=self.timeout)
+        self.robot.reset_all_arms()
         self.robot.torso.reset()
         return "done"
 
@@ -88,7 +88,7 @@ class ResetArmsTorsoHead(smach.State):
         self.timeout = timeout
 
     def execute(self, userdata=None):
-        self.robot.reset_all_arms(gripper_timeout=self.timeout)
+        self.robot.reset_all_arms()
         self.robot.head.reset(timeout=self.timeout)
         self.robot.torso.reset()
         return "done"
