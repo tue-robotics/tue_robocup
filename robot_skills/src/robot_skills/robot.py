@@ -99,9 +99,8 @@ class Robot(object):
         :param arm_name: Name of the arm part.
         :param arm_part: Arm part object
         """
-        # Don't add the arm to the robot object to avoid direct access from challenge code.
-        self.parts[arm_name] = arm_part
         self._arms[arm_name] = arm_part
+        self.add_body_part(arm_name, arm_part)
 
     @property
     def arms(self):
