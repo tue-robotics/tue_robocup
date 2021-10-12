@@ -49,7 +49,7 @@ class LocalPlanner(RobotPart):
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
         self._orientation_constraint = orientation_constraint
-        self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
+        self._action_client.send_goal(goal, done_cb=self.__doneCallback, feedback_cb=self.__feedbackCallback)
         self._goal_handle = self._action_client.gh
         rospy.logdebug("Goal handle = {0}".format(self._goal_handle))
         self.__setState("controlling", None, None, plan)
@@ -105,7 +105,7 @@ class GlobalPlanner(RobotPart):
         self.analyzer = analyzer
         self._position_constraint = None
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
-        self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
+        self._check_plan_client = self.create_service_client("/" + robot_name + "/global_planner/check_plan_srv", CheckPlan)
 
     def getPlan(self, position_constraint: PositionConstraint, start: FrameStamped = None) -> List[PoseStamped]:
         """
