@@ -6,9 +6,13 @@ import argparse
 
 from robot_smach_states.manipulation import ArmToJointConfig
 from robot_smach_states.util.designators import ArmDesignator
+from robot_skills.get_robot import get_robot
 
-class TestArmToJointConfig(smach.State):
+
+class TestArmToJointConfig(smach.StateMachine):
+
     """StateMachine used to test the ArmToJointConfig in robot_smach_states"""
+
     def __init__(self, robot):
         """
         :param robot: robot object used to test the arm (type:string)
@@ -27,6 +31,8 @@ class TestArmToJointConfig(smach.State):
                      transitions = {"failed":"failed",
                                     "succeeded":"succeeded"}
                      )
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Test moving Arm to a default configuration")
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
