@@ -10,26 +10,24 @@ from robot_skills.get_robot import get_robot
 
 
 class TestArmToJointConfig(smach.StateMachine):
-
     """StateMachine used to test the ArmToJointConfig in robot_smach_states"""
-
     def __init__(self, robot):
         """
         :param robot: robot object used to test the arm (type:string)
         """
         super().__init__(outcomes=["succeeded", "failed"])
         self.robot = robot
-        self.arm = ArmDesignator(self.robot)
+        self.arm = ArmDesignator(self.robot, {'required_goals': {'prepare_grasp', 'reset'}})
         with self:
             self.add("MOVE_TO_GRASP",
-                     ArmToJointConfig(self.robot,self.arm,"prepare_grasp"),
-                     transitions = {"failed":"failed",
-                                    "succeeded":"RESET_ARM"}
+                     ArmToJointConfig(self.robot, self.arm, "prepare_grasp"),
+                     transitions={"failed": "failed",
+                                  "succeeded": "RESET_ARM"}
                      )
             self.add("RESET_ARM",
-                     ArmToJointConfig(self.robot,self.arm,"reset"),
-                     transitions = {"failed":"failed",
-                                    "succeeded":"succeeded"}
+                     ArmToJointConfig(self.robot,self.arm, 'reset'),
+                     transitions={"failed": "failed",
+                                  "succeeded": "succeeded"}
                      )
 
 
