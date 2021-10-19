@@ -5,12 +5,14 @@
 
 # System
 import math
-
 import geometry_msgs.msg
 import rospy
 import tf2_ros
+import typing
+
 # ROS
 from actionlib_msgs.msg import GoalStatus
+
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import LocalPlannerAction, LocalPlannerGoal, OrientationConstraint, PositionConstraint
 from cb_base_navigation_msgs.srv import CheckPlan, GetPlan
@@ -18,7 +20,9 @@ from numpy import sign
 
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import nav_analyzer, transformations
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg, kdl_frame_stamped_to_pose_stamped_msg
+from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg, \
+    kdl_frame_stamped_to_pose_stamped_msg, \
+    FrameStamped
 
 
 class LocalPlanner(RobotPart):
@@ -101,7 +105,9 @@ class GlobalPlanner(RobotPart):
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
         self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
 
-    def getPlan(self, position_constraint: PositionConstraint, start_pose: FrameStamped = None) -> list(PoseStamped):
+    def getPlan(
+        self, position_constraint: PositionConstraint, start_pose: FrameStamped = None
+    ) -> typing.List[geometry_msgs.msg.PoseStamped]:
         """
 
         :param position_constraint: (PositionConstraint)
