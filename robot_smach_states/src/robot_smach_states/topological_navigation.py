@@ -10,6 +10,7 @@ from robot_skills.robot import Robot
 from topological_action_planner_msgs.msg import Edge
 
 # Robot Smach States
+from robot_smach_states.manipulation.open_door import OpenDoor
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator
 from .navigation.navigate_to_symbolic import NavigateToSymbolic
 from .navigation.navigate_to_waypoint import NavigateToWaypoint
@@ -66,66 +67,55 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
     return OpenDoor(robot=robot)
 
 
-class GetNavigationActionPlan(smach.State):
-    def __init__(self, robot: Robot, entity_designator: EdEntityDesignator, area_designator: Designator = None):
-        """
-        Gets an action plan from the topological action server
+@smach.cb_interface(outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"])
+def get_topological_action_plan(
+    userdata: smach.UserData, robot: Robot, entity_designator: EdEntityDesignator, area_designator: Designator = None
+) -> str:
+    """
+    Gets an action plan from the topological action server
 
-        :param robot: robot API object
-        :param entity_designator: designator resolving to the entity to navigate to
-        :param area_designator: designator resolving to a string describing the area to navigate to
-        """
-        smach.State.__init__(
-            self, outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"]
-        )
-        self.robot = robot
-        self.entity_designator = entity_designator
-        self.area_designator = area_designator
-        # ToDo: convert to CB state?
+    :param userdata: smach userdata
+    :param robot: robot API object
+    :param entity_designator: designator resolving to the entity to navigate to
+    :param area_designator: designator resolving to a string describing the area to navigate to
+    """
+    # Queries planner
+    entity_id = entity_designator.resolve().id
+    area = area_designator.resolve() if area_designator is not None else ""
+    action_msgs = robot.topological_planner.get_plan(entity_id=entity_id, area=area)
+    rospy.loginfo(f"Actions: {action_msgs}")
 
-    def execute(self, userdata: smach.UserData) -> str:
-        # Queries planner
-        entity_id = self.entity_designator.resolve().id
-        area = self.area_designator.resolve() if self.area_designator is not None else ""
-        action_msgs = self.robot.topological_planner.get_plan(entity_id=entity_id, area=area)
-        rospy.loginfo(f"Actions: {action_msgs}")
-
-        try:
-            actions = convert_msgs_to_actions(self.robot, action_msgs)
-        except TopologicalPlannerException as e:
-            rospy.logerr(e.message)
-            return "unreachable"
-        userdata.action_plan = actions
-        return "goal_ok"
+    try:
+        actions = convert_msgs_to_actions(robot, action_msgs)
+    except TopologicalPlannerException as e:
+        rospy.logerr(e.message)
+        return "unreachable"
+    userdata.action_plan = actions
+    return "goal_ok"
 
 
-class ExecuteNavigationActionPlan(smach.State):
-    def __init__(self, robot: Robot):
-        """
-        Executes the action plan
+@smach.cb_interface(
+    outcomes=["succeeded", "arrived", "blocked", "preempted"],
+    input_keys=["action_plan"],
+    output_keys=["failing_edge"]
+)
+def execute_topological_plan(userdata: smach.UserData) -> str:
+    """
+    Sequentially executes all actions in the action plan provided through UserData
 
-        :param robot: robot API object
-        """
-        smach.State.__init__(
-            self,
-            outcomes=["succeeded", "arrived", "blocked", "preempted"],
-            input_keys=["action_plan"],
-            output_keys=["failing_edge"]
-        )
-        self.robot = robot
-        # ToDo: convert to CB state?
-
-    def execute(self, userdata: smach.UserData) -> str:
-        for action in userdata.action_plan:
-            result = action.execute()  # ToDo: process result
-            if result not in ['succeeded', 'done', 'arrived']:
-                rospy.loginfo("action: {} had result {}".format(action, result))
-                if result == "preempted":
-                    return "preempted"
-                userdata.failing_edge = action
-                return "blocked"
-            rospy.sleep(1.0)
-        return "succeeded"
+    :param userdata: smach userdata
+    :return: outcome
+    """
+    for action in userdata.action_plan:
+        result = action.execute()  # ToDo: process result
+        if result not in ['succeeded', 'done', 'arrived']:
+            rospy.loginfo("action: {} had result {}".format(action, result))
+            if result == "preempted":
+                return "preempted"
+            userdata.failing_edge = action
+            return "blocked"
+        rospy.sleep(1.0)
+    return "succeeded"
 
 
 class TopologicalNavigateTo(smach.StateMachine):
@@ -148,7 +138,7 @@ class TopologicalNavigateTo(smach.StateMachine):
 
             smach.StateMachine.add(
                 "GET_PLAN",
-                GetNavigationActionPlan(robot, entity_designator, area_designator),
+                smach.CBState(get_topological_action_plan),
                 transitions={
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
@@ -159,7 +149,7 @@ class TopologicalNavigateTo(smach.StateMachine):
 
             smach.StateMachine.add(
                 "EXECUTE_PLAN",
-                ExecuteNavigationActionPlan(robot),
+                smach.CBState(execute_topological_plan, robot, entity_designator, area_designator),
                 transitions={
                     "succeeded": "arrived",
                     "arrived": "arrived",
