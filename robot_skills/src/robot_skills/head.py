@@ -1,5 +1,5 @@
 # ROS
-import PyKDL as kdl
+
 import rospy
 from geometry_msgs.msg import PointStamped
 from head_ref_msgs.msg import HeadReferenceAction, HeadReferenceGoal
