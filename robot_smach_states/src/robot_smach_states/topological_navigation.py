@@ -7,12 +7,10 @@ import smach
 
 # TU/e Robotics
 from robot_skills.robot import Robot
-from topological_action_planner_msgs.msg import Edge, Node
+from topological_action_planner_msgs.msg import Edge
 
-# Robor Smach States
+# Robot Smach States
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator
-from robot_smach_states.manipulation import OpenDoor
-from robot_smach_states.push_object import PushObject
 from .navigation.navigate_to_symbolic import NavigateToSymbolic
 from .navigation.navigate_to_waypoint import NavigateToWaypoint
 from .navigation.navigation import NavigateTo
@@ -41,8 +39,6 @@ def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.Lis
             result.append(convert_drive_msg_to_action(robot, msg))
         elif msg.action_type == Edge.ACTION_OPEN_DOOR:
             result.append(convert_open_door_msg_to_action(robot, msg))
-        elif msg.action_type == Edge.ACTION_PUSH_OBJECT:
-            result.append(convert_push_object_msg_to_action(robot, msg))
         else:
             raise TopologicalPlannerException(f"Do not have action for type {msg.action_type}")
     return result
@@ -68,33 +64,6 @@ def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
 def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
     rospy.loginfo("entered function")
     return OpenDoor(robot=robot)
-       # if msg.origin.entity != msg.destination.entity:
-       #     raise TopologicalPlannerException(
-       #         f"OpenDoor action: origin entity ({msg.origin.entity}) "
-       #         f"does not match destination entity ({msg.destination.entity})"
-       #     )
-       # if not msg.origin.area:
-       #     raise TopologicalPlannerException(f"OpenDoor: 'before' area is empty")
-       # if not msg.destination.area:
-       #     raise TopologicalPlannerException(f"OpenDoor: 'behind' area is empty")
-       # door_designator = EntityByIdDesignator(robot, msg.destination.entity)
-       # before_area = Designator(msg.origin.area, str)
-       # behind_area = Designator(msg.destination.area, str)
-
-
-def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
-    #if not msg.origin.area:
-    #    raise TopologicalPlannerException(f"PushObject: 'before' area is empty")
-    entity = robot.ed.get_entity(msg.destination.entity)
-    dx = -0.8  # TODO hardcoded diff
-    dy = 0  # TODO hardcoded diff
-    return PushObject(
-        robot=robot,
-        x=entity._pose.p.x(),
-        y=entity._pose.p.y(),
-        gdx=dx,
-        gdy=dy,
-    )
 
 
 class GetNavigationActionPlan(smach.State):
@@ -121,9 +90,6 @@ class GetNavigationActionPlan(smach.State):
         action_msgs = self.robot.topological_planner.get_plan(entity_id=entity_id, area=area)
         rospy.loginfo(f"Actions: {action_msgs}")
 
-        # action_msgs = self.robot.topological_planner.collapse_plan(action_msgs)
-        # rospy.loginfo(f"After plan simplification: {action_msgs}")
-
         try:
             actions = convert_msgs_to_actions(self.robot, action_msgs)
         except TopologicalPlannerException as e:
@@ -141,7 +107,11 @@ class ExecuteNavigationActionPlan(smach.State):
         :param robot: robot API object
         """
         smach.State.__init__(
-            self, outcomes=["succeeded", "arrived", "blocked", "preempted"], input_keys=["action_plan"], output_keys=["failing_edge"])
+            self,
+            outcomes=["succeeded", "arrived", "blocked", "preempted"],
+            input_keys=["action_plan"],
+            output_keys=["failing_edge"]
+        )
         self.robot = robot
         # ToDo: convert to CB state?
 
@@ -156,22 +126,6 @@ class ExecuteNavigationActionPlan(smach.State):
                 return "blocked"
             rospy.sleep(1.0)
         return "succeeded"
-
-
-class UpdateNavigationGraph(smach.State):
-    def __init__(self, robot: Robot):
-        """
-        Executes the action plan
-
-        :param robot: robot API object
-        """
-        smach.State.__init__(
-            self, outcomes=["done"], input_keys=["failing_edge"])
-        self.robot = robot
-
-    def execute(self, userdata: smach.UserData) -> str:
-        self.robot.topological_planner.update_edge_cost(userdata.failing_edge, 50)  # TODO magic number
-        return "done"
 
 
 class TopologicalNavigateTo(smach.StateMachine):
@@ -211,13 +165,5 @@ class TopologicalNavigateTo(smach.StateMachine):
                     "arrived": "arrived",
                     "blocked": "unreachable",
                     "preempted": "unreachable",  # N.B.: NavigateTo does not support 'preempted'
-                }
-            )
-
-            smach.StateMachine.add(
-                "UPDATE_GRAPH",
-                UpdateNavigationGraph(robot),
-                transitions={
-                    "done": "GET_PLAN",
                 }
             )
