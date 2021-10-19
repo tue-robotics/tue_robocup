@@ -101,10 +101,11 @@ class GlobalPlanner(RobotPart):
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
         self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
 
-    def getPlan(self, position_constraint):
+    def getPlan(self, position_constraint: PositionConstraint, start_pose: FrameStamped = None) -> list(PoseStamped):
         """
 
         :param position_constraint: (PositionConstraint)
+        :param start_pose: optional start pose. If this is not provided, the current position is used.
         :return: list(PoseStamped). N.B.: If No path was found, this list is empty. If the planner service fails,
             'None' is returned.
         """
@@ -114,10 +115,12 @@ class GlobalPlanner(RobotPart):
         pcs = [position_constraint]
 
         start_time = rospy.Time.now()
-        start_pose = kdl_frame_stamped_to_pose_stamped_msg(get_location(self.robot_name, self.tf_buffer))
+
+        start_pose = start_pose if start_pose is not None else get_location(self.robot_name, self.tf_buffer)
+        start_pose_msg = kdl_frame_stamped_to_pose_stamped_msg(start_pose)
 
         try:
-            resp = self._get_plan_client(start_pose, pcs)
+            resp = self._get_plan_client(start_pose_msg, pcs)
         except Exception as e:
             rospy.logerr("Could not get plan from global planner via service call: {}".format(e))
             return None
