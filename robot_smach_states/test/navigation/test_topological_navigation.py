@@ -7,7 +7,6 @@ from topological_action_planner_msgs.msg import Edge, Node
 
 # Robot Smach States
 from robot_smach_states.manipulation.open_door import PassDoor
-from robot_smach_states.push_object import PushObject
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.topological_navigation import TopologicalPlannerException, convert_msgs_to_actions
@@ -66,15 +65,6 @@ class TestTopologicalNavigation(unittest.TestCase):
         msg.origin = Node(entity_id, "")
         msg.destination = Node(entity_id, DESTINATION_NODE_AREA)
         self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, ROBOT, [msg])
-
-    def test_push_object(self):
-        msg = Edge()
-        msg.action_type = Edge.ACTION_PUSH_OBJECT
-        msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
-        msg.destination.entity = DESTINATION_NODE_ID
-        actions = convert_msgs_to_actions(ROBOT, [msg])
-        self.assertEquals(len(actions), 1, "Result should contain exactly one action")
-        self.assertTrue(isinstance(actions[0], PushObject), "Action should be a 'PushObject' action")
 
     def test_invalid_action(self):
         msg = Edge()
