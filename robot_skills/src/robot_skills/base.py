@@ -8,6 +8,8 @@ from typing import List
 # System
 import math
 
+# ROS
+from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Point, PoseStamped, PoseWithCovarianceStamped, Twist
 from pykdl_ros import FrameStamped
 import rospy
@@ -17,7 +19,7 @@ import tf2_geometry_msgs
 # noinspection PyUnresolvedReferences
 import tf2_pykdl_ros
 
-from actionlib_msgs.msg import GoalStatus
+
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import LocalPlannerAction, LocalPlannerGoal, OrientationConstraint, PositionConstraint
 from cb_base_navigation_msgs.srv import CheckPlan, GetPlan
@@ -107,28 +109,29 @@ class GlobalPlanner(RobotPart):
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
         self._check_plan_client = self.create_service_client("/" + robot_name + "/global_planner/check_plan_srv", CheckPlan)
 
-    def getPlan(self, position_constraint: PositionConstraint, start: FrameStamped = None) -> List[PoseStamped]:
+    def getPlan(self, position_constraint: PositionConstraint, start_pose: FrameStamped = None) -> List[PoseStamped]:
         """
         Get a global plan from start(optional) to a goal constrained by position_constraint
 
         :param position_constraint: Goal position constraints
-        :param start: Start position
+        :param start_pose: optional start pose. If this is not provided, the current position is used.
         :return: If No path was found, this list is empty. If the planner service fails,
             'None' is returned.
         """
 
         self._position_constraint = position_constraint
 
-        if start is None:
-            start = get_location(self.robot_name, self.tf_buffer)
+        if start_pose is None:
+            start_pose = get_location(self.robot_name, self.tf_buffer)
 
         pcs = [position_constraint]
 
         start_time = rospy.Time.now()
-        start_pose = tf2_ros.convert(start, PoseStamped)
+
+        start_pose_msg = tf2_ros.convert(start_pose, PoseStamped)
 
         try:
-            resp = self._get_plan_client(start_pose, pcs)
+            resp = self._get_plan_client(start_pose_msg, pcs)
         except Exception as e:
             rospy.logerr("Could not get plan from global planner via service call: {}".format(e))
             return None
