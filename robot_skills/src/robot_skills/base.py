@@ -11,6 +11,7 @@ import math
 # ROS
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Point, PoseStamped, PoseWithCovarianceStamped, Twist
+import PyKDL as kdl
 from pykdl_ros import FrameStamped
 import rospy
 import tf2_ros
@@ -355,14 +356,11 @@ def get_location(robot_name, tf_buffer) -> FrameStamped:
 
     try:
         time = rospy.Time.now()
-        tf_buffer.can_transform(f"{robot_name}/base_link", time, rospy.Duration(20.0))
-        target_transform = tf_buffer.lookup_transform(f"{robot_name}/base_link", time)
-        target_pose = tf2_ros.convert(target_transform, PoseStamped)
-        target_pose.header = target_transform.header
-        target_pose.pose.position = target_transform.transform.translation
-        target_pose.pose.orientation = target_transform.transform.rotation
+        tf_buffer.can_transform("map", f"{robot_name}/base_link", time, rospy.Duration(20.0))
+        target_frame_stamped = FrameStamped(kdl.Frame(), rospy.Time.now(), f"{robot_name}/base_link")
+        target_frame_stamped = tf_buffer.transform(target_frame_stamped, "map", timeout=rospy.Duration(5.0))
 
-        return tf2_ros.convert(target_pose, FrameStamped)
+        return target_frame_stamped
 
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
         rospy.logerr("tf2 request failed!, {}".format(e))

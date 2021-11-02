@@ -241,7 +241,7 @@ class ED(RobotPart):
             json_entity += ', "action": "%s"' % action
 
         if frame_stamped:
-            if frame_stamped.frame_id != "/map" and frame_stamped.frame_id != "map":
+            if frame_stamped.header.frame_id != "/map" and frame_stamped.header.frame_id != "map":
                 rospy.loginfo('update_entity: frame not in map, transforming')
                 frame_stamped = self.tf_buffer.transform(frame_stamped, "map")
 
