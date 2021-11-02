@@ -11,7 +11,6 @@ import ed_msgs.srv
 import ed_sensor_integration_msgs.srv as ed_sensor_srv
 from pykdl_ros import VectorStamped
 import rospy
-import tf2_ros
 # noinspection PyUnresolvedReferences
 import tf2_geometry_msgs
 # noinspection PyUnresolvedReferences
@@ -110,7 +109,7 @@ class ED(RobotPart):
         :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point
         """
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
         self._publish_marker(center_point, radius)
 
         center_point_in_map = self.tf_buffer.transform(center_point, "map", new_type=VectorStamped)
@@ -130,7 +129,7 @@ class ED(RobotPart):
 
     def get_closest_entity(self, type="", center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
 
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
@@ -152,7 +151,7 @@ class ED(RobotPart):
 
     def get_closest_room(self, center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
@@ -168,7 +167,7 @@ class ED(RobotPart):
         :return: list of Entity
         """
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius, ignore_z=ignore_z)
 
@@ -315,7 +314,7 @@ class ED(RobotPart):
         :return: (Entity) entity (if found), None otherwise
         """
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name + "/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
             center_point = self.tf_buffer.transform(center_point, "map")
         assert center_point.frame_id.endswith("map"), "Other frame ids not yet implemented"
 
