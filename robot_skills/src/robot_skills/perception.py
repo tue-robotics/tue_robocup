@@ -56,7 +56,7 @@ class Perception(RobotPart):
         self._person_recognition_3d_srv = \
             self.create_service_client('/' + robot_name + '/people_recognition/detect_people_3d', RecognizePeople3D)
 
-        self._locate_handle_client = self.create_simple_action_client('/locate_handle', LocateDoorHandleAction)
+        self._locate_handle_client = self.create_simple_action_client('/' + robot_name + '/handle_locator/locate_handle', LocateDoorHandleAction)
 
     def close(self):
         pass
