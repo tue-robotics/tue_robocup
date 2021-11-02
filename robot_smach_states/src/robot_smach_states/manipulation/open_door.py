@@ -150,7 +150,7 @@ class OpenDoor(smach.StateMachine):
 
 class NavigateToHandle(NavigateTo):
     def __init__(self, robot, door_des, arm_des):
-        super(NavigateToHandle, self).__init__(robot, lambda: self.generateConstraint)
+        super(NavigateToHandle, self).__init__(robot, self.generateConstraint)
 
         self._robot = robot
         self._door_des = door_des
@@ -165,8 +165,7 @@ class NavigateToHandle(NavigateTo):
 
         handle_point = kdl_con.kdl_vector_stamped_to_point_stamped(door.handle_pose)
         angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        # radius = 0.75*math.hypot(arm.base_offset.x(), arm.base_offset.y())
-        radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
+        radius = 0.75*math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
         handle_point_map = self._robot.tf_buffer.transform(handle_point, "map")
         x = handle_point_map.point.x
@@ -179,33 +178,6 @@ class NavigateToHandle(NavigateTo):
         oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="map", angle_offset=angle_offset)
 
         return pc, oc
-
-    # def __init__(self, robot, arm_designator, entity_designator):
-    #     """"
-    #     Navigate so that the arm can easily grasp the entity
-    #     :param robot: robot object
-    #     :param arm_designator: which arm to eventually grasp with?
-    #     :param entity_designator: designator that resolves to an Ed Entity
-    #     """
-    #     check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
-    #     pose_designator = AttrDesignator(entity_designator, 'pose', resolve_type=FrameStamped)
-
-    #     super(NavigateToGrasp, self).__init__(robot,
-    #                                           lambda: arms_reach_constraint(pose_designator=pose_designator,
-    #                                                                         look=True,
-    #                                                                         arm_designator=arm_designator),
-    #                                           reset_head=False)
-
-    # def __init__(self, robot, x, y, rz, radius=0.15, frame_id="map"):
-    #     """
-    #     Navigates to a pose specified by the user.
-    #     :param robot: (Robot) object
-    #     :param x, y: coordinates of the goal pose
-    #     :param rz (optional): orientation to assume. if not specified no orientation constraint is used.
-    #     :param radius (default 0.15): allowed distance to the pose
-    #     :param frame_id (default "/map"): frame in which the pose is expressed
-    #     """
-    #     super(NavigateToPose, self).__init__(robot, lambda: pose_constraints(x, y, rz, radius, frame_id))
 
 class DetermineDoorState(smach.State):
     def __init__(self, robot, door_des):
@@ -293,7 +265,7 @@ class GraspHandle(smach.State):
         arm.send_gripper_goal("open")
 
         handle_point = door.handle_pose
-        # ToDo: calculate this value based on the current position? Then we do rely on localization...
+
         align_door = 0.0 # -0.3 This depends on the orientation of the door wrt the base link frame
 
         handle_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(-1.57, 0.0, align_door),
@@ -339,19 +311,14 @@ class UnlatchHandle(smach.State):
             rospy.logerr("Could not resolve arm")
             return None
 
-        # you want the roll in the gripper frame to be complient, but not the pitch and yaw.
-        # ToDo: do sth with whole_body.end_effector_frame = 'base_link' ?
-        # self._whole_body.impedance_config = 'compliance_soft'
         arm.send_gripper_goal('close', max_torque=1.0)
-        move_vector = (0.0, 0.0, self._move_dist)
-        # current_pose = self._robot.tf_buffer.transform(handle_point, "map")
 
-        current_pose = self._robot.tf_buffer.lookup_transform('hero/base_link', 'grippoint', rospy.Time(0))
+        current_pose = self._robot.tf_buffer.lookup_transform('hero/base_link', 'hand_palm_link', rospy.Time(0))
 
         orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y, 
                                               current_pose.transform.rotation.z, current_pose.transform.rotation.w)
         (curr_r, curr_p, curr_y) = orientation.GetRPY()
-        # curr_r, curr_p, curr_y = euler_from_quaternion(current_pose[1])
+
         next_z = current_pose.transform.translation.z - self._move_dist
 
 
@@ -406,24 +373,27 @@ class PushDoorOpen(smach.State):
             return None
 
         next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
-                                                                kdl.Vector(0.15, 0.0, 0.0)),
-                                                        frame_id="grippoint")
+                                                                kdl.Vector(0.1, 0.05, 0.0)),
+                                                        frame_id="hand_palm_link")
         goal_bl = next_pose_framestamped.projectToFrame('hero/base_link', tf_buffer=self._robot.tf_buffer)
-
-        # Not sure is the previous statement works, maybe should be this:
-
-        # current_pose = self._robot.tf_buffer.lookup_transform('hero/base_link', 'grippoint', rospy.Time(0))
-        # orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y, 
-        #                                     current_pose.transform.rotation.z, current_pose.transform.rotation.w)
-        # (curr_r, curr_p, curr_y) = orientation.GetRPY()
-        # goal_bl = kdl_con.kdl_frame_stamped_from_XYZRPY(current_pose.transform.translation.x + 0.15, current_pose.transform.translation.y, 
-        #                                                 current_pose.transform.translation.z, curr_r, curr_p, curr_y,
-        #                                                 "hero/base_link")
 
         arm_goal_res = arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()
         if arm_goal_res:
             arm.send_gripper_goal('open')
+
+            door_frame_robot0 = door.frame_points[0].projectToFrame("base_link", self._robot.tf_buffer)
+            door_frame_robot1 = door.frame_points[1].projectToFrame("base_link", self._robot.tf_buffer)
+            x1 = door_frame_robot0.vector.x()
+            y1 = door_frame_robot0.vector.y()
+            x2 = door_frame_robot1.vector.x()
+            y2 = door_frame_robot1.vector.y()
+            x = (x1 + x2) / 2.0
+            y = (y1 + y2) / 2.0
+
+            self._robot.base.force_drive(0.1, y/(x/0.1), 0, x/0.1)
+            arm.reset()
+            arm.wait_for_motion_done()
             return 'succeeded'
         else:
             return'failed'
@@ -451,7 +421,7 @@ class PullDoorOpen(smach.State):
         # Move back and to the left
         next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
                                                                 kdl.Vector(-0.05, 0.0, 0.15)),
-                                                      frame_id="grippoint")
+                                                      frame_id="hand_palm_link")
         goal_bl = next_pose_framestamped.projectToFrame('hero/base_link',
                                                         tf_buffer=self._robot.tf_buffer)
 
@@ -460,7 +430,7 @@ class PullDoorOpen(smach.State):
         # Move forward and twist
         next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 1.0, 0.0),
                                                                 kdl.Vector(0.1, 0.0, 0.0)),
-                                                        frame_id="grippoint")
+                                                        frame_id="hand_palm_link")
         goal_bl = next_pose_framestamped.projectToFrame('hero/base_link',
                                                         tf_buffer=self._robot.tf_buffer)
 
@@ -563,104 +533,19 @@ class PassDoor(smach.StateMachine):
                 }
             )
 
-# class Door(object):
-#     def __init__(self):
-#         """
-#         Door object that contains all information about the door
-#         """
-#         self._handle = Handle()
-#         self._hinge_direction = {"known": False, "value": None}
-#         self._frame_points = {"known": True, "value": []}
-#         self._direction = {"known": False, "value": None}
-#
-#     @property
-#     def handle(self):
-#         return self._handle
-#
-#     @property
-#     def hinge_direction(self):
-#         return self._hinge_direction
-#
-#     @property
-#     def frame_points(self):
-#         return self._frame_points
-#
-#     @property
-#     def direction(self):
-#         return self._direction
-#
-#     @hinge_direction.setter
-#     def hinge_direction(self, hinge_direction):
-#         """
-#         :param hinge_direction: describes the direction by which to open the door
-#         :type hinge_direction: str (either "left" or "right")
-#         """
-#         self._hinge_direction["known"] = True
-#         self._hinge_direction["value"] = hinge_direction
-#
-#     @frame_points.setter
-#     def frame_points(self, frame_points):
-#         """
-#         :param frame_points: describes the two bottom end points of the door frame
-#         :type frame_points: list of two PointStamped
-#         """
-#         self._frame_points["known"] = True
-#         self._frame_points["value"] = frame_points
-#
-#     @direction.setter
-#     def direction(self, direction):
-#         """
-#         :param direction: describes the direction by which to open the door
-#         :type direction: str (either "outward" or "inward")
-#         """
-#         self._direction["known"] = True
-#         self._direction["value"] = direction
-#
-#
-# class Handle(object):
-#     def __init__(self):
-#         """
-#         Handle object
-#         """
-#         self._location = {"known": False, "value": PointStamped()}
-#         self._direction = {"known": False, "value": None}
-#         self._grasp_orientation = {"known": False, "value": None}
-#
-#     @property
-#     def location(self):
-#         return self._location
-#
-#     @property
-#     def direction(self):
-#         return self._direction
-#
-#     @property
-#     def grasp_orientation(self):
-#         return self._grasp_orientation
-#
-#     @location.setter
-#     def location(self, point):
-#         """
-#         :param point: point in 3d space that estimates the handle location
-#         :type point: PointStamped()
-#         """
-#         self._location["known"] = True
-#         self._location["value"] = point
-#
-#     @direction.setter
-#     def direction(self, direction):
-#         """
-#         :param direction: describes the direction by which to unlatch the handle
-#         :type direction: str (either "up" or "down")
-#         """
-#         self._direction["known"] = True
-#         self._direction["value"] = direction
-#
-#     @grasp_orientation.setter
-#     def grasp_orientation(self, orientation):
-#         """
-#         :param orientation: describes the orientation the gripper should have to grasp the handle
-#         :type orientation: str (either "horizontal" or "vertical")
-#         """
-#         self._grasp_orientation["known"] = True
-#         self._grasp_orientation["value"] = orientation
+
+if __name__ == "__main__":
+    import rospy
+    from robot_skills import get_robot
+    from robot_smach_states.util.designators import Designator, EdEntityDesignator, UnoccupiedArmDesignator, check_type
+    from robot_skills.arm import arms
+    from robot_smach_states.manipulation.open_door import OpenDoor, Door
+    
+    rospy.init_node("josja_faalt")
+
+    hero = get_robot('hero')
+    arm_des = UnoccupiedArmDesignator(hero, {"required_goals": ["reset", "handover"],"force_sensor_required": True, "required_gripper_types": [arms.GripperTypes.GRASPING]})                           
+    door = hero.ed.get_entity(id="door")                                                                                                                                                               
+    door_des = Designator(Door(door))                                                                                                                                                                  
+    test = OpenDoor(hero, arm_des, door_des)                                                                                                                                                           
+    test.execute()
