@@ -532,8 +532,6 @@ class PassDoor(smach.StateMachine):
 
 if __name__ == "__main__":
     from robot_skills import get_robot
-    from robot_smach_states.util.designators import Designator, EdEntityDesignator
-    from robot_smach_states.manipulation.open_door import OpenDoor, Door
 
     rospy.init_node("josja_faalt")
 
