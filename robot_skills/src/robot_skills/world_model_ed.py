@@ -316,7 +316,7 @@ class ED(RobotPart):
         if not center_point:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
             center_point = self.tf_buffer.transform(center_point, "map")
-        assert center_point.frame_id.endswith("map"), "Other frame ids not yet implemented"
+        assert center_point.header.frame_id.endswith("map"), "Other frame ids not yet implemented"
 
         # Get all entities
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
@@ -464,7 +464,7 @@ class ED(RobotPart):
 
     def _publish_marker(self, center_point, radius):
         marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = center_point.frame_id
+        marker.header.frame_id = center_point.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
 
