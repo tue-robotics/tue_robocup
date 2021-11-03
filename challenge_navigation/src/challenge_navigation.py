@@ -407,7 +407,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_ARENA_DOOR'})
 
         smach.StateMachine.add('GOTO_ARENA_DOOR',
-                               states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=door_id_designator),
+                               states.NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid_designator=door_id_designator),
                                                          challenge_knowledge.target_door_radius),
                                transitions={'arrived': 'ARENA_DOOR_REACHED',
                                             'unreachable': 'RESET_ED_ARENA_DOOR',
@@ -424,7 +424,7 @@ def setup_statemachine(robot):
                                transitions={'done': 'GOTO_ARENA_DOOR_BACKUP'})
 
         smach.StateMachine.add('GOTO_ARENA_DOOR_BACKUP',
-                               states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=door_id_designator),
+                               states.NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid_designator=door_id_designator),
                                                          challenge_knowledge.target_door_radius),
                                transitions={'arrived': 'ARENA_DOOR_REACHED',
                                             'unreachable': 'TIMEOUT_ARENA_DOOR',
@@ -449,9 +449,9 @@ def setup_statemachine(robot):
         smach.StateMachine.add('OPEN_DOOR',
                                states.OpenDoorByPushing(robot,
                                                         EdEntityDesignator(robot,
-                                                                             id_designator=open_door_wp1_des),
+                                                                           uuid_designator=open_door_wp1_des),
                                                         EdEntityDesignator(robot,
-                                                                             id_designator=open_door_wp2_des)),
+                                                                           uuid_designator=open_door_wp2_des)),
                                transitions={'succeeded': 'SAY_RETURN_TARGET3',
                                             'failed': 'TIMEOUT_ARENA_DOOR_OPENING'})
 
