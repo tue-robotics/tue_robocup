@@ -2,15 +2,12 @@ from __future__ import print_function
 
 # System
 import os
-# ROS
-import rospkg
 import yaml
 
-# TU/e
-import ed_msgs.srv
-import ed_sensor_integration_msgs.srv as ed_sensor_srv
-from pykdl_ros import VectorStamped
 import rospy
+from geometry_msgs.msg import PointStamped
+from pykdl_ros import VectorStamped
+import rospkg
 # noinspection PyUnresolvedReferences
 import tf2_geometry_msgs
 # noinspection PyUnresolvedReferences
@@ -19,14 +16,15 @@ import visualization_msgs.msg
 
 from cb_base_navigation_msgs.msg import PositionConstraint
 from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
-from ed_msgs.srv import Configure, SimpleQuery, SimpleQueryRequest, UpdateSrv
+from ed_msgs.srv import Configure, Reset, SimpleQuery, SimpleQueryRequest, UpdateSrv
 from ed_navigation_msgs.srv import GetGoalConstraint
 from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
+import ed_sensor_integration_msgs.srv as ed_sensor_srv
 
+# Robot skills
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.robot_part import RobotPart
-# Robot skills
 from robot_skills.util import transformations
 from robot_skills.util.decorators import deprecated
 from robot_skills.util.entity import from_entity_info
@@ -65,7 +63,7 @@ class ED(RobotPart):
                                                                 ed_sensor_srv.Update)
         self._ed_classify_srv = self.create_service_client('/%s/ed/classify' % robot_name, Classify)
         self._ed_configure_srv = self.create_service_client('/%s/ed/configure' % robot_name, Configure)
-        self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed_msgs.srv.Reset)
+        self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, Reset)
         self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
                                                             ed_sensor_srv.GetImage)
         self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name,
@@ -109,11 +107,11 @@ class ED(RobotPart):
         :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point
         """
         if not center_point:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
         self._publish_marker(center_point, radius)
 
-        center_point_in_map = self.tf_buffer.transform(center_point, "map", new_type=VectorStamped)
-        query = SimpleQueryRequest(id=id, type=type, center_point=center_point_in_map,
+        center_point_in_map = self.tf_buffer.transform(center_point, "map", new_type=PointStamped)
+        query = SimpleQueryRequest(id=id, type=type, center_point=center_point_in_map.point,
                                    radius=radius, ignore_z=ignore_z)
 
         try:
@@ -129,7 +127,7 @@ class ED(RobotPart):
 
     def get_closest_entity(self, type="", center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
@@ -151,7 +149,7 @@ class ED(RobotPart):
 
     def get_closest_room(self, center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
@@ -167,7 +165,7 @@ class ED(RobotPart):
         :return: list of Entity
         """
         if not center_point:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius, ignore_z=ignore_z)
 
@@ -314,7 +312,7 @@ class ED(RobotPart):
         :return: (Entity) entity (if found), None otherwise
         """
         if not center_point:
-            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
             center_point = self.tf_buffer.transform(center_point, "map")
         assert center_point.header.frame_id.endswith("map"), "Other frame ids not yet implemented"
 
