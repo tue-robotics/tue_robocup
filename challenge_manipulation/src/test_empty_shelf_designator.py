@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
 
 def setup_statemachine(robot):
-    cabinet = EntityByIdDesignator(robot, id="bookcase", name="pick_shelf")
+    cabinet = EntityByIdDesignator(robot, uuid="bookcase", name="pick_shelf")
 
     ds = EmptyShelfDesignator(robot, cabinet, name="placement", area=PLACE_SHELF)
 

@@ -9,7 +9,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.util.entity import Entity
+from ed_py.entity import Entity
 from .state import State
 from .util import designators as ds
 
@@ -31,7 +31,7 @@ class LookAtEntity(State):
         # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         # The added benefit is that the entity's frame actually moves because the entity is tracked.
         # This makes the head track the entity
-        vs = VectorStamped.from_xyz(0, 0, 0, entity.last_update_time, frame_id=entity.id)
+        vs = VectorStamped.from_xyz(0, 0, 0, entity.last_update_time, frame_id=entity.uuid)
         rospy.loginfo('Look at %s' % (repr(vs)))
         robot.head.look_at_point(vs)
         rospy.sleep(rospy.Duration(waittime))
@@ -64,7 +64,7 @@ class LookAtArea(State):
         # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         # The added benefit is that the entity's frame actually moves because the entity is tracked.
         # This makes the head track the entity
-        frame_id = entity.id
+        frame_id = entity.uuid
 
         if area in entity.volumes:
             cp = entity.volumes[area].center_point
@@ -84,13 +84,13 @@ class LookAtArea(State):
             rospy.sleep(rospy.Duration(waittime))
             return "succeeded"
 
-        rospy.logwarn("Cannot find {0} in {1}".format(area, entity.id))
+        rospy.logwarn("Cannot find {0} in {1}".format(area, entity.uuid))
         return "failed"
 
 
 # Testing
 def setup_statemachine(robot):
-    entity = ds.EntityByIdDesignator(robot, id='hallway_couch')
+    entity = ds.EntityByIdDesignator(robot, uuid='hallway_couch')
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:

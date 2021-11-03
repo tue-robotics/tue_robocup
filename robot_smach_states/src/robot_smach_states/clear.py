@@ -31,8 +31,8 @@ class SelectEntity(smach.State):
             self._robot.speech.speak("I cleaned everything up! Isn't that awesome?")
             return "no_entities_left"
 
-        rospy.loginfo("We have selected the entity with id %s" % entity_classification.id)
-        self._selected_entity_designator.id_ = entity_classification.id
+        rospy.loginfo("We have selected the entity with id %s" % entity_classification.uuid)
+        self._selected_entity_designator.uuid = entity_classification.uuid
 
         return "entity_selected"
 
@@ -83,7 +83,7 @@ class Clear(smach.StateMachine):
         arm_des.lock()
 
         place_position = EmptySpotDesignator(robot, EdEntityDesignator(
-                                             robot, id=target_location.id),
+                                             robot, uuid=target_location.uuid),
                                              arm_des,
                                              area="on_top_of"
                                              )

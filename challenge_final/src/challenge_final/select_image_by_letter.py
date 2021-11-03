@@ -101,7 +101,7 @@ class LocatePeople(StateMachine):
             except:
                 pass
 
-            room_entity = robot.ed.get_entity(id=room_id)  # type: Entity
+            room_entity = robot.ed.get_entity(uuid=room_id)  # type: Entity
             room_volume = room_entity.volumes["in"]
             min_corner = room_entity.pose.frame * room_volume.min_corner
             max_corner = room_entity.pose.frame * room_volume.max_corner

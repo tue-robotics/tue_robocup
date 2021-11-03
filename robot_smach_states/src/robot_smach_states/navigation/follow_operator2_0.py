@@ -91,17 +91,17 @@ class Track(smach.State):
             else:
                 self._robot.speech.speak(sentence)
 
-        rospy.loginfo("Trying to get operator with id: {}".format(operator.id))
-        operator = self._robot.ed.get_entity(id=operator.id)
+        rospy.loginfo("Trying to get operator with id: {}".format(operator.uuid))
+        operator = self._robot.ed.get_entity(uuid=operator.uuid)
         if operator is None:
             rospy.loginfo("Could not find operator")
             _entities = self._robot.ed.get_entities()
-            _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
+            _laser_entity_ids = [e.uuid for e in _entities if "laser" in e.uuid]
             rospy.loginfo("Available laser IDs: {}".format(_laser_entity_ids))
             rospy.sleep(2)  # Crucial sleep! Do not remove!
 
             if self._operator:
-                operator = self._robot.ed.get_entity(id=self._operator.id)
+                operator = self._robot.ed.get_entity(uuid=self._operator.uuid)
 
             if not operator:
                 options = ["Don't move, I'm losing you.",
@@ -116,7 +116,7 @@ class Track(smach.State):
                 return 'track'
 
         else:
-            rospy.loginfo("Found operator with id: {}".format(operator.id))
+            rospy.loginfo("Found operator with id: {}".format(operator.uuid))
             self._buffer.append(operator)
             return 'track'
 
@@ -176,7 +176,7 @@ class FollowBread(smach.State):
             return 'no_follow_bread_recovery'
         #
         # if self._operator:
-        #     operator = self._robot.ed.get_entity(id=self._operator.id)
+        #     operator = self._robot.ed.get_entity(uuid=self._operator.uuid)
 
         # while True:  # Should be timer, I think
         try:
@@ -214,7 +214,7 @@ class FollowBread(smach.State):
         p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
                                                        self._operator_radius)
         o = OrientationConstraint()
-        o.frame = self._operator.id
+        o.frame = self._operator.uuid
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
 
         for crumb_waypoint in self._breadcrumb:

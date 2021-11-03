@@ -18,7 +18,7 @@ if __name__ == "__main__":
         ids = sys.argv[2:]
     else:
         robot.speech.speak("No ids specified, I will do them all", block=False)
-        ids = [e.id for e in robot.ed.get_entities() if e.is_a("furniture")]
+        ids = [e.uuid for e in robot.ed.get_entities() if e.is_a("furniture")]
         random.shuffle(ids)
 
     print("IDS:", ids)
@@ -27,8 +27,8 @@ if __name__ == "__main__":
 
         robot.speech.speak("I am going to navigate to the %s" % id, block=False)
 
-        machine = robot_smach_states.NavigateToSymbolic(robot, {robot_smach_states.util.designators.EntityByIdDesignator(robot, id=id): "in_front_of"},
-                                                        robot_smach_states.util.designators.EntityByIdDesignator(robot, id=id))
+        machine = robot_smach_states.NavigateToSymbolic(robot, {robot_smach_states.util.designators.EntityByIdDesignator(robot, uuid=id): "in_front_of"},
+                                                        robot_smach_states.util.designators.EntityByIdDesignator(robot, uuid=id))
 
         machine.execute()
 

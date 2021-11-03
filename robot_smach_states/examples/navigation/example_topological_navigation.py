@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     sm = TopologicalNavigateTo(
         robot,
-        EntityByIdDesignator(robot, entity.id),
+        EntityByIdDesignator(robot, entity.uuid),
         Designator(area, str),
     )
     sm.execute()

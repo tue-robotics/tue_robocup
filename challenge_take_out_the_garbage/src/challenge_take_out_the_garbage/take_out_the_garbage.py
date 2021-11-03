@@ -39,9 +39,9 @@ class TakeOutGarbage(smach.StateMachine):
             rospy.loginfo("There is no second trash bin")
             next_state = "ANNOUNCE_END"
 
-        # drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
-        helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.helper_waypoint)
-        end_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.end_waypoint)
+        # drop_zone_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.drop_zone_id)
+        helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.helper_waypoint)
+        end_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.end_waypoint)
         arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(
             robot,
             {"required_goals": ["handover", "reset", "handover_to_human"], "force_sensor_required": True,
@@ -124,7 +124,7 @@ class TestDummy(smach.StateMachine):
 
         # Create designators
         dummy_trashbin_designator = ds.EdEntityDesignator(
-            dummy_robot, id=CHALLENGE_KNOWLEDGE.trashbin_id2, name='trashbin_designator'
+            dummy_robot, uuid=CHALLENGE_KNOWLEDGE.trashbin_id2, name='trashbin_designator'
         )
         dummy_arm_designator_un = ds.UnoccupiedArmDesignator(
             dummy_robot,

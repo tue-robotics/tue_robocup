@@ -5,9 +5,10 @@ import rospy
 from pykdl_ros import FrameStamped
 import re
 
+from ed_py.entity import Entity
+
 # Robot Skills
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
 
 # Robot Smach States
@@ -41,7 +42,7 @@ class TestTourGuide(unittest.TestCase):
                                                                           kdl.Vector(8, 1, 0)),
                                None, {"on_top_off": box2}, ["furniture"], rospy.Time())
 
-        cls.robot.ed._static_entities = {e.id: e for e in [cls._kitchen, cls._bedroom, cls._cabinet, cls._bookcase]}
+        cls.robot.ed._static_entities = {e.uuid: e for e in [cls._kitchen, cls._bedroom, cls._cabinet, cls._bookcase]}
 
         cls.tour_guide = TourGuide(cls.robot)
 
@@ -64,7 +65,7 @@ class TestTourGuide(unittest.TestCase):
 
     def test_get_room(self):
         room = self.tour_guide.get_room(kdl.Vector(3, 1, 0))
-        self.assertEqual(room.id, "kitchen")
+        self.assertEqual(room.uuid, "kitchen")
 
     def test_get_room_raise(self):
         position = kdl.Vector(20, 20, 0)
@@ -85,8 +86,8 @@ class TestTourGuide(unittest.TestCase):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(),
                                                                       kdl.Vector(3.5, 3.5, 0)), rospy.Time(), "map")
         self.tour_guide.initialize()
-        self.assertListEqual(self.tour_guide._passed_room_ids, [self._kitchen.id])
-        self.assertListEqual(self.tour_guide._passed_furniture_ids, [self._cabinet.id])
+        self.assertListEqual(self.tour_guide._passed_room_ids, [self._kitchen.uuid])
+        self.assertListEqual(self.tour_guide._passed_furniture_ids, [self._cabinet.uuid])
         self.assertListEqual(sorted(self.tour_guide._furniture_entities, key=lambda x: getattr(x, 'id')),
                              sorted([self._cabinet, self._bookcase], key=lambda x: getattr(x, 'id')))
         self.assertListEqual(sorted(self.tour_guide._room_entities, key=lambda x: getattr(x, 'id')),

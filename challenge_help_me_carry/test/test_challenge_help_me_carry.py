@@ -14,25 +14,26 @@ def getKey():
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
     return key
 
+
 class door(object):
-    def __init__(self, W, id, x = 0, y = 0, th = 0, dooropen=False):
-        self.id = id
+    def __init__(self, W, uuid, x = 0, y = 0, th = 0, dooropen=False):
+        self.uuid = uuid
         self.x = x
         self.y = y
         self.th = th
         self.dooropen = dooropen
 
-        self.door = W.add_object("door-" + self.id, "robotics_testlabs.door",  self.x, self.y, 0.0, 0.0, 0.0, self.th )
+        self.door = W.add_object("door-" + self.uuid, "robotics_testlabs.door",  self.x, self.y, 0.0, 0.0, 0.0, self.th )
 
     def toggleOpen(self):
         if self.dooropen:
             self.door.set_position(self.x, self.y, 0.0, 0.0, 0.0, self.th)
             self.dooropen = False
-            print("Door " + self.id + " is closed")
+            print("Door " + self.uuid + " is closed")
         else:
             self.door.set_position(self.x, self.y,-3.0, 0.0, 0.0, self.th ) # TODO: make door swing open instead of move down by 3 meters
             self.dooropen = True
-            print("Door " + self.id + " is opened")
+            print("Door " + self.uuid + " is opened")
 
 
 if __name__ == "__main__":

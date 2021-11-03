@@ -6,11 +6,12 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
+from ed_py.entity import Entity
+
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arm.arms import PublicArm
-from robot_skills.util.entity import Entity
 from robot_smach_states.utility import ResolveArm, check_arm_requirements
 
 
@@ -47,7 +48,7 @@ class PointAt(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped(0, 0, 0, rospy.Time.now(), point_entity.id)
+        goal_map = VectorStamped(0, 0, 0, rospy.Time.now(), point_entity.uuid)
 
         try:
             # Transform to base link frame
@@ -70,7 +71,7 @@ class PointAt(smach.State):
         # Resolve the entity again because we want the latest pose
         updated_point_entity = self.point_entity_designator.resolve()
 
-        rospy.loginfo("ID to update: {0}".format(point_entity.id))
+        rospy.loginfo("ID to update: {0}".format(point_entity.uuid))
         if not updated_point_entity:
             rospy.logerr("Could not resolve the updated grab_entity, "
                          "this should not happen [CHECK WHY THIS IS HAPPENING]")
@@ -91,7 +92,7 @@ class PointAt(smach.State):
         for x_offset in [-0.15, 0.0]:  # Hack because Hero does not pre-grasp reliably
             _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), rospy.Time.now(),
                                     goal_bl.frame_id)
-            if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.id]):
+            if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.uuid]):
                 self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
                 rospy.logerr('Grasp failed')
                 arm.reset()
@@ -105,7 +106,7 @@ class PointAt(smach.State):
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
-        if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[point_entity.id]):
+        if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[point_entity.uuid]):
             rospy.logerr('Failed retract')
         arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
@@ -191,9 +192,9 @@ if __name__ == "__main__":
     entity_id = "test_item"
     pose = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), rospy.Time.now(), "map")
 
-    robot.ed.update_entity(id=entity_id, frame_stamped=pose)
+    robot.ed.update_entity(uuid=entity_id, frame_stamped=pose)
 
-    item = ds.EdEntityDesignator(robot, id=entity_id)
+    item = ds.EdEntityDesignator(robot, uuid=entity_id)
 
     arm = ds.UnoccupiedArmDesignator(robot, {})
 

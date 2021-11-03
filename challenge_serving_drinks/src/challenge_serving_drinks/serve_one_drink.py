@@ -1,11 +1,11 @@
 # ROS
 import smach
 
+from ed_py.entity import Entity
+
 # Robot smach states
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-
-from robot_skills.util.entity import Entity
 
 # Serving drinks
 from .sd_states import DescriptionStrDesignator

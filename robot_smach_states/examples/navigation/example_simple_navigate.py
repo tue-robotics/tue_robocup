@@ -24,17 +24,17 @@ if __name__ == "__main__":
     #nav_state = NavigateToPose(robot, 1, 0, 0)
     #nav_state.execute()
 
-    #nav_state = NavigateToObserve(robot, ds.EntityByIdDesignator(robot=robot, id="dinnertable"))
+    #nav_state = NavigateToObserve(robot, ds.EntityByIdDesignator(robot=robot, uuid="dinnertable"))
     #nav_state.execute()
 
     # nav_state = NavigateToSymbolic(robot, {
-    #                                         ds.EntityByIdDesignator(robot, id=room):"in"},
-    #                                         ds.EntityByIdDesignator(robot, id=room))
+    #                                         ds.EntityByIdDesignator(robot, uuid=room):"in"},
+    #                                         ds.EntityByIdDesignator(robot, uuid=room))
     # nav_state.execute()
 
     #nav_state = NavigateToSymbolic(robot, {
-    #                                        ds.EntityByIdDesignator(robot, id="couch"):"in_front_of"},
-    #                                        ds.EntityByIdDesignator(robot, id="couch"))
+    #                                        ds.EntityByIdDesignator(robot, uuid="couch"):"in_front_of"},
+    #                                        ds.EntityByIdDesignator(robot, uuid="couch"))
     #nav_state.execute()
 
     # nav_state = NavigateToWaypoint(robot=robot, waypoint_designator=ds.EntityByIdDesignator(robot=robot,

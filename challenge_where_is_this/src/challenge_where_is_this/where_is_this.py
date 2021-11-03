@@ -135,7 +135,7 @@ class WhereIsThis(smach.StateMachine):
             def store_pose(userdata=None):
                 base_loc = robot.base.get_location()
                 location_id = INFORMATION_POINT_ID
-                robot.ed.update_entity(id=location_id,
+                robot.ed.update_entity(uuid=location_id,
                                        frame_stamped=base_loc,
                                        type="waypoint")
 

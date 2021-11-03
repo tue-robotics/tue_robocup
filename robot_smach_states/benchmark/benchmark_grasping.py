@@ -11,13 +11,14 @@ import rospy
 from pykdl_ros import VectorStamped
 
 # TU/e Robotics
+from ed_py.entity import Entity
+
 from robot_skills.get_robot import get_robot
 from robot_skills.arm import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.entity import Entity
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.manipulation import Grab, SetGripper
 from robot_smach_states.navigation import ForceDrive, NavigateToWaypoint
@@ -55,9 +56,9 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     :return: a dict with the benchmark result
     """
     grasp_cls = ds.Designator(cls, name='grasp_cls')
-    support_entity = ds.EdEntityDesignator(robot, id=support, name='support_entity')
+    support_entity = ds.EdEntityDesignator(robot, uuid=support, name='support_entity')
     entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
-    waypoint_des = ds.EdEntityDesignator(robot, id=waypoint, name='waypoint')
+    waypoint_des = ds.EdEntityDesignator(robot, uuid=waypoint, name='waypoint')
 
     arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, name='unoccupied-arm',
                                                           arm_properties={"required_trajectories": ["prepare_grasp"],
@@ -93,19 +94,19 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
                 rospy.loginfo("Any item will match")
                 matching_results = inspection_result
             else:
-                matching_results = [result for result in inspection_result if result.type == grasp_cls.resolve()]
+                matching_results = [result for result in inspection_result if result.etype == grasp_cls.resolve()]
                 rospy.loginfo("Found {} items of class {}".format(len(matching_results), grasp_cls.resolve()))
 
             if matching_results:
                 if len(matching_results) > 1:
                     rospy.logwarn("There are multiple items OK to grab, will select the last one")
-                    record['observed_class'] = ' '.join([result.type for result in matching_results])
+                    record['observed_class'] = ' '.join([result.etype for result in matching_results])
                 else:
-                    record['observed_class'] = matching_results[-1].type
-                selected_entity_id = matching_results[-1].id
+                    record['observed_class'] = matching_results[-1].etype
+                selected_entity_id = matching_results[-1].uuid
 
                 rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
-                grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
+                grasp_entity = ds.EdEntityDesignator(robot, uuid=selected_entity_id)
                 record['id'] = selected_entity_id[:6]
 
                 entity = grasp_entity.resolve()  # type: Entity

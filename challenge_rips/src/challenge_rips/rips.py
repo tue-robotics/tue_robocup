@@ -35,19 +35,19 @@ def setup_statemachine(robot):
         # There is no transition to Failed in StartChallengeRobust (28 May)
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1), radius=0.5),
+                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_1), radius=0.5),
                                transitions={'arrived': 'ASK_CONTINUE',
                                             'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
                                             'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1'})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_2), radius=0.5),
+                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_2), radius=0.5),
                                transitions={'arrived': 'ASK_CONTINUE',
                                             'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
                                             'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2'})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_3), radius=0.5),
+                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_3), radius=0.5),
                                transitions={'arrived': 'ASK_CONTINUE',
                                             'unreachable': 'ASK_CONTINUE',
                                             'goal_not_defined': 'ASK_CONTINUE'})
@@ -65,19 +65,19 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_1), radius=0.7),
+                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_1), radius=0.7),
                                transitions={'arrived': 'AT_END',
                                             'unreachable': 'GO_TO_EXIT_2',
                                             'goal_not_defined': 'GO_TO_EXIT_2'})
 
         smach.StateMachine.add('GO_TO_EXIT_2',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_2), radius=0.5),
+                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_2), radius=0.5),
                                transitions={'arrived': 'AT_END',
                                             'unreachable': 'GO_TO_EXIT_3',
                                             'goal_not_defined': 'GO_TO_EXIT_3'})
 
         smach.StateMachine.add('GO_TO_EXIT_3',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_3), radius=0.5),
+                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_3), radius=0.5),
                                transitions={'arrived': 'AT_END',
                                             'unreachable': 'RESET_ED_TARGET',
                                             'goal_not_defined': 'AT_END'})

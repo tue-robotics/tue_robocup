@@ -79,7 +79,7 @@ class WaitForCustomer(smach.State):
         point = waving_persons[0].position
         pose = FrameStamped.from_xyz_rpy(point.x, point.y, point.z, 0, 0, 0, header.stamp, header.frame_id)
         rospy.loginfo('update customer position to %s', pose)
-        self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
+        self._robot.ed.update_entity(uuid=self._caller_id, frame_stamped=pose, etype="waypoint")
 
         # look at the barman
         kitchen_entity = self._kitchen_designator.resolve()
@@ -161,7 +161,7 @@ class WaitForClickedCustomer(smach.State):
 
         # TODO, get data from point into ED
         pose = FrameStamped.from_xyz_rpy(self._point.point.x, self._point.point.y, 0, 0, 0, 0, rospy.Time.now(), "map")
-        self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
+        self._robot.ed.update_entity(uuid=self._caller_id, frame_stamped=pose, etype="waypoint")
         return 'succeeded'
 
 

@@ -33,9 +33,9 @@ class ChallengeSetATable(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         # Create designators
-        grasp_designator1 = ds.EdEntityDesignator(robot, type="temp")
-        grasp_designator2 = ds.EdEntityDesignator(robot, type="temp")
-        grasp_designator3 = ds.EdEntityDesignator(robot, type="temp")
+        grasp_designator1 = ds.EdEntityDesignator(robot, etype="temp")
+        grasp_designator2 = ds.EdEntityDesignator(robot, etype="temp")
+        grasp_designator3 = ds.EdEntityDesignator(robot, etype="temp")
 
         start_pose = robot.base.get_location()
         start_x = start_pose.frame.p.x()
@@ -52,13 +52,13 @@ class ChallengeSetATable(smach.StateMachine):
             # There is no transition to Failed in StartChallengeRobust (28 May)
 
             smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1),
+                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_1),
                                                              radius=0.5),
                                    transitions={'arrived': 'ANNOUNCEMENT',
                                                 'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
                                                 'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1'})
             smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1),
+                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_1),
                                                              radius=0.7),
                                    transitions={'arrived': 'ANNOUNCEMENT',
                                                 'unreachable': 'ANNOUNCEMENT',

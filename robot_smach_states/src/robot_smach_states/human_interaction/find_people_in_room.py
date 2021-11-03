@@ -11,9 +11,9 @@ import smach
 from pykdl_ros import VectorStamped
 
 # TU/e Robotics
+from ed_py.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills.util.entity import Entity
 
 
 class FindPeople(smach.State):
@@ -30,7 +30,7 @@ class FindPeople(smach.State):
     >>> # sm.execute()
     >>> # des.resolve()
 
-    Entity(id=something, )
+    Entity(uuid=something, )
 
     """
 
@@ -184,7 +184,7 @@ class FindPeople(smach.State):
                 if query_entity:
                     result_people = filter(lambda x: query_entity.in_volume(VectorStamped.from_framestamped(x.pose), 'in'),
                                            found_people)
-                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))
+                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
                     # If people not in query_entity then try if query_entity in
                     # people
@@ -195,7 +195,7 @@ class FindPeople(smach.State):
                             result_people = filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
                                                    found_people)
                             rospy.loginfo(
-                                "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))
+                                "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
                         except Exception:
                             pass
             else:
@@ -225,7 +225,7 @@ class FindPeople(smach.State):
 
     def _check_person_property(self, person, prop_name, prop_value):
         person_attr_val = getattr(person.person_properties, prop_name)
-        rospy.loginfo("For person {}: {} is {}".format(person.id, prop_name, person_attr_val))
+        rospy.loginfo("For person {}: {} is {}".format(person.uuid, prop_name, person_attr_val))
         if prop_value:
             if self._strict:
                 # Making the conditon less strict to increase search domain
@@ -480,8 +480,8 @@ class FindPeopleInRoom(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=room + "_waypoint")
-        room_designator = ds.EntityByIdDesignator(robot=robot, id=room)
+        waypoint_designator = ds.EntityByIdDesignator(robot=robot, uuid=room + "_waypoint")
+        room_designator = ds.EntityByIdDesignator(robot=robot, uuid=room)
         ds.check_type(found_people_designator, [Entity])
         ds.is_writeable(found_people_designator)
 

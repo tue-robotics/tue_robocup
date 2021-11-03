@@ -10,8 +10,8 @@ import rospy
 import smach
 
 # TU/e Robotics
+from ed_py.entity import Entity
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.entity import Entity
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds
 from .rise import RiseForInspect
@@ -88,7 +88,7 @@ class UpdateEntityPose(smach.State):
         time.sleep(0.5)
 
         # Inspect 'on top of' the entity
-        res = self._robot.ed.update_kinect("{}".format(entity_to_inspect.id))
+        res = self._robot.ed.update_kinect("{}".format(entity_to_inspect.uuid))
 
         # Return
         return "done"
@@ -122,15 +122,15 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
         dst_entity = self._dst_entity_designator.resolve() if hasattr(self._dst_entity_designator, 'resolve') else \
             self._dst_entity_designator
 
-        if (not src_entity) or (not self._robot.ed.get_entity(src_entity.id)) or (not dst_entity):
+        if (not src_entity) or (not self._robot.ed.get_entity(src_entity.uuid)) or (not dst_entity):
             return "failed"
 
         if isinstance(dst_entity, Entity):
-            dst_id = dst_entity.id
+            dst_id = dst_entity.uuid
         else:
             dst_id = dst_entity
 
-        self._robot.ed.update_entity(id=dst_id,
+        self._robot.ed.update_entity(uuid=dst_id,
                                      frame_stamped=src_entity.pose)
 
         return "done"
@@ -184,7 +184,7 @@ class SegmentObjects(smach.State):
             time.sleep(0.5)
 
         # Inspect 'on top of' the entity
-        res = self.robot.ed.update_kinect("{} {}".format(segmentation_area, entity_to_inspect.id))
+        res = self.robot.ed.update_kinect("{} {}".format(segmentation_area, entity_to_inspect.uuid))
         segmented_object_ids = res.new_ids + res.updated_ids
 
         if segmented_object_ids:
@@ -195,13 +195,13 @@ class SegmentObjects(smach.State):
 
             if object_classifications:
                 for idx, obj in enumerate(object_classifications):
-                    _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id))
+                    _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.etype, obj.uuid))
 
                 if self.filter_threshold:
                     over_threshold = [obj for obj in object_classifications if
                                       obj.probability >= self.filter_threshold]
 
-                    dropped = {obj.id: obj.probability for obj in object_classifications if
+                    dropped = {obj.uuid: obj.probability for obj in object_classifications if
                                obj.probability < self.filter_threshold}
                     rospy.loginfo("Dropping {ln} entities due to low class. score (< {th}): {dropped}"
                                   .format(th=self.filter_threshold, dropped=dropped, ln=len(dropped)))
@@ -247,7 +247,7 @@ class CheckEmpty(smach.State):
         if seen_entities:
             if self.threshold:
                 vol = entity.volumes[self.volume]  # type: Volume
-                entities = [self.robot.ed.get_entity(id=seen_entity.id) for seen_entity in seen_entities]
+                entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
                 occupied_space = sum(entity.shape.size for entity in entities)
                 remaining_space = vol.size - occupied_space
                 rospy.loginfo('Occupied space is {}, remaining space is {}'.format(occupied_space, remaining_space))
@@ -347,6 +347,6 @@ if __name__ == "__main__":
 
     robot = get_robot_from_argv(index=1)
 
-    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="display_cabinet"),
+    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, uuid="display_cabinet"),
                  navigation_area="in_front_of")
     print(sm.execute())

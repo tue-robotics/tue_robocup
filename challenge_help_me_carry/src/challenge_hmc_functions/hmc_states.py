@@ -74,7 +74,7 @@ class WaitForOperatorCommand(smach.State):
 
         if self._commands_as_userdata:
             userdata.command_recognized = command_recognized
-            self.target_destination.id_ = command_recognized
+            self.target_destination.uuid = command_recognized
 
         if self._commands_as_outcomes:
             return command_recognized
@@ -92,14 +92,15 @@ class StoreCarWaypoint(smach.State):
         self._robot = robot
 
     def execute(self, userdata=None):
-        response = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
+        response = self._robot.ed.update_entity(uuid=challenge_knowledge.waypoint_car['id'],
                                                frame_stamped=self._robot.base.get_location(),
-                                               type="waypoint")
+                                               etype="waypoint")
 
         if not response.response:
             return "success"
         else:
             return "abort"
+
 
 class TurnToReplan(smach.State):
     """

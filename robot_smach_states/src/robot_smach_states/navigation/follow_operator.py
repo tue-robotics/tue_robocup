@@ -19,8 +19,8 @@ from visualization_msgs.msg import Marker
 
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
+from ed_py.entity import Entity
 from hmi import TimeoutException
-from robot_skills.util.entity import Entity
 from ..util.startup import startup
 from ..util.designators import VariableDesignator
 
@@ -218,9 +218,9 @@ class FollowOperator(smach.State):
                 if not operator:
                     rospy.sleep(1)
 
-        rospy.loginfo("We have a new operator: %s" % operator.id)
+        rospy.loginfo("We have a new operator: %s" % operator.uuid)
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
-        self._operator_id = operator.id
+        self._operator_id = operator.uuid
         self._operator = operator
         self._breadcrumbs.append(operator)
 
@@ -512,7 +512,7 @@ class FollowOperator(smach.State):
 
                 if recovered_operator:
                     rospy.loginfo("Found one!")
-                    self._operator_id = recovered_operator.id
+                    self._operator_id = recovered_operator.uuid
                     rospy.loginfo("Recovered operator id: %s" % self._operator_id)
                     self._operator = recovered_operator
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)

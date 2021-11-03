@@ -1,11 +1,12 @@
 import unittest
 import PyKDL as kdl
 import rospy
+
 from ed_sensor_integration_msgs.srv import UpdateResponse
+from ed_py.entity import Entity
 
 from robot_skills import Mockbot
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
 from robot_smach_states.world_model import SegmentObjects
 import robot_smach_states.util.designators as ds
@@ -74,7 +75,7 @@ class TestSegmentObjects(unittest.TestCase):
             entity_to_inspect_designator=MockDesignator(self.robot, "foo"),
         )
         self.assertEqual(state.execute(), "done", "SegmentObjects did not return 'done'")
-        self.assertEqual(self.storage_designator._current[0].id, "foobar")
+        self.assertEqual(self.storage_designator._current[0].uuid, "foobar")
 
     @unittest.skip("test_overwrite: is not (yet) implemented correctly in SegmentObjects")
     def test_overwrite(self):

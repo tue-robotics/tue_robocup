@@ -93,16 +93,16 @@ class TourGuide(object):
             rospy.logwarn(e)
             return ""
 
-        if room.id not in self._passed_room_ids:
-            self._passed_room_ids.append(room.id)
-            rospy.logdebug("describe entering room: {}.\t passed rooms is now {}".format(room.id, self._passed_room_ids))
-            return "We now enter the {}".format(room.id)
+        if room.uuid not in self._passed_room_ids:
+            self._passed_room_ids.append(room.uuid)
+            rospy.logdebug("describe entering room: {}.\t passed rooms is now {}".format(room.uuid, self._passed_room_ids))
+            return "We now enter the {}".format(room.uuid)
 
         # not entering a new room, checking furniture
         furniture_objects = self._furniture_entities_room[room]  # Furniture objects in our current room
         for entity in furniture_objects:  # type: Entity
             # Check if in passed ids
-            if entity.id in self._passed_furniture_ids:
+            if entity.uuid in self._passed_furniture_ids:
                 continue
 
             # Compute the pose of the entity w.r.t. the 'path'
@@ -111,12 +111,12 @@ class TourGuide(object):
             # Check the distance
             if abs(entity_relative_pose.p.x()) < self._x_threshold and \
                     abs(entity_relative_pose.p.y()) < self._y_threshold:
-                self._passed_furniture_ids.append(entity.id)
+                self._passed_furniture_ids.append(entity.uuid)
                 side = "left" if entity_relative_pose.p.y() >= 0.0 else "right"
                 rospy.logdebug(
-                    "describe passing entity: {}.\t passed entities is now {}".format(entity.id,
+                    "describe passing entity: {}.\t passed entities is now {}".format(entity.uuid,
                                                                                       self._passed_furniture_ids))
-                return "On our {} you can see the {}".format(side, entity.id)
+                return "On our {} you can see the {}".format(side, entity.uuid)
 
         # no furniture passed, nothing of interest
         return ""
@@ -124,7 +124,7 @@ class TourGuide(object):
     def initialize(self):
         entities = self._robot.ed.get_entities()
         self._furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
-        self._room_entities = [room for room in entities if room.type == "room"]
+        self._room_entities = [room for room in entities if room.etype == "room"]
 
         # Match the furniture entities to rooms
         self._furniture_entities_room = {room: [] for room in self._room_entities}
@@ -132,10 +132,10 @@ class TourGuide(object):
             try:
                 room = self.get_room(item._pose.p)
             except RuntimeError:
-                rospy.logwarn("{} ({}) not in any room".format(item.id, item._pose.p))
+                rospy.logwarn("{} ({}) not in any room".format(item.uuid, item._pose.p))
                 continue
             self._furniture_entities_room[room].append(item)
-            rospy.logdebug("{} ({}) is in the {}".format(item.id, item._pose.p, room.id))
+            rospy.logdebug("{} ({}) is in the {}".format(item.uuid, item._pose.p, room.uuid))
 
         self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
         self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
@@ -144,7 +144,7 @@ class TourGuide(object):
         position = self._robot.base.get_location()
         try:
             room = self.get_room(position.frame.p)
-            self._passed_room_ids.append(room.id)
+            self._passed_room_ids.append(room.uuid)
         except RuntimeError:
             rospy.logwarn("position ({}) not in any room".format(position.frame.p))
 
@@ -153,7 +153,7 @@ class TourGuide(object):
         close_entities = self._robot.ed.get_entities(center_point=VectorStamped.from_framestamped(position), radius=r)
         close_furniture_entities = [entity for entity in close_entities if entity.is_a("furniture")]
         for entity in close_furniture_entities:
-            self._passed_furniture_ids.append(entity.id)
+            self._passed_furniture_ids.append(entity.uuid)
         rospy.loginfo("TourGuide: passed rooms: {}.\t passed entities {}"
                       .format(self._passed_room_ids, self._passed_furniture_ids))
 

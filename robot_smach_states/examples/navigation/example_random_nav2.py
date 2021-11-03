@@ -51,26 +51,26 @@ class RandomNavDesignator(EdEntityDesignator):
             return self.entity_id
 
         # Get all entities
-        entities = self._robot.ed.get_entities(type="")
+        entities = self._robot.ed.get_entities(etype="")
 
         # Temp: only pick close targets
         #if entities:
         #    entities = [entity for entity in entities if (
-        #    entity.id == "elevator"
-        #    or entity.id == "lecture_room_1"
-        #    or entity.id == "lecture_room_2"
-        #    or entity.id == "copier"
-        #    or entity.id == "stairway"
+        #    entity.uuid == "elevator"
+        #    or entity.uuid == "lecture_room_1"
+        #    or entity.uuid == "lecture_room_2"
+        #    or entity.uuid == "copier"
+        #    or entity.uuid == "stairway"
         #    )]
 
         # If entities found: only take entities with convex hulls, that have a type and are not floor...
         if entities:
             entities = [entity for entity in entities if ( entity.convex_hull
-                and "library" in entity.type
-                and not entity.id == "floor"
-                and not entity.id == "walls"
-                and not entity.id == "desks-support"
-                and not entity.id == "desks-top"
+                and "library" in entity.etype
+                and not entity.uuid == "floor"
+                and not entity.uuid == "walls"
+                and not entity.uuid == "desks-support"
+                and not entity.uuid == "desks-top"
                 )]
         else:
             raise Exception("No entities in this model")
@@ -88,9 +88,9 @@ class RandomNavDesignator(EdEntityDesignator):
                     msg.data += ","
 
                 # Add entity
-                msg.data += entity.id
+                msg.data += entity.uuid
 
-                print("ID = {0}, type = {1}".format(entity.id, entity.type))
+                print("ID = {0}, type = {1}".format(entity.uuid, entity.etype))
 
             self.locations_pub.publish(msg)
 
@@ -98,10 +98,10 @@ class RandomNavDesignator(EdEntityDesignator):
             entity_id = None
             while entity_id is None:
                 entity = random.choice(entities)
-                if entity.id != self.last_entity_id:
-                    entity_id = entity.id
+                if entity.uuid != self.last_entity_id:
+                    entity_id = entity.uuid
 
-            rospy.loginfo("Entity:\n\tid = {0},\n\ttype = {1}".format(entity.id, entity.type))
+            rospy.loginfo("Entity:\n\tid = {0},\n\ttype = {1}".format(entity.uuid, entity.etype))
 
             self.entity_id = entity_id
             return self.entity_id

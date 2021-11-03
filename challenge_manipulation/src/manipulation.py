@@ -27,6 +27,7 @@ import smach
 
 # ED
 from ed_robocup_msgs.srv import FitEntityInImage, FitEntityInImageRequest
+from ed_py.entity import Entity
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
@@ -35,7 +36,6 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states.manipulation import Grab, Place
 
 # Robot Skills
-from robot_skills.util.entity import Entity
 from robot_skills.arm import arms
 
 # RoboCup knowledge
@@ -83,9 +83,9 @@ ignore_types = ['waypoint', 'floor', 'room']
 PLACE_HEIGHT = 1.0
 
 # Criteria
-not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
+not_ignored = lambda entity: not entity.etype in ignore_types and not entity.uuid in ignore_ids
 size = lambda entity: abs(entity.shape.z_max - entity.shape.z_min) < 0.4
-has_type = lambda entity: entity.type != ""
+has_type = lambda entity: entity.etype != ""
 min_entity_height = lambda entity: abs(entity.shape.z_max - entity.shape.z_min) > 0.04
 
 def max_width(entity):
@@ -98,7 +98,7 @@ def max_width(entity):
     ok = x_ok and y_ok
 
     if not ok:
-        rospy.logwarn("Entity(id={id}: x_size={x}, y_size={y}".format(x=x_size, y=y_size, id=entity.id))
+        rospy.logwarn("Entity(id={uuid}: x_size={x}, y_size={y}".format(x=x_size, y=y_size, uuid=entity.uuid))
     return ok
 
 # ----------------------------------------------------------------------------------------------------
@@ -109,17 +109,16 @@ class EntityDescriptionDesignator(ds.Designator):
     def __init__(self, entity_designator, name=None):
         super(EntityDescriptionDesignator, self).__init__(resolve_type=str, name=name)
         self.entity_designator = entity_designator
-        self.known_formats = "I'm trying to grab the {type}"
+        self.known_formats = "I'm trying to grab the {etype}"
         self.unknown_formats = "I'm trying to grab this thing"
 
     def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
             return self.unknown_formats
-        short_id = entity.id[:5]
-        typ = entity.type
-        if typ:
-            sentence = self.known_formats.format(type=typ)
+        etype = entity.etype
+        if etype:
+            sentence = self.known_formats.format(etype=etype)
         else:
             sentence = self.unknown_formats
         return sentence
@@ -258,7 +257,7 @@ class InspectShelves(smach.State):
         ''' Get cabinet entity '''
         rospy.sleep(rospy.Duration(0.25))  # Sleep for a while to make
         # sure that the robot is actually in ED
-        cabinet_entity = self.robot.ed.get_entity(id=CABINET)
+        cabinet_entity = self.robot.ed.get_entity(uuid=CABINET)
 
         ''' Get the pose of all shelves '''
         shelves = []
@@ -266,9 +265,9 @@ class InspectShelves(smach.State):
             ''' See if the area is in the list of inspection areas '''
             if name in OBJECT_SHELVES:
                 center_point = volume.center_point
-                shelves.append({'vs': VectorStamped(center_point, rospy.Time.now(), cabinet_entity.id), 'name': name})
+                shelves.append({'vs': VectorStamped(center_point, rospy.Time.now(), cabinet_entity.uuid), 'name': name})
             else:
-                rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.id))
+                rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.uuid))
 
         # rospy.loginfo("Inspection points: {0}".format(shelves))
         # ''' Loop over shelves '''
@@ -279,7 +278,7 @@ class InspectShelves(smach.State):
             center_vector = vector_stamped.vector
 
             # ''' Get entities '''
-            # shelf_entity = self.robot.ed.get_entity(id=shelf)
+            # shelf_entity = self.robot.ed.get_entity(uuid=shelf)
 
             # if shelf_entity:
 
@@ -311,25 +310,25 @@ class InspectShelves(smach.State):
             ''' Enable kinect segmentation plugin (only one image frame) '''
             # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
             # segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
-            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
+            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.uuid))
 
-            for id_ in segmented_entities.new_ids:
-                entity = self.robot.ed.get_entity(id=id_)  # In simulation, the entity type is not yet updated...
-                SEGMENTED_ENTITIES.append((entity, id_))
+            for uuid in segmented_entities.new_ids:
+                entity = self.robot.ed.get_entity(uuid=uuid)  # In simulation, the entity type is not yet updated...
+                SEGMENTED_ENTITIES.append((entity, uuid))
 
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
 
             # Recite entities
             for etp in entity_types_and_probs:
-                self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+                self.robot.speech.speak("I have seen {0}".format(etp.etype), block=False)
 
             # Lock entities
-            self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+            self.robot.ed.lock_entities(lock_ids=[e.uuid for e in entity_types_and_probs], unlock_ids=[])
 
-            # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
-            # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
+            # DETECTED_OBJECTS_WITH_PROBS = [(e.uuid, e.etype) for e in entity_types_and_probs]
+            # DETECTED_OBJECTS_WITH_PROBS = [(e.uuid, e.etype) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
             for e in entity_types_and_probs:
-                entity = self.robot.ed.get_entity(id=e.id)  # In simulation, the entity type is not yet updated...
+                entity = self.robot.ed.get_entity(uuid=e.uuid)  # In simulation, the entity type is not yet updated...
                 DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
             # print("Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS))
@@ -371,9 +370,9 @@ class RemoveSegmentedEntities(smach.State):
         entities = self.robot.ed.get_entities()
 
         for e in entities:
-            if not e.is_a("furniture") and e.id != '_root':
+            if not e.is_a("furniture") and e.uuid != '_root':
                 # import ipdb; ipdb.set_trace()
-                self.robot.ed.remove_entity(e.id)
+                self.robot.ed.remove_entity(e.uuid)
 
         return "done"
 
@@ -419,8 +418,8 @@ class ManipRecogSingleItem(smach.StateMachine):
         self.manipulated_items = manipulated_items
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        self.cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
-        # self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
+        self.cabinet = ds.EntityByIdDesignator(robot, uuid=CABINET, name="pick_shelf")
+        # self.place_shelf = ds.EntityByIdDesignator(robot, uuid=PLACE_SHELF, name="place_shelf")
 
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
@@ -479,7 +478,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         with self:
             # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
             #                         #states.NavigateToObserve(robot, self.pick_shelf),
-            #                         states.NavigateToSymbolic(robot, {self.pick_shelf:"in_front_of", EntityByIdDesignator(robot, id=ROOM):"in"}, self.pick_shelf),
+            #                         states.NavigateToSymbolic(robot, {self.pick_shelf:"in_front_of", EntityByIdDesignator(robot, uuid=ROOM):"in"}, self.pick_shelf),
             #                         transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
             #                                         'unreachable'       :'LOOKAT_PICK_SHELF',
             #                                         'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
@@ -528,8 +527,8 @@ class ManipRecogSingleItem(smach.StateMachine):
                 global ignore_ids
                 # import ipdb; ipdb.set_trace()
                 if self.current_item.resolve():
-                    ignore_ids += [self.current_item.resolve().id]
-                    rospy.loginfo("Current_item WAS now locked to {0}".format(self.current_item.resolve().id))
+                    ignore_ids += [self.current_item.resolve().uuid]
+                    rospy.loginfo("Current_item WAS now locked to {0}".format(self.current_item.resolve().uuid))
                 self.current_item.unlock() #This determines that self.current_item can now resolve to a new value on the next call
                 self.place_position.unlock() #This determines that self.place_position can now resolve to a new position on the next call
                 return 'unlocked'
@@ -588,7 +587,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
+    start_waypoint = ds.EntityByIdDesignator(robot, uuid="manipulation_init_pose", name="start_waypoint")
     placed_items = []
 
     with sm:
@@ -625,8 +624,8 @@ def setup_statemachine(robot):
                                transitions={'continue': drive_state,
                                             'no_response': 'AWAIT_START'})
 
-        cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
-        room = ds.EntityByIdDesignator(robot, id=ROOM)
+        cabinet = ds.EntityByIdDesignator(robot, uuid=CABINET)
+        room = ds.EntityByIdDesignator(robot, uuid=ROOM)
 
         if USE_SLAM:
             # vth = 1.0

@@ -3,10 +3,10 @@ import unittest
 
 from action_server.test_tools import test_grammar
 from ed_msgs.msg import EntityInfo
+from ed_py.entity import from_entity_info
 
 from robocup_knowledge import load_knowledge
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.entity import from_entity_info
 
 
 class GrammarTest(unittest.TestCase):

@@ -6,8 +6,8 @@ import rospy
 import smach
 
 # TU/e Robotics
+from ed_py.entity import Entity
 from robot_skills.arm.arms import PublicArm
-from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators import check_type
 
 # System
@@ -124,8 +124,8 @@ if __name__ == "__main__":
         robot = get_robot(robot_name)
         sm = PointAtSM(robot,
                        arm_designator=UnoccupiedArmDesignator(robot).lockable(),
-                       point_at_designator=EdEntityDesignator(robot, id=point_at, name='point_at_des'),
-                       look_at_designator=EdEntityDesignator(robot, id=look_at, name='look_at_des'))
+                       point_at_designator=EdEntityDesignator(robot, uuid=point_at, name='point_at_des'),
+                       look_at_designator=EdEntityDesignator(robot, uuid=look_at, name='look_at_des'))
         sm.execute()
     else:
         print("Please provide robot name, point_at ID and look_at ID as argument.")

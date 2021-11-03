@@ -2,8 +2,8 @@ import smach
 import rospy
 from pykdl_ros import VectorStamped
 
+from ed_py.entity import Entity
 from robot_smach_states.util.designators import EntityByIdDesignator
-from robot_skills.util.entity import Entity
 
 from .self_cleanup import SelfCleanup  # , SelfCleanup2
 
@@ -33,7 +33,7 @@ class SelectEntity(smach.State):
             except Exception:
                 return "no_entities_left"
 
-            entity = EntityByIdDesignator(self._robot, entity_classification.id).resolve()  # type: Entity
+            entity = EntityByIdDesignator(self._robot, entity_classification.uuid).resolve()  # type: Entity
             shape = entity.shape
             size_x = max(shape.x_max - shape.x_min, 0.001)
             size_y = max(shape.y_max - shape.y_min, 0.001)
@@ -46,8 +46,8 @@ class SelectEntity(smach.State):
 
             correct_entity = True
 
-        rospy.loginfo("We have selected the entity with id %s" % entity_classification.id)
-        self._selected_entity_designator.id_ = entity_classification.id
+        rospy.loginfo("We have selected the entity with id %s" % entity_classification.uuid)
+        self._selected_entity_designator.uuid = entity_classification.uuid
 
         return "entity_selected"
 
@@ -66,10 +66,10 @@ class DetermineAction(smach.State):
             rospy.logerr("Could not resolve the selected entity!")
             return "failed"
 
-        rospy.loginfo("The type of the entity is '%s'" % selected_entity.type)
+        rospy.loginfo("The type of the entity is '%s'" % selected_entity.etype)
 
         # If we don't know the entity type, try to classify again
-        if selected_entity.type == "" or selected_entity.type == "unknown":
+        if selected_entity.etype == "" or selected_entity.etype == "unknown":
             # Make sure the head looks at the entity
             rospy.loginfo("entity: {}".format(selected_entity))
             pos = selected_entity.pose.frame.p
@@ -80,12 +80,12 @@ class DetermineAction(smach.State):
             rospy.sleep(1)
 
             # Inspect the entity again
-            self._robot.ed.update_kinect(selected_entity.id)
+            self._robot.ed.update_kinect(selected_entity.uuid)
 
             # Classify the entity again
             try:
-                selected_entity.type = self._robot.ed.classify(ids=[selected_entity.id])[0].type
-                rospy.loginfo("We classified the entity again; type = %s" % selected_entity.type)
+                selected_entity.etype = self._robot.ed.classify(ids=[selected_entity.uuid])[0].etype
+                rospy.loginfo("We classified the entity again; type = %s" % selected_entity.etype)
             except Exception as e:
                 rospy.logerr(e)
 

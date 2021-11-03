@@ -6,8 +6,9 @@
 
 from smach import StateMachine
 
+from ed_py.entity import Entity
+
 import robot_smach_states.util.designators as ds
-from robot_skills.util.entity import Entity
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.human_interaction import Say
@@ -43,7 +44,7 @@ def setup_statemachine(robot):
 
         # Drive to the start location
         StateMachine.add('NAVIGATE_TO_START',
-                         NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=HOME_LOCATION)),
+                         NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, uuid=HOME_LOCATION)),
                          transitions={'arrived': 'GET_FURNITURE_FROM_OPERATOR_POSE',
                                       'unreachable': 'NAVIGATE_TO_START',  # ToDo: other fallback
                                       'goal_not_defined': 'done'})  # I'm not even going to fill this in

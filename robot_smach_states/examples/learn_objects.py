@@ -32,7 +32,7 @@ def look_at_entity(robot, location_des):
 
 
 def take_picture(robot, entity):
-    res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
+    res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.uuid))
     segmented = res.new_ids + res.updated_ids
     robot.ed.classify(ids=segmented)
 

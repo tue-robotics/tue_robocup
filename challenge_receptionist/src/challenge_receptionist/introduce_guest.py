@@ -1,12 +1,13 @@
 from __future__ import print_function
 
+from math import radians
+
 import rospy
+from ed_py.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
 from robocup_knowledge import load_knowledge
-from robot_skills.util.entity import Entity
-from math import radians
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
 

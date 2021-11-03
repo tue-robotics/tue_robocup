@@ -37,8 +37,8 @@ if __name__ == "__main__":
 
     # Instantiate GuideToSymbolic machine
     s = guidance.GuideToSymbolic(r,
-                                 {ds.EntityByIdDesignator(r, id=e_id): "in_front_of"},
-                                 ds.EntityByIdDesignator(r, id=e_id)
+                                 {ds.EntityByIdDesignator(r, uuid=e_id): "in_front_of"},
+                                 ds.EntityByIdDesignator(r, uuid=e_id)
                                  )
 
     # In simulation, mock the _check_operator method
