@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 # System
+from contextlib import redirect_stdout
 import math
 import numpy as np
 
@@ -22,7 +23,7 @@ class FindPeople(smach.State):
     people in its view.
 
     >>> from robot_skills.mockbot import Mockbot
-    >>> robot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>> # Designator to store the result
     >>> des = ds.VariableDesignator(resolve_type=[Entity])
     >>>

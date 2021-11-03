@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 # System
+from contextlib import redirect_stdout
 import math
 import random
 import time
@@ -27,7 +28,7 @@ class Say(smach.State):
     runtime. The main sentence can be a str, [str] or a Designator to str or [str]
 
     >>> from robot_skills.mockbot import Mockbot
-    >>> robot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>>
     >>> say = Say(robot, ["a", "b", "c"])
     >>> say.execute()
@@ -226,7 +227,7 @@ class HearOptionsExtra(smach.State):
 
     >>> from robot_skills.mockbot import Mockbot
     >>> from hmi import HMIResult
-    >>> mockbot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>> import robot_smach_states.util.designators as ds
     >>> import os
     >>> spec = "T[O] -> OPTIONS[O]"+os.linesep  # Newlines are needed, doctests doesn't accept 'slash-n"
@@ -234,7 +235,7 @@ class HearOptionsExtra(smach.State):
     >>> spec += "OPTIONS['bar'] -> bar"+os.linesep
     >>> spec = ds.Designator(spec)
     >>> answer = ds.VariableDesignator(resolve_type=HMIResult)
-    >>> state = HearOptionsExtra(mockbot, spec, answer.writeable)
+    >>> state = HearOptionsExtra(robot, spec, answer.writeable)
     >>> outcome = state.execute()
     """
 
