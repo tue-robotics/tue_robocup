@@ -84,7 +84,7 @@ class DetermineAction(smach.State):
 
             # Classify the entity again
             try:
-                selected_entity.etype = self._robot.ed.classify(ids=[selected_entity.uuid])[0].etype
+                selected_entity.etype = self._robot.ed.classify(uuids=[selected_entity.uuid])[0].etype
                 rospy.loginfo("We classified the entity again; type = %s" % selected_entity.etype)
             except Exception as e:
                 rospy.logerr(e)

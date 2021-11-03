@@ -316,7 +316,7 @@ class InspectShelves(smach.State):
                 entity = self.robot.ed.get_entity(uuid=uuid)  # In simulation, the entity type is not yet updated...
                 SEGMENTED_ENTITIES.append((entity, uuid))
 
-            entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+            entity_types_and_probs = self.robot.ed.classify(uuids=segmented_entities.new_ids, types=OBJECT_TYPES)
 
             # Recite entities
             for etp in entity_types_and_probs:
