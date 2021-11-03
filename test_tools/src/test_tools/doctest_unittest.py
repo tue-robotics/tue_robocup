@@ -16,7 +16,7 @@ class _TestDocTests(unittest.TestCase):
 
     class DocTestsModuleA(_TestDocTests):
         def __init__(self, method_name="test_doctests"):
-        super(DocTestsModuleA, self).__init__(module_name="ModuleA", method_name=method_name)
+        super(DocTestsModuleA, self).__init__(pkg_name="ModuleA", method_name=method_name)
 
     if __name__ == '__main__':
         suite = unittest.TestSuite()
@@ -25,17 +25,21 @@ class _TestDocTests(unittest.TestCase):
 
     """
 
-    def __init__(self, module_name, method_name="test_doctests"):
+    def __init__(self, pkg_name: str, module_name: str = None, method_name: str = "test_doctests"):
         """
         Constructor
 
-        :param module_name: (str) Name of the python module
-        :param method_name: (str) Name of the member variable to run, this should be "test_doctests" and shouldn't
+        :param pkg_name: Name of catkin package
+        :param module_name: Name of the python module
+        :param method_name: Name of the member variable to run, this should be "test_doctests" and shouldn't
             be changed.
         """
         assert method_name == "test_doctests", "The method_name should be 'test_doctests'. This is the function which" \
                                                "implements the functionality of this TestCase."
         super(_TestDocTests, self).__init__(method_name)
+        if module_name is None:
+            module_name = pkg_name
+        self.pkg_name = pkg_name
         self.module_name = module_name
 
     def test_doctests(self):
@@ -43,7 +47,7 @@ class _TestDocTests(unittest.TestCase):
         Iterates over all Python files in module_name/src/module_name and runs doctest.testmod
         """
 
-        path = rospkg.RosPack().get_path(self.module_name)
+        path = rospkg.RosPack().get_path(self.pkg_name)
         path = os.path.join(path, "src", self.module_name)
 
         for root, dirs, files in os.walk(path):
