@@ -8,8 +8,8 @@ from pykdl_ros import VectorStamped
 
 # Robot Skills
 from ed_py.entity import Entity
+from ed_py.volume import BoxVolume
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.volume import BoxVolume
 
 # Robot Smach States
 from robot_smach_states.perception import LookAtArea, LookAtEntity
