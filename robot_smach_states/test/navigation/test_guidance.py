@@ -88,10 +88,10 @@ class TestTourGuide(unittest.TestCase):
         self.tour_guide.initialize()
         self.assertListEqual(self.tour_guide._passed_room_ids, [self._kitchen.uuid])
         self.assertListEqual(self.tour_guide._passed_furniture_ids, [self._cabinet.uuid])
-        self.assertListEqual(sorted(self.tour_guide._furniture_entities, key=lambda x: getattr(x, 'id')),
-                             sorted([self._cabinet, self._bookcase], key=lambda x: getattr(x, 'id')))
-        self.assertListEqual(sorted(self.tour_guide._room_entities, key=lambda x: getattr(x, 'id')),
-                             sorted([self._kitchen, self._bedroom], key=lambda x: getattr(x, 'id')))
+        self.assertListEqual(sorted(self.tour_guide._furniture_entities, key=lambda x: getattr(x, 'uuid')),
+                             sorted([self._cabinet, self._bookcase], key=lambda x: getattr(x, 'uuid')))
+        self.assertListEqual(sorted(self.tour_guide._room_entities, key=lambda x: getattr(x, 'uuid')),
+                             sorted([self._kitchen, self._bedroom], key=lambda x: getattr(x, 'uuid')))
         self.assertDictEqual(self.tour_guide._furniture_entities_room, {self._kitchen: [self._cabinet],
                                                                         self._bedroom: [self._bookcase]})
 
