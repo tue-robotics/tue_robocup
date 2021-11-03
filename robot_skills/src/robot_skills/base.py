@@ -354,12 +354,10 @@ class Base(RobotPart):
 
 def get_location(robot_name, tf_buffer) -> FrameStamped:
 
+    time = rospy.Time()
+    target_frame_stamped = FrameStamped(kdl.Frame(), time, f"{robot_name}/base_link")
     try:
-        time = rospy.Time.now()
-        tf_buffer.can_transform("map", f"{robot_name}/base_link", time, rospy.Duration(20.0))
-        target_frame_stamped = FrameStamped(kdl.Frame(), rospy.Time.now(), f"{robot_name}/base_link")
-        target_frame_stamped = tf_buffer.transform(target_frame_stamped, "map", timeout=rospy.Duration(5.0))
-
+        target_frame_stamped = tf_buffer.transform(target_frame_stamped, "map", timeout=rospy.Duration(20))
         return target_frame_stamped
 
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
