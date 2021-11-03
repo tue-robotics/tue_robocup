@@ -362,10 +362,7 @@ def get_location(robot_name, tf_buffer) -> FrameStamped:
 
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
         rospy.logerr("tf2 request failed!, {}".format(e))
-        target_pose = PoseStamped()
-        target_pose.header.frame_id = "map"
-        target_pose.header.stamp = time
-        return tf2_ros.convert(target_pose, FrameStamped)
+        return FrameStamped(kdl.Frame(), time, "map")
 
 
 def computePathLength(path):
