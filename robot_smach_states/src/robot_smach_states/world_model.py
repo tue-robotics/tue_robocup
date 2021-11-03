@@ -191,7 +191,7 @@ class SegmentObjects(smach.State):
             _color_info(">> Segmented %d objects!" % len(segmented_object_ids))
 
             # Classify and update IDs
-            object_classifications = self.robot.ed.classify(ids=segmented_object_ids, unknown_threshold=self.unknown_threshold)
+            object_classifications = self.robot.ed.classify(uuids=segmented_object_ids, unknown_threshold=self.unknown_threshold)
 
             if object_classifications:
                 for idx, obj in enumerate(object_classifications):

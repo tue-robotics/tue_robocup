@@ -367,7 +367,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def classify(self, ids, types=None, unknown_threshold=0.0):
+    def classify(self, uuids, types=None, unknown_threshold=0.0):
         # type: (List[str], List[str], float) -> List[ClassificationResult]
         """
         Classifies the entities with the given IDs
@@ -382,7 +382,7 @@ class ED(RobotPart):
         :rtype: List[ClassificationResult]
         """
 
-        res = self._ed_classify_srv(ids=ids, unknown_probability=unknown_threshold)
+        res = self._ed_classify_srv(ids=uuids, unknown_probability=unknown_threshold)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
