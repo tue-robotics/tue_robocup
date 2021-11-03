@@ -7,4 +7,3 @@ from . import image_operations
 from . import msg_constructors
 from . import nav_analyzer
 from . import transformations
-from . import volume

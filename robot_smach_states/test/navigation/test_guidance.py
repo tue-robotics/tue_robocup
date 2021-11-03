@@ -6,10 +6,10 @@ from pykdl_ros import FrameStamped
 import re
 
 from ed_py.entity import Entity
+from ed_py.volume import BoxVolume
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.volume import BoxVolume
 
 # Robot Smach States
 from robot_smach_states.navigation.guidance import TourGuide

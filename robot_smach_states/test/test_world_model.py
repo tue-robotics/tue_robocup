@@ -4,10 +4,10 @@ import rospy
 
 from ed_sensor_integration_msgs.srv import UpdateResponse
 from ed_py.entity import Entity
+from ed_py.volume import BoxVolume
 
 from robot_skills import Mockbot
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.volume import BoxVolume
 from robot_smach_states.world_model import SegmentObjects
 import robot_smach_states.util.designators as ds
 
