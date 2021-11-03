@@ -63,8 +63,8 @@ def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
 
 
 def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
-    rospy.loginfo("entered function")
-    return OpenDoor(robot=robot)
+    door_designator = EntityByIdDesignator(robot, msg.destination.entity)
+    return OpenDoor(robot=robot, door_designator=door_designator)
 
 
 @smach.cb_interface(outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"])
