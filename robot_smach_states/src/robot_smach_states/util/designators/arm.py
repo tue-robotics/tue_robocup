@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from contextlib import redirect_stdout
 import copy
 
 # ROS
@@ -39,7 +40,7 @@ def const_resolve(arm_designator, additional_properties):
 class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.
     >>> from robot_skills.mockbot import Mockbot
-    >>> robot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>> a = ArmDesignator(robot, {'required_arm_name': 'leftArm'})
     >>> assert a.resolve()._arm == robot.arms['leftArm']
     """
@@ -77,7 +78,7 @@ class UnoccupiedArmDesignator(ArmDesignator):
     """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
     .resolve() returns None when no such arm can be found
     >>> from robot_skills.mockbot import Mockbot
-    >>> robot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>>
     >>> robot.arms['leftArm'].occupied_by = None
     >>> robot.arms['rightArm'].occupied_by = None
@@ -123,7 +124,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     .resolve() returns None when no such arm can be found
 
     >>> from robot_skills.mockbot import Mockbot
-    >>> robot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>> a = ArmDesignator(robot, {'required_arm_name': 'leftArm'})
     >>> assert a.resolve()._arm == robot.arms['leftArm']
 

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 # System
+from contextlib import redirect_stdout
 import inspect
 import pprint
 
@@ -22,7 +23,7 @@ class EdEntityCollectionDesignator(Designator):
     Resolves to a collection of Ed entities
 
     >>> from robot_skills.mockbot import Mockbot
-    >>> robot = Mockbot()
+    >>> with redirect_stdout(None): robot = Mockbot()
     >>> entities = EdEntityCollectionDesignator(robot)
     >>> check_resolve_type(entities, [Entity]) #This is more a test for check_resolve_type to be honest :-/
     """
