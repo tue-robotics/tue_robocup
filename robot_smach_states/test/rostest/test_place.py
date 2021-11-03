@@ -6,10 +6,10 @@ import PyKDL as kdl
 from pykdl_ros import FrameStamped
 
 from ed_py.entity import Entity
+from ed_py.shape import RightPrism
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.shape import RightPrism
 
 # Robot Smach States
 from robot_smach_states.manipulation import Place

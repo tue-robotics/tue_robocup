@@ -7,13 +7,13 @@ import rospy
 
 # TU/e Robotics
 from ed_py.entity import Entity
+from ed_py.shape import RightPrism
 from pykdl_ros import FrameStamped
 from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation import Grab
-from robot_skills.util.shape import RightPrism
 
 
 if __name__ == "__main__":
