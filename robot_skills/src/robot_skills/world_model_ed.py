@@ -2,6 +2,7 @@ from __future__ import print_function
 
 # System
 import os
+import traceback
 import yaml
 
 import rospy
@@ -118,9 +119,10 @@ class ED(RobotPart):
             entity_infos = self._ed_simple_query_srv(query).entities
             entities = list(map(from_entity_info, entity_infos))
         except Exception as e:
-            rospy.logerr("ERROR: robot.ed.get_entities(id={}, type={}, center_point={}, radius={}, ignore_z={})".format(
-                id, type, str(center_point), str(radius), ignore_z))
-            rospy.logerr("L____> [%s]" % e)
+            rospy.logerr(
+                f"get_entities(id={id}, type={type}, center_point={center_point}, radius={radius}, "
+                f"ignore_z={ignore_z})\n{e}, "
+                f"{traceback.format_exc()}")
             return []
 
         return entities
