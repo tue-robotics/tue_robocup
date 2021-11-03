@@ -5,7 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_msgs.msg import EntityInfo
+from ed_py.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
@@ -226,7 +226,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
             arm.gripper.occupied_by = self.item_designator.resolve()
         else:
             if self.item_label != "":
-                handed_entity = EntityInfo(id=self.item_label)
+                handed_entity = Entity(self.item_label, None, "map", None, None, {}, None, rospy.Time())
                 arm.gripper.occupied_by = handed_entity
             else:
                 rospy.logerr("No grabbed entity designator and no label for dummy entity given")
