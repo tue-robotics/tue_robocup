@@ -20,7 +20,7 @@ def symbolic_constraint(robot, entity_designator_area_name_map):
         if hasattr(area_name, "resolve"):
             area_name = area_name.resolve()
         if entity:
-            entity_id_area_name_map[entity.id] = area_name
+            entity_id_area_name_map[entity.uuid] = area_name
         else:
             rospy.logerr("Designator {0} in entity_designator_area_name_map resolved to {1}.".format(desig, entity))
             # Put a None item in the dict. We check on that and if there's a None, something failed.

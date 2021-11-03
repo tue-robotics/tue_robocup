@@ -45,7 +45,7 @@ class NavigateToExplore(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
-        rospy.logdebug("Navigating to explore entity '{}'".format(e.id))
+        rospy.logdebug("Navigating to explore entity '{}'".format(e.uuid))
 
         ch = e.convex_hull
 
@@ -91,6 +91,6 @@ class NavigateToExplore(NavigateTo):
         if not entity:
             return True
 
-        rospy.loginfo("Breakout: entity_id = {0}".format(entity.id))
+        rospy.loginfo("Breakout: entity_id = {0}".format(entity.uuid))
 
         return False

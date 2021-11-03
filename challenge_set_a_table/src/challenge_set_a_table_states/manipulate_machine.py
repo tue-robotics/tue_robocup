@@ -4,6 +4,7 @@ import rospy
 import smach
 
 # TU/e
+from ed_py.entity import Entity
 import robot_skills
 from robot_skills.arm import arms
 import robot_smach_states as states
@@ -25,7 +26,7 @@ class DefaultGrabDesignator(ds.Designator):
         :param surface_designator: designator for the object to grab from
         :param area_description: string with id of the area where the object should be located in
         """
-        super(DefaultGrabDesignator, self).__init__(resolve_type=robot_skills.util.entity.Entity)
+        super(DefaultGrabDesignator, self).__init__(resolve_type=Entity)
 
         self._robot = robot
         self._surface_designator = surface_designator
@@ -92,7 +93,7 @@ class GrabSingleItem(smach.StateMachine):
                 # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
                 self.grab_designator.lock()
                 if self.grab_designator.resolve():
-                    rospy.loginfo("Current_item is now locked to {0}".format(self.grab_designator.resolve().id))
+                    rospy.loginfo("Current_item is now locked to {0}".format(self.grab_designator.resolve().uuid))
 
                 return "locked"
 
@@ -137,7 +138,7 @@ class PlaceSingleItem(smach.State):
 
     def execute(self, userdata=None):
         # Try to place the object
-        item = ds.EdEntityDesignator(robot=self._robot, id=arm.gripper.occupied_by.id)
+        item = ds.EdEntityDesignator(robot=self._robot, uuid=arm.gripper.occupied_by.uuid)
         arm_designator = ds.OccupiedArmDesignator(self._robot,
                                                   arm_properties={
                                                       "required_trajectories": ["prepare_place"],
@@ -186,10 +187,10 @@ class ManipulateMachine(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        grasp_furniture_designator1 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id1)
-        grasp_furniture_designator2 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id2)
+        grasp_furniture_designator1 = ds.EntityByIdDesignator(robot, uuid=grasp_furniture_id1)
+        grasp_furniture_designator2 = ds.EntityByIdDesignator(robot, uuid=grasp_furniture_id2)
 
-        place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
+        place_furniture_designator = ds.EntityByIdDesignator(robot, uuid=place_furniture_id)
         arm_designator = ds.ArmDesignator(robot, {})
         place_designator = EmptySpotDesignator(robot=robot,
                                                place_location_designator=place_furniture_designator,

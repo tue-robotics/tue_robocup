@@ -67,18 +67,18 @@ class GetTrashBin(smach.State):
             raise Exception("trashbin designator is empty")
 
         # get original entity pose
-        frame_original = self._robot.ed.get_entity(id=e.id).pose.frame
+        frame_original = self._robot.ed.get_entity(uuid=e.uuid).pose.frame
 
         # inspect and update entity
-        states.look_at_segmentation_area(self._robot, self._robot.ed.get_entity(id=e.id), 'on_top_of')
-        self._robot.ed.update_kinect("{} {}".format('on_top_of', e.id))
-        pose_updated = self._robot.ed.get_entity(id=e.id).pose
+        states.look_at_segmentation_area(self._robot, self._robot.ed.get_entity(uuid=e.uuid), 'on_top_of')
+        self._robot.ed.update_kinect("{} {}".format('on_top_of', e.uuid))
+        pose_updated = self._robot.ed.get_entity(uuid=e.uuid).pose
 
         # update entity with original orientation
         pose_updated.frame.M = frame_original.M
 
         # new_frame.header.stamp
-        self._robot.ed.update_entity(self._robot, e.id, frame_stamped=pose_updated)
+        self._robot.ed.update_entity(self._robot, e.uuid, frame_stamped=pose_updated)
         if e:
             return "succeeded"
         else:
@@ -311,7 +311,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'done': 'GO_TO_NEW_BIN'})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.id, radius=0.4,
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.4,
                                                      yaw_offset=-0.2),
                                    transitions={"done": "PREPARE_AND_GRAB"})
 

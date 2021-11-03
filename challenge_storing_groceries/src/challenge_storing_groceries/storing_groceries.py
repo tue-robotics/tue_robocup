@@ -18,7 +18,7 @@ from .pdf import WritePdf
 class StoringGroceries(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
-        # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
+        # start_waypoint = ds.EntityByIdDesignator(robot, uuid="manipulation_init_pose", name="start_waypoint")
 
         pdf_writer = WritePdf(robot=robot)
 
@@ -37,7 +37,7 @@ class StoringGroceries(smach.StateMachine):
                                    transitions={'continue': "MOVE_TABLE",
                                                 'no_response': 'AWAIT_START'})
 
-            cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
+            cabinet = ds.EntityByIdDesignator(robot, uuid=CABINET)
 
             open_door = OpenDoorMachine(robot, 'temp', 'in_front_of', 'shelf6') # cabinet_id is overwritten by 'move_table' below
 
@@ -57,20 +57,20 @@ class StoringGroceries(smach.StateMachine):
                 table_id = closest_workspace.grasp_entity_conf.entity_id
 
                 # Update the world model by fitting the entities to the frame_stamped's given below.
-                robot.ed.update_entity(id=cabinet_id, frame_stamped=closest_workspace.place_entity_conf.pose_estimate)
-                robot.ed.update_entity(id=table_id, frame_stamped=closest_workspace.grasp_entity_conf.pose_estimate)
+                robot.ed.update_entity(uuid=cabinet_id, frame_stamped=closest_workspace.place_entity_conf.pose_estimate)
+                robot.ed.update_entity(uuid=table_id, frame_stamped=closest_workspace.grasp_entity_conf.pose_estimate)
 
                 # Update designators
-                cabinet.id_ = closest_workspace.place_entity_conf.entity_id
+                cabinet.uuid = closest_workspace.place_entity_conf.entity_id
 
                 # Update manipulate machine
-                manipulate_machine.table_designator.id_         = closest_workspace.grasp_entity_conf.entity_id
+                manipulate_machine.table_designator.uuid        = closest_workspace.grasp_entity_conf.entity_id
 
-                manipulate_machine.place_entity_designator.id_  = closest_workspace.place_entity_conf.entity_id
+                manipulate_machine.place_entity_designator.uuid = closest_workspace.place_entity_conf.entity_id
                 manipulate_machine.place_designator._area       = closest_workspace.place_entity_conf.manipulation_volumes[0]
-                manipulate_machine.place_designator.place_location_designator.id = closest_workspace.place_entity_conf.entity_id
-                manipulate_machine.cabinet.id_                  = closest_workspace.place_entity_conf.entity_id
-                open_door.cabinet.id_                           = closest_workspace.place_entity_conf.entity_id
+                manipulate_machine.place_designator.place_location_designator.uuid = closest_workspace.place_entity_conf.entity_id
+                manipulate_machine.cabinet.uuid                 = closest_workspace.place_entity_conf.entity_id
+                open_door.cabinet.uuid                          = closest_workspace.place_entity_conf.entity_id
 
                 return "done"
 

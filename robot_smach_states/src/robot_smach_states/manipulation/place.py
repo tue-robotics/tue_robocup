@@ -6,8 +6,8 @@ import rospy
 import smach
 
 # TU/e Robotics
+from ed_py.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
-from robot_skills.util.entity import Entity
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
 from ..utility import LockDesignator, ResolveArm, check_arm_requirements
@@ -226,7 +226,7 @@ class Place(smach.StateMachine):
 
         # Case 3
         if isinstance(place_pose, str):
-            furniture_designator = EdEntityDesignator(robot=robot, id=place_pose)
+            furniture_designator = EdEntityDesignator(robot=robot, uuid=place_pose)
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
                                                    arm_designator=arm, area=place_area)
         # Case 1
@@ -283,8 +283,8 @@ if __name__ == "__main__":
 
     robot = get_robot_from_argv(index=1)
 
-    robot.ed.update_entity(id="bla")
-    place_entity = EdEntityDesignator(robot, id="bla")
+    robot.ed.update_entity(uuid="bla")
+    place_entity = EdEntityDesignator(robot, uuid="bla")
     arm = ArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_place"],
                                                "required_grasping_types": [arms.GripperTypes.GRASPING]})
 

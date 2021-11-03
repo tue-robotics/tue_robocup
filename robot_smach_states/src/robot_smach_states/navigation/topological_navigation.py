@@ -82,7 +82,7 @@ def get_topological_action_plan(
     :param area_designator: designator resolving to a string describing the area to navigate to
     """
     # Queries planner
-    entity_id = entity_designator.resolve().id
+    entity_id = entity_designator.resolve().uuid
     area = area_designator.resolve() if area_designator is not None else ""
     action_msgs = robot.topological_planner.get_plan(entity_id=entity_id, area=area)
     rospy.loginfo(f"Actions: {action_msgs}")

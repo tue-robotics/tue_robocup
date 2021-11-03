@@ -96,7 +96,7 @@ class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
     def __init__(self, robot, cupboard_id, cupboard_navigation_area, required_items):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
 
-        cupboard = EdEntityDesignator(robot=robot, id=cupboard_id)
+        cupboard = EdEntityDesignator(robot=robot, uuid=cupboard_id)
 
         with self:
             StateMachine.add("NAVIGATE_TO_CUPBOARD",

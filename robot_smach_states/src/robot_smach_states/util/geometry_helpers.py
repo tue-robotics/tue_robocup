@@ -68,7 +68,7 @@ def onTopOff(subject, container, ht=0.1):
     """
     ''' First: check if container actually has a convex hull '''
     if len(container.convex_hull) == 0:
-        rospy.logerr('Entity {0} has no convex hull'.format(container.id))
+        rospy.logerr('Entity {0} has no convex hull'.format(container.uuid))
         return False
 
     ''' Second: turn points into KDL objects and offset '''

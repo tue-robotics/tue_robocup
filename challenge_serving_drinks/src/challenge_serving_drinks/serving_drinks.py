@@ -72,7 +72,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
 
     def execute(self, userdata=None):
         classification_list = self._classification_list_designator.resolve() if hasattr(self._classification_list_designator, "resolve") else self._classification_list_designator
-        classification_list = set([classification.type for classification in classification_list])
+        classification_list = set([classification.etype for classification in classification_list])
 
         if not classification_list:
             rospy.loginfo("Classification list empty")
@@ -117,8 +117,8 @@ class ServingDrinks(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         # Designators
-        bar_designator = ds.EdEntityDesignator(robot=robot, id=challenge_knowledge.bar_id, name='bar_des')
-        room_designator = ds.EdEntityDesignator(robot=robot, id=challenge_knowledge.room_id, name='room_des')
+        bar_designator = ds.EdEntityDesignator(robot=robot, uuid=challenge_knowledge.bar_id, name='bar_des')
+        room_designator = ds.EdEntityDesignator(robot=robot, uuid=challenge_knowledge.room_id, name='room_des')
 
         objects_list_des = ds.VariableDesignator(resolve_type=[ClassificationResult], name='objects_list_des')
         unav_drink_des = ds.VariableDesignator(resolve_type=str, name='unav_drink_str_des')

@@ -7,8 +7,8 @@ import rospy
 from pykdl_ros import VectorStamped
 
 # Robot Skills
+from ed_py.entity import Entity
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
 
 # Robot Smach States

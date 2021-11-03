@@ -25,7 +25,7 @@ def waypoint_constraint(waypoint_designator, radius, look=True):
             "waypoint_constraint function: No entity could be resolved from designator '%s'" % waypoint_designator)
         return None
 
-    rospy.logdebug("Navigating to waypoint '{}'".format(e.id))
+    rospy.logdebug("Navigating to waypoint '{}'".format(e.uuid))
 
     try:
         x = e.pose.frame.p.x()

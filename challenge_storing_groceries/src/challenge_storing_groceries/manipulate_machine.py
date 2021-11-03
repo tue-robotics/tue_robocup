@@ -4,6 +4,7 @@ import rospy
 import smach
 
 # TU/e
+from ed_py.entity import Entity
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
@@ -27,7 +28,7 @@ class DefaultGrabDesignator(ds.Designator):
         :param surface_designator: designator for the object to grab from
         :param area_description: string with id of the area where the object should be located in
         """
-        super(DefaultGrabDesignator, self).__init__(resolve_type=robot_skills.util.entity.Entity)
+        super(DefaultGrabDesignator, self).__init__(resolve_type=Entity)
 
         self._robot = robot
         self._surface_designator = surface_designator
@@ -54,13 +55,13 @@ class DefaultGrabDesignator(ds.Designator):
             point = VectorStamped.from_framestamped(e.pose)
             if surface.in_volume(point=point, volume_id=self._area_description):
                 entities.append(e)
-        rospy.loginfo("{l} entities in {vol} of surface {ent}".format(l=len(entities), vol=self._area_description, ent=surface.id))
+        rospy.loginfo("{l} entities in {vol} of surface {ent}".format(l=len(entities), vol=self._area_description, ent=surface.uuid))
 
         # Remove all entities that are too large or too small
         entities = [e for e in entities if (e.shape.z_max - e.shape.z_min) > MIN_GRAB_OBJECT_HEIGHT]
         entities = [e for e in entities if (e.shape.y_max - e.shape.y_min) < MAX_GRAB_OBJECT_WIDTH]
         entities = [e for e in entities if (e.shape.x_max - e.shape.x_min) < MAX_GRAB_OBJECT_WIDTH]
-        rospy.loginfo("Keeping {l} entities in {vol} of surface {ent} that are not too big".format(l=len(entities), vol=self._area_description, ent=surface.id))
+        rospy.loginfo("Keeping {l} entities in {vol} of surface {ent} that are not too big".format(l=len(entities), vol=self._area_description, ent=surface.uuid))
 
         # Check if there are any
         if not entities:
@@ -98,7 +99,7 @@ class GrabSingleItem(smach.StateMachine):
                 # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
                 self.grab_designator.lock()
                 if self.grab_designator.resolve():
-                    rospy.loginfo("Current_item is now locked to {0}".format(self.grab_designator.resolve().id))
+                    rospy.loginfo("Current_item is now locked to {0}".format(self.grab_designator.resolve().uuid))
 
                 return "locked"
 
@@ -149,7 +150,7 @@ class PlaceSingleItem(smach.State):
         if place_designator is not None:
             self.place_designator = place_designator
         # else:
-        #     place_entity_designator = ds.EdEntityDesignator(robot=robot, id=DEFAULT_PLACE_ENTITY)
+        #     place_entity_designator = ds.EdEntityDesignator(robot=robot, uuid=DEFAULT_PLACE_ENTITY)
         #     self._place_designator = ds.EmptySpotDesignator(robot=robot,
         #                                                     place_location_designator=place_entity_designator,
         #                                                     area=DEFAULT_PLACE_AREA)
@@ -158,7 +159,7 @@ class PlaceSingleItem(smach.State):
 
     def execute(self, userdata=None):
         # Try to place the object
-        item = ds.EdEntityDesignator(robot=self._robot, id=arm.gripper.occupied_by.id)
+        item = ds.EdEntityDesignator(robot=self._robot, uuid=arm.gripper.occupied_by.uuid)
         arm_designator = ds.OccupiedArmDesignator(self._robot, {"required_goals": ["reset", "handover_to_human"],
                                                                 "required_gripper_types": [arms.GripperTypes.GRASPING]})
         resolved_arm = arm_designator.resolve()
@@ -204,16 +205,16 @@ class ManipulateMachine(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
+        self.table_designator = ds.EntityByIdDesignator(robot, uuid="temp")  # will be updated later on
         if grab_designator_1 is None:
             grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE)
         if grab_designator_2 is None:
             grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE)
-        self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
+        self.cabinet = ds.EntityByIdDesignator(robot, uuid="temp")  # will be updated later on
 
-        self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
+        self.place_entity_designator = ds.EdEntityDesignator(robot=robot, uuid="temp")
         self.arm_designator = ds.ArmDesignator(robot, {})
         self.place_designator = EmptySpotDesignator(robot=robot,
                                                     place_location_designator=self.place_entity_designator,

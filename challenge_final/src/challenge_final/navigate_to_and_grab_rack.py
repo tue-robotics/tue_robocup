@@ -117,7 +117,7 @@ class NavigateToAndGrabRack(StateMachine):
     def __init__(self, robot, rack_id, rack_navigation_area):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        rack = EdEntityDesignator(robot=robot, id=rack_id)
+        rack = EdEntityDesignator(robot=robot, uuid=rack_id)
 
         with self:
             StateMachine.add("NAVIGATE_TO_RACK",

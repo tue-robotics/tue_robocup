@@ -3,10 +3,10 @@
 from __future__ import print_function
 
 import rospy
+from ed_py.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
-from robot_skills.util.entity import Entity
 
 
 class SeatsInRoomDesignator(ds.Designator):

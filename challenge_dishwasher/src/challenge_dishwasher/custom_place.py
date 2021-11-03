@@ -98,7 +98,7 @@ class TestCustomPlace(StateMachine):
     def __init__(self, robot, dishwasher_id, dishwasher_navigate_area):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+        dishwasher = EdEntityDesignator(robot=robot, uuid=dishwasher_id)
         arm = Designator(robot.leftArm)
 
         with self:

@@ -25,4 +25,4 @@ if __name__ == "__main__":
 
     robot = get_robot(args.robot)
     print(args)
-    door_designator = EntityByIdDesignator(robot=robot, id=args.door_entity)
+    door_designator = EntityByIdDesignator(robot=robot, uuid=args.door_entity)

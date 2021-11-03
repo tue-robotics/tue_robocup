@@ -62,7 +62,7 @@ class SetInitialPose(smach.State):
         :return: tuple(float, float, float) x, y, yaw in map frame
         :raises: Exception
         """
-        location_entity = self.robot.ed.get_entity(id=location)
+        location_entity = self.robot.ed.get_entity(uuid=location)
 
         if not location_entity:
             raise Exception("SetInitialPose: ED entity '" + location + "' does not exist.")

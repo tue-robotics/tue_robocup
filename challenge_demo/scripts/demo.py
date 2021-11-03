@@ -118,7 +118,7 @@ def main():
             base_pose = base_loc.frame
             print(base_pose)
             location_id = "starting_point"
-            robot.ed.update_entity(id=location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(), "map"),
+            robot.ed.update_entity(uuid=location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(), "map"),
                                    type="waypoint")
 
             robot.head.look_at_standing_person()

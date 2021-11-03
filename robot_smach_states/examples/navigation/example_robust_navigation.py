@@ -21,9 +21,9 @@ if __name__ == "__main__":
     sm = NavigateRobust(
         robot,
         options=[
-            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id="foo")),
-            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id="bar")),
-            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id="initial_pose"))
+            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid="foo")),
+            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid="bar")),
+            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid="initial_pose"))
         ],
         wait_time=1.0)
 

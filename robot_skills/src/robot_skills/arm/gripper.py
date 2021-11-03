@@ -106,7 +106,7 @@ class ParrallelGripper(Gripper):
         if state == GripperState.OPEN:
             if self.occupied_by is not None:
                 rospy.logerr("ParrallelGripper.send_goal open is called but there is still an entity with id '%s' \
-                occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
+                occupying the gripper, please update the world model and remove this entity" % self.occupied_by.uuid)
             self.occupied_by = None
 
         goal_status = GoalStatus.SUCCEEDED

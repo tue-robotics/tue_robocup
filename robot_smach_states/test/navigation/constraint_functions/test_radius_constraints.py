@@ -3,11 +3,13 @@ import unittest
 
 import rospy
 
-from robot_skills.util.entity import Entity
-from robot_skills.util.shape import Shape
 import PyKDL as kdl
-from robot_smach_states.util.designators.core import Designator
 
+from ed_py.entity import Entity
+
+from robot_skills.util.shape import Shape
+
+from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.navigation.constraint_functions.radius_constraints import radius_constraint
 from .util import constraint_strings_equal
 

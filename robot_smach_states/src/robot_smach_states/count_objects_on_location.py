@@ -41,17 +41,17 @@ class CountObjectsOnLocation(smach.State):
         if object_classifications:
 
             for idx, obj in enumerate(object_classifications):
-                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.type,
-                                                                                        id=obj.id, p=obj.probability))
+                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.etype,
+                                                                                        id=obj.uuid, p=obj.probability))
 
             over_threshold = [obj for obj in object_classifications if obj.probability >= self.threshold]
 
-            dropped = {obj.id: obj.probability for obj in object_classifications if obj.probability < self.threshold}
+            dropped = {obj.uuid: obj.probability for obj in object_classifications if obj.probability < self.threshold}
             rospy.debug("Dropping {l} entities due to low class. score (< {th}): {dropped}"
                         .format(th=self.threshold, dropped=dropped, l=len(dropped)))
             object_classifications = over_threshold
 
-            list_objects = [obj for obj in object_classifications if obj.type == self.object_type.resolve()]
+            list_objects = [obj for obj in object_classifications if obj.etype == self.object_type.resolve()]
             num_objects = len(list_objects)
             rospy.loginfo("Counted {} objects matching the query".format(num_objects))
             self.num_objects_designator.write(num_objects)

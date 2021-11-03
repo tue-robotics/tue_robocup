@@ -121,7 +121,7 @@ def _get_area(convex_hull):
 #                 rospy.logerr("Could not update_kinect")
 #                 continue
 #
-#             ents = [self._robot.ed.get_entity(id=id_) for id_ in set(kinect_update.new_ids + kinect_update.updated_ids)]
+#             ents = [self._robot.ed.get_entity(uuid=id_) for id_ in set(kinect_update.new_ids + kinect_update.updated_ids)]
 #             ents = [e for e in ents if e is not None]
 #
 #             rospy.loginfo("Found %d entities for side %s" % (len(ents), side))
@@ -223,7 +223,7 @@ class StoreWaypoint(smach.State):
         rospy.set_param("/restaurant_locations/{name}".format(name=self._location_id), loc_dict)
 
         self._visualize_location(base_pose, self._location_id)
-        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(),
+        self._robot.ed.update_entity(uuid=self._location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(),
                                                                                       "map"),
                                      type="waypoint")
 

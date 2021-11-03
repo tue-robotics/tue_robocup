@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from . import concurrent_util
 from . import decorators
-from . import entity
 from . import exceptions
 from . import image_operations
 from . import msg_constructors

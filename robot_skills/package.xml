@@ -26,6 +26,7 @@
   <depend>ed_people_recognition_msgs</depend>
   <depend>ed_perception_msgs</depend>
   <depend>ed_sensor_integration_msgs</depend>
+  <depend>ed_python</depend>
   <depend>geometry_msgs</depend>
   <depend>head_ref_msgs</depend>
   <depend>hmi</depend>

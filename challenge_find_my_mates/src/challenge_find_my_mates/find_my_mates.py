@@ -31,7 +31,7 @@ def setup_statemachine(robot):
                                transitions={'spoken': 'GO_TO_SEARCH_POSE'})
 
         smach.StateMachine.add('GO_TO_SEARCH_POSE',
-                               NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=SEARCH_POINT),
+                               NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=SEARCH_POINT),
                                                                  radius=0.375),
                                transitions={'arrived': 'RISE_FOR_THE_PEOPLE',
                                             'goal_not_defined': 'failed',
@@ -78,9 +78,9 @@ def setup_statemachine(robot):
 
         # drive back to the operator to describe the mates
         smach.StateMachine.add('GO_BACK_TO_OPERATOR',
-                               NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=OPERATOR_POINT),
+                               NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=OPERATOR_POINT),
                                                   radius=0.7,
-                                                  look_at_designator=ds.EntityByIdDesignator(robot, id=OPERATOR_POINT)),
+                                                  look_at_designator=ds.EntityByIdDesignator(robot, uuid=OPERATOR_POINT)),
                                transitions={'arrived': 'REPORT_PEOPLE',
                                             'goal_not_defined': 'REPORT_PEOPLE',
                                             'unreachable': 'WAIT_GO_BACK'})

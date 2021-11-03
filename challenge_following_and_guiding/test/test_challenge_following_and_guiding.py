@@ -10,12 +10,14 @@ import select
 import termios
 import tty
 
+
 def getKey():
     tty.setraw(sys.stdin.fileno())
     select.select([sys.stdin], [], [], 0)
     key = sys.stdin.read(1)
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
     return key
+
 
 class Person(object):
     def __init__(self, W, position):
