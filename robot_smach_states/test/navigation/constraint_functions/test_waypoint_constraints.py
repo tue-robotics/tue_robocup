@@ -4,7 +4,7 @@ import unittest
 import PyKDL as kdl
 import rospy
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.navigation.constraint_functions.waypoint_constraints import waypoint_constraint

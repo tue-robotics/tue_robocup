@@ -9,7 +9,7 @@ from pykdl_ros import FrameStamped
 import rospy
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.get_robot import get_robot
 
 # Robot Smach States

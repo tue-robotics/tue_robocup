@@ -18,7 +18,7 @@ import tf_conversions
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
-from ed_py.entity import from_entity_info
+from ed.entity import from_entity_info
 
 from hmi import HMIResult
 from hmi.common import parse_sentence, random_sentence

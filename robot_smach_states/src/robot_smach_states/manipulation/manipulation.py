@@ -5,7 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say

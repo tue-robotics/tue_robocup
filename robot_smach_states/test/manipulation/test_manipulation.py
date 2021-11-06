@@ -1,7 +1,7 @@
 import unittest
 import mock
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 # Robot Skills
 from robot_skills.arm import arms

@@ -10,7 +10,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.classification_result import ClassificationResult
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds

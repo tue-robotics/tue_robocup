@@ -3,8 +3,8 @@ import unittest
 import PyKDL as kdl
 import rospy
 
-from ed_py.entity import Entity
-from ed_py.volume import BoxVolume
+from ed.entity import Entity
+from ed.volume import BoxVolume
 
 # Robot Smach States
 from robot_smach_states.human_interaction.give_directions import get_room

@@ -27,7 +27,7 @@ import smach
 
 # ED
 from ed_robocup_msgs.srv import FitEntityInImage, FitEntityInImageRequest
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds

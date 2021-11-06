@@ -5,8 +5,8 @@ import rospy
 import PyKDL as kdl
 from pykdl_ros import FrameStamped
 
-from ed_py.entity import Entity
-from ed_py.shape import RightPrism
+from ed.entity import Entity
+from ed.shape import RightPrism
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot

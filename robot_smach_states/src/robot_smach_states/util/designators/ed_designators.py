@@ -9,7 +9,7 @@ import pprint
 import rospy
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from pykdl_ros import VectorStamped
 from .core import Designator
 from .checks import check_resolve_type

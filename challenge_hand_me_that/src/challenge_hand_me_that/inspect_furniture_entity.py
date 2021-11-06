@@ -13,7 +13,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.human_interaction import Say

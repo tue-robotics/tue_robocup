@@ -1,7 +1,7 @@
 import rospy
 import argparse
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 import PyKDL as kdl
 

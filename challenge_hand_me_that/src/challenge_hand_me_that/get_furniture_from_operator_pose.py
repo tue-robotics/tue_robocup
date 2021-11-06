@@ -7,7 +7,7 @@
 import os
 
 import rospy
-from ed_py.entity import Entity
+from ed.entity import Entity
 from geometry_msgs.msg import PoseStamped
 from robot_skills import get_robot, robot
 from robot_smach_states.util.designators import is_writeable, VariableDesignator

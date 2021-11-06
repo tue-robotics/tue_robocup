@@ -8,7 +8,7 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from ..utility import check_arm_requirements, ResolveArm

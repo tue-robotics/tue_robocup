@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import unittest
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from robot_skills.mockbot import Mockbot
 from robot_smach_states.util.designators.core import Designator

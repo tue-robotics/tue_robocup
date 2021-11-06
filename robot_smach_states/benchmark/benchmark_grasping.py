@@ -11,7 +11,7 @@ import rospy
 from pykdl_ros import VectorStamped
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from robot_skills.get_robot import get_robot
 from robot_skills.arm import arms
