@@ -6,18 +6,12 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.arm import arms
 from robot_skills.robot import Robot
 from topological_action_planner_msgs.msg import Edge
 
 # Robot Smach States
 from robot_smach_states.manipulation.open_door import OpenDoor
-from robot_smach_states.util.designators import (
-    Designator,
-    EdEntityDesignator,
-    EntityByIdDesignator,
-    UnoccupiedArmDesignator,
-)
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator
 from .navigation.navigate_to_symbolic import NavigateToSymbolic
 from .navigation.navigate_to_waypoint import NavigateToWaypoint
 from .navigation.navigation import NavigateTo
@@ -70,26 +64,13 @@ def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
 
 def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
     door_designator = EntityByIdDesignator(robot, msg.destination.entity)
-    arm_des = UnoccupiedArmDesignator(
-        robot,
-        {
-            "required_goals": ["reset", "handover"],
-            "force_sensor_required": True,
-            "required_gripper_types": [arms.GripperTypes.GRASPING],
-        },
-    )
-    return OpenDoor(robot=robot, arm_designato=arm_des, door_designator=door_designator)
+
+    return OpenDoor(robot=robot, door_designator=door_designator)
 
 
-@smach.cb_interface(
-    outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"],
-    output_keys=["action_plan"],
-)
+@smach.cb_interface(outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"])
 def get_topological_action_plan(
-    userdata: smach.UserData,
-    robot: Robot,
-    entity_designator: EdEntityDesignator,
-    area_designator: Designator = None,
+    userdata: smach.UserData, robot: Robot, entity_designator: EdEntityDesignator, area_designator: Designator = None
 ) -> str:
     """
     Gets an action plan from the topological action server
@@ -115,9 +96,7 @@ def get_topological_action_plan(
 
 
 @smach.cb_interface(
-    outcomes=["succeeded", "arrived", "blocked", "preempted"],
-    input_keys=["action_plan"],
-    output_keys=["failing_edge"],
+    outcomes=["succeeded", "arrived", "blocked", "preempted"], input_keys=["action_plan"], output_keys=["failing_edge"]
 )
 def execute_topological_plan(userdata: smach.UserData) -> str:
     """
