@@ -435,7 +435,7 @@ class Arm(RobotPart):
         # TODO: Get rid of this custom message type
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
-        grasp_precompute_goal.goal.header.frame_id = frame_in_baselink.frame_id
+        grasp_precompute_goal.goal.header.frame_id = frame_in_baselink.header.frame_id
         grasp_precompute_goal.goal.header.stamp = rospy.Time.now()
 
         grasp_precompute_goal.PERFORM_PRE_GRASP = pre_grasp
