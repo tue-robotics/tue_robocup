@@ -38,9 +38,6 @@ class ArmToJointConfig(smach.State):
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
-        if not arm.has_joint_goal(self.configuration):
-            rospy.logerr("Given default configuration does not exist")
-            return "failed"
         if arm.send_joint_goal(self.configuration):
             return 'succeeded'
         return "failed"
