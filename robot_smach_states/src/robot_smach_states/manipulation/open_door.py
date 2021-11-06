@@ -102,7 +102,7 @@ class OpenDoor(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        if not arm_designator:
+        if arm_designator is None:
             arm_designator = UnoccupiedArmDesignator(robot, {"required_goals": ["reset", "handover"],
                                                              "force_sensor_required": True,
                                                              "required_gripper_types": [arms.GripperTypes.GRASPING]})
