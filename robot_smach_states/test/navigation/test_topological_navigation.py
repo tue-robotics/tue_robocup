@@ -52,7 +52,7 @@ class TestTopologicalNavigation(unittest.TestCase):
 
     def test_open_door_wrong_entity(self):
         msg = Edge()
-        msg.action_type = Edge.ACTION_OPEN_DOOR
+        msg.action_type = Edge.ACTION_USE_ELEVATOR
         entity_id = "door"
         msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
         msg.destination = Node(entity_id, DESTINATION_NODE_AREA)
