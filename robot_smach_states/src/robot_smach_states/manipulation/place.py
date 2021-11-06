@@ -6,7 +6,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace

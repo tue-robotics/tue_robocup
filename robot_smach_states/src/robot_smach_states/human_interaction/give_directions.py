@@ -17,7 +17,7 @@ import tf2_pykdl_ros
 
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.robot import Robot
 
 # Robot Smach States

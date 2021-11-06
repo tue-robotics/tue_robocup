@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import rospy
-from ed_py.entity import Entity
+from ed.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach

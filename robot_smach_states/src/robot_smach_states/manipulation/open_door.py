@@ -12,7 +12,7 @@ from pykdl_ros import FrameStamped, VectorStamped
 from geometry_msgs.msg import PointStamped, Point
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm import arms
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint

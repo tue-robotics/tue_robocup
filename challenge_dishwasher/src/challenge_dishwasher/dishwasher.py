@@ -5,7 +5,7 @@ from challenge_dishwasher.custom_place import CustomPlace
 from challenge_dishwasher.open_dishwasher import OpenDishwasher
 from challenge_dishwasher.simple_grab import FindAndGrab
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from robot_skills.classification_result import ClassificationResult
 from robot_smach_states.human_interaction import Say

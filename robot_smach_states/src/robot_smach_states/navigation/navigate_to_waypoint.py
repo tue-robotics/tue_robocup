@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from .navigation import NavigateTo
 from .constraint_functions import combine_constraints, waypoint_constraint, look_at_constraint
 from ..util.designators import check_resolve_type

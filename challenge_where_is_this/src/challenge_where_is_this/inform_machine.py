@@ -6,7 +6,7 @@ import rospy
 import smach
 
 # TU/e
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.simulation import is_sim_mode
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult

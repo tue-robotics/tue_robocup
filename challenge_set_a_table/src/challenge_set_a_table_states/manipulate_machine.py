@@ -4,7 +4,7 @@ import rospy
 import smach
 
 # TU/e
-from ed_py.entity import Entity
+from ed.entity import Entity
 import robot_skills
 from robot_skills.arm import arms
 import robot_smach_states as states

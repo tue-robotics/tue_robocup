@@ -3,8 +3,8 @@ import PyKDL as kdl
 import rospy
 
 from ed_sensor_integration_msgs.srv import UpdateResponse
-from ed_py.entity import Entity
-from ed_py.volume import BoxVolume
+from ed.entity import Entity
+from ed.volume import BoxVolume
 
 from robot_skills import Mockbot
 from robot_skills.classification_result import ClassificationResult

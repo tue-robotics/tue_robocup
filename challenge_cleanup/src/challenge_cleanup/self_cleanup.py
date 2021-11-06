@@ -4,7 +4,7 @@ import hmi
 
 from pykdl_ros import FrameStamped
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from robot_smach_states.human_interaction import AskYesNo, HearOptionsExtra, Say
 from robot_smach_states.manipulation import ArmToJointConfig, Grab, Place

@@ -1,7 +1,7 @@
 # ROS
 import smach
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 # Robot smach states
 import robot_smach_states as states

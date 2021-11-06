@@ -5,7 +5,7 @@ import rospy
 
 import PyKDL as kdl
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.navigation.constraint_functions.look_at_constraints import look_at_constraint

@@ -6,8 +6,8 @@ import PyKDL as kdl
 import rospy
 
 # TU/e Robotics
-from ed_py.entity import Entity
-from ed_py.shape import RightPrism
+from ed.entity import Entity
+from ed.shape import RightPrism
 from pykdl_ros import FrameStamped
 from robot_skills.get_robot import get_robot
 

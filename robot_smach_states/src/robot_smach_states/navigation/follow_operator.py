@@ -19,7 +19,7 @@ from visualization_msgs.msg import Marker
 
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
-from ed_py.entity import Entity
+from ed.entity import Entity
 from hmi import TimeoutException
 from ..util.startup import startup
 from ..util.designators import VariableDesignator

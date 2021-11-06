@@ -9,7 +9,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from .state import State
 from .util import designators as ds
 

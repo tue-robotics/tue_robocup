@@ -2,7 +2,7 @@ import smach
 import rospy
 from pykdl_ros import VectorStamped
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_smach_states.util.designators import EntityByIdDesignator
 
 from .self_cleanup import SelfCleanup  # , SelfCleanup2

@@ -5,8 +5,8 @@ import rospy
 from pykdl_ros import FrameStamped
 import re
 
-from ed_py.entity import Entity
-from ed_py.volume import BoxVolume
+from ed.entity import Entity
+from ed.volume import BoxVolume
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot

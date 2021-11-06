@@ -12,7 +12,7 @@ from pykdl_ros import FrameStamped, VectorStamped
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from robot_skills.arm.arms import PublicArm
 from ..util.designators import Designator, check_resolve_type
 from cb_base_navigation_msgs.msg import PositionConstraint

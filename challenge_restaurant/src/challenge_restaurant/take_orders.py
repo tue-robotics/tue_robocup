@@ -11,7 +11,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
 import robot_smach_states.util.designators as ds

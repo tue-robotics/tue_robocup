@@ -5,8 +5,8 @@ import rospy
 
 import PyKDL as kdl
 
-from ed_py.entity import Entity
-from ed_py.shape import Shape
+from ed.entity import Entity
+from ed.shape import Shape
 
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.navigation.constraint_functions.radius_constraints import radius_constraint

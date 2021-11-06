@@ -3,7 +3,7 @@ import unittest
 
 from action_server.test_tools import test_grammar
 from ed_msgs.msg import EntityInfo
-from ed_py.entity import from_entity_info
+from ed.entity import from_entity_info
 
 from robocup_knowledge import load_knowledge
 from robot_skills.mockbot import Mockbot

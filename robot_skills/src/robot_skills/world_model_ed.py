@@ -23,7 +23,7 @@ from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
 import ed_sensor_integration_msgs.srv as ed_sensor_srv
 
-from ed_py.entity import from_entity_info
+from ed.entity import from_entity_info
 
 # Robot skills
 from robot_skills.classification_result import ClassificationResult

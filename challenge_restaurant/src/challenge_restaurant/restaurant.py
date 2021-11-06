@@ -4,7 +4,7 @@ import numpy as np
 import robot_smach_states as states
 import smach
 
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 from .store_waypoint import StoreWaypoint
 from .take_orders import TakeOrder, ReciteOrders, ClearOrders

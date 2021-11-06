@@ -6,7 +6,7 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
-from ed_py.entity import Entity
+from ed.entity import Entity
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
