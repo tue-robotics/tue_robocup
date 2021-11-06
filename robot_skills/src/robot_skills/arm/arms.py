@@ -647,7 +647,7 @@ class Arm(RobotPart):
         :return: no return
         """
         marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = goal.frame_id
+        marker.header.frame_id = goal.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
         marker.pose.position.x = goal.frame.p.x()
