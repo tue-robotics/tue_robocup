@@ -426,9 +426,9 @@ class Arm(RobotPart):
         myargs = locals()
 
         # If necessary, prefix frame_id
-        if frameStamped.frame_id.find(self.robot_name) < 0:
-            frameStamped.frame_id = self.robot_name + "/" + frameStamped.frame_id
-            rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
+        if frameStamped.header.frame_id.find(self.robot_name) < 0:
+            frameStamped.header.frame_id = self.robot_name + "/" + frameStamped.header.frame_id
+            rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.header.frame_id))
 
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
         frame_in_baselink = self.tf_buffer.transform(frameStamped, self.robot_name + "/base_link")
