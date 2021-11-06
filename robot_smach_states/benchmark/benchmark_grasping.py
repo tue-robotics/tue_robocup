@@ -74,6 +74,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
                            .format(cls=cls,support=support,search_area=search_area))
         say_announce.execute()
 
+        rospy.loginfo("Navigating to waypoint '{}'".format(waypoint))
         nav_to_start = NavigateToWaypoint(robot,
                                           waypoint_designator=waypoint_des,
                                           look_at_designator=support_entity)
@@ -146,6 +147,10 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     except AssertionError as assertion_err:
         say_fail = Say(robot, sentence=assertion_err.message + ", sorry")
         say_fail.execute()
+    except Exception as other_exception:
+        say_fail = Say(robot, sentence="Some exception happened, sorry")
+        say_fail.execute()
+        raise other_exception
     finally:
         results_writer.writerow(record)
 
