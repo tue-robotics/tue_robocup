@@ -81,9 +81,15 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
     return OpenDoor(robot=robot, arm_designato=arm_des, door_designator=door_designator)
 
 
-@smach.cb_interface(outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"])
+@smach.cb_interface(
+    outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"],
+    output_keys=["action_plan"],
+)
 def get_topological_action_plan(
-    userdata: smach.UserData, robot: Robot, entity_designator: EdEntityDesignator, area_designator: Designator = None
+    userdata: smach.UserData,
+    robot: Robot,
+    entity_designator: EdEntityDesignator,
+    area_designator: Designator = None,
 ) -> str:
     """
     Gets an action plan from the topological action server
@@ -111,7 +117,7 @@ def get_topological_action_plan(
 @smach.cb_interface(
     outcomes=["succeeded", "arrived", "blocked", "preempted"],
     input_keys=["action_plan"],
-    output_keys=["failing_edge"]
+    output_keys=["failing_edge"],
 )
 def execute_topological_plan(userdata: smach.UserData) -> str:
     """
@@ -122,7 +128,7 @@ def execute_topological_plan(userdata: smach.UserData) -> str:
     """
     for action in userdata.action_plan:
         result = action.execute()  # ToDo: process result
-        if result not in ['succeeded', 'done', 'arrived']:
+        if result not in ["succeeded", "done", "arrived"]:
             rospy.loginfo("action: {} had result {}".format(action, result))
             if result == "preempted":
                 return "preempted"
@@ -158,7 +164,7 @@ class TopologicalNavigateTo(smach.StateMachine):
                     "goal_not_defined": "goal_not_defined",
                     "goal_ok": "EXECUTE_PLAN",
                     "preempted": "unreachable",  # N.B.: NavigateTo does not support 'preempted'
-                }
+                },
             )
 
             smach.StateMachine.add(
@@ -169,5 +175,5 @@ class TopologicalNavigateTo(smach.StateMachine):
                     "arrived": "arrived",
                     "blocked": "unreachable",
                     "preempted": "unreachable",  # N.B.: NavigateTo does not support 'preempted'
-                }
+                },
             )
