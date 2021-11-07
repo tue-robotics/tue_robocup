@@ -214,7 +214,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                NavigateToWaypoint(robot=robot, waypoint_designator=ds.EntityByIdDesignator(
                                    robot=robot,
-                                   id=challenge_knowledge.starting_point),
+                                   uuid=challenge_knowledge.starting_point),
                                                   radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
                                             "unreachable": "SAY_CLEANED_ROOM",
