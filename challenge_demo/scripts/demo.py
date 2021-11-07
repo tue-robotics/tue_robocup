@@ -178,7 +178,7 @@ def main():
         rospy.loginfo("Driving back to the starting point")
         nwc = NavigateToWaypoint(robot=robot,
                                  waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                          id=location_id),
+                                                                          uuid=location_id),
                                  radius=0.3)
         nwc.execute()
 
