@@ -93,14 +93,19 @@ class Door(Entity):
 
 class OpenDoor(smach.StateMachine):
     # def __init__(self, robot, arm_designator, door_designator, in_front_area_designator, behind_area_designator):
-    def __init__(self, robot, arm_designator, door_designator):
+    def __init__(self, robot, door_designator, arm_designator=None):
         """
         Enter the arena by force driving through the door
         :param robot: robot object
         :param door_designator: door_designator object
+        :param arm_designator: Designator resolving to an arm. Defaults to None to use an UnoccupiedArm
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
+        if arm_designator is None:
+            arm_designator = UnoccupiedArmDesignator(robot, {"required_goals": ["reset", "handover"],
+                                                             "force_sensor_required": True,
+                                                             "required_gripper_types": [arms.GripperTypes.GRASPING]})
         check_type(arm_designator, arms.PublicArm)
 
         with self:
@@ -536,10 +541,7 @@ if __name__ == "__main__":
     rospy.init_node("josja_faalt")
 
     hero = get_robot('hero')
-    arm_des = UnoccupiedArmDesignator(hero, {"required_goals": ["reset", "handover"],
-                                             "force_sensor_required": True,
-                                             "required_gripper_types": [arms.GripperTypes.GRASPING]})
     door = hero.ed.get_entity(id="door")
     door_des = Designator(Door(door))
-    test = OpenDoor(hero, arm_des, door_des)
+    test = OpenDoor(hero, door_des)
     test.execute()

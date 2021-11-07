@@ -155,42 +155,15 @@ class Robot(object):
                 bodypart.reset()
         return all(results.values())
 
-    def reset_all_arms(self, arm_timeout=0.0, close_gripper=True, gripper_timeout=None):
+    def reset_all_arms(self):
         """
-        Reset all arms of the robot, and by default, close their grippers.
-
-        The arm is always reset, the gripper is closed if 'close_gripper' is True (which is the default).
-
-        :param arm_timeout: How long to wait for resetting the arm, by default 0.0
-        :param close_gripper: By default 'True', which closes the gripper. If False, the gripper is not activated,
-        :param gripper_timeout: If specified and 'close_gripper' holds, timeout for closing the gripper.
-            If not specified, gripper movement uses 'arm_timeout'.
+        Reset all arms of the robot, including their parts.
         """
         for arm in self._arms.values():
-            if close_gripper:
-                if gripper_timeout is None:
-                    gripper_timeout = arm_timeout
-                arm.send_gripper_goal('close', timeout=gripper_timeout)
-
-            arm.selfreset()
-
-    def standby(self):
-        if not self.robot_name == 'amigo':
-            rospy.logerr('Standby only works for amigo')
-            return
-
-        self.reset_all_arms()
-        self.head.look_down()
-        self.torso.low()
-        self.lights.set_color(0, 0, 0)
+            arm.reset()
 
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
-
-    def tf_transform_pose(self, ps, frame):
-        self.tf_buffer.can_transform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
-        output_pose = self.tf_buffer.transform(ps, frame)
-        return output_pose
 
     def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
                 required_goals=None, desired_goals=None,

@@ -172,7 +172,7 @@ def main():
         robot.lights.set_color(0, 0, 1)  # be sure lights are blue
 
         robot.head.look_at_standing_person()
-        robot.reset_all_arms(gripper_timeout=0.0)
+        robot.reset_all_arms()
         robot.torso.reset()
 
         rospy.loginfo("Driving back to the starting point")

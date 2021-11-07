@@ -14,6 +14,7 @@ class GripperState(object):
     OPEN = "open"
     CLOSE = "close"
 
+
 class Gripper(RobotPart):
     """
     A gripper used for manipulating objects in the environment.
