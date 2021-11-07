@@ -68,6 +68,7 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
     return OpenDoor(robot=robot, door_designator=door_designator)
 
 
+# ToDo: replace userdata by designators
 @smach.cb_interface(outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"])
 def get_topological_action_plan(
     userdata: smach.UserData, robot: Robot, entity_designator: EdEntityDesignator, area_designator: Designator = None
@@ -95,6 +96,7 @@ def get_topological_action_plan(
     return "goal_ok"
 
 
+# ToDo: replace userdata by designators
 @smach.cb_interface(
     outcomes=["succeeded", "arrived", "blocked", "preempted"], input_keys=["action_plan"], output_keys=["failing_edge"]
 )
