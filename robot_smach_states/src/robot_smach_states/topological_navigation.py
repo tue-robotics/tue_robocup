@@ -137,7 +137,9 @@ class TopologicalNavigateTo(smach.StateMachine):
 
             smach.StateMachine.add(
                 "GET_PLAN",
-                smach.CBState(get_topological_action_plan),
+                smach.CBState(get_topological_action_plan, cb_kwargs={'robot': robot,
+                                                                      'entity_designator': entity_designator,
+                                                                      'area_designator': area_designator}),
                 transitions={
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
@@ -148,7 +150,7 @@ class TopologicalNavigateTo(smach.StateMachine):
 
             smach.StateMachine.add(
                 "EXECUTE_PLAN",
-                smach.CBState(execute_topological_plan, robot, entity_designator, area_designator),
+                smach.CBState(execute_topological_plan),
                 transitions={
                     "succeeded": "arrived",
                     "arrived": "arrived",
