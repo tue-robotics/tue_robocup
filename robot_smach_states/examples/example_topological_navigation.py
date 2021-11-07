@@ -8,7 +8,7 @@ import rospy
 from robot_skills import get_robot
 
 # Robot Smach States
-from robot_smach_states.topological_navigation import TopologicalNavigateTo
+from robot_smach_states.navigation.topological_navigation import TopologicalNavigateTo
 from robot_smach_states.util.designators import Designator, EntityByIdDesignator
 
 if __name__ == "__main__":
