@@ -115,7 +115,6 @@ def execute_topological_plan(userdata: smach.UserData) -> str:
                 return "preempted"
             userdata.failing_edge = action
             return "blocked"
-        rospy.sleep(1.0)
     return "succeeded"
 
 
