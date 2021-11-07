@@ -252,7 +252,7 @@ class SelfCleanup(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         store_entity_id_des = ds.VariableDesignator(resolve_type=str, name="store_entity_id")
-        store_entity_des = ds.EdEntityDesignator(robot, id_designator=store_entity_id_des)
+        store_entity_des = ds.EdEntityDesignator(robot, uuid_designator=store_entity_id_des)
 
         selected_entity_type_des = ds.AttrDesignator(selected_entity_designator, "type", resolve_type=str)
 
