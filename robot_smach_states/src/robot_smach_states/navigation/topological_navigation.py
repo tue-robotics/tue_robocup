@@ -12,9 +12,9 @@ from topological_action_planner_msgs.msg import Edge
 # Robot Smach States
 from robot_smach_states.manipulation.open_door import OpenDoor
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator
-from .navigation.navigate_to_symbolic import NavigateToSymbolic
-from .navigation.navigate_to_waypoint import NavigateToWaypoint
-from .navigation.navigation import NavigateTo
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.navigation.navigation import NavigateTo
 
 # ToDo: allow preemption and continuing to next nav waypoint without stopping
 # ToDo: add recovery behaviour on fails
@@ -68,6 +68,7 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
     return OpenDoor(robot=robot, door_designator=door_designator)
 
 
+# ToDo: replace userdata by designators
 @smach.cb_interface(outcomes=["unreachable", "goal_not_defined", "goal_ok", "preempted"], output_keys=["action_plan"])
 def get_topological_action_plan(
     userdata: smach.UserData, robot: Robot, entity_designator: EdEntityDesignator, area_designator: Designator = None
@@ -95,6 +96,7 @@ def get_topological_action_plan(
     return "goal_ok"
 
 
+# ToDo: replace userdata by designators
 @smach.cb_interface(
     outcomes=["succeeded", "arrived", "blocked", "preempted"], input_keys=["action_plan"], output_keys=["failing_edge"]
 )
@@ -113,7 +115,6 @@ def execute_topological_plan(userdata: smach.UserData) -> str:
                 return "preempted"
             userdata.failing_edge = action
             return "blocked"
-        rospy.sleep(1.0)
     return "succeeded"
 
 
@@ -137,7 +138,9 @@ class TopologicalNavigateTo(smach.StateMachine):
 
             smach.StateMachine.add(
                 "GET_PLAN",
-                smach.CBState(get_topological_action_plan),
+                smach.CBState(get_topological_action_plan, cb_kwargs={'robot': robot,
+                                                                      'entity_designator': entity_designator,
+                                                                      'area_designator': area_designator}),
                 transitions={
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
@@ -148,7 +151,7 @@ class TopologicalNavigateTo(smach.StateMachine):
 
             smach.StateMachine.add(
                 "EXECUTE_PLAN",
-                smach.CBState(execute_topological_plan, robot, entity_designator, area_designator),
+                smach.CBState(execute_topological_plan),
                 transitions={
                     "succeeded": "arrived",
                     "arrived": "arrived",

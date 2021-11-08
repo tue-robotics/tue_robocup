@@ -9,7 +9,7 @@ from topological_action_planner_msgs.msg import Edge, Node
 from robot_smach_states.manipulation.open_door import OpenDoor
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
-from robot_smach_states.topological_navigation import TopologicalPlannerException, convert_msgs_to_actions
+from robot_smach_states.navigation.topological_navigation import TopologicalPlannerException, convert_msgs_to_actions
 
 SOURCE_NODE_ID = "SOURCE_NODE"
 SOURCE_NODE_AREA = "IN_FRONT_OF"
