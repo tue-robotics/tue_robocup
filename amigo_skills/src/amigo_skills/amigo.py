@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 from robot_skills import api, base, ears, ebutton, head, lights, perception, robot, sound_source_localisation, speech, \
-    torso, world_model_ed
+    topological_planner, torso, world_model_ed
 from robot_skills.arm import arms, gripper, handover_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
 
@@ -56,6 +56,11 @@ class Amigo(robot.Robot):
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_buffer))
+
+        # Action planning
+        self.add_body_part(
+            'topological_planner', topological_planner.TopologicalPlanner(self.robot_name, self.tf_buffer)
+        )
 
         self.configure()
 

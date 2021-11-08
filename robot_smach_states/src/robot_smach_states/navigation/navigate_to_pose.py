@@ -13,7 +13,7 @@ class NavigateToPose(NavigateTo):
 
         :param robot: (Robot) object
         :param x, y: coordinates of the goal pose
-        :param rz (optional): orientation to assume. if not specified no orientation constraint is used.
+        :param rz: orientation to assume
         :param radius (default 0.15): allowed distance to the pose
         :param frame_id (default "/map"): frame in which the pose is expressed
         """
