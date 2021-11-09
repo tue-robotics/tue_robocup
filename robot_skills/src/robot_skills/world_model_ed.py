@@ -107,7 +107,7 @@ class ED(RobotPart):
         :param id: ID of entity
         :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point
         """
-        if not center_point:
+        if center_point is None:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
         self._publish_marker(center_point, radius)
 
@@ -166,7 +166,7 @@ class ED(RobotPart):
         :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point criterium.
         :return: list of Entity
         """
-        if not center_point:
+        if center_point is None:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius, ignore_z=ignore_z)
@@ -313,7 +313,7 @@ class ED(RobotPart):
         :param radius: (float) radius to look for possible humans
         :return: (Entity) entity (if found), None otherwise
         """
-        if not center_point:
+        if center_point is None:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
             center_point = self.tf_buffer.transform(center_point, "map")
         assert center_point.header.frame_id.endswith("map"), "Other frame ids not yet implemented"
