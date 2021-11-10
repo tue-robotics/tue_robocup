@@ -7,12 +7,12 @@ from threading import Event
 
 # ROS
 from geometry_msgs.msg import PolygonStamped
+import PyKDL as kdl
 import rospy
 from sensor_msgs.msg import LaserScan
 import smach
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
 from . import check_ebutton
 from . import human_interaction
 from .navigation import ForceDrive
@@ -176,9 +176,11 @@ class WaitForDoorOpen(smach.State):
     def execute(self, userdata=None):
         rospy.loginfo("Waiting for door...")
         transorm_stamped = self._robot.tf_buffer.lookup_transform(self._robot.base_link_frame,
-                                                           self._robot.robot_name + '/base_laser',
-                                                           rospy.Time(0))
-        laser_rotation = quaternion_msg_to_kdl_rotation(transorm_stamped.transform.rotation)
+                                                                  self._robot.robot_name + '/base_laser',
+                                                                  rospy.Time(0))
+
+        quat_msg = transorm_stamped.pose.orientation
+        laser_rotation = kdl.Rotation.Quaternion(quat_msg.x, quat_msg.y, quat_msg.z, quat_msg.w)
         laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
         laser_yaw = laser_rotation.GetRPY()[2]
 

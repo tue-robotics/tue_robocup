@@ -5,13 +5,13 @@ import time
 
 # ROS
 import PyKDL as kdl
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
 # TU/e Robotics
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds
 from .rise import RiseForInspect
@@ -50,7 +50,7 @@ def look_at_segmentation_area(robot, entity, volume=None):
         z = pos.z() + entity.shape.z_max
 
     # Point the head at the right direction
-    robot.head.look_at_point(VectorStamped(x, y, z, "map"), timeout=0)
+    robot.head.look_at_point(VectorStamped(kdl.Vector(x, y, z), entity.last_update_time, "map"), timeout=0)
 
     # Make sure the spindle is at the appropriate height if we are AMIGO
     if robot.robot_name == "amigo":

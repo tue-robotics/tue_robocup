@@ -1,13 +1,22 @@
 # System
 import yaml
 
-import PyKDL as kdl
 # ROS
+import genpy
+import PyKDL as kdl
 import rospy
+
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 
-from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame
+from pykdl_ros import VectorStamped, FrameStamped
+
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+
 from robot_skills.util.shape import shape_from_entity_info
 from robot_skills.util.volume import volumes_from_entity_volumes_msg
 
@@ -27,6 +36,7 @@ class Entity(object):
         :param shape: Shape of this entity
         :param volumes: dict mapping strings to Volume
         :param super_types: list with strings representing super types in an ontology of object types
+        :param last_update_time: last update time
         """
         self.id = identifier
         self.type = object_type
@@ -56,11 +66,11 @@ class Entity(object):
             return False
 
         # Transform the point
-        fid1 = point.frame_id if point.frame_id[0] != "/" else point.frame_id[1:]  # Remove slash for comparison
+        fid1 = point.header.frame_id if point.header.frame_id[0] != "/" else point.header.frame_id[1:]  # Remove slash for comparison
         fid2 = self.frame_id if self.frame_id[0] != "/" else self.frame_id[1:]  # Remove slash for comparison
         if fid1 != fid2:
             rospy.logerr("Cannot compute with volume and entity defined w.r.t. different frame: {} and {}".format(
-                point.frame_id, self.frame_id
+                point.header.frame_id, self.frame_id
             ))
             return False
         vector = self._pose.Inverse() * point.vector
@@ -80,12 +90,12 @@ class Entity(object):
         :rtype: List[Entities]
         """
 
-        entities = [e for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
+        entities = [e for e in entities if self.in_volume(VectorStamped.from_FrameStamped(e.pose), volume_id)]
 
         return entities
 
     @property
-    def last_update_time(self):
+    def last_update_time(self) -> genpy.Time:
         return self._last_update_time
 
     def distance_to_2d(self, point):
@@ -136,14 +146,17 @@ class Entity(object):
         return super_type in self.super_types
 
     @property
-    def pose(self):
+    def pose(self) -> FrameStamped:
         """ Returns the pose of the Entity as a FrameStamped"""
-        return FrameStamped(frame=self._pose, frame_id=self.frame_id)
+        return FrameStamped(frame=self._pose, stamp=self.last_update_time, frame_id=self.frame_id)
 
     @pose.setter
     def pose(self, pose):
         """ Setter """
-        self._pose = pose_msg_to_kdl_frame(pose)
+        frame_stamped = tf2_ros.convert(pose, FrameStamped)  # type: FrameStamped
+        self._pose = frame_stamped.frame
+        self.frame_id = frame_stamped.header.frame_id
+        self.last_update_time = frame_stamped.header.stamp
 
     @property
     def person_properties(self):
@@ -214,7 +227,8 @@ class PersonProperties(object):
 
 
 def from_entity_info(e):
-    """ Converts ed_msgs.msg.EntityInfo to an Entity
+    """
+    Converts ed_msgs.msg.EntityInfo to an Entity
 
     :param e: ed_msgs.msg.EntityInfo
     :return: Entity
@@ -223,10 +237,10 @@ def from_entity_info(e):
     identifier = e.id
     object_type = e.type
     frame_id = "map"  # ED has all poses in map
-    pose = pose_msg_to_kdl_frame(e.pose)
+    rot = kdl.Rotation.Quaternion(e.pose.orientation.x, e.pose.orientation.y, e.pose.orientation.z, e.pose.orientation.w)
+    trans = kdl.Vector(e.pose.position.x, e.pose.position.y, e.pose.position.z)
+    pose = kdl.Frame(rot, trans)
     shape = shape_from_entity_info(e)
-
-    last_update_time = e.last_update_time.to_sec()
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
     volumes = volumes_from_entity_volumes_msg(e.volumes)
@@ -247,7 +261,7 @@ def from_entity_info(e):
         super_types += ["possible_human"]
 
     entity = Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
-                  volumes=volumes, super_types=super_types, last_update_time=last_update_time)
+                    volumes=volumes, super_types=super_types, last_update_time=e.last_update_time)
 
     if e.type == 'person':
         try:

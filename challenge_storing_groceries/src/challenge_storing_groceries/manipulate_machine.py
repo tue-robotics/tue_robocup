@@ -1,4 +1,5 @@
 # ROS
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
@@ -50,7 +51,7 @@ class DefaultGrabDesignator(ds.Designator):
         rospy.loginfo("Gathering all entities in {vol} of surface {ent}".format(vol=self._area_description, ent=surface))
         # import ipdb; ipdb.set_trace()
         for e in all_entities:
-            point = robot_skills.util.kdl_conversions.VectorStamped(frame_id=e.frame_id, vector=e._pose.p)
+            point = VectorStamped.from_framestamped(e.pose)
             if surface.in_volume(point=point, volume_id=self._area_description):
                 entities.append(e)
         rospy.loginfo("{l} entities in {vol} of surface {ent}".format(l=len(entities), vol=self._area_description, ent=surface.id))

@@ -2,6 +2,7 @@
 
 import random
 
+from pykdl_ros import VectorStamped
 import rospy
 from image_recognition_msgs.msg import FaceProperties
 from tue_msgs.msg import People
@@ -9,7 +10,6 @@ from tue_msgs.msg import People
 import robot_smach_states as states
 import smach
 from robot_skills.util.image_operations import img_cutout, img_recognitions_to_rois
-from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states.util.startup import startup
 
 timeout = 10
@@ -61,7 +61,7 @@ class DetectCrowd(smach.State):
 
         for i in range(0, tries):
             self.robot.speech.speak(sentences[i % (tries - 1)], block=False)
-            self.robot.head.look_at_point(VectorStamped(6, 0, 0, self.robot.robot_name + "/base_link"))
+            self.robot.head.look_at_point(VectorStamped.from_xyz(6, 0, 0, rospy.Time.now(), self.robot.base_link_frame))
             self.robot.head.wait_for_motion_done()
             rospy.sleep(1)
 

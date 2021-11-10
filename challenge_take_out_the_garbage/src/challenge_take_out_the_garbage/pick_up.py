@@ -1,4 +1,5 @@
 # ROS
+from pykdl_ros import FrameStamped
 import rospy
 import numpy
 import smach
@@ -16,7 +17,6 @@ from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBi
 from ed_msgs.msg import EntityInfo
 
 from robot_skills.force_sensor import TimeOutException
-from robot_skills.util.kdl_conversions import FrameStamped
 
 
 class MeasureForce(object):
@@ -67,19 +67,18 @@ class GetTrashBin(smach.State):
             raise Exception("trashbin designator is empty")
 
         # get original entity pose
-        frame_original = self._robot.ed.get_entity(id=e.id)._pose
+        frame_original = self._robot.ed.get_entity(id=e.id).pose.frame
 
         # inspect and update entity
         states.look_at_segmentation_area(self._robot, self._robot.ed.get_entity(id=e.id), 'on_top_of')
         self._robot.ed.update_kinect("{} {}".format('on_top_of', e.id))
-        frame_updated = self._robot.ed.get_entity(id=e.id)._pose
+        pose_updated = self._robot.ed.get_entity(id=e.id).pose
 
         # update entity with original orientation
-        frame_updated.M = frame_original.M
-        new_frame = FrameStamped(frame_updated, "map")
+        pose_updated.frame.M = frame_original.M
 
         # new_frame.header.stamp
-        self._robot.ed.update_entity(self._robot, e.id, frame_stamped=new_frame)
+        self._robot.ed.update_entity(self._robot, e.id, frame_stamped=pose_updated)
         if e:
             return "succeeded"
         else:

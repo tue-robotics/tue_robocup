@@ -1,5 +1,6 @@
 # ROS
 import PyKDL as kdl
+from pykdl_ros import FrameStamped, VectorStamped
 import rospy
 import smach
 import tf2_ros
@@ -10,7 +11,6 @@ from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_smach_states.utility import ResolveArm, check_arm_requirements
 
 
@@ -47,11 +47,11 @@ class PointAt(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped(0, 0, 0, frame_id=point_entity.id)
+        goal_map = VectorStamped(0, 0, 0, rospy.Time.now(), point_entity.id)
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_buffer=self.robot.tf_buffer)
+            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -89,7 +89,8 @@ class PointAt(smach.State):
         # Grasp
         rospy.loginfo('Start pointing')
         for x_offset in [-0.15, 0.0]:  # Hack because Hero does not pre-grasp reliably
-            _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), goal_bl.frame_id)
+            _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), rospy.Time.now(),
+                                    goal_bl.frame_id)
             if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.id]):
                 self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
                 rospy.logerr('Grasp failed')
@@ -130,7 +131,7 @@ class PointAt(smach.State):
         :return: (FrameStamped)
         """
         # Compute the frame w.r.t. base link
-        fs_robot = point_entity.pose.projectToFrame(self.robot.base_link_frame, self.robot.tf_buffer)
+        fs_robot = self.robot.tf_buffer.transform(point_entity.pose, self.robot.base_link_frame)
 
         # Set the orientation to unity
         fs_robot.frame.M = kdl.Rotation()
@@ -188,7 +189,7 @@ if __name__ == "__main__":
     robot = get_robot_from_argv(index=1)
 
     entity_id = "test_item"
-    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), frame_id="map")
+    pose = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), rospy.Time.now(), "map")
 
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
 

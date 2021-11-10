@@ -3,21 +3,25 @@
 import math
 
 import PyKDL as kdl
+from pykdl_ros import FrameStamped
 import rospy
 import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
 from geometry_msgs.msg import PoseStamped
 
-from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame
 from robot_skills.world_model_ed import ED
 
 
 def callback(msg):
-    kdl_frame = pose_msg_to_kdl_frame(msg.pose)
-    rx, ry, rz = kdl_frame.M.GetRPY()
+    kdl_frame = tf2_ros.convert(msg, FrameStamped)  # type: FrameStamped
+    rx, ry, rz = kdl_frame.frame.M.GetRPY()
     base = math.pi * 0.25
-    kdl_frame.MZ = round(base * round(float(rz)/base), 4)
-    kdl_frame.M = kdl.Rotation.RPY(rx, ry, kdl_frame.MZ)
-    ed.update_entity(entity_id, frame_stamped=FrameStamped(kdl_frame, msg.header.frame_id))
+    MZ = round(base * round(float(rz)/base), 4)
+    kdl_frame.frame.M = kdl.Rotation.RPY(rx, ry, MZ)
+    ed.update_entity(entity_id, frame_stamped=kdl_frame)
 
 
 if __name__ == "__main__":

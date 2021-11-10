@@ -17,7 +17,8 @@ from tue_msgs.msg import LocateDoorHandleAction
 # Robot skills
 from robot_skills.robot_part import RobotPart
 from robot_skills.util.image_operations import img_cutout, img_recognitions_to_rois
-from robot_skills.util.kdl_conversions import VectorStamped
+
+from pykdl_ros import VectorStamped
 
 
 class Perception(RobotPart):
@@ -106,15 +107,14 @@ class Perception(RobotPart):
         response = self.project_rois(rois=[roi]).points[0]
 
         # Convert to VectorStamped
-        result = VectorStamped(x=response.point.x, y=response.point.y, z=response.point.z,
-                               frame_id=response.header.frame_id)
+        result = VectorStamped.from_xyz(response.point.x, response.point.y, response.point.z, rospy.Time.now(),
+                                        response.header.frame_id)
 
         # If necessary, transform the point
         if frame_id is not None:
             rospy.loginfo("Transforming roi to {}".format(frame_id))
-            result = result.projectToFrame(frame_id=frame_id, tf_buffer=self.tf_buffer)
+            result = self.tf_buffer.transform(result, frame_id)
 
-        # Return the result
         return result
 
     def project_rois(self, rois):

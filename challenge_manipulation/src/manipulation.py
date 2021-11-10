@@ -21,6 +21,7 @@ Afterwards, a PDF report has to be made:
 
 from __future__ import print_function
 
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
@@ -32,7 +33,6 @@ import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states.manipulation import Grab, Place
-from robot_skills.util.kdl_conversions import VectorStamped
 
 # Robot Skills
 from robot_skills.util.entity import Entity
@@ -266,7 +266,7 @@ class InspectShelves(smach.State):
             ''' See if the area is in the list of inspection areas '''
             if name in OBJECT_SHELVES:
                 center_point = volume.center_point
-                shelves.append({'vs': VectorStamped(vector=center_point, frame_id=cabinet_entity.id), 'name': name})
+                shelves.append({'vs': VectorStamped(center_point, rospy.Time.now(), cabinet_entity.id), 'name': name})
             else:
                 rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.id))
 
@@ -438,7 +438,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
             # TODO: return x coordinate of entity.center_point in base_link frame
-            epose = entity.pose.projectToFrame(robot.robot_name+"/base_link", robot.tf_buffer)  # Get position in base_link
+            epose = self.robot.tf_buffer.transform(entity.pose, self.robot.base_link_frame)
             p = epose.frame.p
             return p.x()**2
 

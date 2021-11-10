@@ -1,12 +1,14 @@
 import unittest
 import PyKDL as kdl
+import rospy
+
+from pykdl_ros import FrameStamped
 import re
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
-from robot_skills.util.kdl_conversions import FrameStamped
 
 # Robot Smach States
 from robot_smach_states.navigation.guidance import TourGuide
@@ -30,14 +32,14 @@ class TestTourGuide(unittest.TestCase):
         cls.robot = Mockbot()
 
         cls._kitchen = Entity("kitchen", "room", "map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(0, 0, 0)),
-                              None, {"in": box1}, ["room"], 0)
+                              None, {"in": box1}, ["room"], rospy.Time())
         cls._bedroom = Entity("bedroom", "room", "map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(5, 0, 0)),
-                              None, {"in": box1}, ["room"], 0)
+                              None, {"in": box1}, ["room"], rospy.Time())
         cls._cabinet = Entity("cabinet", "furniture", "map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(4, 4, 0)),
-                              None, {"on_top_off": box2}, ["furniture"], 0)
+                              None, {"on_top_off": box2}, ["furniture"], rospy.Time())
         cls._bookcase = Entity("bookcase", "furniture", "map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                                                           kdl.Vector(8, 1, 0)),
-                               None, {"on_top_off": box2}, ["furniture"], 0)
+                               None, {"on_top_off": box2}, ["furniture"], rospy.Time())
 
         cls.robot.ed._static_entities = {e.id: e for e in [cls._kitchen, cls._bedroom, cls._cabinet, cls._bookcase]}
 
@@ -45,6 +47,7 @@ class TestTourGuide(unittest.TestCase):
 
     def setUp(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(-1, -1, 0)),
+                                                            rospy.Time(),
                                                             "map")
         self.tour_guide.initialize()
 
@@ -80,7 +83,7 @@ class TestTourGuide(unittest.TestCase):
     def test_initialize(self):
         # initialize is run in setUp, but robot.base.get_location has been replaced, so running it again
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(),
-                                                                      kdl.Vector(3.5, 3.5, 0)), "map")
+                                                                      kdl.Vector(3.5, 3.5, 0)), rospy.Time(), "map")
         self.tour_guide.initialize()
         self.assertListEqual(self.tour_guide._passed_room_ids, [self._kitchen.id])
         self.assertListEqual(self.tour_guide._passed_furniture_ids, [self._cabinet.id])
@@ -93,17 +96,20 @@ class TestTourGuide(unittest.TestCase):
 
     def test_initialize2(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(20, 20, 2)),
+                                                            rospy.Time(),
                                                             "map")
         self.tour_guide.initialize()
         self.assertListEqual(self.tour_guide._passed_room_ids, [])
 
     def test_describe_near_objects(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(1, 1, 0)),
+                                                            rospy.Time(),
                                                             "map")
         self.assertEqual("We now enter the kitchen", self.tour_guide.describe_near_objects())
 
     def test_describe_near_objects2(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(6, 4, 0)),
+                                                            rospy.Time(),
                                                             "map")
         self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
 
@@ -112,6 +118,7 @@ class TestTourGuide(unittest.TestCase):
 
     def test_describe_near_objects4(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(7.5, 2, 0)),
+                                                            rospy.Time(),
                                                             "map")
         self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
         self.assertEqual("On our right you can see the bookcase", self.tour_guide.describe_near_objects())

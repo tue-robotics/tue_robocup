@@ -1,5 +1,6 @@
 import unittest
 import PyKDL as kdl
+import rospy
 from ed_sensor_integration_msgs.srv import UpdateResponse
 
 from robot_skills import Mockbot
@@ -24,7 +25,7 @@ class MockDesignator(ds.EntityByIdDesignator):
                 kdl.Vector(1.0, 1.0, 1.0),
             )},
             super_types=[],
-            last_update_time=None,
+            last_update_time=rospy.Time(),
         )
 
 

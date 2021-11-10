@@ -11,12 +11,12 @@ import random
 import sys
 
 import rospy
+from pykdl_ros import FrameStamped
 from action_server import Client as ActionClient
 
 import hmi
 from robocup_knowledge import load_knowledge
 from robot_skills.get_robot import get_robot
-from robot_skills.util.kdl_conversions import FrameStamped
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
@@ -118,8 +118,8 @@ def main():
             base_pose = base_loc.frame
             print(base_pose)
             location_id = "starting_point"
-            robot.ed.update_entity(id=location_id, frame_stamped=FrameStamped(base_pose, "map"),
-                                         type="waypoint")
+            robot.ed.update_entity(id=location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(), "map"),
+                                   type="waypoint")
 
             robot.head.look_at_standing_person()
 

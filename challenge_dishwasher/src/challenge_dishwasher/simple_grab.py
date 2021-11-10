@@ -1,19 +1,18 @@
 import math
 
 import PyKDL as kdl
+from pykdl_ros import FrameStamped
 import rospy
+# noinspection PyUnresolvedReferences
 import tf2_geometry_msgs
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from challenge_dishwasher.custom_find_cup import CustomFindCup
 from geometry_msgs.msg import PointStamped, Point
 from robot_skills.amigo import Amigo
-from robot_skills.util.kdl_conversions import frame_stamped
 from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.util.designators import Designator
 from smach import StateMachine, State, cb_interface, CBState
 from tf2_ros import Header
-
-_ = tf2_geometry_msgs
 
 
 class SimpleNavigateToGrasp(NavigateTo):
@@ -78,7 +77,8 @@ class SimplePickup(State):
         x = goal_point_base_link.point.x
         y = goal_point_base_link.point.y
         z = goal_point_base_link.point.z
-        goal_bl = frame_stamped(goal_point_base_link.header.frame_id, x, y, z, roll=0, pitch=0, yaw=-0.0463)
+        goal_bl = FrameStamped.from_xyz_rpy(x, y, z, 0, 0, -0.0463, rospy.Time.now(),
+                                            goal_point_base_link.header.frame_id)
 
         # Grasp
         rospy.loginfo('Start grasping')

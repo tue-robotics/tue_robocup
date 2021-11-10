@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 import unittest
 
-from robot_skills.util.entity import Entity
 import PyKDL as kdl
+import rospy
+
+from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators.core import Designator
 
 from robot_smach_states.navigation.constraint_functions.waypoint_constraints import waypoint_constraint
@@ -20,7 +22,7 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
-        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
+        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, rospy.Time())
         entity = Designator(e, name="entity designator")
 
         pc, oc = waypoint_constraint(entity, radius)
@@ -46,7 +48,7 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
-        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
+        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, rospy.Time())
         entity = Designator(e, name="entity designator")
 
         pc, oc = waypoint_constraint(entity, radius, look=False)

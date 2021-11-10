@@ -8,8 +8,8 @@ import pprint
 import rospy
 
 # TU/e Robotics
+from pykdl_ros import VectorStamped
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped
 from .core import Designator
 from .checks import check_resolve_type
 
@@ -28,7 +28,7 @@ class EdEntityCollectionDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", criteriafuncs=None,
-                 type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
+                 type_designator=None, center_point_designator=None, id_designator=None, name=None):
         """Designates a collection of entities of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -47,7 +47,7 @@ class EdEntityCollectionDesignator(Designator):
         if center_point is not None and center_point_designator is not None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point is None and center_point_designator is None:
-            center_point = VectorStamped()
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), "map")
         if id != "" and id_designator is not None:
             raise TypeError("Specify either id or id_designator, not both")
 
@@ -69,8 +69,6 @@ class EdEntityCollectionDesignator(Designator):
             check_resolve_type(id_designator, str)
         self.id_designator = id_designator
 
-        self.debug = debug
-
     def _resolve(self):
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
@@ -78,9 +76,6 @@ class EdEntityCollectionDesignator(Designator):
         _criteria = self.criteriafuncs
 
         entities = self.ed.get_entities(_type, _center_point, self.radius, _id)
-        if self.debug:
-            import ipdb;
-            ipdb.set_trace()
         if entities:
             for criterium in _criteria:
                 entities = filter(criterium, entities)
@@ -102,7 +97,7 @@ class EdEntityDesignator(Designator):
 
     def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", criteriafuncs=None,
                  weight_function=None, type_designator=None, center_point_designator=None, id_designator=None,
-                 debug=False, name=None):
+                 name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -128,7 +123,7 @@ class EdEntityDesignator(Designator):
         self.ed = robot.ed
         self.type = type
         if center_point is None and center_point_designator is None:
-            center_point = VectorStamped()
+            center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), "map")
         self.center_point = center_point
         self.radius = radius
         self.id = id
@@ -147,15 +142,10 @@ class EdEntityDesignator(Designator):
             check_resolve_type(id_designator, str)
         self.id_designator = id_designator
 
-        self.debug = debug
-
     def lockable(self):
         return LockToId(self.robot, self)
 
     def _resolve(self):
-        if self.debug:
-            import ipdb;
-            ipdb.set_trace()
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
         _id = self.id_designator.resolve() if self.id_designator else self.id

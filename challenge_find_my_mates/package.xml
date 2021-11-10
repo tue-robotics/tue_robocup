@@ -17,13 +17,14 @@
   <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
 
   <depend>geometry_msgs</depend>
-  <depend>rospy</depend>
+  <depend>pykdl_ros</depend>
   <depend condition="$ROS_PYTHON_VERSION == 2">python-matplotlib</depend>
   <depend condition="$ROS_PYTHON_VERSION == 3">python3-matplotlib</depend>
   <depend condition="$ROS_PYTHON_VERSION == 2">python-rospkg</depend>
   <depend condition="$ROS_PYTHON_VERSION == 3">python3-rospkg</depend>
   <depend condition="$ROS_PYTHON_VERSION == 2">python-sklearn</depend>
   <depend condition="$ROS_PYTHON_VERSION == 3">python3-sklearn</depend>
+  <depend>rospy</depend>
   <depend>smach</depend>
   <depend>cv_bridge</depend>
 

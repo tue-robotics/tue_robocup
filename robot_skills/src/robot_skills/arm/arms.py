@@ -425,13 +425,8 @@ class Arm(RobotPart):
         # save the arguments for debugging later
         myargs = locals()
 
-        # If necessary, prefix frame_id
-        if frameStamped.frame_id.find(self.robot_name) < 0:
-            frameStamped.frame_id = self.robot_name + "/" + frameStamped.frame_id
-            rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
-
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
-        frame_in_baselink = frameStamped.projectToFrame(self.robot_name + "/base_link", self.tf_buffer)
+        frame_in_baselink = self.tf_buffer.transform(frameStamped, self.robot_name + "/base_link")
 
         self._publish_marker(frameStamped, [1, 0, 0], "grasp_point")
 
@@ -440,7 +435,7 @@ class Arm(RobotPart):
         # TODO: Get rid of this custom message type
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
-        grasp_precompute_goal.goal.header.frame_id = frame_in_baselink.frame_id
+        grasp_precompute_goal.goal.header.frame_id = frame_in_baselink.header.frame_id
         grasp_precompute_goal.goal.header.stamp = rospy.Time.now()
 
         grasp_precompute_goal.PERFORM_PRE_GRASP = pre_grasp
@@ -652,7 +647,7 @@ class Arm(RobotPart):
         :return: no return
         """
         marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = goal.frame_id
+        marker.header.frame_id = goal.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
         marker.pose.position.x = goal.frame.p.x()

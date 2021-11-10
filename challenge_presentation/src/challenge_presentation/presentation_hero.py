@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-
 from __future__ import print_function
 
+from functools import partial
+
 # ROS
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 import sys
-from functools import partial
 
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 from robot_smach_states.util.startup import startup
 from robot_skills.arm import arms
-from robot_skills.util.kdl_conversions import VectorStamped
+
 
 class English(object):
     HI_MY_NAME_IS = "Hello, my name is Hero"
@@ -34,6 +35,7 @@ class English(object):
     LRF_LOCS2 = "Look it's right there"
     MICROPHONE = "Finally, I have a microphone on my head so that I can hear what you are saying"
     END_OF_INTRO = "Thank you for your attention, I hope you enjoyed my presentation and have a nice day."
+
 
 class Dutch(object):
     HI_MY_NAME_IS = "Hallo, mijn naam is Hero"
@@ -144,11 +146,15 @@ class Presentation(smach.State):
                                      voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.robot.head.look_at_point, VectorStamped(1,1,1.75, frame_id="/hero/base_link"))) # Set nice path for moving head
+        # Set nice path for moving head
+        function_list.append(partial(self.robot.head.look_at_point,
+                                     VectorStamped(1, 1, 1.75, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
-        function_list.append(partial(self.robot.head.look_at_point, VectorStamped(1,-1,1.0, frame_id="/hero/base_link"))) # Set nice path for moving head
+        function_list.append(partial(self.robot.head.look_at_point,
+                                     VectorStamped(1, -1, 1, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
-        function_list.append(partial(self.robot.head.look_at_point, VectorStamped(-1,0,1.0, frame_id="/hero/base_link"))) # Set nice path for moving head
+        function_list.append(partial(self.robot.head.look_at_point,
+                                     VectorStamped(-1, 0, 1, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
 
         function_list.append(partial(self.robot.head.reset))
@@ -164,7 +170,6 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS2, language=self.language,
                                      voice=self.voice, block=True))
         function_list.append(partial(self.arm.reset))
-
 
         # Microphone
         function_list.append(partial(self.robot.speech.speak, self.trans.MICROPHONE, language=self.language,
@@ -208,6 +213,7 @@ class PresentationMachineHero(smach.StateMachine):
                 smach.StateMachine.add("PRESENT", Presentation(robot=robot, language=language),
                                        transitions={"done": "done", "preempted": "preempted"})
 
+
 def setup_statemachine(robot):
         sm = smach.StateMachine(outcomes=["done", "aborted", "preempted"])
         with sm:
@@ -218,6 +224,7 @@ def setup_statemachine(robot):
                 smach.StateMachine.add("PRESENT", Presentation(robot=robot, language="en"),
                                        transitions={"done": "done", "preempted": "preempted"})
                 return sm
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

@@ -3,8 +3,8 @@ from collections import namedtuple
 
 import rospy
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
+from pykdl_ros import FrameStamped
 from robot_skills.amigo import Amigo
-from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from robot_smach_states.util.geometry_helpers import wrap_angle_pi
@@ -110,8 +110,8 @@ class OpenDishwasher(StateMachine):
         def _grab_handle(ud):
             robot.rightArm.wait_for_motion_done()
             robot.speech.speak('I hope this goes right!', block=False)
-            fs = frame_stamped("dishwasher", 0.42, 0, 0.8, roll=math.pi / 2, pitch=0, yaw=math.pi)
-            robot.rightArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_buffer))
+            fs = FrameStamped.from_xyz_rpy(0.42, 0, 0.8, math.pi/2, 0, math.pi, rospy.Time.now(), "dishwasher")
+            robot.rightArm.send_goal(robot.tf_buffer.transform(fs, robot.base_link_frame))
             robot.rightArm.gripper.send_goal("close")
             return 'done'
 

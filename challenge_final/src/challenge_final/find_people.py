@@ -9,6 +9,7 @@ from collections import deque
 # ROS
 import numpy as np
 import PyKDL as kdl
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 from geometry_msgs.msg import PointStamped
@@ -16,7 +17,6 @@ from geometry_msgs.msg import PointStamped
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills.util import kdl_conversions
 from .clustering import cluster_people
 
 WAYPOINT_ID = "find_people_waypoint"
@@ -156,10 +156,8 @@ class FindPeople(smach.StateMachine):
 
                 #look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
                 look_angles = np.linspace(-np.pi / 4, np.pi / 4, 4)  # From -pi/2 to +pi/2 to scan 180 degrees wide
-                head_goals = [kdl_conversions.VectorStamped(x=100 * math.cos(angle),
-                                                            y=100 * math.sin(angle),
-                                                            z=1.5,
-                                                            frame_id="/%s/base_link" % robot.robot_name)
+                head_goals = [VectorStamped.from_xyz(100 * math.cos(angle), 100 * math.sin(angle), 1.5,
+                                                     rospy.Time.now(), robot.base_link_frame)
                               for angle in look_angles]
 
                 sentences = deque([

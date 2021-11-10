@@ -1,11 +1,14 @@
-# ROS
-import smach
 from functools import partial
+
+# ROS
+import rospy
+
+from pykdl_ros import VectorStamped
+import smach
 
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 import robot_skills.arm.arms as arms
-from robot_skills.util.kdl_conversions import VectorStamped
 
 
 class English(object):
@@ -137,10 +140,10 @@ class Presentation(smach.State):
         # function_list.append(partial(self.right_arm.send_joint_trajectory, "point_to_kinect"))
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language, voice=self.voice, block=False))
         function_list.append(partial(self.robot.head.look_at_point,
-                                     VectorStamped(1.0, 1.0, 1.5, frame_id="/"+self.robot.robot_name+"/base_link")))
+                                     VectorStamped.from_xyz(1.0, 1.0, 1.5, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
         function_list.append(partial(self.robot.head.look_at_point,
-                                     VectorStamped(1.0, -1.0, 1.5, frame_id="/"+self.robot.robot_name+"/base_link")))
+                                     VectorStamped.from_xyz(1.0, -1.0, 1.5, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
         function_list.append(partial(self.robot.head.reset))
         function_list.append(partial(self.robot.head.wait_for_motion_done))

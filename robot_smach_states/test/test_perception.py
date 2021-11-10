@@ -2,7 +2,9 @@ import unittest
 
 # datatypes
 import PyKDL as kdl
-from robot_skills.util.kdl_conversions import VectorStamped
+import rospy
+
+from pykdl_ros import VectorStamped
 
 # Robot Skills
 from robot_skills.mockbot import Mockbot
@@ -24,7 +26,7 @@ class TestLookAtEntity(unittest.TestCase):
         self.entity = Entity("12345", "dummy", "map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
-                             None, {}, None, 0)
+                             None, {}, None, rospy.Time())
 
     def test_look_at_enity_looks_at_correct_point(self):
         """Test that the robot looks at the center point of the named area, w.r.t. the frame of the entity"""
@@ -34,7 +36,7 @@ class TestLookAtEntity(unittest.TestCase):
 
         state.execute()
 
-        vs = VectorStamped(0, 0, 0, "12345")
+        vs = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), "12345")
 
         self.robot.head.look_at_point.assert_called_with(vs)
 
@@ -52,7 +54,7 @@ class TestLookAtArea(unittest.TestCase):
         self.entity = Entity("12345", "dummy", "map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
-                             None, {"dummy_volume": box}, None, 0)
+                             None, {"dummy_volume": box}, None, rospy.Time())
 
         self.area = "dummy_volume"
 
@@ -65,7 +67,7 @@ class TestLookAtArea(unittest.TestCase):
 
         state.execute()
 
-        vs = VectorStamped(0.5, 0.5, 0.5, "12345")
+        vs = VectorStamped.from_xyz(0.5, 0.5, 0.5, rospy.Time(), "12345")
 
         self.robot.head.look_at_point.assert_called_with(vs, timeout=0)
 

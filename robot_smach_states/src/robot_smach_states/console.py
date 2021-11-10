@@ -25,9 +25,10 @@ import rospy
 from robot_skills import get_robot
 
 # Load convenient data types (DO NOT REMOVE)
+# noinspection PyUnresolvedReferences
 import PyKDL as kdl
-from robot_skills.util.kdl_conversions import frame_stamped, FrameStamped
-
+# noinspection PyUnresolvedReferences
+from pykdl_ros import FrameStamped, VectorStamped
 
 class bcolors:
     HEADER = '\033[95m'

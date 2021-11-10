@@ -4,11 +4,11 @@ import math
 from Queue import Queue, Empty
 
 import PyKDL as kdl
+from pykdl_ros import FrameStamped, VectorStamped
 import rospy
 import smach
 from geometry_msgs.msg import PointStamped
 from hmi import TimeoutException
-from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from tue_msgs.msg import People
 
 
@@ -64,9 +64,8 @@ class WaitForCustomer(smach.State):
             angle = look_angles[i % len(look_angles)]
             rospy.loginfo('Still waiting... looking at %d degrees', angle)
             angle = math.radians(angle)
-            head_goal = VectorStamped(x=look_distance * math.cos(angle),
-                                      y=look_distance * math.sin(angle), z=1.3,
-                                      frame_id="/%s/base_link" % self._robot.robot_name)
+            head_goal = VectorStamped.from_xyz(look_distance * math.cos(angle), look_distance * math.sin(angle), 1.3,
+                                               header.stamp, self._robot.base_link_frame)
             self._robot.head.look_at_point(head_goal)
             i += 1
 
@@ -78,7 +77,7 @@ class WaitForCustomer(smach.State):
             rospy.logwarn('using the first person')
 
         point = waving_persons[0].position
-        pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
+        pose = FrameStamped.from_xyz_rpy(point.x, point.y, point.z, 0, 0, 0, header.stamp, header.frame_id)
         rospy.loginfo('update customer position to %s', pose)
         self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
 
@@ -86,10 +85,7 @@ class WaitForCustomer(smach.State):
         kitchen_entity = self._kitchen_designator.resolve()
         target_pose = kitchen_entity._pose
         head_target_kdl = target_pose * kdl.Vector(20.0, 0.0, 0.0)
-        head_target = VectorStamped(x=head_target_kdl.x(), y=head_target_kdl.y(), z=head_target_kdl.z(),
-                                    frame_id="map")
-        # pose = kitchen_entity.pose.extractVectorStamped()
-        # pose.vector[2] = 1.5
+        head_target = VectorStamped(head_target_kdl, header.stamp, "map")
 
         self._robot.head.look_at_point(head_target)
         self._robot.head.wait_for_motion_done()
@@ -164,7 +160,7 @@ class WaitForClickedCustomer(smach.State):
             return 'aborted'
 
         # TODO, get data from point into ED
-        pose = frame_stamped("map", self._point.point.x, self._point.point.y, 0.0)
+        pose = FrameStamped.from_xyz_rpy(self._point.point.x, self._point.point.y, 0, 0, 0, 0, rospy.Time.now(), "map")
         self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
         return 'succeeded'
 

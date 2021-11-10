@@ -6,13 +6,13 @@ from collections import OrderedDict
 
 # ROS
 import PyKDL as kdl
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped
 
 # Robot Smach States
 from ..navigation.constraint_functions.symbolic_constraints import symbolic_constraint
@@ -198,7 +198,7 @@ def in_room(room, position):
     :return: whether or not the position is in the room
     :rtype: bool
     """
-    if room.in_volume(VectorStamped(vector=position), "in"):
+    if room.in_volume(VectorStamped(position, room.last_update_time, "map"), "in"):
         return True
     return False
 

@@ -8,13 +8,13 @@ import actionlib
 import math
 import numpy
 import PyKDL as kdl
+from pykdl_ros import FrameStamped, VectorStamped
 from geometry_msgs.msg import PointStamped, Point
 
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.arm import arms
 from robot_skills.util.entity import Entity
-import robot_skills.util.kdl_conversions as kdl_con
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 # Robot Smach States
@@ -48,32 +48,32 @@ class Door(Entity):
         )
 
     @property
-    def handle_pose(self) -> kdl_con.VectorStamped:
+    def handle_pose(self) -> VectorStamped:
         """
         Returns the pose of the handle in map frame
         """
         return self._get_volume_center_point_in_map(self.HANDLE_ID)
 
     @property
-    def frame_points(self) -> typing.List[kdl_con.VectorStamped]:
+    def frame_points(self) -> typing.List[VectorStamped]:
         """
         Returns the ground points of the door frame in map frame
         """
         return [self._get_volume_center_point_in_map(self.FRAME_LEFT_POINT_ID),
                 self._get_volume_center_point_in_map(self.FRAME_RIGHT_POINT_ID)]
 
-    def _get_volume_center_point_in_map(self, volume_id: str) -> kdl_con.VectorStamped:
+    def _get_volume_center_point_in_map(self, volume_id: str) -> VectorStamped:
         """
         Gets the center point of a volume (typically defined w.r.t. the entity frame) and converts this to map frame.
 
         :param volume_id: id of the volume to get the center point from
         :return: center point converted to map frame
         """
-        center_point_entity = self.volumes[volume_id].center_point
-        center_point_map = self.pose.frame * center_point_entity
-        return kdl_con.VectorStamped(center_point_map.x(), center_point_map.y(), center_point_map.z(), "map")
+        cp_entity = self.volumes[volume_id].center_point
+        cp_map = self.pose.frame * cp_entity
+        return VectorStamped.from_xyz(cp_map.x(), cp_map.y(), cp_map.z(), rospy.Time.now(),"map")
 
-    def get_direction(self, base_pose: kdl_con.FrameStamped) -> str:
+    def get_direction(self, base_pose: FrameStamped) -> str:
         """
         Determines whether the open the door inward or outward.
 
@@ -216,8 +216,8 @@ class UpdateHandleLocation(smach.State):
     def execute(self, userdata=None):
         door = self._door_des.resolve()
         handle_estimate = door.handle_pose
-        self._robot.head.look_at_point(kdl_con.VectorStamped(x=handle_estimate.vector.x(), y=handle_estimate.vector.y(),
-                                                             z=handle_estimate.vector.z()), timeout=0.0)
+        self._robot.head.look_at_point(VectorStamped.from_framestamped(handle_estimate), timeout=0.0)
+
         self._robot.head.wait_for_motion_done()
 
         goal = LocateDoorHandleGoal()
@@ -236,15 +236,12 @@ class UpdateHandleLocation(smach.State):
         if state == actionlib.GoalStatus.SUCCEEDED:
             result = self._robot.perception.locate_handle_client.get_result()
             rospy.logdebug("Updated handle location is{}".format(result))
-            handle_loc = kdl_con.VectorStamped()
-            handle_loc.frame_id = result.handle_edge_point1.header.frame_id
-            handle_loc.vector.x(numpy.average([result.handle_edge_point1.point.x, result.handle_edge_point2.point.x]))
-            handle_loc.vector.y(numpy.average([result.handle_edge_point1.point.y, result.handle_edge_point2.point.y]))
-            handle_loc.vector.z(numpy.average([result.handle_edge_point1.point.z, result.handle_edge_point2.point.z]))
+            x = numpy.average([result.handle_edge_point1.point.x, result.handle_edge_point2.point.x])
+            y = numpy.average([result.handle_edge_point1.point.y, result.handle_edge_point2.point.y])
+            z = numpy.average([result.handle_edge_point1.point.z, result.handle_edge_point2.point.z])
+            handle_loc = VectorStamped.from_xyz(x, y, z, rospy.Time.now(), result.handle_edge_point1.header.frame_id)
             # This should update the door entity (probs via the designator)
-            handle_loc.projectToFrame("map", self._robot.tf_buffer)
-
-            self.handle_pose = handle_loc
+            door.handle_pose = self._robot.tf_buffer.transform(handle_loc, "map")
 
             return "succeeded"
         else:
@@ -275,11 +272,11 @@ class GraspHandle(smach.State):
 
         align_door = 0.0  # -0.3 This depends on the orientation of the door wrt the base link frame
 
-        handle_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(-1.57, 0.0, align_door),
-                                                             handle_point.vector),
-                                                   frame_id=handle_point.frame_id)
-        goal_bl = handle_framestamped.projectToFrame(self._robot.robot_name + '/base_link',
-                                                     tf_buffer=self._robot.tf_buffer)
+        handle_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(-1.57, 0.0, align_door),
+                                                     handle_point.vector),
+                                           rospy.Time.now(),
+                                           frame_id=handle_point.header.frame_id)
+        goal_bl = self._robot.tf_buffer.transform(handle_framestamped, self._robot.base_link_frame)
 
         # Move to in front of handle, this is heavily tuned so not robust!
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.08)
@@ -322,15 +319,15 @@ class UnlatchHandle(smach.State):
 
         current_pose = self._robot.tf_buffer.lookup_transform(self._robot.base_link_frame, 'hand_palm_link', rospy.Time(0))
 
-        orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y,
-                                              current_pose.transform.rotation.z, current_pose.transform.rotation.w)
+        rot = current_pose.transform.rotation
+        orientation = kdl.Rotation.Quaternion(rot.x, rot.y, rot.z, rot.w)
         (curr_r, curr_p, curr_y) = orientation.GetRPY()
 
-        next_z = current_pose.transform.translation.z - self._move_dist
+        trans = current_pose.transform.translation
+        next_z = trans.z - self._move_dist
 
-        next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(current_pose.transform.translation.x, current_pose.transform.translation.y,
-                                                          next_z, curr_r, curr_p, curr_y,
-                                                          self._robot.base_link_frame)
+        next_pose = FrameStamped.from_xyz_rpy(trans.x, trans.y, next_z, curr_r, curr_p, curr_y, rospy.Time.now(),
+                                              self._robot.base_link_frame)
 
         result = arm.send_goal(next_pose)
         if result:
@@ -378,18 +375,17 @@ class PushDoorOpen(smach.State):
             rospy.logerr("Could not resolve arm")
             return None
 
-        next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
-                                                                kdl.Vector(0.1, 0.05, 0.0)),
-                                                        frame_id="hand_palm_link")
-        goal_bl = next_pose_framestamped.projectToFrame('hero/base_link', tf_buffer=self._robot.tf_buffer)
+        next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(0.1, 0.05, 0.0)),
+                                              rospy.Time.now(), "hand_palm_link")
+        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
 
         arm_goal_res = arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()
         if arm_goal_res:
             arm.send_gripper_goal('open')
 
-            door_frame_robot0 = door.frame_points[0].projectToFrame("base_link", self._robot.tf_buffer)
-            door_frame_robot1 = door.frame_points[1].projectToFrame("base_link", self._robot.tf_buffer)
+            door_frame_robot0 = self._robot.tf_buffer.transform(door.frame_points[0], self._robot.base_link_frame)
+            door_frame_robot1 = self._robot.tf_buffer.transform(door.frame_points[1], self._robot.base_link_frame)
             x1 = door_frame_robot0.vector.x()
             y1 = door_frame_robot0.vector.y()
             x2 = door_frame_robot1.vector.x()
@@ -397,12 +393,12 @@ class PushDoorOpen(smach.State):
             x = (x1 + x2) / 2.0
             y = (y1 + y2) / 2.0
 
-            self._robot.base.force_drive(0.1, y/(x/0.1), 0, x/0.1)
+            self._robot.base.force_drive(0.1, y / (x / 0.1), 0, x / 0.1)
             arm.reset()
             arm.wait_for_motion_done()
             return 'succeeded'
         else:
-            return'failed'
+            return 'failed'
 
 
 class PullDoorOpen(smach.State):
@@ -425,20 +421,18 @@ class PullDoorOpen(smach.State):
         rospy.sleep(2.0)
         arm.send_gripper_goal('open')
         # Move back and to the left
-        next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0),
-                                                                kdl.Vector(-0.05, 0.0, 0.15)),
-                                                      frame_id="hand_palm_link")
-        goal_bl = next_pose_framestamped.projectToFrame('hero/base_link',
-                                                        tf_buffer=self._robot.tf_buffer)
+        next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(-0.05, 0.0, 0.15)),
+                                              rospy.Time.now(),
+                                              "hand_palm_link")
+        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
 
         arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()
         # Move forward and twist
-        next_pose_framestamped = kdl_con.FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 1.0, 0.0),
-                                                                kdl.Vector(0.1, 0.0, 0.0)),
-                                                        frame_id="hand_palm_link")
-        goal_bl = next_pose_framestamped.projectToFrame('hero/base_link',
-                                                        tf_buffer=self._robot.tf_buffer)
+        next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 1.0, 0.0), kdl.Vector(0.1, 0.0, 0.0)),
+                                              rospy.Time.now(),
+                                              "hand_palm_link")
+        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
 
         arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()
@@ -464,12 +458,12 @@ class PullDoorOpen(smach.State):
 #         door = self._door_des.resolve()
 #         door_points = door.frame_points["value"]
 
-#         door_point_1_map = self._robot.tf_buffer.transform(door_points[0], "base_link")
-#         door_point_2_map = self._robot.tf_buffer.transform(door_points[1], "base_link")
-#         x1 = door_point_1_map.point.x
-#         y1 = door_point_1_map.point.y
-#         x2 = door_point_2_map.point.x
-#         y2 = door_point_2_map.point.y
+#        door_point_1_map = self._robot.tf_buffer.transform(door_points0], self._robot.base_link_frame)
+#         door_point_2_map = self._robot.tf_buffer.transform(door_points[1], self._robot.base_link_frame)
+#         x1 = door_frame_robot0.vector.x()
+#         y1 = door_frame_robot0.vector.y()
+#         x2 = door_frame_robot1.vector.x()
+#         y2 = door_frame_robot1.vector.y()
 #         x = (x1 + x2) / 2.0
 #         y = (y1 + y2) / 2.0
 
@@ -543,8 +537,6 @@ class PassDoor(smach.StateMachine):
 
 if __name__ == "__main__":
     from robot_skills import get_robot
-    from robot_smach_states.util.designators import Designator, EdEntityDesignator
-    from robot_smach_states.manipulation.open_door import OpenDoor, Door
 
     rospy.init_node("josja_faalt")
 

@@ -13,6 +13,7 @@ from collections import deque
 from datetime import datetime
 
 import PyKDL
+from pykdl_ros import VectorStamped
 import cv2
 import numpy as np
 import rospy
@@ -21,7 +22,6 @@ from geometry_msgs.msg import PointStamped
 
 from challenge_find_my_mates.cluster import cluster_people
 from robot_skills import get_robot
-from robot_skills.util import kdl_conversions
 from smach import CBState, StateMachine, cb_interface
 
 NUM_LOOKS = 2
@@ -45,10 +45,8 @@ class LocatePeople(StateMachine):
             # return "done"
 
             look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
-            head_goals = [kdl_conversions.VectorStamped(x=100 * math.cos(angle),
-                                                        y=100 * math.sin(angle),
-                                                        z=1.5,
-                                                        frame_id="/%s/base_link" % robot.robot_name)
+            head_goals = [VectorStamped.from_xyz(100 * math.cos(angle), 100 * math.sin(angle), 1.5, rospy.Time.now(),
+                                                 robot.base_link_frame)
                           for angle in look_angles]
 
             sentences = deque([

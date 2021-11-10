@@ -6,13 +6,19 @@ from builtins import range
 import math
 
 # ROS
+from geometry_msgs.msg import PoseStamped
 import PyKDL as kdl
+from pykdl_ros import FrameStamped
 import rospy
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
 from visualization_msgs.msg import Marker, MarkerArray
 
 # TU/e Robotics
 from ..util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_to_pose_msg
 
 
 class GraspPointDeterminant(object):
@@ -110,10 +116,12 @@ class GraspPointDeterminant(object):
              # * kdl.Vector(0.5 * (wmin+wmax, 0, 0)
             tvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
                                 kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.frame.p.z())),
-                                frame_id="map") # Helper frame
+                                rospy.Time.now(),
+                                frame_id="map")  # Helper frame
 
             cvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
                                 tvec.frame * kdl.Vector(0, -0.5 * (wmin+wmax), 0)),
+                                rospy.Time.now(),
                                 frame_id="map")
 
             ''' Optimize over yaw offset w.r.t. robot '''
@@ -142,12 +150,12 @@ class GraspPointDeterminant(object):
         msg = MarkerArray()
         for i, c in enumerate(candidates):
             marker = Marker()
-            marker.header.frame_id = c['vector'].frame_id
+            marker.header.frame_id = c['vector'].header.frame_id
             marker.header.stamp = rospy.Time.now()
             marker.id = i
             marker.type = marker.ARROW
             marker.action = marker.ADD
-            marker.pose = kdl_frame_to_pose_msg(c['vector'].frame)
+            marker.pose = tf2_ros.convert(c['vector'], PoseStamped).pose
             if i == 0: # The 'best' one is blue...
                 marker.color.b = 1.0
             elif 'score' in c:
@@ -177,7 +185,3 @@ class GraspPointDeterminant(object):
             #####
 
         self._marker_array_pub.publish(msg)
-
-
-
-

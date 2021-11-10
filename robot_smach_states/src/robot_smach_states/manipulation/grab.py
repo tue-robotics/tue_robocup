@@ -2,13 +2,13 @@ from __future__ import absolute_import
 
 # ROS
 import PyKDL as kdl
+from pykdl_ros import VectorStamped
 import rospy
 import smach
 import tf2_ros
 
 # TU/e Robotics
 from robot_skills.robot import Robot
-from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from ..utility import check_arm_requirements, ResolveArm
@@ -48,7 +48,7 @@ class PrepareEdGrasp(smach.State):
             return "failed"
 
         self.robot.move_to_inspect_pose(entity._pose.p)
-        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="map"), timeout=0.0)
+        self.robot.head.look_at_point(entity.pose, timeout=0.0)
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
@@ -70,7 +70,7 @@ class PrepareEdGrasp(smach.State):
         arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
-        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="map"), timeout=0.0)
+        self.robot.head.look_at_point(entity.pose, timeout=0.0)
         self.robot.head.wait_for_motion_done()
         return 'succeeded'
 
@@ -112,11 +112,11 @@ class PickUp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.id)
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, self.robot.tf_buffer)
+            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -153,11 +153,11 @@ class PickUp(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.id)
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, self.robot.tf_buffer)
+            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
             if goal_bl is None:
                 return 'failed'
             else:
@@ -168,8 +168,7 @@ class PickUp(smach.State):
                 self.robot.tf_buffer.can_transform("map", self.robot.base_link_frame, rospy.Time(0),
                                                         rospy.Duration(10))
                 # Transform to base link frame
-                goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
-                                                            tf_buffer=self.robot.tf_buffer)
+                goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
                 if goal_bl is None:
                     return 'failed'
             except tf2_ros.TransformException as tfe:
@@ -202,8 +201,7 @@ class PickUp(smach.State):
         arm.gripper.occupied_by = grab_entity
 
         # Lift
-        goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
-                                                    self.robot.tf_buffer)
+        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
         rospy.loginfo('Start lifting')
         roll = 0.0
 
@@ -214,8 +212,7 @@ class PickUp(smach.State):
             rospy.logerr('Failed lift')
 
         # Retract
-        goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
-                                                    self.robot.tf_buffer)
+        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
         rospy.loginfo('Start retracting')
         roll = 0.0
 

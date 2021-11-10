@@ -3,15 +3,23 @@
 #  October '14
 #
 
+from typing import List
+
 # System
 import math
-import geometry_msgs.msg
-import rospy
-import tf2_ros
-import typing
 
 # ROS
 from actionlib_msgs.msg import GoalStatus
+from geometry_msgs.msg import Point, PoseStamped, PoseWithCovarianceStamped, Twist
+import PyKDL as kdl
+from pykdl_ros import FrameStamped
+import rospy
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+
 
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import LocalPlannerAction, LocalPlannerGoal, OrientationConstraint, PositionConstraint
@@ -20,9 +28,6 @@ from numpy import sign
 
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import nav_analyzer, transformations
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg, \
-    kdl_frame_stamped_to_pose_stamped_msg, \
-    FrameStamped
 
 
 class LocalPlanner(RobotPart):
@@ -47,7 +52,7 @@ class LocalPlanner(RobotPart):
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
         self._orientation_constraint = orientation_constraint
-        self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
+        self._action_client.send_goal(goal, done_cb=self.__doneCallback, feedback_cb=self.__feedbackCallback)
         self._goal_handle = self._action_client.gh
         rospy.logdebug("Goal handle = {0}".format(self._goal_handle))
         self.__setState("controlling", None, None, plan)
@@ -103,27 +108,28 @@ class GlobalPlanner(RobotPart):
         self.analyzer = analyzer
         self._position_constraint = None
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
-        self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
+        self._check_plan_client = self.create_service_client("/" + robot_name + "/global_planner/check_plan_srv", CheckPlan)
 
-    def getPlan(
-        self, position_constraint: PositionConstraint, start_pose: FrameStamped = None
-    ) -> typing.List[geometry_msgs.msg.PoseStamped]:
+    def getPlan(self, position_constraint: PositionConstraint, start_pose: FrameStamped = None) -> List[PoseStamped]:
         """
+        Get a global plan from start(optional) to a goal constrained by position_constraint
 
-        :param position_constraint: (PositionConstraint)
+        :param position_constraint: Goal position constraints
         :param start_pose: optional start pose. If this is not provided, the current position is used.
-        :return: list(PoseStamped). N.B.: If No path was found, this list is empty. If the planner service fails,
+        :return: If No path was found, this list is empty. If the planner service fails,
             'None' is returned.
         """
 
         self._position_constraint = position_constraint
 
+        if start_pose is None:
+            start_pose = get_location(self.robot_name, self.tf_buffer)
+
         pcs = [position_constraint]
 
         start_time = rospy.Time.now()
 
-        start_pose = start_pose if start_pose is not None else get_location(self.robot_name, self.tf_buffer)
-        start_pose_msg = kdl_frame_stamped_to_pose_stamped_msg(start_pose)
+        start_pose_msg = tf2_ros.convert(start_pose, PoseStamped)
 
         try:
             resp = self._get_plan_client(start_pose_msg, pcs)
@@ -172,9 +178,8 @@ class Base(RobotPart):
             cmd_vel_topic = '/' + robot_name + '/base/references'
         if initial_pose_topic is None:
             initial_pose_topic = '/' + robot_name + '/initialpose'
-        self._cmd_vel = rospy.Publisher(cmd_vel_topic, geometry_msgs.msg.Twist, queue_size=10)
-        self._initial_pose_publisher = rospy.Publisher(initial_pose_topic,
-                                                       geometry_msgs.msg.PoseWithCovarianceStamped, queue_size=10)
+        self._cmd_vel = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
+        self._initial_pose_publisher = rospy.Publisher(initial_pose_topic, PoseWithCovarianceStamped, queue_size=10)
 
         self.analyzer = nav_analyzer.NavAnalyzer(robot_name)
 
@@ -212,9 +217,9 @@ class Base(RobotPart):
         current_pose = self.get_location()
         p = PositionConstraint()
         p.constraint = "(x-%f)^2+(y-%f)^2 < %f^2" % (current_pose.frame.p.x(), current_pose.frame.p.y(), 0.1)
-        p.frame = current_pose.frame_id
+        p.frame = current_pose.header.frame_id
         plan = self.global_planner.getPlan(p)
-        o = OrientationConstraint(look_at=geometry_msgs.msg.Point(x, y, 0.0), angle_offset=offset)
+        o = OrientationConstraint(look_at=Point(x, y, 0.0), angle_offset=offset)
         o.frame = frame
         self.local_planner.setPlan(plan, p, o)
 
@@ -237,7 +242,7 @@ class Base(RobotPart):
         # Cancel the local planner goal
         self.local_planner.cancelCurrentPlan()
 
-        v = geometry_msgs.msg.Twist()        # Initialize velocity
+        v = Twist()  # Initialize velocity
         t_start = rospy.Time.now()
         t_end = t_start + rospy.Duration.from_sec(timeout)
 
@@ -266,7 +271,7 @@ class Base(RobotPart):
 
         return True
 
-    def get_location(self):
+    def get_location(self) -> FrameStamped:
         """ Returns a FrameStamped with the robot pose
 
         :return: FrameStamped with robot pose
@@ -275,7 +280,7 @@ class Base(RobotPart):
 
     def set_initial_pose(self, x, y, phi):
 
-        initial_pose = geometry_msgs.msg.PoseWithCovarianceStamped()
+        initial_pose = PoseWithCovarianceStamped()
 
         initial_pose.header.frame_id = "map"
 
@@ -347,25 +352,17 @@ class Base(RobotPart):
     ########################################################
 
 
-def get_location(robot_name, tf_buffer):
+def get_location(robot_name, tf_buffer) -> FrameStamped:
 
+    time = rospy.Time()
+    target_frame_stamped = FrameStamped(kdl.Frame(), time, f"{robot_name}/base_link")
     try:
-        time = rospy.Time.now()
-        tf_buffer.can_transform("map", robot_name + "/base_link", time, rospy.Duration(20.0))
-        target_transform = tf_buffer.lookup_transform("map", robot_name + "/base_link", time)
-        target_pose = geometry_msgs.msg.PoseStamped()
-        target_pose.header = target_transform.header
-        target_pose.pose.position = target_transform.transform.translation
-        target_pose.pose.orientation = target_transform.transform.rotation
-
-        return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
+        target_frame_stamped = tf_buffer.transform(target_frame_stamped, "map", timeout=rospy.Duration(20))
+        return target_frame_stamped
 
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
         rospy.logerr("tf2 request failed!, {}".format(e))
-        target_pose = geometry_msgs.msg.PoseStamped()
-        target_pose.header.frame_id = "map"
-        target_pose.header.stamp = time
-        return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
+        return FrameStamped(kdl.Frame(), time, "map")
 
 
 def computePathLength(path):
