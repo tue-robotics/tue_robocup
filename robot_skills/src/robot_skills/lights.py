@@ -84,7 +84,7 @@ class TueLights(LightsInterface):
         :param rgba_msg: message to send
         """
         rgb_msg = RGBLightCommand(color=rgba)
-        rgb_msg.show_color.data = True
+        rgb_msg.show_color = True
         self._publisher.publish(rgb_msg)
 
     def taste_the_rainbow(self, duration=5.0):
