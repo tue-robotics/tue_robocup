@@ -12,8 +12,8 @@ from pykdl_ros import FrameStamped, VectorStamped
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
+from ed.entity import Entity
 from robot_skills.arm.arms import PublicArm
-from robot_skills.util.entity import Entity
 from ..util.designators import Designator, check_resolve_type
 from cb_base_navigation_msgs.msg import PositionConstraint
 from ..util.geometry_helpers import offsetConvexHull
@@ -28,7 +28,7 @@ class EmptySpotDesignator(Designator):
     robot = amigo
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
-    cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+    cabinet = ds.EntityByIdDesignator(robot, uuid=CABINET, name="pick_shelf")
     arm = ds.UnoccupiedArmDesignator(robot, {})
     place_position = ds.LockingDesignator(EmptySpotDesignator(robot, cabinet, arm, name="placement", area=PLACE_SHELF),
                                           name="place_position")
@@ -102,7 +102,7 @@ class EmptySpotDesignator(Designator):
     def _is_poi_unoccupied(self, frame_stamped, surface_entity):
         entities_at_poi = self.robot.ed.get_entities(center_point=VectorStamped.from_framestamped(frame_stamped),
                                                      radius=self._spacing)
-        entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
+        entities_at_poi = [entity for entity in entities_at_poi if entity.uuid != surface_entity.uuid]
         return not any(entities_at_poi)
 
     def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
@@ -199,7 +199,7 @@ class EmptySpotDesignator(Designator):
         box = entity.volumes[area]
 
         if not hasattr(box, "bottom_area"):
-            rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.id))
+            rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.uuid))
 
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box

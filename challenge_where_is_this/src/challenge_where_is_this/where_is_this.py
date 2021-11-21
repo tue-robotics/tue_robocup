@@ -33,7 +33,7 @@ class WhereIsThis(smach.StateMachine):
 
         hmi_result_des = ds.VariableDesignator(resolve_type=HMIResult)
         information_point_id_designator = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
-        information_point_designator = ds.EdEntityDesignator(robot, id_designator=information_point_id_designator)
+        information_point_designator = ds.EdEntityDesignator(robot, uuid_designator=information_point_id_designator)
 
         with self:
             single_item = InformMachine(robot)
@@ -135,7 +135,7 @@ class WhereIsThis(smach.StateMachine):
             def store_pose(userdata=None):
                 base_loc = robot.base.get_location()
                 location_id = INFORMATION_POINT_ID
-                robot.ed.update_entity(id=location_id,
+                robot.ed.update_entity(uuid=location_id,
                                        frame_stamped=base_loc,
                                        type="waypoint")
 

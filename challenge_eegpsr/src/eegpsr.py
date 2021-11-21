@@ -80,7 +80,7 @@ def main():
         s.execute()
 
         # Move to the start location
-        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
+        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=challenge_knowledge.starting_pose), radius = 0.3)
         nwc.execute()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,7 +133,7 @@ def main():
                 break
 
             if not args.skip:
-                nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
+                nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=challenge_knowledge.starting_pose), radius = 0.3)
                 nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------

@@ -6,7 +6,7 @@ import rospy
 import smach
 
 # TU/e
-import robot_skills
+from ed.entity import Entity
 from robot_skills.simulation import is_sim_mode
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult
@@ -47,7 +47,7 @@ class EntityFromHmiResults(ds.Designator):
         :param robot: robot object
         :param hmi_result_des:
         """
-        super(EntityFromHmiResults, self).__init__(resolve_type=robot_skills.util.entity.Entity)
+        super(EntityFromHmiResults, self).__init__(resolve_type=Entity)
 
         self._robot = robot
         self._hmi_result_des = hmi_result_des
@@ -63,7 +63,7 @@ class EntityFromHmiResults(ds.Designator):
         if entity_id is None:
             return None
 
-        entities = self._robot.ed.get_entities(id=entity_id)
+        entities = self._robot.ed.get_entities(uuid=entity_id)
         if entities:
             return entities[0]
         else:
@@ -91,7 +91,7 @@ class GuideToRoomOrObject(smach.StateMachine):
             @smach.cb_interface(outcomes=["room", "object"])
             def determine_type(userdata=None):
                 entity = entity_des.resolve()
-                entity_type = entity.type
+                entity_type = entity.etype
                 if entity_type == "room":
                     return "room"
                 else:

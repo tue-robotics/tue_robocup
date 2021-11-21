@@ -2,15 +2,16 @@
 
 import rospy
 import smach
-import datetime
 from pykdl_ros import FrameStamped
+
+from ed.entity import Entity
+
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 from robocup_knowledge import load_knowledge
 from challenge_hmc_functions import hmc_states
-from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
@@ -24,9 +25,9 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                          "=============================================="])
         rospy.loginfo("\n" + msg)
 
-        self.target_destination = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place)
+        self.target_destination = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.default_place)
 
-        self.car_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_car['id'])
+        self.car_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_car['id'])
 
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
 

@@ -23,12 +23,13 @@ from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
 import ed_sensor_integration_msgs.srv as ed_sensor_srv
 
+from ed.entity import from_entity_info
+
 # Robot skills
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import transformations
 from robot_skills.util.decorators import deprecated
-from robot_skills.util.entity import from_entity_info
 
 
 class Navigation(RobotPart):
@@ -97,14 +98,14 @@ class ED(RobotPart):
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=None, radius=float('inf'), id="", ignore_z=False):
+    def get_entities(self, etype="", center_point=None, radius=float('inf'), uuid="", ignore_z=False):
         """
         Get entities via Simple Query interface
 
-        :param type: Type of entity
+        :param etype: Type of entity
         :param center_point: Point from which radius is measured
         :param radius: Distance between center_point and entity
-        :param id: ID of entity
+        :param uuid: ID of entity
         :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point
         """
         if center_point is None:
@@ -112,7 +113,7 @@ class ED(RobotPart):
         self._publish_marker(center_point, radius)
 
         center_point_in_map = self.tf_buffer.transform(center_point, "map", new_type=PointStamped)
-        query = SimpleQueryRequest(id=id, type=type, center_point=center_point_in_map.point,
+        query = SimpleQueryRequest(id=uuid, type=etype, center_point=center_point_in_map.point,
                                    radius=radius, ignore_z=ignore_z)
 
         try:
@@ -120,21 +121,21 @@ class ED(RobotPart):
             entities = list(map(from_entity_info, entity_infos))
         except Exception as e:
             rospy.logerr(
-                f"get_entities(id={id}, type={type}, center_point={center_point}, radius={radius}, "
+                f"get_entities(uuid={uuid}, etype={etype}, center_point={center_point}, radius={radius}, "
                 f"ignore_z={ignore_z})\n{e}, "
                 f"{traceback.format_exc()}")
             return []
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=None, radius=float('inf')):
+    def get_closest_entity(self, etype="", center_point=None, radius=float('inf')):
         if not center_point:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
-        entities = self.get_entities(type=type, center_point=center_point, radius=radius)
+        entities = self.get_entities(etype=etype, center_point=center_point, radius=radius)
 
         # HACK
-        entities = [e for e in entities if e.shape is not None and e.type != ""]
+        entities = [e for e in entities if e.shape is not None and e.etype != ""]
 
         if len(entities) == 0:
             return None
@@ -153,9 +154,9 @@ class ED(RobotPart):
         if not center_point:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
-        return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
+        return self.get_closest_entity(etype="room", center_point=center_point, radius=radius)
 
-    def get_closest_laser_entity(self, type="", center_point=None, radius=float('inf'), ignore_z=False):
+    def get_closest_laser_entity(self, etype="", center_point=None, radius=float('inf'), ignore_z=False):
         """
         Get the closest entity detected by the laser. The ID's of such entities are postfixed with '-laser'
         For the rest, this works exactly like get_closest_entity
@@ -169,10 +170,10 @@ class ED(RobotPart):
         if center_point is None:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
 
-        entities = self.get_entities(type="", center_point=center_point, radius=radius, ignore_z=ignore_z)
+        entities = self.get_entities(etype="", center_point=center_point, radius=radius, ignore_z=ignore_z)
 
         # HACK
-        entities = [e for e in entities if e.shape and e.type == "" and e.id.endswith("-laser")]
+        entities = [e for e in entities if e.shape and e.etype == "" and e.uuid.endswith("-laser")]
 
         if len(entities) == 0:
             return None
@@ -188,17 +189,17 @@ class ED(RobotPart):
 
         return entities[0]
 
-    def get_entity(self, id):
-        entities = self.get_entities(id=id)
+    def get_entity(self, uuid):
+        entities = self.get_entities(uuid=uuid)
         if len(entities) == 0:
-            rospy.logerr("Could not get_entity(id='{}')".format(id))
+            rospy.logerr("Could not get_entity(uuid='{}')".format(uuid))
             return None
 
         return entities[0]
 
-    def get_entity_info(self, id):
+    def get_entity_info(self, uuid):
         try:
-            return self._ed_entity_info_query_srv(id=id, measurement_image_border=20)
+            return self._ed_entity_info_query_srv(uuid=uuid, measurement_image_border=20)
         except rospy.ServiceException as e:
             rospy.logerr("Cant get entity info of id='{}': {}".format(id, e))
             return GetEntityInfoResponse()
@@ -216,12 +217,12 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=None, remove_flags=None, action=None):
+    def update_entity(self, uuid, etype=None, frame_stamped=None, flags=None, add_flags=None, remove_flags=None, action=None):
         """
         Updates entity
 
-        :param id: entity id
-        :param type: entity type
+        :param uuid: entity id
+        :param etype: entity type
         :param frame_stamped: If specified, the entity is updated to be at this FrameStamped
         :param flags: (OBSOLETE, use add_flags and remove_flags): (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,  e.g., 'perception'
         :param add_flags: list of flags which will be added to the specified entity
@@ -288,21 +289,21 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def remove_entity(self, id):
+    def remove_entity(self, uuid):
         """ Removes entity with the provided id to the world model
 
-        :param id: string with the ID of the entity to remove
+        :param uuid: string with the ID of the entity to remove
         """
-        return self.update_entity(id=id, action="remove")
+        return self.update_entity(uuid=uuid, action="remove")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def lock_entities(self, lock_ids, unlock_ids):
-        for eid in lock_ids:
-            self.update_entity(id=eid, add_flags=['locked'])
+        for uuid in lock_ids:
+            self.update_entity(uuid=uuid, add_flags=['locked'])
 
-        for eid in unlock_ids:
-            self.update_entity(id=eid, remove_flags=['locked'])
+        for uuid in unlock_ids:
+            self.update_entity(uuid=uuid, remove_flags=['locked'])
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -319,7 +320,7 @@ class ED(RobotPart):
         assert center_point.header.frame_id.endswith("map"), "Other frame ids not yet implemented"
 
         # Get all entities
-        entities = self.get_entities(type="", center_point=center_point, radius=radius)
+        entities = self.get_entities(etype="", center_point=center_point, radius=radius)
 
         # Filter on 'possible humans'
         entities = [e for e in entities if e.is_a('possible_human')]
@@ -366,7 +367,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def classify(self, ids, types=None, unknown_threshold=0.0):
+    def classify(self, uuids, types=None, unknown_threshold=0.0):
         # type: (List[str], List[str], float) -> List[ClassificationResult]
         """
         Classifies the entities with the given IDs
@@ -381,14 +382,14 @@ class ED(RobotPart):
         :rtype: List[ClassificationResult]
         """
 
-        res = self._ed_classify_srv(ids=ids, unknown_probability=unknown_threshold)
+        res = self._ed_classify_srv(ids=uuids, unknown_probability=unknown_threshold)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
         posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
 
         # Filter on types if types is not None
-        return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr
+        return [ClassificationResult(uuid, exp_val, exp_prob, distr) for uuid, exp_val, exp_prob, distr
                 in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if
                 types is None or exp_val in types]
 
@@ -428,9 +429,9 @@ class ED(RobotPart):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     @deprecated
-    def mesh_entity_in_view(self, id, type=""):
+    def mesh_entity_in_view(self, uuid, etype=""):
         # Takes the biggest one in view
-        # return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+        # return self._ed_mesh_entity_in_view_srv(uuid=uuid, etype=etype)
         rospy.logwarn("[world_model_ed.py] Function 'mesh_entity_in_view' is obsolete.")
         return None
 
@@ -441,7 +442,7 @@ class ED(RobotPart):
     def get_full_id(self, short_id):
         """Get an entity's full ID based on the first characters of its ID like you can do with git hashes"""
         all_entities = self.get_entities()
-        matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
+        matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.uuid for entity in all_entities])
         return matches
 
     def ray_trace(self, pose):
@@ -508,7 +509,7 @@ class ED(RobotPart):
         # Iterate over all furniture objects
         for wm_object in furniture_objects:
             for file_object in composition_list:
-                if wm_object.id == file_object.get("id", ""):
+                if wm_object.uuid == file_object.get("id", ""):
                     # Yeehah, we found something we need to update
                     _, _, Z = wm_object.pose.frame.M.GetRPY()
                     pos = wm_object.pose.frame.p

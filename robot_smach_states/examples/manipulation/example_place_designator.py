@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     robot = get_robot(args.robot)
 
-    furniture_designator = ds.EntityByIdDesignator(robot, id="dinner_table")
+    furniture_designator = ds.EntityByIdDesignator(robot, uuid="dinner_table")
     arm_designator = ds.UnoccupiedArmDesignator(robot, {})
 
     def with_area():

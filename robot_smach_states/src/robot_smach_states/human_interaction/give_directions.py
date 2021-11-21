@@ -9,10 +9,16 @@ import PyKDL as kdl
 from pykdl_ros import VectorStamped
 import rospy
 import smach
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+
 
 # TU/e Robotics
+from ed.entity import Entity
 from robot_skills.robot import Robot
-from robot_skills.util.entity import Entity
 
 # Robot Smach States
 from ..navigation.constraint_functions.symbolic_constraints import symbolic_constraint
@@ -51,7 +57,7 @@ class GiveDirections(smach.State):
         # Get the constraints for the global planner
         nav_constraints = OrderedDict()
         goal_entity = self._entity_designator.resolve()  # type: Entity
-        rospy.loginfo("Resolved to Entity: {}".format(goal_entity.id))
+        rospy.loginfo("Resolved to Entity: {}".format(goal_entity.uuid))
         if not goal_entity:
             rospy.logerr("Cannot give directions if I don't know where to go")
             self._robot.speech.speak("I'm sorry but I don't know where you want to go", mood="sad")
@@ -78,17 +84,17 @@ class GiveDirections(smach.State):
                 break
 
         if not path:
-            rospy.logerr("No path to {}".format(goal_entity.id))
-            self._robot.speech.speak("I'm sorry but I don't know how to get to the {}".format(goal_entity.id))
+            rospy.logerr("No path to {}".format(goal_entity.uuid))
+            self._robot.speech.speak("I'm sorry but I don't know how to get to the {}".format(goal_entity.uuid))
             return "failed"
 
         # Convert the path to a list of kdl Vectors
         assert(all([p.header.frame_id.endswith("map") for p in path])), "Not all path poses are defined w.r.t. 'map'"
-        kdl_path = [point_msg_to_kdl_vector(p.pose.position) for p in path]
+        kdl_path = [tf2_ros.convert(p, VectorStamped).vector for p in path]
 
         # Get all entities
         entities = self._robot.ed.get_entities()
-        room_entities = [room for room in entities if room.type == "room"]
+        room_entities = [room for room in entities if room.etype == "room"]
 
         # Log the time we start iterating
         t_start = rospy.Time.now()
@@ -101,8 +107,8 @@ class GiveDirections(smach.State):
                 room = get_room(room_entities, position)
             except RuntimeError:
                 continue
-            if room.id not in passed_room_ids:
-                passed_room_ids.append(room.id)
+            if room.uuid not in passed_room_ids:
+                passed_room_ids.append(room.uuid)
                 final_room_entry_pose = create_frame_from_points(position, next_position)
 
         # With this information: start creating the text for the robot
@@ -125,10 +131,10 @@ class GiveDirections(smach.State):
         angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
         rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
         if abs(angle) < 0.25 * math.pi:
-            sentence += "The {} will be in front of you.\n".format(goal_entity.id)
+            sentence += "The {} will be in front of you.\n".format(goal_entity.uuid)
         else:
             side = "left" if angle > 0.0 else "right"
-            sentence += "The {} is on your {}.\n".format(goal_entity.id, side)
+            sentence += "The {} is on your {}.\n".format(goal_entity.uuid, side)
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 
@@ -236,14 +242,14 @@ if __name__ == "__main__":
         Tests the 'get room' method
         """
         entities = robot.ed.get_entities()
-        room_entities = [e for e in entities if e.type == "room"]
+        room_entities = [e for e in entities if e.etype == "room"]
 
         for x in np.arange(-4.0, 4.0, 0.1):
             for y in np.arange(-2.0, 6.0, 0.1):
                 position = kdl.Vector(x, y, 0)
                 try:
                     room = get_room(room_entities, position)
-                    rospy.loginfo("Position {} is in the {}".format(position, room.id))
+                    rospy.loginfo("Position {} is in the {}".format(position, room.uuid))
                 except RuntimeError as e:
                     rospy.logerr(e.message)
 
@@ -275,5 +281,5 @@ if __name__ == "__main__":
 
     rospy.loginfo("Starting giving directions to {}".format(furniture_id))
     state = GiveDirections(robot=robot,
-                           entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id))
+                           entity_designator=ds.EntityByIdDesignator(robot=robot, uuid=furniture_id))
     state.execute()

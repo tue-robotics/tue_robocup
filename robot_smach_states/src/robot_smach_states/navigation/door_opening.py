@@ -307,7 +307,7 @@ class CheckDoorPassable(smach.State):
     """Check whether a given door can be passed. The precondition is that the robot is in front of said door.
 
     Test in amigo-console with
-    state_machine.CheckDoorPassable(amigo, ds.EdEntityDesignator(amigo, id='door_navigation')).execute() """
+    state_machine.CheckDoorPassable(amigo, ds.EdEntityDesignator(amigo, uuid='door_navigation')).execute() """
 
     def __init__(self, robot, destination_designator, door_entity_designator=None):
         """
@@ -368,9 +368,9 @@ class WaypointOfDoorDesignator(ds.Designator):
         import ipdb; ipdb.set_trace()
         if door_entity:
             waypoint_id = door_entity.data[self.data_field]
-            waypoint = self.robot.ed.get_entity(id=waypoint_id)
+            waypoint = self.robot.ed.get_entity(uuid=waypoint_id)
             if waypoint:
-                rospy.loginfo("Door {} should be opened from {}".format(door_entity.id, waypoint.id))
+                rospy.loginfo("Door {} should be opened from {}".format(door_entity.uuid, waypoint.uuid))
                 return waypoint
         return None
 
@@ -378,7 +378,7 @@ class WaypointOfDoorDesignator(ds.Designator):
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print(do.execute());
+    door = ds.EdEntityDesignator(amigo, uuid='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print(do.execute());
     """
     def __init__(self, robot, door_start_wp_designator, door_dest_wp_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
         """

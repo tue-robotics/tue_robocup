@@ -4,9 +4,9 @@ import unittest
 import PyKDL as kdl
 import rospy
 
-from robot_skills.util.entity import Entity
-from robot_smach_states.util.designators.core import Designator
+from ed.entity import Entity
 
+from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.navigation.constraint_functions.waypoint_constraints import waypoint_constraint
 from .util import constraint_strings_equal
 

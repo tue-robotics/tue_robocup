@@ -3,9 +3,8 @@ import unittest
 import PyKDL as kdl
 import rospy
 
-# Robot Skills
-from robot_skills.util.entity import Entity
-from robot_skills.util.volume import BoxVolume
+from ed.entity import Entity
+from ed.volume import BoxVolume
 
 # Robot Smach States
 from robot_smach_states.human_interaction.give_directions import get_room
@@ -45,7 +44,7 @@ class TestGetRoom(unittest.TestCase):
         """
         position = kdl.Vector(0.5, 0.5, 1.0)
         room = get_room(self.room_entities, position)
-        self.assertEqual(room.id, 'kitchen')
+        self.assertEqual(room.uuid, 'kitchen')
 
     def test_get_room2(self):
         """
@@ -53,7 +52,7 @@ class TestGetRoom(unittest.TestCase):
         """
         position = kdl.Vector(1.5, 0.5, 1.0)
         room = get_room(self.room_entities, position)
-        self.assertEqual(room.id, 'living_room')
+        self.assertEqual(room.uuid, 'living_room')
 
     def test_get_room_position_out_of_room(self):
         """

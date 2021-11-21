@@ -18,13 +18,13 @@ import tf_conversions
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
+from ed.entity import from_entity_info
 
 from hmi import HMIResult
 from hmi.common import parse_sentence, random_sentence
 from pykdl_ros import FrameStamped, VectorStamped
 from robot_skills import robot
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.entity import from_entity_info
 
 
 def random_kdl_vector():
@@ -292,36 +292,36 @@ class Torso(MockedRobotPart):
 
 class ED(MockedRobotPart):
     @staticmethod
-    def generate_random_entity(id_=None, type_=None):
+    def generate_random_entity(uuid=None, etype=None):
             entity_info = EntityInfo()
 
-            if not id_:
+            if not uuid:
                 entity_info.id = str(id(entity_info))
             else:
-                entity_info.id = id_
+                entity_info.id = uuid
             entity_info.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             # entity.data = AlteredMagicMock()
             entity_info.data = ""
 
             entity = from_entity_info(entity_info)
             entity._pose = random_kdl_frame()
-            if type_:
-                entity.type = type_
+            if etype:
+                entity.etype = etype
             return entity
 
     def __init__(self, robot_name, tf_buffer, *args, **kwargs):
         super(ED, self).__init__(robot_name, tf_buffer)
         self._dynamic_entities = defaultdict(self.generate_random_entity,
-                                             {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
+                                             {e.uuid: e for e in [self.generate_random_entity() for _ in range(5)]})
 
-        self._dynamic_entities['john'] = self.generate_random_entity(id_='john', type_='person')
+        self._dynamic_entities['john'] = self.generate_random_entity(uuid='john', etype='person')
         self._static_entities = defaultdict(self.generate_random_entity,
-                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
-        self._static_entities['test_waypoint_1'] = self.generate_random_entity(id_='test_waypoint_1', type_='waypoint')
-        self._static_entities['cabinet'] = self.generate_random_entity(id_='cabinet')
+                                     {e.uuid: e for e in [self.generate_random_entity() for _ in range(5)]})
+        self._static_entities['test_waypoint_1'] = self.generate_random_entity(uuid='test_waypoint_1', etype='waypoint')
+        self._static_entities['cabinet'] = self.generate_random_entity(uuid='cabinet')
 
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
-        self.get_entity = lambda id=None: self._entities[id]
+        self.get_entity = lambda uuid=None: self._entities[uuid]
         self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
         self.navigation = AlteredMagicMock()
         self.navigation.get_position_constraint = AlteredMagicMock()
@@ -333,21 +333,21 @@ class ED(MockedRobotPart):
 
         self._person_names = []
 
-    def get_entities(self, type="", center_point=VectorStamped(kdl.Vector(), rospy.Time(), "map"), radius=0, id="",
+    def get_entities(self, etype="", center_point=VectorStamped(kdl.Vector(), rospy.Time(), "map"), radius=0, uuid="",
                      ignore_z=False):
 
         center_point_in_map = self.tf_buffer.transform(center_point, "map")
 
         entities = self._entities.values()
-        if type:
-            entities = [e for e in entities if e.is_a(type)]
+        if etype:
+            entities = [e for e in entities if e.is_a(etype)]
         if radius:
             if ignore_z:
                 entities = [e for e in entities if e.distance_to_2d(center_point_in_map.vector) <= radius]
             else:
                 entities = [e for e in entities if e.distance_to_3d(center_point_in_map.vector) <= radius]
-        if id:
-            entities = [e for e in entities if e.id == id]
+        if uuid:
+            entities = [e for e in entities if e.uuid == uuid]
 
         return entities
 
@@ -358,25 +358,25 @@ class ED(MockedRobotPart):
         return defaultdict(ED.generate_random_entity, entities.items())
 
     def segment_kinect(self, *args, **kwargs):
-        self._dynamic_entities = {e.id: e for e in [ED.generate_random_entity() for _ in range(5)]}
+        self._dynamic_entities = {e.uuid: e for e in [ED.generate_random_entity() for _ in range(5)]}
         return self._entities
 
     def update_kinect(self, *args, **kwargs):
-        new_entities = {e.id:e for e in [ED.generate_random_entity() for _ in range(2)]}
+        new_entities = {e.uuid:e for e in [ED.generate_random_entity() for _ in range(2)]}
         self._dynamic_entities.update(new_entities)
 
         res = UpdateResponse()
-        res.new_ids = [e.id for e in new_entities.values()]
-        res.updated_ids = [random.choice(self._dynamic_entities).id for _ in range(2)]
+        res.new_ids = [e.uuid for e in new_entities.values()]
+        res.updated_ids = [random.choice(self._dynamic_entities).uuid for _ in range(2)]
         res.deleted_ids = []
         return res
 
-    def classify(self, ids, types=None, unknown_threshold=0.0):
-        entities = [self._entities[_id] for _id in ids if _id in self._entities]
-        return [ClassificationResult(e.id, e.type, random.uniform(0, 1), None) for e in entities]
+    def classify(self, uuids, types=None, unknown_threshold=0.0):
+        entities = [self._entities[uuid] for uuid in uuids if uuid in self._entities]
+        return [ClassificationResult(e.uuid, e.etype, random.uniform(0, 1), None) for e in entities]
 
     def detect_people(self, rgb, depth, cam_info):
-        return True, [self._dynamic_entities['operator'].id]
+        return True, [self._dynamic_entities['operator'].uuid]
 
 
 class MockedTfBuffer(mock.MagicMock):

@@ -6,16 +6,16 @@ class EntityDescriptionDesignator(ds.Designator):
     def __init__(self, entity_designator, name=None):
         super(EntityDescriptionDesignator, self).__init__(resolve_type=str, name=name)
         self.entity_designator = entity_designator
-        self.known_formats = "I'm trying to grab the {type}"
+        self.known_formats = "I'm trying to grab the {etype}"
         self.unknown_formats = "I'm trying to grab this thing"
 
     def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
             return self.unknown_formats
-        typ = entity.type
-        if typ:
-            sentence = self.known_formats.format(type=typ)
+        etype = entity.etype
+        if etype:
+            sentence = self.known_formats.format(etype=etype)
         else:
             sentence = self.unknown_formats
         return sentence

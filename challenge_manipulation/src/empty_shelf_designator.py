@@ -13,7 +13,7 @@ class EmptyShelfDesignator(Designator):
     robot = amigo
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
-    cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+    cabinet = ds.EntityByIdDesignator(robot, uuid=CABINET, name="pick_shelf")
     place_position = ds.LockingDesignator(ds.EmptyShelfDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
     """
     def __init__(self, robot, place_location_designator, name=None, area=None):
@@ -125,13 +125,13 @@ class EmptyShelfDesignator(Designator):
         :return:
         """
         # Just to be sure, copy e
-        e = self.robot.ed.get_entity(id=e.id)
+        e = self.robot.ed.get_entity(uuid=e.uuid)
 
         # We want to give it a convex hull using the designated area
         if area in e.volumes:
             box = e.volumes[area]
         else:
-            rospy.logwarn("Entity {0} has no volume named {1}".format(e.id, area))
+            rospy.logwarn("Entity {0} has no volume named {1}".format(e.uuid, area))
 
         if not self._candidate_list_obj:
             for y in [0, self._spacing, -self._spacing, 2.0 * self._spacing, -2.0 * self._spacing]:
@@ -146,7 +146,7 @@ class EmptyShelfDesignator(Designator):
                                                           0,
                                                           0,
                                                           rospy.Time.now(),
-                                                          e.id)
+                                                          e.uuid)
 
                 # e.convex_hull = []
                 # e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
@@ -166,7 +166,7 @@ class EmptyShelfDesignator(Designator):
             self.marker_array.markers.append(self.create_marker(frame_stamped.frame.p.x(),
                                                                 frame_stamped.frame.p.y(),
                                                                 frame_stamped.frame.p.z(),
-                                                                e.id))
+                                                                e.uuid))
         self.marker_pub.publish(self.marker_array)
 
         return self._candidate_list_obj
@@ -180,7 +180,7 @@ class EmptyShelfDesignator(Designator):
     #     y = e.pose.position.y
     #
     #     if len(e.convex_hull) == 0:
-    #         rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+    #         rospy.logerr('Entity: {0} has an empty convex hull'.format(e.uuid))
     #         return []
     #
     #     ''' Convert convex hull to map frame '''

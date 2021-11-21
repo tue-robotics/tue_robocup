@@ -108,7 +108,7 @@ class DriveAndSwordFight(smach.StateMachine):
             smach.StateMachine.add("NAVIGATE_TO_START",
                                    states.NavigateToWaypoint(
                                        robot=robot,
-                                       waypoint_designator=ds.EntityByIdDesignator(robot, id=LIGHTSABER_WAYPOINT_ID),
+                                       waypoint_designator=ds.EntityByIdDesignator(robot, uuid=LIGHTSABER_WAYPOINT_ID),
                                    ),
                                    transitions={"arrived": "SWORDFIGHT",
                                                 "unreachable": "SWORDFIGHT",  # Just take it from here

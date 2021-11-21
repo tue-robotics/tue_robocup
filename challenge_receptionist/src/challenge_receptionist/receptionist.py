@@ -1,10 +1,13 @@
-import rospy
+import smach
+
+from ed.entity import Entity
+
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-import smach
+
+
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
-from robot_skills.util.entity import Entity
 from challenge_receptionist.find_empty_seat import FindEmptySeat
 from challenge_receptionist.learn_guest import LearnGuest
 from challenge_receptionist.introduce_guest import IntroduceGuest
@@ -21,8 +24,8 @@ class HandleSingleGuest(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
 
-        door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
-        livingroom_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_livingroom['id'])
+        door_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_door['id'])
+        livingroom_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])
 
         guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
         guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')

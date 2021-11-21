@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 import unittest
 
-from robot_skills.mockbot import Mockbot
-from robot_skills.util.entity import Entity
-from robot_smach_states.util.designators.core import Designator
+from ed.entity import Entity
 
+from robot_skills.mockbot import Mockbot
+from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.navigation.constraint_functions.symbolic_constraints import symbolic_constraint, room_constraint
 
 

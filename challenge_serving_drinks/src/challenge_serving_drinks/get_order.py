@@ -41,7 +41,7 @@ class GetOrder(smach.StateMachine):
 
             # Operator id
             caller_id = "operator"
-            caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id, name="caller_des", none_resolve=True)
+            caller_designator = ds.EdEntityDesignator(robot=robot, uuid=caller_id, name="caller_des", none_resolve=True)
             smach.StateMachine.add("RESET_ROBOT_GET_ORDER",
                                    states.ArmToJointConfig(robot=robot,
                                                            arm_designator=hacky_arm_des,

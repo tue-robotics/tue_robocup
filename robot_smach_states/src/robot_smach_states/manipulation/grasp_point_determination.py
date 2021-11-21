@@ -48,7 +48,7 @@ class GraspPointDeterminant(object):
         ''' Create a grasp vector for every side of the convex hull '''
         ''' First: check if container actually has a convex hull '''
         if entity.shape is None:
-            rospy.logerr("Entity {0} has no shape. We need to do something with this".format(entity.id))
+            rospy.logerr("Entity {0} has no shape. We need to do something with this".format(entity.uuid))
             return False
 
         ''' Second: turn points into KDL objects and offset chull to get it in map frame '''

@@ -13,12 +13,13 @@ import rospy
 import smach
 
 # TU/e Robotics
+from ed.entity import Entity
+
 import robot_smach_states.util.designators as ds
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.world_model import Inspect
 from robot_skills import get_robot_from_argv
 from robot_skills.robot import Robot
-from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
 
 # Items with x- or y-dimension larger than this value will be filtered out
@@ -81,12 +82,12 @@ class InspectFurniture(smach.StateMachine):
                 assert userdata.laser_dot.header.frame_id.endswith("map"), "Provide your laser dot in map frame"
 
                 # Extract classification results
-                entity_ids = [cr.id for cr in object_ids_des.resolve()]
+                entity_ids = [cr.uuid for cr in object_ids_des.resolve()]
                 rospy.loginfo("Segmented entities: {}".format(entity_ids))
 
                 # Obtain all corresponding entities
                 all_entities = robot.ed.get_entities()
-                segmented_entities = [e for e in all_entities if e.id in entity_ids]
+                segmented_entities = [e for e in all_entities if e.uuid in entity_ids]
 
                 # Filter out 'unprobable' entities
                 candidates = []
@@ -121,12 +122,12 @@ class InspectFurniture(smach.StateMachine):
                     x_e = e.pose.frame.p.x()
                     y_e = e.pose.frame.p.y()
                     distance_2d = math.hypot(x_ref - x_e, y_ref - y_e)
-                    rospy.loginfo("Entity {} at {}, {}: distance = {}".format(e.id, x_e, y_e, distance_2d))
+                    rospy.loginfo("Entity {} at {}, {}: distance = {}".format(e.uuid, x_e, y_e, distance_2d))
 
                     if closest_tuple[0] is None or distance_2d < closest_tuple[1]:
                         closest_tuple = (e, distance_2d)
 
-                rospy.loginfo("Best entity: {} at {}".format(closest_tuple[0].id, closest_tuple[1]))
+                rospy.loginfo("Best entity: {} at {}".format(closest_tuple[0].uuid, closest_tuple[1]))
                 entity_designator.write(closest_tuple[0])
 
                 return "succeeded"
@@ -145,7 +146,7 @@ if __name__ == "__main__":
     _robot = get_robot_from_argv(index=1)
 
     # Test data
-    furniture = ds.EdEntityDesignator(robot=_robot, id="desk")
+    furniture = ds.EdEntityDesignator(robot=_robot, uuid="desk")
     entity_designator = ds.VariableDesignator(resolve_type=Entity)
 
     ps = geometry_msgs.msg.PointStamped()

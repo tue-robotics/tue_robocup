@@ -175,9 +175,9 @@ class GetBreakfastOrder(smach.State):
         """ Recites the order based on the main course
         :param choice: string with chosen main course
         """
-        self.grasp_designator1.type = self.options[choice]["drink1"]
-        self.grasp_designator2.type = self.options[choice]["drink2"]
-        self.grasp_designator3.type = self.options[choice]["food"]
+        self.grasp_designator1.etype = self.options[choice]["drink1"]
+        self.grasp_designator2.etype = self.options[choice]["drink2"]
+        self.grasp_designator3.etype = self.options[choice]["food"]
 
         self.robot.speech.speak("I will bring you {}".format(choice), block=False)
         self.robot.speech.speak("This comes with {} and {}".format(self.options[choice]["drink1"],

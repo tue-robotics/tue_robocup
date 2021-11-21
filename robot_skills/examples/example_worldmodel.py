@@ -44,7 +44,7 @@ if not len(close_entities) < len(all_entities):
 robot_loc = VectorStamped.from_framestamped(robot.base.get_location())
 query_type = "trashbin"
 radius_2 = 10
-close_entities_of_type = robot.ed.get_entities(type=query_type, center_point=robot_loc, radius=radius_2)
+close_entities_of_type = robot.ed.get_entities(etype=query_type, center_point=robot_loc, radius=radius_2)
 robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
                    .format(count=len(close_entities_of_type), radius=radius_2, type=query_type))
 
@@ -54,14 +54,14 @@ robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
 
 # TODO: center_point should also be a VectorStamped
 closest = robot.ed.get_closest_entity(center_point=VectorStamped(kdl.Vector(), rospy.Time.now(), "map"), radius=2.0)
-robot.speech.speak("The closest entity to the center of the arena is {id}, of type {type}"
-                   .format(id=closest.id[:10], type=closest.type))
+robot.speech.speak("The closest entity to the center of the arena is {uuid}, of type {etype}"
+                   .format(uuid=closest.uuid[:10], etype=closest.etype))
 
-closest2 = robot.ed.get_closest_entity(type=query_type,
+closest2 = robot.ed.get_closest_entity(etype=query_type,
                                        center_point=VectorStamped(kdl.Vector(), rospy.Time.now(), "map"),
                                        radius=10.0)
-robot.speech.speak("The closest {type} to the center of the arena is {id}".format(id=closest2.id, type=query_type))
-if closest2.type != query_type:
+robot.speech.speak("The closest {etype} to the center of the arena is {uuid}".format(uuid=closest2.uuid, etype=query_type))
+if closest2.etype != query_type:
     failed_actions += ["get_closest_entity with type, center_point and radius"]
 
 
@@ -69,9 +69,10 @@ if closest2.type != query_type:
 # Test Get Entity #
 #######################
 
-id_ = "trashbin"
-trashbin = robot.ed.get_entity(id_)
-robot.speech.speak("Entity {id} is at {x}, {y} in the map".format(id=id_, x=trashbin.pose.frame.p.x(), y=trashbin.pose.frame.p.y()))
-if trashbin.id != id_:
-    failed_actions += ["get_entity with id {id}".format(id=id_)]
-    robot.speech.speak("I could not get entity with id {id}".format(id=id_))
+uuid = "trashbin"
+trashbin = robot.ed.get_entity(uuid)
+robot.speech.speak("Entity {uuid} is at {x}, {y} in the map".format(uuid=uuid, x=trashbin.pose.frame.p.x(),
+                                                                    y=trashbin.pose.frame.p.y()))
+if trashbin.uuid != uuid:
+    failed_actions += ["get_entity with id {uuid}".format(uuid=uuid)]
+    robot.speech.speak("I could not get entity with id {uuid}".format(uuid=uuid))

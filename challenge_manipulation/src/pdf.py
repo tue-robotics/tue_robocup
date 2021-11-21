@@ -89,17 +89,17 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
     html += "<h1>%s</h1>"%name
 
     for entity in entities:
-        if len(entity.id) == 32 and entity.type != "":
-            image = save_entity_image_to_file(world_model_ed, entity.id)
-            print("Created entry for %s (%s)"%(entity.id, entity.type))
+        if len(entity.uuid) == 32 and entity.etype != "":
+            image = save_entity_image_to_file(world_model_ed, entity.uuid)
+            print("Created entry for %s (%s)"%(entity.uuid, entity.etype))
             html += "<table border='1'><tr>"
             if image:
-                html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.id)
+                html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.uuid)
             else:
-                html += "<td>!! NO IMAGE FOR '%s' !!</td>"%entity.id
+                html += "<td>!! NO IMAGE FOR '%s' !!</td>"%entity.uuid
             html += "<td><center>"
-            html += "<h2>%s</h2>"%entity.id
-            html += "<p><b>Type: </b>%s</p>"%entity.type
+            html += "<h2>%s</h2>"%entity.uuid
+            html += "<p><b>Type: </b>%s</p>"%entity.etype
             html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>"%(entity.pose.frame.p.x(), entity.frame.p.y(), entity.frame.p.z())
             html += "</center></td>"
             html += "</tr></table>"
@@ -113,16 +113,17 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
 
     try:
         html2pdf(html, "%s/%s"%(directory, filename))
-    except IOError, ioerror:
+    except IOError as ioerror:
         rospy.logerr(ioerror)
         rospy.logwarn("Writing to local file instead")
         html2pdf(html, "%s"%filename)
 
     html2pdf(html, "%s/%s"%(os.path.expanduser("~"), filename))
 
+
 if __name__ == '__main__':
     rospy.init_node("testpdf")
     pisa.showLogging()
 
-    ed = world_model_ed.ED("amigo", "nbanana");
+    ed = world_model_ed.ED("amigo", "nbanana")
     entities_to_pdf(ed, ed.get_entities(), "all_entities")

@@ -4,8 +4,9 @@ import argparse
 import PyKDL as kdl
 from pykdl_ros import FrameStamped
 
+from ed.entity import Entity
+
 from robot_skills.get_robot import get_robot
-from robot_skills.util.entity import Entity
 
 # Robot Smach States
 from robot_smach_states.navigation.constraint_functions.arms_reach_constraints import arms_reach_constraint

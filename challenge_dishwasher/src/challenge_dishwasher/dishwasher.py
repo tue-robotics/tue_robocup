@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import rospy
+
 from challenge_dishwasher.custom_place import CustomPlace
 from challenge_dishwasher.open_dishwasher import OpenDishwasher
 from challenge_dishwasher.simple_grab import FindAndGrab
+
+from ed.entity import Entity
+
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.entity import Entity
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.startup import StartChallengeRobust
@@ -37,7 +40,7 @@ class GetCupId(State):
         self._candidate_entities_designator = candidate_entities_designator
 
     def execute(self, userdata=None):
-        ids_to_select_from = [e.id for e in self._candidate_entities_designator.resolve()]
+        ids_to_select_from = [e.uuid for e in self._candidate_entities_designator.resolve()]
         rospy.logdebug('list of entities to select from: {}'.format(ids_to_select_from))
 
         satisfying_entities = []
@@ -52,7 +55,7 @@ class GetCupId(State):
         rospy.logdebug('entities that satisfy the seleciton criteria: {}'.format(satisfying_entities))
 
         if satisfying_entities:
-            rospy.logerr("Cup Id: {}".format(satisfying_entities[0].id))
+            rospy.logerr("Cup Id: {}".format(satisfying_entities[0].uuid))
             self._found_entity_designator.write(satisfying_entities[0])
             return 'succeeded'
         else:
@@ -88,7 +91,7 @@ class FindObject(StateMachine):
     def __init__(self, robot, item):
         StateMachine.__init__(self, outcomes=['found', 'not_found'])
 
-        source_entity_designator = EdEntityDesignator(robot, id=source_entity)
+        source_entity_designator = EdEntityDesignator(robot, uuid=source_entity)
         # description_designator = VariableDesignator({
         #     'type': 'cup'
         # })
@@ -122,7 +125,7 @@ class NavigateAndOpenDishwasher(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+        dishwasher = EdEntityDesignator(robot=robot, uuid=dishwasher_id)
 
         with self:
             StateMachine.add("NAVIGATE_TO_DISHWASHER",
@@ -141,7 +144,7 @@ class NavigateAndPlaceDishwasher(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+        dishwasher = EdEntityDesignator(robot=robot, uuid=dishwasher_id)
 
         with self:
             StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER",
@@ -170,7 +173,7 @@ class GrabRobust(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        source_entity_designator = EdEntityDesignator(robot, id=source_entity)
+        source_entity_designator = EdEntityDesignator(robot, uuid=source_entity)
         navigation_area_designator1 = VariableDesignator('in_front_of')
         navigation_area_designator2 = VariableDesignator('in_back_of')
 
@@ -244,19 +247,19 @@ def setup_statemachine(robot):
                          transitions={'spoken': 'GO_TO_EXIT'})
 
         StateMachine.add('GO_TO_EXIT',
-                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_1), radius=0.7),
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_1), radius=0.7),
                          transitions={'arrived': 'done',
                                       'unreachable': 'GO_TO_EXIT_2',
                                       'goal_not_defined': 'GO_TO_EXIT_2'})
 
         StateMachine.add('GO_TO_EXIT_2',
-                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_2), radius=0.5),
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_2), radius=0.5),
                          transitions={'arrived': 'done',
                                       'unreachable': 'GO_TO_EXIT_3',
                                       'goal_not_defined': 'GO_TO_EXIT_3'})
 
         StateMachine.add('GO_TO_EXIT_3',
-                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_3), radius=0.5),
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_3), radius=0.5),
                          transitions={'arrived': 'done',
                                       'unreachable': 'done',
                                       'goal_not_defined': 'done'})

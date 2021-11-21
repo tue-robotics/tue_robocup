@@ -34,15 +34,15 @@ def entities_from_description(robot, knowledge, entity_description, list_of_enti
 
     # Select entities based on the description
     if entity_description.get('type'):
-        entities = [e for e in entities if e.type == entity_description['type']]
+        entities = [e for e in entities if e.etype == entity_description['type']]
     elif entity_description.get('category'):
-        entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['category']]
+        entities = [e for e in entities if knowledge.get_object_category(e.etype) == entity_description['category']]
     else:
         return []
 
         # If we have a list of entities to choose from, select based on that list
     if list_of_entity_ids:
-        entities = [e for e in entities if e.id in list_of_entity_ids]
+        entities = [e for e in entities if e.uuid in list_of_entity_ids]
 
     # Sort entities by distance
     robot_location = robot.base.get_location()
@@ -70,7 +70,7 @@ class CheckIfDescribedEntityAvailable(smach.State):
         self._candidate_entities_designator = candidate_entities_designator
 
     def execute(self, userdata=None):
-        ids_to_select_from = [e.id for e in self._candidate_entities_designator.resolve()]
+        ids_to_select_from = [e.uuid for e in self._candidate_entities_designator.resolve()]
         rospy.logdebug('list of entities to select from: {}'.format(ids_to_select_from))
         description = self._description_designator.resolve()
 

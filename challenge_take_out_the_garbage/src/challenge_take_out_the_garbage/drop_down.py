@@ -70,7 +70,7 @@ class DropTrash(smach.State):
 #
 #         # Query ed
 #         try:
-#             frame = self._robot.ed.get_entity(id=self._name)._pose
+#             frame = self._robot.ed.get_entity(uuid=self._name)._pose
 #         except:
 #             rospy.logwarn("The provided entity has no _pose")
 #             return None
@@ -98,7 +98,7 @@ class DropDownTrash(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=drop_zone_id),
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=drop_zone_id),
                                                              radius=0.5),
 
                                    transitions={"arrived": "DROP_TRASH",
@@ -115,7 +115,7 @@ class DropDownTrash(smach.StateMachine):
                                                 "preempted": "GO_TO_COLLECTION_ZONE2"})
 
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE2",
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=drop_zone_id),
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=drop_zone_id),
                                                              radius=0.5),
 
                                    transitions={"arrived": "DROP_TRASH",
@@ -133,5 +133,5 @@ class DropDownTrash(smach.StateMachine):
 
 
 #states.NavigateToObserve(robot, drop_designator),
-#states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1),
+#states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_1),
 #                                                         radius=0.5),

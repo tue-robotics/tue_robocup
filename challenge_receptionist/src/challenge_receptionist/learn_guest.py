@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 import rospy
+from ed.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
 from robocup_knowledge import load_knowledge
-from robot_skills.util.entity import Entity
 from hmi import HMIResult
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
@@ -103,8 +103,8 @@ if __name__ == "__main__":
         def __init__(self, robot):
             smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
 
-            self.door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
-            self.livingroom_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_livingroom['id'])
+            self.door_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_door['id'])
+            self.livingroom_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])
 
             self.operator_designator = ds.VariableDesignator(resolve_type=Entity)
 

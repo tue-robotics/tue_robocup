@@ -77,7 +77,7 @@ class LearnOperator(smach.State):
                         operator = None
                         break
             r.sleep()
-        rospy.loginfo("We have a new operator: %s" % operator.id)
+        rospy.loginfo("We have a new operator: %s" % operator.uuid)
         self._robot.speech.speak("Who is that handsome person? Oh, it is you!", mood='Excited')
         self._robot.speech.speak(
             "I will follow you now, please say , {}, stop , when we are at the car.".format(self._robot.robot_name))

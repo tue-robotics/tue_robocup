@@ -12,9 +12,9 @@ from pykdl_ros import FrameStamped, VectorStamped
 from geometry_msgs.msg import PointStamped, Point
 
 # TU/e Robotics
+from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm import arms
-from robot_skills.util.entity import Entity
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 # Robot Smach States
@@ -37,8 +37,8 @@ class Door(Entity):
 
     def __init__(self, entity: Entity):
         super().__init__(
-            identifier=entity.id,
-            object_type=entity.type,
+            identifier=entity.uuid,
+            object_type=entity.etype,
             frame_id=entity.frame_id,
             pose=entity.pose.frame,
             shape=entity.shape,
@@ -541,7 +541,7 @@ if __name__ == "__main__":
     rospy.init_node("josja_faalt")
 
     hero = get_robot('hero')
-    door = hero.ed.get_entity(id="door")
+    door = hero.ed.get_entity(uuid="door")
     door_des = Designator(Door(door))
     test = OpenDoor(hero, door_des)
     test.execute()

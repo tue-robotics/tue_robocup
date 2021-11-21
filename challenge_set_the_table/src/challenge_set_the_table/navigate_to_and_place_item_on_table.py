@@ -176,7 +176,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
     def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area, placement_height=0.7):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
 
-        table = EdEntityDesignator(robot=robot, id=table_id)
+        table = EdEntityDesignator(robot=robot, uuid=table_id)
 
         with self:
             StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",

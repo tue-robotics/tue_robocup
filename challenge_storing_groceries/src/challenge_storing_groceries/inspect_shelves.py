@@ -27,7 +27,7 @@ class InspectShelves(smach.State):
         # Get cabinet entity
         # Sleep for a while to make sure that the robot is actually in ED
         rospy.sleep(rospy.Duration(0.25))
-        cabinet_entity = self.robot.ed.get_entity(id=self.cabinet.id_)
+        cabinet_entity = self.robot.ed.get_entity(uuid=self.cabinet.uuid)
 
         # Get the pose of all shelves
         shelves = []
@@ -35,7 +35,7 @@ class InspectShelves(smach.State):
             if k in config.OBJECT_SHELVES:
                 rospy.loginfo("Adding {} to shelves".format(k))
                 vector = 0.5 * (v.min_corner + v.max_corner)
-                shelves.append({'ps': VectorStamped(vector, rospy.Time.now(), cabinet_entity.id), 'name': k})
+                shelves.append({'ps': VectorStamped(vector, rospy.Time.now(), cabinet_entity.uuid), 'name': k})
 
         # Sort the list in ascending order
         shelves = sorted(shelves, key=lambda x: x['ps'].vector.z())
@@ -64,29 +64,29 @@ class InspectShelves(smach.State):
                 continue
 
             # Enable kinect segmentation plugin (only one image frame)
-            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
+            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.uuid))
             # print("Segmented new entities: {}".format(segmented_entities.new_ids))
 
-            for id_ in segmented_entities.new_ids:
+            for uuid in segmented_entities.new_ids:
                 # In simulation, the entity type is not yet updated...
-                entity = self.robot.ed.get_entity(id=id_)
-                config.SEGMENTED_ENTITIES.append((entity, id_))
+                entity = self.robot.ed.get_entity(uuid=uuid)
+                config.SEGMENTED_ENTITIES.append((entity, uuid))
             # print("Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES))
 
             # ToDo: classification threshold
-            entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
+            entity_types_and_probs = self.robot.ed.classify(uuids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
             # print("Types and probs: {}".format(entity_types_and_probs))
 
             # Recite entities
             for etp in entity_types_and_probs:
-                self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+                self.robot.speech.speak("I have seen {0}".format(etp.etype), block=False)
 
             # Lock entities
-            self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+            self.robot.ed.lock_entities(lock_ids=[e.uuid for e in entity_types_and_probs], unlock_ids=[])
 
             for e in entity_types_and_probs:
                 # In simulation, the entity type is not yet updated...
-                entity = self.robot.ed.get_entity(id=e.id)
+                entity = self.robot.ed.get_entity(uuid=e.uuid)
                 config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
             config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1],

@@ -1,10 +1,11 @@
 import unittest
 import mock
 
+from ed.entity import Entity
+
 # Robot Skills
 from robot_skills.arm import arms
 from robot_skills.mockbot import Mockbot
-from robot_skills.util.entity import Entity
 
 # Robot Smach States
 from robot_smach_states.manipulation import CloseGripperOnHandoverToRobot, HandoverFromHuman, HandoverToHuman, SetGripper
@@ -132,7 +133,7 @@ class TestCloseGripper(unittest.TestCase):
         state = CloseGripperOnHandoverToRobot(self.robot, self.arm_ds, self.entity_label)
         self.assertEqual(state.execute(), "succeeded")
         self.robot.arms["leftArm"].handover_detector.handover_to_robot.assert_called_once()
-        self.assertEqual(self.robot.arms["leftArm"].gripper.occupied_by.id, self.entity_label)
+        self.assertEqual(self.robot.arms["leftArm"].gripper.occupied_by.uuid, self.entity_label)
 
 
 class TestCloseGripperFail(unittest.TestCase):

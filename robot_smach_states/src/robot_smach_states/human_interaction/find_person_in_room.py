@@ -103,7 +103,7 @@ class FindPerson(smach.State):
             found_people = [p for p in found_people if p]
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
-            found_names = {person.id: person for person in found_people}
+            found_names = {person.uuid: person for person in found_people}
 
             found_person = None
 
@@ -115,15 +115,15 @@ class FindPerson(smach.State):
                 found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
 
             if self._room:
-                room_entity = self._robot.ed.get_entity(id=self._room)
+                room_entity = self._robot.ed.get_entity(uuid=self._room)
                 if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in'):
                     # If the person is not in the room we are looking for, ignore the person
                     rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
-                                  .format(found_person.id, room_entity.id))
+                                  .format(found_person.uuid, room_entity.uuid))
                     found_person = None
 
             if found_person:
-                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label,
+                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.uuid, person_label,
                                                                            VectorStamped(found_person.pose),
                                                                            block=False))
                 if self.speak_when_found:
@@ -193,8 +193,8 @@ class FindPersonInRoom(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        waypoint_designator = EntityByIdDesignator(robot=robot, id=area + "_waypoint")
-        room_designator = EntityByIdDesignator(robot=robot, id=area)
+        waypoint_designator = EntityByIdDesignator(robot=robot, uuid=area + "_waypoint")
+        room_designator = EntityByIdDesignator(robot=robot, uuid=area)
 
         with self:
             smach.StateMachine.add("DECIDE_NAVIGATE_STATE",

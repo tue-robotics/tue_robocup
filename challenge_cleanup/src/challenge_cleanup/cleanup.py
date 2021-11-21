@@ -57,7 +57,7 @@ class VerifyWorldModelInfo(smach.State):
         # There should be an 'underscore_rule' : trash_bin or trashbin???
         # (Different between rgo2019 and robotics_testlabs knowledge)
 
-        ids = [e.id for e in self._robot.ed.get_entities()]
+        ids = [e.uuid for e in self._robot.ed.get_entities()]
         # for loc in challenge_knowledge.cleaning_locations:
             # ToDo: This depends on environment
             # if loc["room"] == "living_room":
@@ -214,7 +214,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                NavigateToWaypoint(robot=robot, waypoint_designator=ds.EntityByIdDesignator(
                                    robot=robot,
-                                   id=challenge_knowledge.starting_point),
+                                   uuid=challenge_knowledge.starting_point),
                                                   radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
                                             "unreachable": "SAY_CLEANED_ROOM",

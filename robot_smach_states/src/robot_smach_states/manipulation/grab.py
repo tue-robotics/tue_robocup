@@ -8,8 +8,8 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
+from ed.entity import Entity
 from robot_skills.robot import Robot
-from robot_skills.util.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from ..utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
@@ -48,9 +48,10 @@ class PrepareEdGrasp(smach.State):
             return "failed"
 
         self.robot.move_to_inspect_pose(entity._pose.p)
-        self.robot.head.look_at_point(entity.pose, timeout=0.0)
+        entity_pose_vs = VectorStamped.from_framestamped(entity.pose)
+        self.robot.head.look_at_point(entity_pose_vs, timeout=0.0)
         self.robot.head.wait_for_motion_done()
-        segm_res = self.robot.ed.update_kinect("%s" % entity.id)
+        segm_res = self.robot.ed.update_kinect("%s" % entity.uuid)
 
         arm = self.arm_designator.resolve()
 
@@ -70,7 +71,7 @@ class PrepareEdGrasp(smach.State):
         arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
-        self.robot.head.look_at_point(entity.pose, timeout=0.0)
+        self.robot.head.look_at_point(entity_pose_vs, timeout=0.0)
         self.robot.head.wait_for_motion_done()
         return 'succeeded'
 
@@ -112,7 +113,7 @@ class PickUp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.id)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.uuid)
 
         try:
             # Transform to base link frame
@@ -135,7 +136,7 @@ class PickUp(smach.State):
         # Resolve the entity again because we want the latest pose
         updated_grab_entity = self.grab_entity_designator.resolve()
 
-        rospy.loginfo("ID to update: {0}".format(grab_entity.id))
+        rospy.loginfo("ID to update: {0}".format(grab_entity.uuid))
         if not updated_grab_entity:
             rospy.logerr("Could not resolve the updated grab_entity, "
                          "this should not happen [CHECK WHY THIS IS HAPPENING]")
@@ -153,7 +154,7 @@ class PickUp(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.id)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.uuid)
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
@@ -188,7 +189,7 @@ class PickUp(smach.State):
 
         # Grasp
         rospy.loginfo('Start grasping')
-        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.uuid]):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
@@ -208,7 +209,7 @@ class PickUp(smach.State):
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
         rospy.loginfo("Start lift")
-        if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.uuid]):
             rospy.logerr('Failed lift')
 
         # Retract
@@ -220,13 +221,13 @@ class PickUp(smach.State):
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
-        if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.uuid]):
             rospy.logerr('Failed retract')
         arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
         # Update Kinect once again to make sure the object disappears from ED
-        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
+        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.uuid)
 
         arm.wait_for_motion_done(cancel=True)
 

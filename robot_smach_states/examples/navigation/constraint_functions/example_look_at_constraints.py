@@ -1,8 +1,10 @@
 import rospy
 import argparse
 
-from robot_skills.util.entity import Entity
+from ed.entity import Entity
+
 import PyKDL as kdl
+
 # Robot Smach States
 from robot_smach_states.navigation.constraint_functions.look_at_constraints import look_at_constraint
 from robot_smach_states.util.designators.core import Designator

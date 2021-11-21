@@ -47,7 +47,7 @@ class GetDrinks(smach.StateMachine):
             smach.StateMachine.add("NAVIGATE_TO_FRIDGE",
                                    states.NavigateToWaypoint(
                                        robot=robot,
-                                       waypoint_designator=ds.EntityByIdDesignator(robot, id=FRIDGE_WAYPOINT)
+                                       waypoint_designator=ds.EntityByIdDesignator(robot, uuid=FRIDGE_WAYPOINT)
                                    ),
                                    transitions={"arrived": "SAY_PUT_DRINKS",
                                                 "unreachable": "failed",
@@ -89,7 +89,7 @@ class GetDrinks(smach.StateMachine):
             smach.StateMachine.add("DELIVER_DRINKS",
                                    states.NavigateToWaypoint(
                                        robot,
-                                       waypoint_designator=ds.EntityByIdDesignator(robot, id=WAYPOINT_ID)),
+                                       waypoint_designator=ds.EntityByIdDesignator(robot, uuid=WAYPOINT_ID)),
                                    transitions={"arrived": "SAY_DRINKS_ARRIVED",
                                                 "unreachable": "failed",
                                                 "goal_not_defined": "failed"})

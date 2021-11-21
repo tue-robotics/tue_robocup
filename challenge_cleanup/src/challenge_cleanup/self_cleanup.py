@@ -4,7 +4,7 @@ import hmi
 
 from pykdl_ros import FrameStamped
 
-from robot_skills.util.entity import Entity
+from ed.entity import Entity
 
 from robot_smach_states.human_interaction import AskYesNo, HearOptionsExtra, Say
 from robot_smach_states.manipulation import ArmToJointConfig, Grab, Place
@@ -66,7 +66,7 @@ class StorePlaceDesignator(ds.Designator):
             rospy.logerr("Could not resolve the object category of {}".format(type_category))
             return None
 
-        entities = self._robot.ed.get_entities(id=location)
+        entities = self._robot.ed.get_entities(uuid=location)
         if entities:
             return entities[0]
         else:
@@ -88,12 +88,12 @@ class StorePlaceLocation(smach.State):
             rospy.logerr("Could not resolve the selected entity!")
             return "failed"
 
-        item_category = challenge_knowledge.common.get_object_category(e.type)
+        item_category = challenge_knowledge.common.get_object_category(e.etype)
         if item_category is not None:
             location, area_name = challenge_knowledge.common.get_object_category_location(item_category)
             return area_name
         else:
-            rospy.logerr("Could not resolve the object category of {}".format(e.type))
+            rospy.logerr("Could not resolve the object category of {}".format(e.etype))
             return "failed"
 
 
@@ -138,9 +138,9 @@ class EntityToCategory(smach.State):
             rospy.logerr("Could not resolve the selected entity!")
             return "failed"
 
-        rospy.loginfo("The type of the entity is '{}'".format(selected_entity.type))
+        rospy.loginfo("The type of the entity is '{}'".format(selected_entity.etype))
 
-        category = challenge_knowledge.common.get_object_category(selected_entity.type)
+        category = challenge_knowledge.common.get_object_category(selected_entity.etype)
         if category:
             self._category_des.write(category)
             return "done"
@@ -252,7 +252,7 @@ class SelfCleanup(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         store_entity_id_des = ds.VariableDesignator(resolve_type=str, name="store_entity_id")
-        store_entity_des = ds.EdEntityDesignator(robot, id_designator=store_entity_id_des)
+        store_entity_des = ds.EdEntityDesignator(robot, uuid_designator=store_entity_id_des)
 
         selected_entity_type_des = ds.AttrDesignator(selected_entity_designator, "type", resolve_type=str)
 

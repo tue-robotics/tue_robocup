@@ -41,7 +41,7 @@ class WritePdf(smach.State):
         # entities = self._robot.ed.get_entities()
         #
         # # Filter for the robot itself, the floor and walls and furniture objects
-        # entities = [e for e in entities if self._robot.robot_name not in e.id and e.id not in ["floor", "walls"] and
+        # entities = [e for e in entities if self._robot.robot_name not in e.uuid and e.uuid not in ["floor", "walls"] and
         #             "furniture" not in e.super_types]
 
         # config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
@@ -49,29 +49,29 @@ class WritePdf(smach.State):
 
         # Get DETECTED_OBJECTS_WITH_PROBS, i.e., the detections resulting from inspection
         for entity, probability in config.DETECTED_OBJECTS_WITH_PROBS:
-            if entity.id not in self._items:
-                image = save_entity_image_to_file(self._robot.ed, entity.id)
-                self._items[entity.id] = (entity, probability, image)
+            if entity.uuid not in self._items:
+                image = save_entity_image_to_file(self._robot.ed, entity.uuid)
+                self._items[entity.uuid] = (entity, probability, image)
 
         # Try to get stuff from the designator if available
         if self._designator is not None:
             results = self._designator.resolve()
 
             # results is a list of ClassificationResults
-            # These are mapped to the entity ID, so that self._items[entity.id] maps to
+            # These are mapped to the entity ID, so that self._items[entity.uuid] maps to
             #   the entity,
             #   the probability for the type it has
             #   an image
             for result in results:
-                if result.id not in self._items:
-                    image = save_entity_image_to_file(self._robot.ed, result.id)
-                    entity = self._robot.ed.get_entity(id=result.id)
-                    self._items[entity.id] = (entity, result.probability, image)
+                if result.uuid not in self._items:
+                    image = save_entity_image_to_file(self._robot.ed, result.uuid)
+                    entity = self._robot.ed.get_entity(uuid=result.uuid)
+                    self._items[entity.uuid] = (entity, result.probability, image)
 
         # Filter and sort based on probabilities
         # Items with a to low probability are dropped from the list and thus not rendered to the PDF later
         items = [item for item in self._items.values() if item[1] >= config.CLASSIFICATION_THRESHOLD]
-        items = [item for item in items if item[0].type not in config.SKIP_LIST]
+        items = [item for item in items if item[0].etype not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
 
@@ -86,7 +86,7 @@ class WritePdf(smach.State):
         unknown_items = unknown_items[:config.MAX_UNKNOWN_OBJECTS]
 
         for item in unknown_items:
-            item[0].type = "unknown"
+            item[0].etype = "unknown"
 
         # Write to file
         entities_to_pdf(items, "tech_united_eindhoven", directory="/home/amigo/usb")
@@ -183,17 +183,17 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
     for item in items:
         entity = item[0]
         image = item[2]
-        if len(entity.id) == 32 and entity.type != "":
-            # image = save_entity_image_to_file(world_model_ed, entity.id)
-            print("Created entry for %s (%s)" % (entity.id, entity.type))
+        if len(entity.uuid) == 32 and entity.etype != "":
+            # image = save_entity_image_to_file(world_model_ed, entity.uuid)
+            print("Created entry for %s (%s)" % (entity.uuid, entity.etype))
             html += "<table border='1'><tr>"
             if image:
-                html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.id)
+                html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.uuid)
             else:
-                html += "<td>!! NO IMAGE FOR '%s' !!</td>"%entity.id
+                html += "<td>!! NO IMAGE FOR '%s' !!</td>"%entity.uuid
             html += "<td><center>"
-            html += "<h2>%s</h2>" % entity.id
-            html += "<p><b>Type: </b>%s</p>" % entity.type
+            html += "<h2>%s</h2>" % entity.uuid
+            html += "<p><b>Type: </b>%s</p>" % entity.etype
             html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>" % (entity._pose.p.x(),
                                                                           entity._pose.p.y(),
                                                                           entity._pose.p.z())

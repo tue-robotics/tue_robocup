@@ -18,7 +18,7 @@ class StoreRobocupArena(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata=None):
-        self._robot.ed.update_entity(id="robocup_arena", posestamped=self._robot.base.get_location(), type="waypoint")
+        self._robot.ed.update_entity(uuid="robocup_arena", posestamped=self._robot.base.get_location(), etype="waypoint")
 
         return "done"
 
@@ -88,10 +88,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SAY_GUIDE', states.Say(robot, "I will guide you back to the robocup arena!", look_at_standing_person=True), transitions={ 'spoken' :'GUIDE_TO_ROBOCUP_ARENA'})
 
-        smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="robocup_arena"), radius = knowledge.back_radius),
+        smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid="robocup_arena"), radius = knowledge.back_radius),
                                 transitions={'arrived': 'SAY_BACK', 'unreachable':'GUIDE_TO_ROBOCUP_ARENA_BACKUP', 'goal_not_defined':'GUIDE_TO_ROBOCUP_ARENA_BACKUP'})
 
-        smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA_BACKUP', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="robocup_arena"), radius = knowledge.back_radius+0.1),
+        smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA_BACKUP', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid="robocup_arena"), radius = knowledge.back_radius+0.1),
                                 transitions={'arrived': 'SAY_BACK', 'unreachable':'GUIDE_TO_ROBOCUP_ARENA', 'goal_not_defined':'GUIDE_TO_ROBOCUP_ARENA'})
 
         smach.StateMachine.add('SAY_BACK', states.Say(robot, "We are back in the robocup arena!", look_at_standing_person=True), transitions={ 'spoken' :'done'})

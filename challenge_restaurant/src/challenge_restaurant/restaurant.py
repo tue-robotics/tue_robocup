@@ -4,10 +4,11 @@ import numpy as np
 import robot_smach_states as states
 import smach
 
+from ed.entity import Entity
+
 from .store_waypoint import StoreWaypoint
 from .take_orders import TakeOrder, ReciteOrders, ClearOrders
 from .wait_for_customer import AskTakeTheOrder
-from robot_skills.util.entity import Entity
 
 
 class Restaurant(smach.StateMachine):
