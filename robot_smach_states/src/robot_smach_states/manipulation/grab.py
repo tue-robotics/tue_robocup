@@ -48,7 +48,8 @@ class PrepareEdGrasp(smach.State):
             return "failed"
 
         self.robot.move_to_inspect_pose(entity._pose.p)
-        self.robot.head.look_at_point(entity.pose, timeout=0.0)
+        entity_pose_vs = VectorStamped.from_framestamped(entity.pose)
+        self.robot.head.look_at_point(entity_pose_vs, timeout=0.0)
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.uuid)
 
@@ -70,7 +71,7 @@ class PrepareEdGrasp(smach.State):
         arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
-        self.robot.head.look_at_point(entity.pose, timeout=0.0)
+        self.robot.head.look_at_point(entity_pose_vs, timeout=0.0)
         self.robot.head.wait_for_motion_done()
         return 'succeeded'
 
