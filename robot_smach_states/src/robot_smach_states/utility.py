@@ -377,7 +377,7 @@ class ResolveArm(smach.State):
                 self.arm.to_be_locked.arm_properties[k] = v
         self.arm.lock()
         if self.arm.resolve() is None:
-            rospy.logerror("Didn't find an arm")  # ToDo: improve error message
+            rospy.logerr("Didn't find an arm")  # ToDo: improve error message
             return "failed"
         else:
             return "succeeded"

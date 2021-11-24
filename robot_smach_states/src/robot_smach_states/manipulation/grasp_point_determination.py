@@ -116,12 +116,12 @@ class GraspPointDeterminant(object):
              # * kdl.Vector(0.5 * (wmin+wmax, 0, 0)
             tvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
                                 kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.frame.p.z())),
-                                rospy.Time.now(),
+                                rospy.Time(),
                                 frame_id="map")  # Helper frame
 
             cvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
                                 tvec.frame * kdl.Vector(0, -0.5 * (wmin+wmax), 0)),
-                                rospy.Time.now(),
+                                rospy.Time(),
                                 frame_id="map")
 
             ''' Optimize over yaw offset w.r.t. robot '''

@@ -113,7 +113,7 @@ class PickUp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.uuid)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=grab_entity.uuid)
 
         try:
             # Transform to base link frame
@@ -154,7 +154,7 @@ class PickUp(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time.now(), frame_id=grab_entity.uuid)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=grab_entity.uuid)
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
@@ -166,8 +166,7 @@ class PickUp(smach.State):
         else:
             # We do have a grasp pose, given as a kdl frame in map
             try:
-                self.robot.tf_buffer.can_transform("map", self.robot.base_link_frame, rospy.Time(0),
-                                                        rospy.Duration(10))
+                self.robot.tf_buffer.can_transform("map", self.robot.base_link_frame, rospy.Time(), rospy.Duration(10))
                 # Transform to base link frame
                 goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
                 if goal_bl is None:
