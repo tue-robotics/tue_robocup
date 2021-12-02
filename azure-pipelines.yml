@@ -19,13 +19,18 @@ jobs:
     condition: and(succeeded(), not(canceled()))
     steps:
       - task: Bash@3
-        displayName: 'Determine packages to be build'
-        name: matrix
+        displayName: 'Get CI scripts'
         inputs:
           targetType: 'inline'
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/ci/azure/ci/packages.sh
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/ci/azure/ci/azure_commit_range.py
+      - task: Bash@3
+        displayName: 'Determine packages to be build'
+        name: matrix
+        inputs:
+          targetType: 'inline'
+          script: |
             export COMMIT_RANGE=$(python3 ./azure_commit_range.py)
             ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
             source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL tue_robocup challenge_following_and_guiding challenge_manipulation challenge_navigation challenge_person_recognition challenge_spr challenge_speech_recognition
