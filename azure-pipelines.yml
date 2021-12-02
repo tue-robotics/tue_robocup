@@ -2,8 +2,8 @@ trigger:
   batch: true
 
 schedules:
-  - cron: "0 1 * * *"
-    displayName: "Nightly"
+  - cron: '0 1 * * *'
+    displayName: 'Nightly'
     branches:
       include:
         - master
