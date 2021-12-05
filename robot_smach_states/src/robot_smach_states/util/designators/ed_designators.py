@@ -218,7 +218,7 @@ class EntityByIdDesignator(Designator):
             return None
 
     def __repr__(self):
-        return "EntityByIdDesignator(iuud={}, name={})".format(self.uuid, self.name)
+        return "EntityByIdDesignator(uuid={}, name={})".format(self.uuid, self.name)
 
 
 class ReasonedEntityDesignator(Designator):
