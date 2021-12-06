@@ -234,7 +234,7 @@ class ED(RobotPart):
         if remove_flags is None:
             remove_flags = []
         json_entity = '"id" : "%s"' % uuid
-        if type:
+        if etype:
             json_entity += ', "type": "%s"' % etype
 
         if action:
