@@ -8,20 +8,19 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    {'name': 'couch_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
     {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
     {'name': 'bookcase',      'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'panda_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'cabinet',       'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'closet',        'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
 
-    {'name': 'cabinet',       'room': 'kitchen',    'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'trashbin',      'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
-    {'name': 'couch',         'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'fridge',        'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'salon_table',   'room': 'kitchen',    'category': 'table', 'manipulation': 'yes'},
+    {'name': 'couch_long',    'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'couch_short',   'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
 
-    {'name': 'workbench',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
-
-    {'name': 'hallway_table', 'room': 'hallway',    'category': 'table',   'manipulation': 'yes'},
-    {'name': 'bar',           'room': 'hallway',    'category': 'table',   'manipulation': 'yes'},
-    {'name': 'paperbin',      'room': 'hallway',    'category': 'utility', 'manipulation': 'no'}
+    {'name': 'workbench1',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
+    {'name': 'workbench2',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -79,16 +78,17 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-    "food": {"bookcase": "on_top_of"},
-    "snack": {"bookcase": "on_top_of"},
-    "container": {"flight_case": "in"},
+    "food": {"closet": "on_top_of"},
+    "snack": {"closet": "on_top_of"},
+    "container": {"cabinet": "on_top_of"},
     "drink": {"dinner_table": "on_top_of"},
     "cleaning_stuff": {"cabinet": "on_top_of"},
-    "cutlery": {"bar": "on_top_of"}
+    "cutlery": {"cabinet": "on_top_of"}
 }
 
 inspect_areas = {
-    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
+    "closet": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"],
+    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4"]
 }
 
 inspect_positions = {
@@ -100,10 +100,8 @@ default_target_radius = 0.2
 
 most_probable_location_in_room_map = {
     'livingroom': 'dinner_table',
-    'bedroom': 'nightstand',
-    'workshop': 'workbench',
-    'kitchen': 'cabinet',
-    'hallway': 'hallway_table'
+    'workshop': 'workbench1',
+    'kitchen': 'salon_table'
 }
 
 
@@ -112,10 +110,10 @@ def get_location_from_room(room_id):
         return most_probable_location_in_room_map[room_id]
     return None
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def object_names_of_category(category):
     return [obj['name'] for obj in objects if obj['category'] == category]
+
 
 drink_names = object_names_of_category('drink')
 drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
