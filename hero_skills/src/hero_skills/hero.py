@@ -7,7 +7,7 @@ import rospy
 # TU/e Robotics
 from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, \
     topological_planner, torso, world_model_ed
-from robot_skills.arm import arms, force_sensor, gripper, handover_detector
+from robot_skills.arm import arms, force_sensor, gripper, handover_detector, active_grasp_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
 
 
@@ -33,7 +33,8 @@ class Hero(robot.Robot):
         hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
         hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'center'))
-
+	
+	hero_arm.add_part('active_grasp_detector',active_grasp_detector.ActiveGraspDetector(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
         self.add_arm_part('arm_center', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_buffer))
