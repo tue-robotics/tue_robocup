@@ -59,13 +59,6 @@ class PrepareEdGrasp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        # Torso up (non-blocking)
-        self.robot.torso.reset()
-
-        # Arm to position in a safe way
-        self.robot.move_to_pregrasp_pose(arm, entity._pose.p)
-        arm.wait_for_motion_done()
-
         # Open gripper
         arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
@@ -125,13 +118,8 @@ class PickUp(smach.State):
             rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
             return 'failed'
 
-        # Make sure the torso and the arm are done
-        self.robot.torso.wait_for_motion_done(cancel=True)
+        # Make sure the arm is done
         arm.wait_for_motion_done(cancel=True)
-
-        # This is needed because the head is not entirely still when the
-        # look_at_point function finishes
-        rospy.sleep(rospy.Duration(0.5))
 
         # Resolve the entity again because we want the latest pose
         updated_grab_entity = self.grab_entity_designator.resolve()
@@ -151,10 +139,6 @@ class PickUp(smach.State):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
         grasp_framestamped = self._gpd.get_grasp_pose(grab_entity, arm)
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=grab_entity.uuid)
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
@@ -200,24 +184,13 @@ class PickUp(smach.State):
 
         arm.gripper.occupied_by = grab_entity
 
-        # Lift
-        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
-        rospy.loginfo('Start lifting')
-        roll = 0.0
-
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
-        goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
-        rospy.loginfo("Start lift")
-        if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.uuid]):
-            rospy.logerr('Failed lift')
-
         # Retract
         goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
         rospy.loginfo('Start retracting')
         roll = 0.0
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.1)  # Go 5 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.uuid]):
