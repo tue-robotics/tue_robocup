@@ -13,13 +13,13 @@ class Hear(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        result = self.robot.ears.recognize(spec='Bring me a <drink>',
-                                           choices={'drink': ['coke', 'fanta']},
-                                           time_out=rospy.Duration(60))
-        choices = result.choices['drink'] if result else None
-        if choices:
-            rospy.loginfo('I heared:' + repr(choices))
-        userdata.heared = choices
+        answer = self.robot.hmi.query(description='can i have a coke?',
+                                      grammar="T -> DET coke \n DET -> a",
+                                      target='T',
+                                      timeout=rospy.Duration(60).to_sec())
+        if answer:
+            rospy.loginfo('I heard:' + answer.sentence)
+        userdata.heared = answer.sentence
         return 'succeeded'
 
 
