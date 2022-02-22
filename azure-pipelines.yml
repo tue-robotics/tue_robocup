@@ -2,8 +2,8 @@ trigger:
   batch: true
 
 schedules:
-  - cron: "0 1 * * *"
-    displayName: "Nightly"
+  - cron: '0 1 * * *'
+    displayName: 'Nightly'
     branches:
       include:
         - master
@@ -13,26 +13,37 @@ variables:
 
 jobs:
   - job: package_selection
-    displayName: 'Package selection'
+    ${{ if eq(variables['Build.Reason'], 'PullRequest')}}:
+      displayName: 'Package selection (PR)'
+    ${{ else }}:
+      displayName: 'Package selection'
     pool:
       vmImage: 'ubuntu latest'
     condition: and(succeeded(), not(canceled()))
     steps:
+      - task: Bash@3
+        displayName: 'Get CI scripts'
+        inputs:
+          targetType: 'inline'
+          script: |
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/azure_commit_range.py
       - task: Bash@3
         displayName: 'Determine packages to be build'
         name: matrix
         inputs:
           targetType: 'inline'
           script: |
-            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
-            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/azure_commit_range.py
             export COMMIT_RANGE=$(python3 ./azure_commit_range.py)
             ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
             source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL tue_robocup challenge_following_and_guiding challenge_manipulation challenge_navigation challenge_person_recognition challenge_spr challenge_speech_recognition
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
 
   - job: install_build_test
-    displayName: 'Install, build & test:'
+    ${{ if eq(variables['Build.Reason'], 'PullRequest')}}:
+      displayName: 'Install, build & test (PR):'
+    ${{ else }}:
+      displayName: 'Install, build & test:'
     pool:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
@@ -51,31 +62,31 @@ jobs:
       displayName: 'Get CI scripts'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
+      displayName: 'Set Branch'
       inputs:
         targetType: 'inline'
         script: |
           source ./set-branch.sh --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}
           echo "##vso[task.setvariable variable=BRANCH]$BRANCH"
-      displayName: 'Set Branch'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
+      displayName: 'Install'
       inputs:
         targetType: 'inline'
         script: |
           bash install-package.sh --package=$PACKAGE --branch=$BRANCH --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
-      displayName: 'Install'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
+      displayName: 'Build'
       inputs:
         targetType: 'inline'
         script: |
           bash build-package.sh --package=$PACKAGE
-      displayName: 'Build'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
+      displayName: 'Test'
       inputs:
         targetType: 'inline'
         script: |
           bash test-package.sh --package=$PACKAGE
-      displayName: 'Test'
       condition: and(succeeded(), not(canceled()))

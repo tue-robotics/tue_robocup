@@ -3,7 +3,7 @@ import rospy
 import smach
 
 from robot_smach_states.util.startup import startup
-from robot_smach_states import Initialize
+from robot_smach_states.utility import Initialize
 
 
 class Hear(smach.State):
