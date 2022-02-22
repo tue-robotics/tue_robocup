@@ -7,7 +7,7 @@ from robot_skills.robot_part import RobotPart
 
 class GraspPositionDetector(RobotPart):
 
-    def __init__(self, robot_name, tf_buffer, wrench_topic, timeout=1.5):
+    def __init__(self, robot_name, tf_buffer, wrench_topic):
         """
         Class for detecting whether or not the robot is holding something
 
@@ -18,7 +18,7 @@ class GraspPositionDetector(RobotPart):
         """
         super(GraspPositionDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._topic = wrench_topic
-        self.timeout = rospy.Duration(timeout)
+        self.timeout = rospy.Duration(2.0) #seconds
         self.wrench_sub = self.create_subscriber(self._topic, JointState, self._joint_callback, queue_size=1)
         self.current_position = None
         self.store_position = False # Flag to store the position
