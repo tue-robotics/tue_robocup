@@ -34,7 +34,7 @@ class Hero(robot.Robot):
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
         hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'center'))
 	
-	hero_arm.add_part('active_grasp_detector',active_grasp_detector.ActiveGraspDetector(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
+	hero_arm.add_part('active_grasp_detector',grasp_position_detector.GraspPositionDetector(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
         self.add_arm_part('arm_center', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_buffer))
