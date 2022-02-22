@@ -7,7 +7,7 @@ import rospy
 # TU/e Robotics
 from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, \
     topological_planner, torso, world_model_ed
-from robot_skills.arm import arms, force_sensor, gripper, handover_detector, active_grasp_detector
+from robot_skills.arm import arms, force_sensor, gripper, handover_detector, grasp_position_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
 
 
