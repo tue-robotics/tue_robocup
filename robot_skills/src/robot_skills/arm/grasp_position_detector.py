@@ -23,7 +23,7 @@ class GraspPositionDetector(RobotPart):
         self.current_position = None
         self.store_position = False # Flag to store the position
         self.start_time = None
-
+    
     def _joint_callback(self, msg):
         """
         Will be executed every time a new message is received.
@@ -33,7 +33,7 @@ class GraspPositionDetector(RobotPart):
             if msg.name == 'hand_motor_joint':
                 self.current_position = msg.position
                 self.store_position = False
-
+    
     def detect(self):
         """
         Returns the position of the gripper if possible
@@ -55,4 +55,3 @@ class GraspPositionDetector(RobotPart):
                 break
         
         return self.current_position
-
