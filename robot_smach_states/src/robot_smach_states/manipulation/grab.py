@@ -170,7 +170,19 @@ class PickUp(smach.State):
         #     arm.gripper.send_goal('close', timeout=None)
         #     return 'failed'
 
+        # Pre grasp
+        goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.15)  # 10 cm in front
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # 5 cm up
+        rospy.loginfo('Start grasping')
+        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.uuid]):
+            self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
+            rospy.logerr('Grasp failed')
+            arm.reset()
+            arm.gripper.send_goal('close', timeout=0.0)
+            return 'failed'
+
         # Grasp
+        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
         rospy.loginfo('Start grasping')
         if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.uuid]):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
@@ -190,7 +202,7 @@ class PickUp(smach.State):
         roll = 0.0
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.1)  # Go 5 cm higher
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.1)  # Go 10 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.uuid]):
