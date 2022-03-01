@@ -17,7 +17,6 @@ class ActiveGraspDetector(smach.State):
 
         :param arm_designator: designator that resolves to arm to check
         :param robot: Robot to execute the state with
-        :param timeout: float amount of time the procedure may take
         """
         smach.State.__init__(self, outcome=['succeeded', 'failed', 'timeout'])
         self.robot = robot
