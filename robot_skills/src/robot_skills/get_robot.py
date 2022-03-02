@@ -1,6 +1,6 @@
 # System
+from typing import Dict, Tuple
 import importlib
-import os.path
 import sys
 
 # ROS
@@ -70,8 +70,8 @@ def get_robot_from_argv(index, default_robot_name="hero"):
     return get_robot(robot_name)
 
 
-def get_robot(name):
-    # type: (str) -> Robot
+def get_robot(name, *args, **kwargs):
+    # type: (str, Tuple, Dict) -> Robot
     """
     Constructs a robot (api) object based on the provided name
 
@@ -82,7 +82,7 @@ def get_robot(name):
     rospy.loginfo("Constructing robot {}".format(name))
     robot_class = ROBOTS.get(name.lower())
     if robot_class is not None:
-        return robot_class()
+        return robot_class(*args, **kwargs)
     else:
         error_msg = "Cannot construct robot '{}'\n".format(name)
         error_msg += "Available robots:\n\t{}\n".format("\n\t".join(list(ROBOTS.keys())))
