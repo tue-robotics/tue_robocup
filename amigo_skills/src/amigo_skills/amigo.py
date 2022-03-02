@@ -10,13 +10,14 @@ class Amigo(robot.Robot):
     """
     Amigo
     """
-    def __init__(self, wait_services=False):
+    def __init__(self, connection_timeout=robot.DEFAULT_CONNECTION_TIMEOUT):
         """
         Constructor
 
-        :param wait_services: Not supported anymore by robot class
+        :param connection_timeout: timeout to wait for ROS connections
+        :type connection_timeout: Optional[float]
         """
-        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)
+        super(Amigo, self).__init__(robot_name="amigo", connection_timeout=connection_timeout)
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_buffer))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_buffer, self.get_joint_states))

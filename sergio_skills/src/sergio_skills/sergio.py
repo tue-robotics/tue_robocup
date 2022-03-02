@@ -9,13 +9,14 @@ class Sergio(robot.Robot):
     Sergio
     """
     # noinspection PyUnresolvedReferences
-    def __init__(self, wait_services=False):
+    def __init__(self, connection_timeout=robot.DEFAULT_CONNECTION_TIMEOUT):
         """
         Constructor
 
-        :param wait_services: Not supported anymore by robot class
+        :param connection_timeout: timeout to wait for ROS connections
+        :type connection_timeout: Optional[float]
         """
-        super(Sergio, self).__init__(robot_name="sergio", wait_services=wait_services)
+        super(Sergio, self).__init__(robot_name="sergio", connection_timeout=connection_timeout)
 
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 

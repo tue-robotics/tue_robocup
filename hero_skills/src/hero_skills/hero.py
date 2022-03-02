@@ -13,13 +13,14 @@ from robot_skills.simulation import is_sim_mode, SimEButton
 
 class Hero(robot.Robot):
     """Hero"""
-    def __init__(self, wait_services=False):
+    def __init__(self, connection_timeout=robot.DEFAULT_CONNECTION_TIMEOUT):
         """
         Constructor
 
-        :param wait_services: Not supported anymore by robot class
+        :param connection_timeout: timeout to wait for ROS connections
+        :type connection_timeout: Optional[float]
         """
-        super(Hero, self).__init__(robot_name="hero", wait_services=wait_services)
+        super(Hero, self).__init__(robot_name="hero", connection_timeout=connection_timeout)
 
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
