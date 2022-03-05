@@ -13,8 +13,8 @@ class Hear(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        answer = self.robot.hmi.query(description='can i have a coke?',
-                                      grammar="T -> DET coke \n DET -> a",
+        answer = self.robot.hmi.query(description='can i have a fanta?',
+                                      grammar="T -> DET coke | DET fanta \n DET -> a | an ",
                                       target='T',
                                       timeout=60)
         if answer:
@@ -26,19 +26,17 @@ class Hear(smach.State):
 class GetEntitysByType(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'],
-                             input_keys=['type'],
+                             input_keys=['heard'],
                              output_keys=['entity'])
         self.robot = robot
 
     def execute(self, userdata):
-        type = userdata.type
+        type = userdata.heard
 
         rospy.loginfo('I\'m going to search for {}'.format(type))
-        # call robot.ed.get_closest_entity()
         entity = self.robot.ed.get_closest_entity(etype=userdata.heard)
-        #entity = {'id': 'coke-1'}
 
-        userdata.entity = entsity
+        userdata.entity = entity
         return 'succeeded'
 
 
