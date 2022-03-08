@@ -6,16 +6,16 @@ from robot_skills.robot_part import RobotPart
 
 
 class GraspPositionDetector(RobotPart):
-    def __init__(self, robot_name, tf_buffer, wrench_topic):
+    def __init__(self, robot_name, tf_buffer, joint_topic):
         """
-        Class for detecting whether or not the robot is holding something
+        Class for detecting whether the robot is holding something
 
         :param robot_name: Name of the robot
         :param tf_buffer: tf2_ros.Buffer for use in RobotPart
-        :param wrench_topic: Topic to use for measurement
+        :param joint_topic: Topic to use for measurement
         """
         super(GraspPositionDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
-        self._topic = wrench_topic
+        self._topic = joint_topic
         self.timeout = rospy.Duration(2.0)  # seconds
         self.wrench_sub = self.create_subscriber(self._topic, JointState, self._joint_callback, queue_size=1)
         self.current_position = None
@@ -29,9 +29,8 @@ class GraspPositionDetector(RobotPart):
         :param msg: input joint message
         """
         if self.store_position:
-            if msg.name == 'hand_motor_joint':
-                self.current_position = msg.position
-                self.store_position = False
+            self.current_position = msg.position[msg.name.index("hand_motor_joint")]
+            self.store_position = False
 
     def detect(self):
         """
