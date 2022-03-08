@@ -24,27 +24,24 @@ from std_msgs.msg import String
 from .arm import arms
 from .functionalities.add_functionalities import add_functionalities
 
-CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
+DEFAULT_CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 
 
 class Robot(object):
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", wait_services=False, tf_buffer=None):
+    def __init__(self, robot_name="", tf_buffer=None, connection_timeout=DEFAULT_CONNECTION_TIMEOUT):
         """
         Constructor
 
         :param robot_name: Name of the robot
         :type robot_name: str
-        :param wait_services: Not used anymore
-        :type wait_services: bool
         :param tf_buffer: tf2_ros.Buffer object
         :type tf_buffer: Optional[tf2_ros.Buffer]
+        :param connection_timeout: timeout to wait for ROS connections
+        :type connection_timeout: Optional[float]
         """
-
-        if wait_services:
-            rospy.logwarn("(Robot) wait_services is not used anymore and will be removed in the future")
 
         self.robot_name = robot_name
         if tf_buffer is None:
@@ -52,6 +49,8 @@ class Robot(object):
             self._tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         else:
             self.tf_buffer = tf_buffer
+
+        self._connection_timeout = float(connection_timeout)
 
         self.configured = False
 
@@ -114,22 +113,38 @@ class Robot(object):
         """
         This should be run at the end of the constructor of a child class.
         """
+
         add_functionalities(self)  # at the end of robot construction add functionalities
+
+        if self._connection_timeout <= 0:
+            rospy.loginfo("Not waiting for ROS connections as timeout is 0")
+            self.configured = True
+            return
+
         # Wait for connections
         connected = False
         s = rospy.Time.now()
         r = rospy.Rate(1.0)
         rospy.loginfo("Waiting for ROS connections")
-        while not connected and (rospy.Time.now() - s).to_sec() < CONNECTION_TIMEOUT:
+
+        def remaining_time():
+            return self._connection_timeout - (rospy.Time.now() - s).to_sec()
+
+        while not connected and remaining_time() > 0:
             connected_hypot = True
             for bodypart in self.parts.values():
                 connected_hypot = connected_hypot and bodypart.wait_for_connections(0.1, log_failing_connections=False)
             if connected_hypot:
                 connected = True
                 break
-            r.sleep()
-            rospy.loginfo("Will wait for another {} seconds".format(
-                CONNECTION_TIMEOUT - (rospy.Time.now() - s).to_sec()))
+
+            loop_remaining_time = r.remaining().to_sec()
+            if loop_remaining_time+0.01 < remaining_time():
+                r.sleep()
+                rospy.loginfo("Will wait for another {} seconds".format(
+                    round(remaining_time(), 2)))
+            else:
+                rospy.sleep(loop_remaining_time)
 
         # If connected: log how low it took
         if connected:
