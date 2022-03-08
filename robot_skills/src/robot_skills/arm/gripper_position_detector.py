@@ -5,7 +5,7 @@ from sensor_msgs.msg import JointState
 from robot_skills.robot_part import RobotPart
 
 
-class GraspPositionDetector(RobotPart):
+class GripperPositionDetector(RobotPart):
     def __init__(self, robot_name, tf_buffer, joint_topic):
         """
         Class for detecting whether the robot is holding something
@@ -14,7 +14,7 @@ class GraspPositionDetector(RobotPart):
         :param tf_buffer: tf2_ros.Buffer for use in RobotPart
         :param joint_topic: Topic to use for measurement
         """
-        super(GraspPositionDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
+        super(GripperPositionDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._topic = joint_topic
         self.timeout = rospy.Duration(2.0)  # seconds
         self.wrench_sub = self.create_subscriber(self._topic, JointState, self._joint_callback, queue_size=1)

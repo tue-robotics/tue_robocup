@@ -38,7 +38,7 @@ class ActiveGraspDetector(smach.State):
             rospy.logerr("Could not resolve arm")
             return 'failed'
 
-        first_position = arm._arm.grasp_position_detector.detect()  # First position of the gripper
+        first_position = arm._arm.gripper_position_detector.detect()  # First position of the gripper
 
         if first_position is None:
             return 'failed'
@@ -47,7 +47,7 @@ class ActiveGraspDetector(smach.State):
             if not arm.gripper.send_goal('close', max_torque=self.max_torque):
                 rospy.logerr("Error while closing the gripper")  # Ignores the error but notifies it
 
-            self.second_position = arm._arm.grasp_position_detector.detect()
+            second_position = arm._arm.gripper_position_detector.detect()
 
             if self.second_position is not None:
                 if abs(self.first_position - self.second_position) < self.threshold_difference:
