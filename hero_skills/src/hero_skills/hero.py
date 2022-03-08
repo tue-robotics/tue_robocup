@@ -40,7 +40,7 @@ class Hero(robot.Robot):
 
         hero_arm.add_part('active_grasp_detector',
                           grasp_position_detector.GraspPositionDetector(self.robot_name, self.tf_buffer,
-                                                                        "/" + self.robot_name + "/wrist_wrench/raw"))
+                                                                        "/" + self.robot_name + "/joint_states"))
         self.add_arm_part('arm_center', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_buffer))
