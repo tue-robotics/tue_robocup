@@ -25,7 +25,7 @@ if __name__ == "__main__":
     robot = get_robot(args.robot)
     arm = ds.ArmDesignator(robot)
 
-    agd = ActiveGraspDetector(arm, robot)
+    agd = ActiveGraspDetector(robot, arm)
 
     rospy.loginfo("Detecting...")
     agd.execute()

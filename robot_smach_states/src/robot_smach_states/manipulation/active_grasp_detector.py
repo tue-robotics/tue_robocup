@@ -12,12 +12,12 @@ from robot_skills.arm.gripper_position_detector import GripperPositionDetector
 class ActiveGraspDetector(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, arm_designator, robot, threshold_difference=0.075, minimum_position=0.2, max_torque=0.015):
+    def __init__(self, robot, arm_designator, threshold_difference=0.075, minimum_position=0.2, max_torque=0.015):
         """
         State for detecting whether the robot is holding something
 
-        :param arm_designator: designator that resolves to arm to check
         :param robot: Robot to execute the state with
+        :param arm_designator: designator that resolves to arm to check
         :param threshold_difference: Difference between base and final position
         :param minimum_position: Minimum position to assume that the gripper is holding something
         :param max_torque: Max torque of the gripper to perform the test with
