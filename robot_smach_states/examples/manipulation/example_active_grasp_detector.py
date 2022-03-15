@@ -23,10 +23,11 @@ if __name__ == "__main__":
     rospy.init_node("test_active_grasp_detector")
 
     robot = get_robot(args.robot)
-    arm = ds.ArmDesignator(robot).lockable()
+    arm = ds.ArmDesignator(robot)
 
     agd = ActiveGraspDetector(arm, robot)
 
     rospy.loginfo("Detecting...")
     agd.execute()
+    rospy.loginfo("Done!")
 
