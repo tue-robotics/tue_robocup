@@ -6,6 +6,7 @@ import smach
 
 # TU/e Robotics
 from robot_skills.arm.arms import GripperTypes
+from robot_skills.arm.gripper_position_detector import GripperPositionDetector
 
 
 class ActiveGraspDetector(smach.State):
@@ -49,8 +50,8 @@ class ActiveGraspDetector(smach.State):
 
             second_position = arm._arm.gripper_position_detector.detect()
 
-            if self.second_position is not None:
-                if abs(self.first_position - self.second_position) < self.threshold_difference:
+            if second_position is not None:
+                if abs(first_position - second_position) < self.threshold_difference:
                     return 'true'
                 else:
                     return 'false'
