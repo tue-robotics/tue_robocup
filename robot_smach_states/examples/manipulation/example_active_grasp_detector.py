@@ -11,8 +11,6 @@ from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDet
 # System
 import argparse
 
-rospy.init_node("example_active_grasp_detector")
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Detects if the robot is holding something")

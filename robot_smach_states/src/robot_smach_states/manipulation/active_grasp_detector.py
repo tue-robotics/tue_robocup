@@ -22,7 +22,7 @@ class ActiveGraspDetector(smach.State):
         :param minimum_position: Minimum position to assume that the gripper is holding something
         :param max_torque: Max torque of the gripper to perform the test with
         """
-        smach.State.__init__(self, outcome=['true', 'false', 'failed'])
+        smach.State.__init__(self, outcomes=['true', 'false', 'failed'])
         self.robot = robot
 
         self.arm_designator = arm_designator
@@ -32,7 +32,8 @@ class ActiveGraspDetector(smach.State):
         self.max_torque = max_torque
 
     def execute(self, userdata=None):
-        first_position, second_position = None  # Init position variables
+        first_position = None
+        second_position = None  # Init position variables
 
         arm = self.arm_designator.resolve()
         if not arm:
