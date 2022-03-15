@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     rospy.loginfo("Detecting...")
     result = agd.execute()
-    rospy.loginfo("The robot is holding something: {}".format(result))
+    rospy.loginfo("The robot is holding something: {}!".format(result))
 
     rospy.loginfo("Done!")
 
