@@ -12,14 +12,14 @@ from robot_skills.arm.gripper_position_detector import GripperPositionDetector
 class ActiveGraspDetector(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot, arm_designator, threshold_difference=0.075, minimum_position=0.1, max_torque=0.15):
+    def __init__(self, robot, arm_designator, threshold_difference=0.075, minimum_position=-0.82, max_torque=0.15):
         """
         State for detecting whether the robot is holding something
 
         :param robot: Robot to execute the state with
         :param arm_designator: designator that resolves to arm to check
         :param threshold_difference: Difference between base and final position
-        :param minimum_position: Minimum position to assume that the gripper is holding something
+        :param minimum_position: Minimum position to assume that the gripper is holding something (values from -1 to 1)
         :param max_torque: Max torque of the gripper to perform the test with
         """
         smach.State.__init__(self, outcomes=['true', 'false', 'failed', 'Cannot determine'])
@@ -59,7 +59,7 @@ class ActiveGraspDetector(smach.State):
                                   "Second position is {}".format(first_position, second_position))
                     return 'true'
                 else:
-                    rospy.loginfo("First position is {}"
+                    rospy.loginfo("First position is {}\n"
                                   "Second position is {}".format(first_position, second_position))
                     return 'false'
             else:
