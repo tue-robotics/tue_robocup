@@ -407,7 +407,7 @@ class Mockbot(robot.Robot):
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"
 
-        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_buffer=MockedTfBuffer())
+        super(Mockbot, self).__init__(robot_name=robot_name, connection_timeout=0, tf_buffer=MockedTfBuffer())
 
         self.publish_target = AlteredMagicMock()
         self.tf_buffer_transform_pose = AlteredMagicMock()

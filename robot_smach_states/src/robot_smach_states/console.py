@@ -3,8 +3,12 @@
 """Robot console
 
 Usage:
-  robot-console <robot>...
-  robot-console <robot>...
+  robot-console <robot>... [options]
+  robot-console [options] <robot>...
+
+Options:
+  -h --help                     Show this screen.
+  -t TIMEOUT --timeout=TIMEOUT  Timeout for ROS connections [Default: {}].
 
 Examples:
   robot-console amigo
@@ -15,6 +19,8 @@ Examples:
 from __future__ import absolute_import, print_function
 
 # System
+import sys
+
 from docopt import docopt, DocoptExit
 import traceback
 
@@ -22,6 +28,7 @@ import traceback
 import rospy
 
 # TU/e Robotics
+from robot_skills.robot import DEFAULT_CONNECTION_TIMEOUT
 from robot_skills import get_robot
 
 # Load convenient data types (DO NOT REMOVE)
@@ -39,24 +46,28 @@ class bcolors:
     ENDC = '\033[0m'
 
 
-def load_robot(robot_name,):
+def load_robot(robot_name, *args, **kwargs):
 
     try:
         print(bcolors.OKBLUE + '\tloading {}'.format(robot_name) + bcolors.ENDC)
-        robot = get_robot(robot_name)
+        robot = get_robot(robot_name, *args, **kwargs)
 
         # register as global
         globals()[robot_name] = robot
-        print(bcolors.OKGREEN+'\tSuccesfully loaded "{}"'.format(robot_name) + bcolors.ENDC)
+        print(bcolors.OKGREEN+'\tSuccessfully loaded "{}"'.format(robot_name) + bcolors.ENDC)
     except Exception:
         msg = '\n"{}" Could not be found.\n'.format(robot_name)
         print(bcolors.WARNING + msg + bcolors.ENDC)
         traceback.print_exc()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    __doc__ = __doc__.format(DEFAULT_CONNECTION_TIMEOUT)
     try:
         arguments = docopt(__doc__)
+        if arguments["--help"]:
+            print(__doc__)
+            sys.exit(0)
         rospy.init_node("robot_console", anonymous=True)
 
         print("""
@@ -70,8 +81,8 @@ if __name__ == '__main__':
         print('\t"import robot_smach_states as states"\n')
 
         for robot in arguments['<robot>']:
-            load_robot(robot)
+            load_robot(robot, connection_timeout=arguments["--timeout"])
 
     except DocoptExit as e:
         print(bcolors.FAIL + str(e) + bcolors.ENDC)
-        exit()  # quit ipython
+        sys.exit(1)  # quit ipython
