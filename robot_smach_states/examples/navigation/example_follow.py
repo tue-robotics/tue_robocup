@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # Create node, robot and toggle interface
     rospy.init_node("test_following")
-    r = get_robot(args.robot, connection_timeout=1.0)
+    r = get_robot(args.robot, connection_timeout=0.5)
 
     state = FollowOperator(robot=r)
     state.execute()

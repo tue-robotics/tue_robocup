@@ -1,7 +1,18 @@
 # ROS
+import actionlib
+import geometry_msgs.msg
+import PyKDL as kdl
+import rospy
 import smach
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+import tf2_ros
 
 # TU/e Robotics
+import pykdl_ros
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+from people_recognition_msgs.msg import TrackOperatorAction, TrackOperatorGoal
 from robot_skills.robot import Robot
 
 
@@ -14,9 +25,17 @@ class SelectOperator(smach.State):
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
+        # ToDo: move to robot_skills
+        self._ac = actionlib.ActionClient(f"/{robot.robot_name}/track_operator", TrackOperatorAction)
 
     def execute(self, _):
-        self._robot.speech.speak("I am selecting the operator")
+        self._robot.speech.speak("I am selecting the operator, still assuming he or she is right in front of me")
+        robot_pose_stamped = self._robot.base.get_location()
+        operator_pose = robot_pose_stamped.frame * kdl.Frame(kdl.Vector(1.0, 0.0, 0.0))
+        operator_pose_stamped = pykdl_ros.FrameStamped(operator_pose, rospy.Time.now(), "map")
+        goal = TrackOperatorGoal()
+        goal.start_pose = tf2_ros.convert(operator_pose_stamped, geometry_msgs.msg.PoseStamped)
+        self._ac.send_goal(goal=goal)  # ToDo: how do we register the feedback CB?
         return "succeeded"
 
 

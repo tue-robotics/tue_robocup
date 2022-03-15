@@ -34,10 +34,12 @@ class TrackingMocker:
         start_pos = kdl.Vector(1.0, 0.5, 0.0)
         current_pos = kdl.Vector(start_pos)
         distance = (current_pos - start_pos).Norm()
-        r = rospy.Rate(2.0)  # Assumed detection rate
+        dt = 0.5
+        r = rospy.Rate(1./dt)  # Assumed detection rate
         velocity = 1.0  # Assumed operator velocity
         while distance < 5.0:
-            current_pos.x(current_pos.x() + velocity/r)
+            current_pos.x(current_pos.x() + velocity * dt)
+            rospy.loginfo(f"Current operator pos: {current_pos}")
             distance = (current_pos - start_pos).Norm()
             self._publish_feedback(current_pos)
             r.sleep()
