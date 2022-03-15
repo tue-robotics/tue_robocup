@@ -1,6 +1,11 @@
+# System
+import collections
+import math
+import typing
+
 # ROS
 import actionlib
-import geometry_msgs.msg
+import geometry_msgs.msg as geom_msgs
 import PyKDL as kdl
 import rospy
 import smach
@@ -12,8 +17,23 @@ import tf2_ros
 import pykdl_ros
 # noinspection PyUnresolvedReferences
 import tf2_pykdl_ros
+from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from people_recognition_msgs.msg import TrackOperatorAction, TrackOperatorFeedback, TrackOperatorGoal
 from robot_skills.robot import Robot
+
+def planar_distance(p1: geom_msgs.PoseStamped, p2: geom_msgs.PoseStamped):
+    """
+    Compute the distance between two PoseStamped msgs. N.B.: the z coordinate is not taken into account!
+
+    :param p1:
+    :param p2:
+    :return:
+    """
+    assert p1.header.frame_id == p2.header.frame_id, \
+        f"Frame IDs of p1 ({p1.header.frame_id}) and p2 ({p2.header.frame_id}) are not equal"
+    pos1 = p1.pose.position
+    pos2 = p2.pose.position
+    return math.hypot(pos2.x - pos1.x, pos2.y - pos1.y)
 
 
 class SelectOperator(smach.State):
@@ -37,7 +57,7 @@ class SelectOperator(smach.State):
         operator_pose = robot_pose_stamped.frame * kdl.Frame(kdl.Vector(1.0, 0.0, 0.0))
         operator_pose_stamped = pykdl_ros.FrameStamped(operator_pose, rospy.Time.now(), "map")
         goal = TrackOperatorGoal()
-        goal.start_pose = tf2_ros.convert(operator_pose_stamped, geometry_msgs.msg.PoseStamped)
+        goal.start_pose = tf2_ros.convert(operator_pose_stamped, geom_msgs.PoseStamped)
         self._ac.send_goal(goal=goal, feedback_cb=self._track_operator_cb)
         return "succeeded"
 
@@ -64,27 +84,89 @@ class SelectOperator(smach.State):
 class FollowBreadcrumb(smach.State):
     def __init__(self, robot: Robot):
         """
-        Smach state to follow a breadcrumb provided by the input queue
+        Smach state to follow a breadcrumb provided by the input queue(
 
         :param robot:
         """
         smach.State.__init__(self, outcomes=["within_reach", "lost"])
         self._robot = robot
+        self._buffer = collections.deque()  # Use a deque for thread safety
+        self._reference_operator_distance = 0.8  # Robot tries to get within this distance of the operator
 
     def execute(self, _):
+        self._buffer.clear()  # Clear the buffer to make sure we don't have any old data
         self._robot.speech.speak("I am trying to follow the breadcrumb", block=False)
+        start_stamp = rospy.Time.now()  # ToDo: remove after implementing is_following
         r = rospy.Rate(1.0)
-        for _ in range(5):
+        trail = []
+        while self.is_following(start_stamp):
+            trail = self._process_queue(trail=trail)
+            trail = self._prune_trail(trail=trail)
+            if trail:
+                self._send_base_goal(trail)
             r.sleep()
         return "within_reach"
 
-    def add_breadcrumb(self, operator_pose: geometry_msgs.msg.PoseStamped):
+    @staticmethod
+    def is_following(start_stamp):
+        # ToDo: make decent implementation
+        duration = (rospy.Time.now() - start_stamp).to_sec()
+        if duration < 5.0:
+            return True
+        else:
+            return False
+
+    def _process_queue(self, trail: typing.List[geom_msgs.PoseStamped]) -> typing.List[geom_msgs.PoseStamped]:
         """
-        Adds a breadcrumb. Typically used as a callback for the tracker
+        Adds the poses in the buffer to the trail
+
+        :param trail: current trail to which the crumbs will be added
+        :return: updated trail
+        """
+        while True:
+            try:
+                trail.append(self._buffer.popleft())
+            except IndexError:
+                break
+        return trail
+
+    @staticmethod
+    def _prune_trail(trail: typing.List[geom_msgs.PoseStamped]) -> typing.List[geom_msgs.PoseStamped]:
+        """
+        Removes crumbs from the trail where the robot has already been
+
+        :param trail: current trail
+        :return: pruned trail
+        """
+        # ToDo: make a decent implementation. This assumes the local planner is smart enough
+        return trail
+
+    def _send_base_goal(self, trail: typing.List[geom_msgs.PoseStamped]):
+        """
+        Sends a goal to the base local planner
+
+        :param trail: trail that the operator left
+        """
+        plan = [p for p in trail if planar_distance(trail[-1], p) > self._reference_operator_distance]
+        if len(plan) == 0:
+            rospy.loginfo("Plan is still empty")
+            return
+        operator_pos = trail[-1].pose.position
+        pc = PositionConstraint()
+        pc.constraint = f"(x-{operator_pos.x})^2 + (y-{operator_pos.y})^2 < {self._reference_operator_distance + 0.1}^2"
+        oc = OrientationConstraint()
+        oc.frame = "map"  # ToDo: check!!!
+        rospy.loginfo(f"Sending goal to planner: {plan}, {pc}, {oc}")
+        self._robot.base.local_planner.setPlan(plan, pc, oc)
+
+    def add_breadcrumb(self, operator_pose: geom_msgs.PoseStamped):
+        """
+        Adds a breadcrumb. Typically used as a callback for the tracker.
 
         :param operator_pose: pose of the operator to follow
         """
         rospy.loginfo(f"FollowBreadCrumb: Received operator position: {operator_pose.pose.position}")
+        self._buffer.append(operator_pose)
 
 
 class WithinReach(smach.State):
