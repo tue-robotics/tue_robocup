@@ -26,6 +26,8 @@ if __name__ == "__main__":
     agd = ActiveGraspDetector(robot, arm)
 
     rospy.loginfo("Detecting...")
-    agd.execute()
+    result = agd.execute()
+    rospy.loginfo("{}".format(result))
+
     rospy.loginfo("Done!")
 

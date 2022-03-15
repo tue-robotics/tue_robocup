@@ -32,8 +32,6 @@ class ActiveGraspDetector(smach.State):
         self.max_torque = max_torque
 
     def execute(self, userdata=None):
-        first_position = None
-        second_position = None  # Init position variables
 
         arm = self.arm_designator.resolve()
         if not arm:
