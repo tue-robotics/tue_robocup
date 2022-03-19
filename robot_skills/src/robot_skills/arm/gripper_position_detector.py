@@ -9,7 +9,8 @@ class GripperPositionDetector(RobotPart):
     def __init__(self, robot_name, tf_buffer, joint_topic):
         """
         Class for getting the position of the hand motor joint (how much the gripper is open or closed)
-
+        Values go from 1 (open) to -1 (closed)
+        
         :param robot_name: Name of the robot
         :param tf_buffer: tf2_ros.Buffer for use in RobotPart
         :param joint_topic: Topic to use for measurement
