@@ -8,7 +8,7 @@ from robot_skills.robot_part import RobotPart
 class GripperPositionDetector(RobotPart):
     def __init__(self, robot_name, tf_buffer, joint_topic):
         """
-        Class for detecting whether the robot is holding something
+        Class for getting the position of the hand motor joint (how much the gripper is open or closed)
 
         :param robot_name: Name of the robot
         :param tf_buffer: tf2_ros.Buffer for use in RobotPart
@@ -25,6 +25,7 @@ class GripperPositionDetector(RobotPart):
     def _joint_callback(self, msg):
         """
         Will be executed every time a new message is received.
+        Stores current position of hand motor joint
 
         :param msg: input joint message
         """
@@ -36,7 +37,7 @@ class GripperPositionDetector(RobotPart):
         """
         Returns the position of the gripper if possible
 
-        :return: The current position as a double, a None value is returned if position can't be retrieved
+        :return: The current position as a double or a None value if position can't be retrieved
         """
         # Reset starting time
         self.start_time = rospy.Time.now()
