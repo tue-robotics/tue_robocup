@@ -14,7 +14,12 @@ class ActiveGraspDetector(smach.State):
 
     def __init__(self, robot, arm_designator, threshold_difference=0.075, minimum_position=-0.82, max_torque=0.15):
         """
-        State for detecting whether the robot is holding something
+        State for detecting whether the robot is holding something using the gripper position.
+        
+        Stores current position of the hand motor joint, slightly closes the gripper and then compares the new
+        position with the first one. If the difference is bigger than the threshold, robot is holding something
+        
+        If the object is too small/thin it will not be able to determine
 
         :param robot: Robot to execute the state with
         :param arm_designator: designator that resolves to arm to check
@@ -31,6 +36,7 @@ class ActiveGraspDetector(smach.State):
         self.minimum_position = minimum_position
         self.max_torque = max_torque
 
+        
     def execute(self, userdata=None):
 
         arm = self.arm_designator.resolve()
@@ -54,14 +60,17 @@ class ActiveGraspDetector(smach.State):
             second_position = arm._arm.gripper_position_detector.detect()
 
             if second_position is not None:
+                
                 if abs(first_position - second_position) < self.threshold_difference:
                     rospy.loginfo("First position is {}\n"
                                   "Second position is {}".format(first_position, second_position))
                     return 'true'
+                
                 else:
                     rospy.loginfo("First position is {}\n"
                                   "Second position is {}".format(first_position, second_position))
                     return 'false'
+            
             else:
                 rospy.loginfo("Cannot retrieve second position")
                 return 'failed'
