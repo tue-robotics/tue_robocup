@@ -24,7 +24,7 @@ class ActiveGraspDetector(smach.State):
         :param robot: Robot to execute the state with
         :param arm_designator: designator that resolves to arm to check
         :param threshold_difference: Difference between base and final position
-        :param minimum_position: Minimum position to assume that the gripper is holding something (values from -1 to 1)
+        :param minimum_position: Minimum position to assume that the gripper is holding something
         :param max_torque: Max torque of the gripper to perform the test with
         """
         smach.State.__init__(self, outcomes=['true', 'false', 'failed', 'Cannot determine'])
