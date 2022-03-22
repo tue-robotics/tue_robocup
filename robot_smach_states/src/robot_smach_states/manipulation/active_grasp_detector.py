@@ -67,7 +67,7 @@ class ActiveGraspDetector(smach.State):
                 else:
                     rospy.logdebug("First position is {}\n"
                                    "Second position is {}".format(first_position, second_position))
-                    return 'true'
+                    return 'false'
 
             else:
                 rospy.logerr("Cannot retrieve second position")
