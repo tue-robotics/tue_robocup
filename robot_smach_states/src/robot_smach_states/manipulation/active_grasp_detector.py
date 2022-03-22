@@ -36,7 +36,7 @@ class ActiveGraspDetector(smach.State):
         self.minimum_position = minimum_position
         self.max_torque = max_torque
 
-    def execute(self, userdata=None):
+    def execute(self, userdata=None) -> str:
 
         arm = self.arm_designator.resolve()
         if not arm:
