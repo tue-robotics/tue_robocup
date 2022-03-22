@@ -21,6 +21,7 @@ from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstrain
 from people_recognition_msgs.msg import TrackOperatorAction, TrackOperatorFeedback, TrackOperatorGoal
 from robot_skills.robot import Robot
 
+
 def planar_distance(p1: geom_msgs.PoseStamped, p2: geom_msgs.PoseStamped):
     """
     Compute the distance between two PoseStamped msgs. N.B.: the z coordinate is not taken into account!
@@ -34,6 +35,22 @@ def planar_distance(p1: geom_msgs.PoseStamped, p2: geom_msgs.PoseStamped):
     pos1 = p1.pose.position
     pos2 = p2.pose.position
     return math.hypot(pos2.x - pos1.x, pos2.y - pos1.y)
+
+
+def trail_to_path(
+    robot_pose: geom_msgs.PoseStamped,
+    trail: typing.List[geom_msgs.PoseStamped],
+    reference_operator_distance: float,
+) -> typing.List[geom_msgs.PoseStamped]:
+    """
+
+    :param robot_pose: current robot pose
+    :param trail: trail of breadcrumbs
+    :param reference_operator_distance: distance the robot is supposed to keep to the operator
+    :return: interpolated path
+    """
+    plan = [robot_pose] + [p for p in trail if planar_distance(trail[-1], p) > reference_operator_distance]
+    return plan
 
 
 class SelectOperator(smach.State):
@@ -147,7 +164,9 @@ class FollowBreadcrumb(smach.State):
 
         :param trail: trail that the operator left
         """
-        plan = [p for p in trail if planar_distance(trail[-1], p) > self._reference_operator_distance]
+        robot_pose_kdl = self._robot.base.get_location()
+        robot_pose = tf2_ros.convert(robot_pose_kdl, geom_msgs.PoseStamped)
+        plan = trail_to_path(robot_pose, trail, self._reference_operator_distance)
         if len(plan) == 0:
             rospy.loginfo("Plan is still empty")
             return
@@ -155,7 +174,9 @@ class FollowBreadcrumb(smach.State):
         pc = PositionConstraint()
         pc.constraint = f"(x-{operator_pos.x})^2 + (y-{operator_pos.y})^2 < {self._reference_operator_distance + 0.1}^2"
         oc = OrientationConstraint()
-        oc.frame = "map"  # ToDo: check!!!
+        oc.frame = "map"
+        oc.look_at.x = operator_pos.x
+        oc.look_at.y = operator_pos.y
         rospy.loginfo(f"Sending goal to planner: {plan}, {pc}, {oc}")
         self._robot.base.local_planner.setPlan(plan, pc, oc)
 
