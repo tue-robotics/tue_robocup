@@ -31,7 +31,7 @@ class TrackingMocker:
         rospy.loginfo("Received tracking goal, start tracking")
         # robot_pose = self._get_robot_pose()
         # ToDo: get rid of hardcoding
-        start_pos = kdl.Vector(1.0, 0.5, 0.0)
+        start_pos = kdl.Vector(1.0, 0.4, 0.0)
         current_pos = kdl.Vector(start_pos)
         distance = (current_pos - start_pos).Norm()
         dt = 0.5

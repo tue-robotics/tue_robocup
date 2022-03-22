@@ -53,6 +53,28 @@ def trail_to_path(
     return plan
 
 
+def operator_moving(
+    trail: typing.List[geom_msgs.PoseStamped],
+    threshold: float = 0.4,
+    timeout: float = 3.0,
+) -> bool:
+    """
+    Checks if the operator is moving, i.e., if the breadcrumbs move
+
+    :param trail:
+    :param threshold:
+    :param timeout
+    :return:
+    """
+    operator_pose = trail[-1]
+    for crumb in reversed(trail):
+        if planar_distance(operator_pose, crumb) > threshold:
+            return True
+        elif (operator_pose.header.stamp.to_sec() - crumb.header.stamp.to_sec()) > timeout:
+            break
+    return False
+
+
 class SelectOperator(smach.State):
     def __init__(self, robot: Robot):
         """
@@ -98,6 +120,89 @@ class SelectOperator(smach.State):
             rospy.loginfo(f"Received operator position feedback: {feedback_msg.current_pose.pose.position}")
 
 
+class MotionState:
+    def __init__(self, timeout):
+        """
+        Holds the 'state' of the motion with some convenience methods
+        """
+        self._timeout = timeout
+        self._stamp = None
+
+    @property
+    def has_moved(self):
+        return self._stamp is not None
+
+    @property
+    def is_moving(self):
+        if self._stamp is None:
+            return False
+        return (rospy.Time.now() - self._stamp).to_sec() < self._timeout
+
+    def tick(self):
+        """
+        Registers that the robot is actually moving
+        """
+        self._stamp = rospy.Time.now()
+
+
+class OperatorState:
+    NEW = "NEW"
+    MOVING = "MOVING"
+    STOPPED = "STOPPED"
+    LOST = "LOST"
+
+    def __init__(self, lost_timeout):
+        """
+        Holds the breadcrumb trail along with some convenience functions
+        """
+        self._trail = []
+        self._has_moved = False
+
+    def get_state(self, stamp):
+        if self._state == self.NEW:
+            return self.NEW
+        # If latest stamp in trail too old: operator is lost
+        # elif
+        # If crumbs are at the same position (within threshold) for a certain duration, operator not moving
+        # elif
+        # Else: we're moving!
+        return self.MOVING
+
+    @property
+    def trail(self):
+        # ToDo: need copy? Less efficient, less error-prone
+        return self._trail
+
+    def process_queue(self, queue):
+        """
+        Processes the queue that is passed to this function and adds the entries to the internal trail
+        :param queue:
+        :return:
+        """
+        while True:
+            try:
+                self._trail.append(queue.popleft())
+                self._has_moved = True
+            except IndexError:
+                break
+
+    def prune_trail(self, robot_pose: geom_msgs.PoseStamped):
+        """
+        Prunes the trail based on the robot pose
+
+        :param robot_pose:
+        :return:
+        """
+        min_idx = 0
+        min_dist = float('inf')
+        for idx, crumb in enumerate(self._trail):
+            dist = planar_distance(robot_pose, crumb)
+            if dist < min_dist:
+                min_idx = idx
+                min_dist = dist
+        self._trail = self._trail[min_idx:]
+
+
 class FollowBreadcrumb(smach.State):
     def __init__(self, robot: Robot):
         """
@@ -106,32 +211,76 @@ class FollowBreadcrumb(smach.State):
         :param robot:
         """
         smach.State.__init__(self, outcomes=["within_reach", "lost"])
+        # Props
         self._robot = robot
-        self._buffer = collections.deque()  # Use a deque for thread safety
         self._reference_operator_distance = 0.8  # Robot tries to get within this distance of the operator
+        self._motion_timeout = 5.0  # If the robot has not moved for this time, it'll stop
+
+        # State
+        self._buffer = collections.deque()  # Use a deque for thread safety
+        self._motion_state = MotionState(self._motion_timeout)
 
     def execute(self, _):
         self._buffer.clear()  # Clear the buffer to make sure we don't have any old data
         self._robot.speech.speak("I am trying to follow the breadcrumb", block=False)
-        start_stamp = rospy.Time.now()  # ToDo: remove after implementing is_following
         r = rospy.Rate(1.0)
-        trail = []
-        while self.is_following(start_stamp):
-            trail = self._process_queue(trail=trail)
-            trail = self._prune_trail(trail=trail)
-            if trail:
-                self._send_base_goal(trail)
+        # trail = []
+        operator_state = OperatorState()
+        self._motion_state = MotionState(self._motion_timeout)
+
+        while self.is_following(operator_state.trail):
+            robot_pose_kdl = self._robot.base.get_location()
+            robot_pose = tf2_ros.convert(robot_pose_kdl, geom_msgs.PoseStamped)
+            operator_state.process_queue(self._buffer)
+            operator_state.prune_trail(robot_pose)
+            if operator_state.trail:
+                self._send_base_goal(operator_state.trail)
+            # Check if we still receive breadcrumbs
+            # ToDo
+            # ToDo: make a clear distinction between receiving operator behavior (moving, stationary, lost)
+            # and robot behavior
             r.sleep()
+
+        self._robot.base.local_planner.cancelCurrentPlan()
         return "within_reach"
 
-    @staticmethod
-    def is_following(start_stamp):
-        # ToDo: make decent implementation
-        duration = (rospy.Time.now() - start_stamp).to_sec()
-        if duration < 5.0:
+    def is_following(self, trail: typing.List[geom_msgs.PoseStamped]) -> bool:
+        """
+        Checks if the robot is still actively following
+
+        :param trail:
+        :return:
+        """
+        # Robot is standing still
+        if self._robot.base.local_planner.getStatus() in ["controlling", "blocked"]:
+            rospy.loginfo("Local planner still active")
+            self._motion_state.tick()
             return True
-        else:
-            return False
+
+        # Check last motion
+        if not self._motion_state.has_moved:
+            rospy.loginfo("Robot has not moved yet")
+            return True
+
+        # if self._motion_state.is_moving:
+        #     rospy.loginfo("Robot is still moving")
+        #     return True
+
+        # Operator within reach
+        robot_pose_kdl = self._robot.base.get_location()
+        robot_pose = tf2_ros.convert(robot_pose_kdl, geom_msgs.PoseStamped)
+        operator_distance = planar_distance(robot_pose, trail[-1])
+        if operator_distance > (self._reference_operator_distance + 0.3):
+            rospy.loginfo(f"Operator too far away at {operator_distance}")
+            return True
+
+        # Operator standing still for a certain period?
+        if operator_moving(trail):
+            rospy.loginfo("Operator still moving")
+            return True
+
+        rospy.loginfo("Seems I'm not following anymore")
+        return False
 
     def _process_queue(self, trail: typing.List[geom_msgs.PoseStamped]) -> typing.List[geom_msgs.PoseStamped]:
         """
@@ -147,16 +296,25 @@ class FollowBreadcrumb(smach.State):
                 break
         return trail
 
-    @staticmethod
-    def _prune_trail(trail: typing.List[geom_msgs.PoseStamped]) -> typing.List[geom_msgs.PoseStamped]:
+    def _prune_trail(self, trail: typing.List[geom_msgs.PoseStamped]) -> typing.List[geom_msgs.PoseStamped]:
         """
-        Removes crumbs from the trail where the robot has already been
+        Removes crumbs from the trail where the robot has already been. This is relevant because the robot pose will
+        be pre-pended to the plan so that the local planner can deal with it.
 
         :param trail: current trail
         :return: pruned trail
         """
         # ToDo: make a decent implementation. This assumes the local planner is smart enough
-        return trail
+        robot_pose_kdl = self._robot.base.get_location()
+        robot_pose = tf2_ros.convert(robot_pose_kdl, geom_msgs.PoseStamped)
+        min_idx = 0
+        min_dist = float('inf')
+        for idx, crumb in enumerate(trail):
+            dist = planar_distance(robot_pose, crumb)
+            if dist < min_dist:
+                min_idx = idx
+                min_dist = dist
+        return trail[min_idx:]
 
     def _send_base_goal(self, trail: typing.List[geom_msgs.PoseStamped]):
         """
@@ -167,7 +325,7 @@ class FollowBreadcrumb(smach.State):
         robot_pose_kdl = self._robot.base.get_location()
         robot_pose = tf2_ros.convert(robot_pose_kdl, geom_msgs.PoseStamped)
         plan = trail_to_path(robot_pose, trail, self._reference_operator_distance)
-        if len(plan) == 0:
+        if len(plan) <= 1:  # Plan always contains the robot pose so should be > 1 to continue
             rospy.loginfo("Plan is still empty")
             return
         operator_pos = trail[-1].pose.position
@@ -177,7 +335,6 @@ class FollowBreadcrumb(smach.State):
         oc.frame = "map"
         oc.look_at.x = operator_pos.x
         oc.look_at.y = operator_pos.y
-        rospy.loginfo(f"Sending goal to planner: {plan}, {pc}, {oc}")
         self._robot.base.local_planner.setPlan(plan, pc, oc)
 
     def add_breadcrumb(self, operator_pose: geom_msgs.PoseStamped):
