@@ -15,10 +15,10 @@ class ActiveGraspDetector(smach.State):
     def __init__(self, robot, arm_designator, threshold_difference=0.075, minimum_position=-0.82, max_torque=0.15):
         """
         State for detecting whether the robot is holding something using the gripper position.
-        
+
         Stores current position of the hand motor joint, slightly closes the gripper and then compares the new
         position with the first one. If the difference is bigger than the threshold, robot is holding something
-        
+
         If the object is too small/thin it will not be able to determine
 
         :param robot: Robot to execute the state with
@@ -36,7 +36,6 @@ class ActiveGraspDetector(smach.State):
         self.minimum_position = minimum_position
         self.max_torque = max_torque
 
-        
     def execute(self, userdata=None):
 
         arm = self.arm_designator.resolve()
@@ -47,30 +46,29 @@ class ActiveGraspDetector(smach.State):
         first_position = arm._arm.gripper_position_detector.detect()  # First position of the gripper
 
         if first_position is None:
-            rospy.loginfo("Cannot retrieve first position")
+            rospy.logerr("Cannot retrieve first position")
             return 'failed'
         elif first_position < self.minimum_position:
-            rospy.loginfo("First position is {}".format(first_position))
+            rospy.logdebug("First position is {}".format(first_position))
             return 'Cannot determine'
 
         else:
-            if not arm.gripper.send_goal('close', max_torque=self.max_torque):
-                rospy.logerr("Error while closing the gripper")  # Ignores the error but notifies it
+            if not arm.gripper.send_goal('close', max_torque=self.max_torque):  # Attempts to close the gripper
+                rospy.logerr("Error while closing the gripper")
+                return 'failed'
 
             second_position = arm._arm.gripper_position_detector.detect()
 
             if second_position is not None:
-                
                 if abs(first_position - second_position) < self.threshold_difference:
-                    rospy.loginfo("First position is {}\n"
-                                  "Second position is {}".format(first_position, second_position))
+                    rospy.logdebug("First position is {}\n"
+                                   "Second position is {}".format(first_position, second_position))
                     return 'true'
-                
                 else:
-                    rospy.loginfo("First position is {}\n"
-                                  "Second position is {}".format(first_position, second_position))
-                    return 'false'
-            
+                    rospy.logdebug("First position is {}\n"
+                                   "Second position is {}".format(first_position, second_position))
+                    return 'true'
+
             else:
-                rospy.loginfo("Cannot retrieve second position")
+                rospy.logerr("Cannot retrieve second position")
                 return 'failed'
