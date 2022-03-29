@@ -8,6 +8,7 @@ from robot_skills import get_robot
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
 
+
 # System
 import argparse
 
