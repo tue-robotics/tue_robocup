@@ -6,7 +6,6 @@ import smach
 
 # TU/e Robotics
 from robot_skills.arm.arms import GripperTypes
-from robot_skills.arm.gripper_position_detector import GripperPositionDetector
 from robot_skills.robot import Robot
 from robot_smach_states.util.designators.arm import ArmDesignator
 
