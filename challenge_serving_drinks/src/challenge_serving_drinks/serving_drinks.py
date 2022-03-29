@@ -89,7 +89,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
 
         if unavailable_drinks_count == self._max_unavailable_drinks + 1:
             for d in unavailable_drink:
-                if d is not "tea_bag":
+                if d != "tea_bag":
                     self._unavailable_drink_designator.write(d)
             return "done"
         elif (unavailable_drinks_count == self._max_unavailable_drinks) and (unavailable_drink[0] == "tea_bag"):
