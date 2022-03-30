@@ -7,12 +7,13 @@ import rospy
 # TU/e Robotics
 from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, \
     topological_planner, torso, world_model_ed
-from robot_skills.arm import arms, force_sensor, gripper, handover_detector
+from robot_skills.arm import arms, force_sensor, gripper, handover_detector, gripper_position_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
 
 
 class Hero(robot.Robot):
     """Hero"""
+
     def __init__(self, connection_timeout=robot.DEFAULT_CONNECTION_TIMEOUT):
         """
         Constructor
@@ -27,14 +28,20 @@ class Hero(robot.Robot):
         self.add_body_part('base', base.Base(self.robot_name, self.tf_buffer))
 
         arm_joint_names = rospy.get_param('/' + self.robot_name + '/skills/arm_center/joint_names')
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_buffer, self.get_joint_states, arm_joint_names))
+        self.add_body_part('torso',
+                           torso.Torso(self.robot_name, self.tf_buffer, self.get_joint_states, arm_joint_names))
 
         # add hero's arm
         hero_arm = arms.Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_center")
-        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
+        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer,
+                                                                   "/" + self.robot_name + "/wrist_wrench/raw"))
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
-        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'center'))
+        hero_arm.add_part('handover_detector',
+                          handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'center'))
 
+        hero_arm.add_part('gripper_position_detector',
+                          gripper_position_detector.GripperPositionDetector(self.robot_name, self.tf_buffer,
+                                                                            "/" + self.robot_name + "/joint_states"))
         self.add_arm_part('arm_center', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_buffer))
@@ -76,7 +83,7 @@ class Hero(robot.Robot):
             part._operational = True
 
         # verify joint goal required for posing
-        assert 'arm_out_of_way' in self.parts['arm_center'].default_configurations,\
+        assert 'arm_out_of_way' in self.parts['arm_center'].default_configurations, \
             "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
         # parameters for posing
         self.z_over = 0.4  # height the robot should look over the surface
