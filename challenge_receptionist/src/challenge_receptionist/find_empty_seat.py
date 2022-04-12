@@ -5,6 +5,7 @@ from __future__ import print_function
 import rospy
 from ed.entity import Entity
 import robot_smach_states as states
+from robot_smach_states.manipulation.point_at import PointAt
 import robot_smach_states.util.designators as ds
 import smach
 
@@ -75,7 +76,7 @@ class FindEmptySeat(smach.StateMachine):
                                                 'failed': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
-                                   states.PointAt(robot=robot,
+                                   PointAt(robot=robot,
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
                                                   point_at_designator=seat_ent_des,
                                                   look_at_designator=seat_ent_des),
