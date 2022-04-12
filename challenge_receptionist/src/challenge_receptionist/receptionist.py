@@ -3,6 +3,8 @@ import smach
 from ed.entity import Entity
 
 import robot_smach_states as states
+from robot_smach_states.utility import SetInitialPose
+from robot_smach_states.reset import ResetArmsTorsoHead
 import robot_smach_states.util.designators as ds
 
 
@@ -30,7 +32,7 @@ class HandleSingleGuest(smach.StateMachine):
         guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
         guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')
         guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
-        guest_drinkname_des = ds.FieldOfHMIResult(guest_drink_des, semantics_field='drink', name='guest_drinkname')
+        guest_drinkname_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
 
         with self:
             smach.StateMachine.add('LEARN_GUEST',
@@ -84,13 +86,12 @@ class ChallengeReceptionist(smach.StateMachine):
         run = ds.VariableDesignator(resolve_type=int)
 
         with self:
-            smach.StateMachine.add('INITIALIZE',
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'SET_INITIAL_POSE',
-                                                'abort': 'aborted'})
+            smach.StateMachine.add('RESET',
+                                   ResetArmsTorsoHead(robot),
+                                   transitions={'done': 'SET_INITIAL_POSE'})
 
             smach.StateMachine.add('SET_INITIAL_POSE',
-                                   states.SetInitialPose(robot, challenge_knowledge.starting_point),
+                                   SetInitialPose(robot, challenge_knowledge.starting_point),
                                    transitions={'done': 'HANDLE_GUEST_1',
                                                 "preempted": 'aborted',
                                                 'error': 'HANDLE_GUEST_1'})
