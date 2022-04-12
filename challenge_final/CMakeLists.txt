@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   robot_skills
   robot_smach_states
   rospy
+  telegram_ros
 )
 
 catkin_python_setup()
