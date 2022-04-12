@@ -2,6 +2,7 @@
 import rospy
 from ed.entity import Entity
 import robot_smach_states as states
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 import robot_smach_states.util.designators as ds
 import smach
 from robocup_knowledge import load_knowledge
@@ -29,9 +30,9 @@ class LearnGuest(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
-                                   states.NavigateToWaypoint(robot,
-                                                             door_waypoint,
-                                                             challenge_knowledge.waypoint_door['radius']),
+                                   NavigateToWaypoint(robot,
+                                                      door_waypoint,
+                                                      challenge_knowledge.waypoint_door['radius']),
                                    transitions={'arrived': 'SAY_OPEN_DOOR',
                                                 'unreachable': 'SAY_OPEN_DOOR',
                                                 'goal_not_defined': 'aborted'})
