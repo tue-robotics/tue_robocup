@@ -2,7 +2,7 @@
 import smach
 
 # TU/e Robotics
-import robot_smach_states as states
+from robot_smach_states.utility import Initialize
 
 # Challenge final
 from .find_people import FindPeople
@@ -28,7 +28,7 @@ class Final(smach.StateMachine):
             #                                     "Aborted": "LASER_POINTING",
             #                                     "Failed": "LASER_POINTING"})
 
-            smach.StateMachine.add("INIT", states.Initialize(robot),
+            smach.StateMachine.add("INIT", Initialize(robot),
                                    transitions={"initialized": "LASER_POINTING",
                                                 "abort": "LASER_POINTING"})
 

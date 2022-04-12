@@ -20,6 +20,7 @@
   <build_depend>robot_skills</build_depend>
   <build_depend>robot_smach_states</build_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>telegram_ros</build_depend>
 
   <exec_depend>challenge_find_my_mates</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
@@ -32,5 +33,6 @@
   <exec_depend>robot_smach_states</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>tf_conversions</exec_depend>
+  <exec_depend>telegram_ros</exec_depend>
 
 </package>

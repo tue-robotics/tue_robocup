@@ -7,7 +7,7 @@ import std_msgs.msg
 from geometry_msgs.msg import PoseStamped
 
 # TU/e Robotics
-import robot_smach_states as states
+from robot_smach_states.navigation import NavigateToWaypoint
 import robot_smach_states.util.designators as ds
 
 TRIGGER_TOPIC = "/trigger"
@@ -44,7 +44,7 @@ class LightSaber(smach.State):
         self._event = Event()
         self._camera_base_ns = "{}/head_rgbd_sensor".format(robot.robot_name)
         self._trigger_sub = rospy.Subscriber(TRIGGER_TOPIC, std_msgs.msg.Empty, self._trigger_callback, queue_size=1)
-        self._speech_cache = ("", rospy.Time.now())  # Keeps track of when the entity has changed for the last time
+        self._speech_cache = ("", rospy.Time(0))  # Keeps track of when the entity has changed for the last time
 
     def execute(self, ud=None):
 
@@ -106,7 +106,7 @@ class DriveAndSwordFight(smach.StateMachine):
         with self:
 
             smach.StateMachine.add("NAVIGATE_TO_START",
-                                   states.NavigateToWaypoint(
+                                   NavigateToWaypoint(
                                        robot=robot,
                                        waypoint_designator=ds.EntityByIdDesignator(robot, uuid=LIGHTSABER_WAYPOINT_ID),
                                    ),
