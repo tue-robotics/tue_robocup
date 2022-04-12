@@ -15,7 +15,7 @@ import smach
 from geometry_msgs.msg import PointStamped
 
 # TU/e Robotics
-import robot_smach_states as states
+from robot_smach_states.navigation import NavigateToWaypoint
 import robot_smach_states.util.designators as ds
 from .clustering import cluster_people
 
@@ -25,35 +25,6 @@ NUM_LOOKS = 2
 MAX_PEOPLE = 6
 SHRINK_X = 0.5
 SHRINK_Y = 0.3
-
-
-def color_map(N=256, normalized=False):
-    """
-    Generate an RGB color map of N different colors
-
-    :param N : int amount of colors to generate
-    :param normalized: bool indicating range of each channel: float32 in [0, 1] or int in [0, 255]
-    :return: a numpy.array of shape (N, 3) with a row for each color and each row is [R,G,B]
-    """
-
-    def bitget(byteval, idx):
-        return ((byteval & (1 << idx)) != 0)
-
-    dtype = 'float32' if normalized else 'uint8'
-    cmap = np.zeros((N, 3), dtype=dtype)
-    for i in range(N):
-        r = g = b = 0
-        c = i + 1  # skip the first color (black)
-        for j in range(8):
-            r |= bitget(c, 0) << 7 - j
-            g |= bitget(c, 1) << 7 - j
-            b |= bitget(c, 2) << 7 - j
-            c >>= 3
-
-        cmap[i] = np.array([r, g, b])
-
-    cmap = cmap / 255 if normalized else cmap
-    return cmap
 
 
 def _filter_and_cluster_images(robot, raw_person_detections, room_id):
@@ -142,7 +113,7 @@ class FindPeople(smach.StateMachine):
 
             # Move to start location
             smach.StateMachine.add("NAVIGATE_TO_START",
-                                   states.NavigateToWaypoint(
+                                   NavigateToWaypoint(
                                        robot=robot,
                                        waypoint_designator=ds.EntityByIdDesignator(robot, WAYPOINT_ID), radius=0.3),
                                    transitions={"arrived": "DETECT_PEOPLE",

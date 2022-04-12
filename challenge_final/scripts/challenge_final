@@ -3,8 +3,7 @@
 # System
 import rospy
 
-# Challenge where is this
-from challenge_final import Final
+from challenge_final.final import Final
 # TU/e Robotics
 from robot_smach_states.util.startup import startup
 
