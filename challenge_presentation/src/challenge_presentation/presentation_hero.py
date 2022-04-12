@@ -148,13 +148,13 @@ class Presentation(smach.State):
                                      voice=self.voice, block=False))
         # Set nice path for moving head
         function_list.append(partial(self.robot.head.look_at_point,
-                                     VectorStamped(1, 1, 1.75, rospy.Time.now(), self.robot.base_link_frame)))
+                                     VectorStamped.from_xyz(1, 1, 1.75, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
         function_list.append(partial(self.robot.head.look_at_point,
-                                     VectorStamped(1, -1, 1, rospy.Time.now(), self.robot.base_link_frame)))
+                                     VectorStamped.from_xyz(1, -1, 1, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
         function_list.append(partial(self.robot.head.look_at_point,
-                                     VectorStamped(-1, 0, 1, rospy.Time.now(), self.robot.base_link_frame)))
+                                     VectorStamped.from_xyz(-1, 0, 1, rospy.Time.now(), self.robot.base_link_frame)))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
 
         function_list.append(partial(self.robot.head.reset))
@@ -235,4 +235,3 @@ if __name__ == "__main__":
 
     rospy.init_node('test_presentation')
     startup(setup_statemachine, robot_name=robot_name)
-

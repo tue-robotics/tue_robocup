@@ -19,7 +19,7 @@ from robot_skills.robot_part import RobotPart
 class Head(RobotPart):
     def __init__(self, robot_name, tf_buffer):
         super(Head, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
-        self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
+        self._ac_head_ref_action = self.create_simple_action_client(f"/{robot_name}/head_ref/action_server",
                                                                     HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
@@ -35,20 +35,20 @@ class Head(RobotPart):
         """
         Reset head position
         """
-        reset_goal = VectorStamped.from_xyz(10, 0, 0, stamp=rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+        reset_goal = VectorStamped.from_xyz(10, 0, 0, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
 
         return self.look_at_point(reset_goal, timeout=timeout)
 
-    def look_at_ground_in_front_of_robot(self, distance=2):
-        goal = VectorStamped.from_xyz(x=distance, stamp=rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+    def look_at_ground_in_front_of_robot(self, distance=2, timeout=0):
+        goal = VectorStamped.from_xyz(distance, 0, 0, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
 
-        return self.look_at_point(goal)
+        return self.look_at_point(goal, timeout=timeout)
 
     def look_down(self, timeout=0):
         """
         Gives a target at z = 1.0 at 1 m in front of the robot
         """
-        goal = VectorStamped.from_xyz(1, 0, 0.5, stamp=rospy.Time.now(), frame_id=self.robot_name+"/base_link")
+        goal = VectorStamped.from_xyz(1, 0, 0.5, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
 
         return self.look_at_point(goal, timeout=timeout)
 
