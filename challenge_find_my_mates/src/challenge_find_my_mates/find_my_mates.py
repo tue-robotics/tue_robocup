@@ -32,7 +32,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GO_TO_SEARCH_POSE',
                                NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=SEARCH_POINT),
-                                                                 radius=0.375),
+                                                  radius=0.375),
                                transitions={'arrived': 'RISE_FOR_THE_PEOPLE',
                                             'goal_not_defined': 'failed',
                                             'unreachable': 'WAIT_SEARCH_POSE'})
@@ -46,7 +46,7 @@ def setup_statemachine(robot):
         @smach.cb_interface(outcomes=["done"])
         def _rise_for_the_people(userdata=None):
             """ Resets the location hmi attempt so that each operator gets three attempts """
-            robot.arms.values()[0]._send_joint_trajectory([[0.70, -1.9, 0.0, -1.57, 0.0]])
+            list(robot.arms.values())[0]._send_joint_trajectory([[0.70, -1.9, 0.0, -1.57, 0.0]])
             robot.speech.speak("Hi there. My Name is Hero. I'm looking for the mates of my operator", block=False)
             return "done"
 
