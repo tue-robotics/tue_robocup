@@ -2,10 +2,10 @@ import smach
 
 from ed.entity import Entity
 
-from robot_smach_states.utility import SetInitialPose
-from robot_smach_states.reset import ResetArmsTorsoHead
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToWaypoint
+from robot_smach_states.utility import SetInitialPose
+from robot_smach_states.reset import ResetArmsTorsoHead
 import robot_smach_states.util.designators as ds
 
 from hmi import HMIResult

@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import rospy
 from ed.entity import Entity
-import robot_smach_states as states
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.designator_iterator import IterateDesignator
