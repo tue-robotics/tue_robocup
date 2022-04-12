@@ -3,3 +3,4 @@ from .find_people import FindPeople
 from .get_drinks import GetDrinks
 from .get_orders import GetOrders
 from .lightsaber import DriveAndSwordFight, LightSaber
+from . import select_option_for_image
