@@ -205,7 +205,7 @@ class ExecutePlanGuidance(smach.State):
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
-        self.robot.head.look_at_point(VectorStamped(-1.0, 0.0, 1.75, rospy.Time.now(), self.robot.base_link_frame))
+        self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, 0.0, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
@@ -230,7 +230,10 @@ class ExecutePlanGuidance(smach.State):
             if distance > self._distance_threshold:
                 rospy.logdebug(
                     "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
-                if not self._check_operator():
+                if self._check_operator():
+                    distance = 0.0
+                    rospy.loginfo("Found operator, continuing following plan")
+                else:
                     rospy.loginfo("Lost operator while guiding, cancelling plan")
                     self.robot.base.local_planner.cancelCurrentPlan()
                     return "lost_operator"
