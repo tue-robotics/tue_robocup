@@ -156,7 +156,7 @@ def main():
 
         # Dump the output json object to a string
         task_specification = json.dumps(semantics)
-        task_specification = task_specification.strip() # remove leading and trailing quotes
+        task_specification = task_specification[1:-1] # remove leading and trailing quotes
         rospy.loginfo("Sending task: {}".format(task_specification))
 
         # Send the task specification to the action server
