@@ -13,7 +13,6 @@ from pykdl_ros import VectorStamped
 
 # TU/e Robotics
 from ed.entity import Entity
-import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
