@@ -15,7 +15,8 @@ from pykdl_ros import VectorStamped
 from ed.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
 
 class FindPeople(smach.State):
     """
@@ -495,13 +496,13 @@ class FindPeopleInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   states.NavigateToWaypoint(robot=robot,
+                                   NavigateToWaypoint(robot=robot,
                                                              waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot=robot,
                                                                              entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
