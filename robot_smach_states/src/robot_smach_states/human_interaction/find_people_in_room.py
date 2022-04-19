@@ -15,8 +15,6 @@ from pykdl_ros import VectorStamped
 from ed.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
-from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
 
 
 class FindPeople(smach.State):
@@ -168,41 +166,37 @@ class FindPeople(smach.State):
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
             robot_pose = self._robot.base.get_location()
-            for z in range(len(list(found_people))):
-                y = list(found_people)[z]
-                rospy.loginfo(" Position of found_people  is {}".format(y.pose))
-                if (y.pose.frame.p - robot_pose.frame.p).Norm() > self._look_distance:
-                    list(found_people).pop(z)
+            # TODO: Check probable bug here
+            found_people = filter(lambda x: (x.pose.frame.p - robot_pose.frame.p).Norm() < self._look_distance,
+                                  found_people)
 
-            rospy.loginfo("{} people remaining after distance < {}-check".format(len(list(found_people)), self._look_distance))
+            rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
 
             if self._properties:
                 for k, v in self._properties.items():
-                    found_people = [x for x in found_people if self._check_person_property(x, k, v)]
-                    rospy.loginfo("{} people remaining after {}={} check".format(len(list(found_people)), k, v))
+                    found_people = filter(lambda x:
+                            self._check_person_property(x, k, v), found_people)
+                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
             result_people = []
 
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
-                    result_people = found_people
-                    for z in range(len(list(found_people))):
-                        y = list(found_people)[z]
-                        if not query_entity.in_volume(VectorStamped.from_framestamped(y.pose), 'in'):
-                            list(result_people).pop(z)
-
+                    result_people = filter(lambda x: query_entity.in_volume(VectorStamped.from_framestamped(x.pose), 'in'),
+                                           found_people)
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
-                    # If people not in query_entity then try if query_entity in people
+                    # If people not in query_entity then try if query_entity in
+                    # people
                     if not result_people:
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = [x for x in found_people if x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in')]
+                            result_people = filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
+                                                   found_people)
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
-
                         except Exception:
                             pass
             else:
@@ -244,7 +238,7 @@ class FindPeople(smach.State):
                     return person_attr_val == prop_value
             else:
                 if (isinstance(person_attr_val, list)
-                        and list(filter(lambda x: x in prop_value, person_attr_val))
+                        and filter(lambda x: x in prop_value, person_attr_val)
                     ) or person_attr_val in prop_value:
                     rospy.loginfo("Executing strict=False")
                     return True
@@ -335,7 +329,7 @@ class FindFirstPerson(smach.StateMachine):
                      })
 
             self.add("GET_FIRST_ITERATE",
-                     states.designator_iterator.IterateDesignator(found_people_designator,
+                     states.IterateDesignator(found_people_designator,
                                               found_person_designator),
                      transitions={'next': 'found',
                                   'stop_iteration': 'failed'})
@@ -425,7 +419,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                      })
 
             self.add("UPDATE_POSE",
-                     states.world_model.UpdateDestEntityPoseWithSrcEntity(
+                     states.UpdateDestEntityPoseWithSrcEntity(
                          robot=robot,
                          src_entity_designator=found_person_designator,
                          dst_entity_designator=dst_entity_designator,
@@ -501,13 +495,13 @@ class FindPeopleInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   NavigateToWaypoint(robot=robot,
+                                   states.NavigateToWaypoint(robot=robot,
                                                              waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot=robot,
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
                                                                              entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
