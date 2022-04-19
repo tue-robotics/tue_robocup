@@ -57,11 +57,11 @@ class GiveDirections(smach.State):
         # Get the constraints for the global planner
         nav_constraints = OrderedDict()
         goal_entity = self._entity_designator.resolve()  # type: Entity
-        rospy.loginfo("Resolved to Entity: {}".format(goal_entity.uuid))
         if not goal_entity:
             rospy.logerr("Cannot give directions if I don't know where to go")
             self._robot.speech.speak("I'm sorry but I don't know where you want to go", mood="sad")
             return "failed"
+        rospy.loginfo("Resolved to Entity: {}".format(goal_entity.uuid))
         if goal_entity.is_a("room"):
             possible_areas = ["in"]
         else:
@@ -101,6 +101,8 @@ class GiveDirections(smach.State):
 
         # Match the path to rooms
         passed_room_ids = []  # Will contain the ids of the rooms that are passed
+        # frame defining where we enter the final room. If we do not pass any rooms, default to starting pose.
+        final_room_entry_pose = create_frame_from_points(kdl_path[0], kdl_path[1])
         for position, next_position in zip(kdl_path[:-1], kdl_path[1:]):
 
             try:
@@ -127,6 +129,7 @@ class GiveDirections(smach.State):
             sentence += "We will enter the {}\n".format(passed_room_ids[-1])
 
         # Check where the goal is upon entering the room
+
         entity_pose_path = final_room_entry_pose.Inverse() * goal_entity.pose.frame
         angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
         rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
