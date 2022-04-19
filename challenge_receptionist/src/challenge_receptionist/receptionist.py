@@ -2,11 +2,11 @@ import smach
 
 from ed.entity import Entity
 
-import robot_smach_states as states
 from robot_smach_states.utility import SetInitialPose
 from robot_smach_states.reset import ResetArmsTorsoHead
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.navigation import NavigateToWaypoint
 import robot_smach_states.util.designators as ds
-
 
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
@@ -46,16 +46,16 @@ class HandleSingleGuest(smach.StateMachine):
                                                 'failed': 'SAY_GOTO_OPERATOR'})
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
-                                   states.SayFormatted(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. Please follow me"],
+                                   Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. Please follow me"],
                                                        name=guest_name_des, drink=guest_drinkname_des,
                                                        block=True,
                                                        look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_LIVINGROOM'})
 
             smach.StateMachine.add('GOTO_LIVINGROOM',
-                                   states.NavigateToWaypoint(robot,
-                                                             livingroom_waypoint,
-                                                             challenge_knowledge.waypoint_livingroom['radius']),
+                                   NavigateToWaypoint(robot,
+                                                      livingroom_waypoint,
+                                                      challenge_knowledge.waypoint_livingroom['radius']),
                                    transitions={'arrived': 'INTRODUCE_GUEST',
                                                 'unreachable': 'INTRODUCE_GUEST',
                                                 'goal_not_defined': 'aborted'})
@@ -107,12 +107,12 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'aborted': 'SAY_DONE'})
 
             smach.StateMachine.add('SAY_DONE',
-                                   states.Say(robot, ["That's all folks, my job is done, bye bye!"],
+                                   Say(robot, ["That's all folks, my job is done, bye bye!"],
                                               block=False),
                                    transitions={'spoken': 'GO_BACK'})
 
             smach.StateMachine.add('GO_BACK',
-                                   states.NavigateToWaypoint(robot,
+                                   NavigateToWaypoint(robot,
                                                              ds.EntityByIdDesignator(robot,
                                                                                      id=challenge_knowledge.waypoint_door['id']),
                                                              challenge_knowledge.waypoint_door['radius']),

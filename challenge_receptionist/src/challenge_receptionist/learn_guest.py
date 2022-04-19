@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 import rospy
 from ed.entity import Entity
-import robot_smach_states as states
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.human_interaction import Say
 import robot_smach_states.util.designators as ds
 import smach
 from robocup_knowledge import load_knowledge
@@ -38,13 +38,13 @@ class LearnGuest(smach.StateMachine):
                                                 'goal_not_defined': 'aborted'})
 
             smach.StateMachine.add('SAY_OPEN_DOOR',
-                                   states.Say(robot, ["Someone please open the door, I'm expecting guests"],
+                                   Say(robot, ["Someone please open the door, I'm expecting guests"],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_PLEASE_COME_IN',
-                                   states.Say(robot, ["Please come in, I'm waiting for someone to step in front of me"],
+                                   Say(robot, ["Please come in, I'm waiting for someone to step in front of me"],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_GUEST'})
