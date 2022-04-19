@@ -4,6 +4,15 @@ from math import radians
 
 import rospy
 from ed.entity import Entity
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.human_interaction.find_people_in_room import FindPeopleInRoom
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
+from robot_smach_states.navigation.navigation import ForceDrive
+from robot_smach_states.human_interaction.find_person_in_room import FindPerson
+from robot_smach_states.manipulation.point_at import PointAt
+from robot_smach_states.reset import ResetArms
+
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
@@ -46,29 +55,29 @@ class IntroduceGuest(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('SAY_INTRO',
-                                   states.SayFormatted(robot,
-                                                       ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
-                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
-                                                       guest_name=guest_name_des,
-                                                       block=False),
+                                   Say(robot,
+                                            ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
+                                            name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
+                                            guest_name=guest_name_des,
+                                            block=False),
                                    transitions={'spoken': 'FIND_OLD_GUESTS'})
 
             smach.StateMachine.add('FIND_OLD_GUESTS',
-                                   states.FindPeopleInRoom(robot,
-                                                           room=challenge_knowledge.waypoint_livingroom['id'],
-                                                           found_people_designator=all_old_guests.writeable),
+                                   FindPeopleInRoom(robot,
+                                                    room=challenge_knowledge.waypoint_livingroom['id'],
+                                                    found_people_designator=all_old_guests.writeable),
                                    transitions = {'found': 'ITERATE_OLD_GUESTS',
                                                    'not_found': 'ITERATE_OLD_GUESTS'})
 
             smach.StateMachine.add('ITERATE_OLD_GUESTS',
-                                   states.IterateDesignator(all_old_guests,
-                                                            current_old_guest.writeable),
+                                   IterateDesignator(all_old_guests,
+                                                     current_old_guest.writeable),
                                    transitions={'next': 'GOTO_OPERATOR',
                                                 'stop_iteration': 'succeeded'})
 
             smach.StateMachine.add('GOTO_OPERATOR',
-                                   states.NavigateToObserve(robot,
-                                                            current_old_guest,
+                                   NavigateToObserve(robot,
+                                                     current_old_guest,
                                                             radius=1.0,
                                                             margin=1.0),  # Makes the robot go within 2m of current_old_guest
                                    transitions={'arrived': 'SAY_LOOK_AT_GUEST',
@@ -76,19 +85,18 @@ class IntroduceGuest(smach.StateMachine):
                                                 'goal_not_defined': 'SAY_LOOK_AT_GUEST'})
 
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
-                                   states.SayFormatted(robot,
-                                                       ["Hi {name}, let me show you our guest"],
-                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
-                                                       block=True),
+                                   Say(robot,
+                                       ["Hi {name}, let me show you our guest"],
+                                        name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                        block=True),
                                    transitions={'spoken': 'TURN_TO_GUEST'})
 
             smach.StateMachine.add('TURN_TO_GUEST',
-                                   states.Turn(robot=robot,
-                                               radians=radians(180)),
-                                   transitions={"turned": "FIND_GUEST"})
+                                   ForceDrive(robot, 0, 0, 1.05, 3.0),
+                                   transitions={"done": "FIND_GUEST"})
 
             smach.StateMachine.add('FIND_GUEST',
-                                   states.FindPerson(robot=robot,
+                                   FindPerson(robot=robot,
                                                      person_label=guest_name_des,
                                                      search_timeout=30,
                                                      found_entity_designator=guest_ent_des.writeable,
@@ -97,7 +105,7 @@ class IntroduceGuest(smach.StateMachine):
                                                 "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
 
             smach.StateMachine.add('POINT_AT_GUEST',
-                                   states.PointAt(robot=robot,
+                                   PointAt(robot=robot,
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
                                                   point_at_designator=guest_ent_des,
                                                   look_at_designator=current_old_guest),
@@ -105,21 +113,21 @@ class IntroduceGuest(smach.StateMachine):
                                                 "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
 
             smach.StateMachine.add('INTRODUCE_GUEST_BY_POINTING',
-                                   states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
+                                   Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'RESET_ARM'})
 
             smach.StateMachine.add('INTRODUCE_GUEST_WITHOUT_POINTING',
-                                   states.SayFormatted(robot,
-                                                       "Our new guest is {name} who likes {drink}",
-                                                       name=guest_name_des, drink=guest_drinkname_des,
-                                                       block=True,
-                                                       look_at_standing_person=True),
+                                   Say(robot,
+                                            ["Our new guest is {name} who likes {drink}"],
+                                            name=guest_name_des, drink=guest_drinkname_des,
+                                            block=True,
+                                            look_at_standing_person=True),
                                    transitions={'spoken': 'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
-                                   states.ResetArms(robot),
+                                   ResetArms(robot),
                                    transitions={'done': 'succeeded' if assume_john else 'ITERATE_OLD_GUESTS'})
 
 
