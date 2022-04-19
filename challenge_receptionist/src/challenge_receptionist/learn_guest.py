@@ -3,6 +3,9 @@ import rospy
 from ed.entity import Entity
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
+from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, LearnPerson, HearOptionsExtra
+from robot_smach_states.reset import ResetArms
+
 import robot_smach_states.util.designators as ds
 import smach
 from robocup_knowledge import load_knowledge
@@ -50,49 +53,49 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_GUEST'})
 
             smach.StateMachine.add("WAIT_FOR_GUEST",
-                                   states.WaitForPersonInFront(robot, attempts=30, sleep_interval=1),
+                                   WaitForPersonInFront(robot, attempts=30, sleep_interval=1),
                                    transitions={'success': 'SAY_HELLO',
                                                 'failed': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_HELLO',
-                                   states.Say(robot, ["Hi there, I'll learn your face now"],
+                                   Say(robot, ["Hi there, I'll learn your face now"],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
 
             smach.StateMachine.add('ASK_GUEST_NAME',
-                                   states.AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
+                                   AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
                                    transitions={'succeeded': 'LEARN_PERSON',
                                                 'failed': 'SAY_HELLO',
                                                 'timeout': 'SAY_HELLO'})
 
             smach.StateMachine.add('LEARN_PERSON',
-                                   states.LearnPerson(robot, name_designator=guest_name_des),
+                                   LearnPerson(robot, name_designator=guest_name_des),
                                    transitions={'succeeded': 'SAY_GUEST_LEARNED',
                                                 'failed': 'SAY_FAILED_LEARNING'})
 
             smach.StateMachine.add('SAY_FAILED_LEARNING',
-                                   states.Say(robot, ["Not sure if I remember you, but I'll do my best"],
+                                   Say(robot, ["Not sure if I remember you, but I'll do my best"],
                                               block=False),
                                    transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_GUEST_LEARNED',
-                                   states.Say(robot, ["Okidoki, now I know what you look like"], block=True),
+                                   Say(robot, ["Okidoki, now I know what you look like"], block=True),
                                    transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_DRINK_QUESTION',
-                                   states.Say(robot, ["What's your favorite drink?"], block=True),
+                                   Say(robot, ["What's your favorite drink?"], block=True),
                                    transitions={'spoken': 'HEAR_DRINK_ANSWER'})
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
-                                   states.HearOptionsExtra(robot,
+                                   HearOptionsExtra(robot,
                                                            self.drink_spec_des,
                                                            guest_drink_des.writeable),
                                    transitions={'heard': 'RESET_1',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('RESET_1',
-                                   states.ResetArms(robot),
+                                   ResetArms(robot),
                                    transitions={'done': 'succeeded'})
 
 
