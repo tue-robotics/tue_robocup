@@ -5,6 +5,7 @@ from builtins import range
 # System
 import rospy
 import math
+from collections import namedtuple
 
 # ROS
 import PyKDL as kdl
@@ -17,6 +18,8 @@ from robot_skills.arm.arms import PublicArm
 from ..util.designators import Designator, check_resolve_type
 from cb_base_navigation_msgs.msg import PositionConstraint
 from ..util.geometry_helpers import offsetConvexHull
+
+Candidate = namedtuple('Candidate', 'frame_stamped edge_score distance')
 
 
 class EmptySpotDesignator(Designator):
@@ -66,6 +69,9 @@ class EmptySpotDesignator(Designator):
         :returns: FrameStamped
         """
         place_location = self.place_location_designator.resolve()
+        if not place_location:
+            rospy.logerr("EmptySpotDesignator: entity not found")
+            return None
         place_frame = FrameStamped(frame=place_location._pose, stamp=rospy.Time.now(), frame_id="map")
 
         # points_of_interest = []
@@ -76,25 +82,29 @@ class EmptySpotDesignator(Designator):
                                                                      z_max=place_location.shape.z_max,
                                                                      convex_hull=place_location.shape.convex_hull)
 
-        assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
+        assert all(isinstance(v, Candidate) for v in vectors_of_interest)
+        assert all(isinstance(v.frame_stamped, FrameStamped) for v in vectors_of_interest)
 
-        open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, place_location), vectors_of_interest)
+        candidates = filter(lambda candidate: self._is_poi_unoccupied(candidate.frame_stamped, place_location), vectors_of_interest)
 
         base_pose = self.robot.base.get_location()
         arm = self.arm_designator.resolve()
-        open_POIs_dist = [(poi, self._distance_to_poi_area_heuristic(poi, base_pose, arm)) for poi in open_POIs]
+        candidates = [Candidate(c.frame_stamped,
+                                c.edge_score,
+                                self._distance_to_poi_area_heuristic(c.frame_stamped, base_pose, arm)) for c in candidates]
 
+        rospy.loginfo("1 Currently considering: {} candidates".format(len(candidates)))
         # We don't care about small differences
-        open_POIs_dist.sort(key=lambda tup:tup[1])
-        open_POIs_dist = [f for f in open_POIs_dist if (f[1] - open_POIs_dist[0][1]) < self._nav_threshold]
+        closest_candidate = min(candidates, key=lambda tup:tup.distance)
+        candidates = [f for f in candidates if (f.distance - closest_candidate.distance) < self._nav_threshold]
+        rospy.loginfo("2 Currently considering: {} candidates".format(len(candidates)))
+        candidates.sort(key=lambda tup: tup.edge_score, reverse=True) # sorts in place
 
-        open_POIs_dist.sort(key=lambda tup: tup[0].edge_score, reverse=True) # sorts in place
-
-        for poi in open_POIs_dist:
-            if self._distance_to_poi_area(poi[0], arm):
-                selection = self._create_selection_marker(poi[0])
+        for candidate in candidates:
+            if self._distance_to_poi_area(candidate.frame_stamped, arm):
+                selection = self._create_selection_marker(candidate.frame_stamped)
                 self.marker_pub.publish(MarkerArray([selection]))
-                return poi[0]
+                return candidate.frame_stamped
 
         rospy.logerr("Could not find an empty spot")
         return None
@@ -212,7 +222,7 @@ class EmptySpotDesignator(Designator):
         :param center_frame: kdl.Frame, center of the Entity to place on top of
         :param z_max: float, height of the entity to place on, w.r.t. the entity
         :param convex_hull: [kdl.Vector], convex hull of the entity
-        :return: [FrameStamped] of candidates for placing
+        :return: [Candidate] of candidates for placing
         """
 
         points = []
@@ -252,9 +262,10 @@ class EmptySpotDesignator(Designator):
                 # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
                 # prevent the robot from hitting the cabinet edges
                 # print("Length: {}, edge score: {}".format(length, min(d, length-d)))
-                setattr(fs, 'edge_score', min(d, length-d))
+                edge_score = min(d, length-d)
 
-                points += [fs]
+                candidate = Candidate(fs, edge_score, 0)
+                points.append(candidate)
 
                 self.marker_array.markers.append(self._create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
 
@@ -262,7 +273,6 @@ class EmptySpotDesignator(Designator):
                 d += self._spacing
 
         self.marker_pub.publish(self.marker_array)
-
         return points
 
     def __repr__(self):
