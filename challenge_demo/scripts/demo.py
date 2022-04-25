@@ -153,6 +153,8 @@ def main():
                 break
 
             break
+        # release the head from look_at_person
+        robot.head.cancel_goal()
 
         # Dump the output json object to a string
         task_specification = json.dumps(semantics)
@@ -173,16 +175,16 @@ def main():
 
         robot.lights.set_color(0, 0, 1)  # be sure lights are blue
 
-        robot.head.look_at_standing_person()
-        robot.reset_all_arms()
-        robot.torso.reset()
-
-        rospy.loginfo("Driving back to the starting point")
-        nwc = NavigateToWaypoint(robot=robot,
-                                 waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                          uuid=location_id),
-                                 radius=0.3)
-        nwc.execute()
+        # robot.head.look_at_standing_person()
+        # robot.reset_all_arms()
+        # robot.torso.reset()
+        #
+        # rospy.loginfo("Driving back to the starting point")
+        # nwc = NavigateToWaypoint(robot=robot,
+        #                          waypoint_designator=EntityByIdDesignator(robot=robot,
+        #                                                                   uuid=location_id),
+        #                          radius=0.3)
+        # nwc.execute()
 
 
 # ------------------------------------------------------------------------------------------------------------------------
