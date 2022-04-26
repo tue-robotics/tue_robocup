@@ -424,7 +424,7 @@ class ED(RobotPart):
             f.write(res.json_meta_data)
 
         # rgbd to png
-        os.system('rosrun rgbd rgbd_to_rgb_png %s' % (fname + ".rgbd"))  # ToDo: very very very ugly
+        os.system('rosrun rgbd rgbd_to_png %s' % (fname + ".rgbd"))  # ToDo: very very very ugly
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
