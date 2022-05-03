@@ -130,6 +130,10 @@ class LocatePeople(StateMachine):
                 pass
 
             room_entity = robot.ed.get_entity(uuid=room_id)  # type: Entity
+            if room_entity is None:
+                msg = f"Could not find room: '{room_id}"
+                rospy.logerr(msg)
+                raise ValueError(msg)
             room_volume = room_entity.volumes["in"]
             min_corner = room_entity.pose.frame * room_volume.min_corner
             max_corner = room_entity.pose.frame * room_volume.max_corner
