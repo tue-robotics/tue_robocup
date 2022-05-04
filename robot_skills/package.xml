@@ -13,8 +13,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_depend condition="$ROS_PYTHON_VERSION == 2">python-setuptools</buildtool_depend>
-  <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
+  <buildtool_depend>python3-setuptools</buildtool_depend>
 
   <depend>actionlib</depend>
   <depend>cb_base_navigation_msgs</depend>
@@ -34,8 +33,7 @@
   <depend>people_recognition_msgs</depend>
   <depend>pykdl_ros</depend>
   <depend>python_orocos_kdl</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 2">python-rospkg</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 3">python3-rospkg</depend>
+  <depend>python3-rospkg</depend>
   <depend>rgbd_msgs</depend>
   <depend>rospy</depend>
   <depend>smach</depend>
@@ -52,19 +50,15 @@
   <depend>tue_msgs</depend>
   <depend>visualization_msgs</depend>
 
-  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-mock</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-mock</exec_depend>
+  <exec_depend>python3-mock</exec_depend>
 
   <test_depend>test_tools</test_depend>
-  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-six</test_depend>
-  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-six</test_depend>
+  <test_depend>python3-six</test_depend>
 
-  <doc_depend condition="$ROS_PYTHON_VERSION == 2">python-sphinx</doc_depend>
-  <doc_depend condition="$ROS_PYTHON_VERSION == 3">python3-sphinx</doc_depend>
+  <doc_depend>python3-sphinx</doc_depend>
   <doc_depend>python-sphinx-autoapi-pip</doc_depend>
   <doc_depend>python-sphinx-rtd-theme-pip</doc_depend>
-  <doc_depend condition="$ROS_PYTHON_VERSION == 2">python-yaml</doc_depend>
-  <doc_depend condition="$ROS_PYTHON_VERSION == 3">python3-yaml</doc_depend>
+  <doc_depend>python3-yaml</doc_depend>
 
   <export>
     <robot_skills robot="robot_skills.mockbot.Mockbot" />
