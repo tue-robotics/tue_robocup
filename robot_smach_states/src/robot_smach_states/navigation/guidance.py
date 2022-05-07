@@ -205,7 +205,7 @@ class ExecutePlanGuidance(smach.State):
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
-        self.robot.head.look_at_point(VectorStamped(-1.0, 0.0, 1.75, rospy.Time.now(), self.robot.base_link_frame))
+        self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, 0.0, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
