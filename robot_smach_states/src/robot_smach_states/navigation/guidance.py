@@ -230,7 +230,10 @@ class ExecutePlanGuidance(smach.State):
             if distance > self._distance_threshold:
                 rospy.logdebug(
                     "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
-                if not self._check_operator():
+                if self._check_operator():
+                    distance = 0.0
+                    rospy.loginfo("Found operator, continuing following plan")
+                else:
                     rospy.loginfo("Lost operator while guiding, cancelling plan")
                     self.robot.base.local_planner.cancelCurrentPlan()
                     return "lost_operator"
