@@ -92,7 +92,7 @@ class DropDownTrash(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        arm_designator = ds.OccupiedArmDesignator(
+        arm_designator = ds.ArmDesignator(
             robot=robot,
             arm_properties={"required_goals": ["handover", "reset", "handover_to_human"],
                             "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
