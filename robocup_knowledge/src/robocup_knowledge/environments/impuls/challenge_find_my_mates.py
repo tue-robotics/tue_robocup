@@ -1,6 +1,6 @@
 starting_point = "initial_pose"
 
-room = "living_room"
+room = "dining_room"
 
 search_point = "initial_pose"
 
