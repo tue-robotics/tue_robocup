@@ -181,7 +181,7 @@ class GrabTrash(smach.State):
         #     return "failed"
 
         self._robot.speech.speak("Look at this I can pick up the trash!")
-        handed_entity = EntityInfo(id="trash")
+        handed_entity = ds.EntityByIdDesignator(robot=self._robot, uuid="trash").resolve()  # type: Entity
         arm.gripper.occupied_by = handed_entity
 
         return "succeeded"
