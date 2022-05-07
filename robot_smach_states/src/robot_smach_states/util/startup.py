@@ -2,7 +2,7 @@
 State machine startup
 
 Usage:
-  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no-execute]
+  {challenge_name} ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no-execute]
 
 Options:
   -h --help                     Show this screen.
@@ -13,10 +13,12 @@ Options:
 """
 
 from __future__ import absolute_import
+import __main__
 
 # System
 import ast
 from docopt import docopt
+import os.path
 import sys
 import time
 
@@ -28,7 +30,9 @@ import smach_ros
 from robot_skills.get_robot import get_robot, ROBOTS
 
 
-def startup(statemachine_creator, statemachine_args=(), initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
+def startup(
+    statemachine_creator, statemachine_args=(), initial_state=None, robot_name='', challenge_name=None, argv=None
+):
     """
     :param statemachine_creator: a function that outputs a statemachine.
         The function should take a robot as its first input.
@@ -40,7 +44,7 @@ def startup(statemachine_creator, statemachine_args=(), initial_state=None, robo
     :type robot_name: str
     :param challenge_name: name of the challenge
     :type challenge_name: str
-    :param argv: argument values
+    :param argv: argument values, stripped from ros arguments (default: rospy.myargv())
     :type argv: list
     """
     t_start = time.time()
@@ -49,11 +53,24 @@ def startup(statemachine_creator, statemachine_args=(), initial_state=None, robo
                       "is not needed and deprecated. "
                       "This is inferred by startup from the command line")
 
+    if argv is None:
+        argv = rospy.myargv()
+
     available_robots = ROBOTS.keys()
-    arguments = docopt(__doc__.format(robot='|'.join(available_robots),
-                                      challenge_name=challenge_name if challenge_name else "xxx"),
-                       argv=[v for v in argv[1:] if not v.startswith("_")],
-                       version='robot_smach_states startup 2.0')
+    try:
+        print(os.path.basename(__main__.__file__))
+        arguments = docopt(
+            __doc__.format(
+                robot="|".join(available_robots),
+                challenge_name=challenge_name if challenge_name else os.path.basename(__main__.__file__),
+            ),
+            argv=argv[1:],
+            version="robot_smach_states startup 2.0",
+        )
+    except SystemExit as e:  # In this except we act as it is a DocoptExit
+        rospy.logfatal(f"Invalid command-line arguments provided: {argv}\nDocopt could not match it against:\n{e.usage}")
+        sys.exit(1)
+
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
     initial_pose = arguments["--initial_pose"]
