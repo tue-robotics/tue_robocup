@@ -51,7 +51,6 @@ def startup(
 
     available_robots = ROBOTS.keys()
     try:
-        print(os.path.basename(__main__.__file__))
         arguments = docopt(
             __doc__.format(
                 robot="|".join(available_robots),
