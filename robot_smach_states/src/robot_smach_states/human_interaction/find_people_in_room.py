@@ -171,7 +171,7 @@ class FindPeople(smach.State):
             robot_pose = self._robot.base.get_location()
             found_people = [p for p in found_people if (p.pose.frame.p - robot_pose.frame.p).Norm() <= self._look_distance]
 
-            rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
+            rospy.loginfo("{} people remaining after distance < {}-check".format(len(list(found_people)), self._look_distance))
 
             if self._properties:
                 for k, v in self._properties.items():
