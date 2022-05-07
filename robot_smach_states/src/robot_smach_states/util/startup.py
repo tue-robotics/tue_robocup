@@ -31,27 +31,19 @@ from robot_skills.get_robot import get_robot, ROBOTS
 
 
 def startup(
-    statemachine_creator, statemachine_args=None, initial_state=None, robot_name='', challenge_name=None, argv=None
+    statemachine_creator, statemachine_args=None, challenge_name=None, argv=None
 ):
     """
     :param statemachine_creator: a function that outputs a statemachine.
         The function should take a robot as its first input.
     :param statemachine_args: A list of arguments. If the statemachine_creator
         function takes any arguments besides robot these can be placed here.
-    :param initial_state: the state to start the state machine in.
-        Can be supplied as command line argument
-    :param robot_name: name of the robot to pass to the state machine
-    :type robot_name: str
     :param challenge_name: name of the challenge
     :type challenge_name: str
     :param argv: argument values, stripped from ros arguments (default: rospy.myargv())
     :type argv: list
     """
     t_start = time.time()
-    if initial_state or robot_name:
-        rospy.logwarn("Setting initial_state and robot_name via the startup"
-                      "is not needed and deprecated. "
-                      "This is inferred by startup from the command line")
     if statemachine_args is None:
         statemachine_args = []
     if argv is None:
