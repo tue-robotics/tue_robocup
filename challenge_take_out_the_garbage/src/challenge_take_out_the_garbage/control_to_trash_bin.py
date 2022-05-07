@@ -46,7 +46,7 @@ class ControlToTrashBin(StateMachine):
                     )
                 )
             )
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.1, 0.2)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.3, 0.3)).execute({})
             return 'done'
 
         with self:
