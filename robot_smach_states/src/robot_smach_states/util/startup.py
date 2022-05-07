@@ -31,7 +31,7 @@ from robot_skills.get_robot import get_robot, ROBOTS
 
 
 def startup(
-    statemachine_creator, statemachine_args=(), initial_state=None, robot_name='', challenge_name=None, argv=None
+    statemachine_creator, statemachine_args=None, initial_state=None, robot_name='', challenge_name=None, argv=None
 ):
     """
     :param statemachine_creator: a function that outputs a statemachine.
@@ -52,7 +52,8 @@ def startup(
         rospy.logwarn("Setting initial_state and robot_name via the startup"
                       "is not needed and deprecated. "
                       "This is inferred by startup from the command line")
-
+    if statemachine_args is None:
+        statemachine_args = []
     if argv is None:
         argv = rospy.myargv()
 
