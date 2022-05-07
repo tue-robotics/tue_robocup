@@ -101,6 +101,7 @@ class GiveDirections(smach.State):
 
         # Match the path to rooms
         passed_room_ids = []  # Will contain the ids of the rooms that are passed
+        final_room_entry_pose = None  # frame defining where we enter the final room.
         for position, next_position in zip(kdl_path[:-1], kdl_path[1:]):
 
             try:
@@ -127,14 +128,15 @@ class GiveDirections(smach.State):
             sentence += "We will enter the {}\n".format(passed_room_ids[-1])
 
         # Check where the goal is upon entering the room
-        entity_pose_path = final_room_entry_pose.Inverse() * goal_entity.pose.frame
-        angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
-        rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
-        if abs(angle) < 0.25 * math.pi:
-            sentence += "The {} will be in front of you.\n".format(goal_entity.uuid)
-        else:
-            side = "left" if angle > 0.0 else "right"
-            sentence += "The {} is on your {}.\n".format(goal_entity.uuid, side)
+        if final_room_entry_pose is not None:
+            entity_pose_path = final_room_entry_pose.Inverse() * goal_entity.pose.frame
+            angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
+            rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
+            if abs(angle) < 0.25 * math.pi:
+                sentence += "The {} will be in front of you.\n".format(goal_entity.uuid)
+            else:
+                side = "left" if angle > 0.0 else "right"
+                sentence += "The {} is on your {}.\n".format(goal_entity.uuid, side)
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 
