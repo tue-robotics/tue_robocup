@@ -27,6 +27,8 @@ class TakeOutGarbage(smach.StateMachine):
         trashbin_designator = ds.EdEntityDesignator(robot=robot,
                                                     uuid=CHALLENGE_KNOWLEDGE.trashbin_id,
                                                     name='trashbin_designator')
+        test = trashbin_designator.resolve()
+        rospy.loginfo("Test: {}".format(test))
 
         # Look if there is a second trash bin present
         # trashbin_designator2 = None

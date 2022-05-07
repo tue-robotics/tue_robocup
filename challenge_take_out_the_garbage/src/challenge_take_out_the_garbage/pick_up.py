@@ -262,6 +262,9 @@ class PickUpTrash(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
         place_pose_designator = EmptySpotDesignator(robot, trashbin_designator, arm_designator)
 
+        if not place_pose_designator:
+            rospy.loginfo("Cannot resolve place_pose_designator")
+
         with self:
             # @cb_interface(outcomes=['done'])
             # def _joint_goal(_):
@@ -279,8 +282,8 @@ class PickUpTrash(smach.StateMachine):
             #                        transitions={'done': 'GO_BIN'})
 
             smach.StateMachine.add("GO_BIN",
-                                   states.navigation.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
-                                                          arm_designator=arm_designator),
+                                   states.navigation.NavigateToSymbolic(robot=robot, entity_designator_area_name_map={trashbin_designator:"in_front_of"},
+                                                          entity_lookat_designator=trashbin_designator),
                                    transitions={"arrived": "GET_BIN_POSITION",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
@@ -312,7 +315,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'done': 'GO_TO_NEW_BIN'})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.4,
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.6,
                                                      yaw_offset=-0.2),
                                    transitions={"done": "PREPARE_AND_GRAB"})
 
