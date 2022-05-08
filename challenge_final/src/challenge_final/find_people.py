@@ -17,7 +17,7 @@ from geometry_msgs.msg import PointStamped
 # TU/e Robotics
 from robot_smach_states.navigation import NavigateToWaypoint
 import robot_smach_states.util.designators as ds
-from .clustering import cluster_people
+from challenge_find_my_mates.cluster import cluster_people
 
 WAYPOINT_ID = "find_people_waypoint"
 ROOM_ID = "living_room"
