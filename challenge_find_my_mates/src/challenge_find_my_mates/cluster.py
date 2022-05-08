@@ -25,11 +25,11 @@ def cluster_people(people_dicts, room_center, plot=False):
     kmeans.fit(people_pos)
 
     # hashable_dict = tuple(people_dicts[0].items())
-    hashable_dicts = [tuple(d.items()) for d in people_dicts]  # A dict isn't hashable so can't be dict key. But a tuple can be, so we create ((k, v), (k, v), ...) tuple
+    # A dict isn't hashable so can't be dict key. But a tuple can be, so we create ((k, v), (k, v), ...) tuple
+    hashable_dicts = [tuple(d.items()) for d in people_dicts]
 
     # hashable_dicts2label maps elements of people_dicts to their laels
-    hashable_dicts2label = dict(zip(hashable_dicts,
-                                    kmeans.labels_))
+    hashable_dicts2label = dict(zip(hashable_dicts, kmeans.labels_))
 
     label2hashable_dicts = defaultdict(list)
 
@@ -37,7 +37,7 @@ def cluster_people(people_dicts, room_center, plot=False):
         label2hashable_dicts[label].append(dict(hashable))  # And here we create a normal dict again
     # label2hashable_dicts maps cluster labels to a list of {'rgb':..., 'person_detection':..., 'map_ps':...}
 
-    # Now we need to select wich element of the cluster is closest to the room_center
+    # Now we need to select which element of the cluster is closest to the room_center
     persons_closest_to_room_center = {}
 
     # import pdb; pdb.set_trace()
@@ -61,8 +61,10 @@ def cluster_people(people_dicts, room_center, plot=False):
 
     return persons_closest_to_room_center.values()
 
+
 if __name__ == "__main__":
     import sys
+
     ppl_dicts = pickle.load(open(sys.argv[1]))
     # ppl_dicts is a list of dicts {'rgb':..., 'person_detection':..., 'map_ps':...}
 
