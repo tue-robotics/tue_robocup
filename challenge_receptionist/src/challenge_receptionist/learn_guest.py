@@ -115,8 +115,8 @@ if __name__ == "__main__":
             self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
             self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
             self.guest1_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest1_drink')
-            self.guest1_drinkname_des = ds.FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink',
-                                                         name='guest1_drinkname')
+            self.guest1_drinkname_des = ds.FieldOfHMIResult(self.guest1_drink_des, semantics_path='drink',
+                                                            name='guest1_drinkname')
 
             with self:
                 smach.StateMachine.add('LEARN_GUEST',
