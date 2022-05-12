@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import rospy
-
 import smach
 from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction import AskContinue, Say
@@ -9,7 +7,6 @@ from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.reset import ResetED
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator, analyse_designators
-from robot_smach_states.util.startup import startup
 
 challenge_knowledge = load_knowledge('challenge_rips')
 
@@ -93,9 +90,3 @@ def setup_statemachine(robot):
 
     analyse_designators(sm, "rips")
     return sm
-
-
-if __name__ == '__main__':
-    rospy.init_node('rips_exec')
-
-    startup(setup_statemachine, challenge_name="rips")
