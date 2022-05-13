@@ -130,27 +130,18 @@ class LocatePeople(StateMachine):
             except Exception:
                 pass
 
+            rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
+
             room_entity = robot.ed.get_entity(uuid=room_id)  # type: Entity
             if room_entity is None:
                 msg = f"Could not find room: '{room_id}"
                 rospy.logerr(msg)
                 raise ValueError(msg)
-            room_volume = room_entity.volumes["in"]
-            min_corner = room_entity.pose.frame * room_volume.min_corner
-            max_corner = room_entity.pose.frame * room_volume.max_corner
 
-            shrink_x = 0.5
-            shrink_y = 0.3
-            min_corner_shrinked = PyKDL.Vector(min_corner.x() + shrink_x, min_corner.y() + shrink_y, 0)
-            max_corner_shrinked = PyKDL.Vector(max_corner.x() - shrink_x, max_corner.y() - shrink_y, 0)
-
-            rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
+            padding = -0.3
 
             def _get_clusters():
-                def _in_room(p):
-                    return min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
-
-                in_room_detections = [d for d in PERSON_DETECTIONS if _in_room(d['map_vs'].vector)]
+                in_room_detections = [d for d in PERSON_DETECTIONS if room_entity.in_volume(d['map_vs'], "in", padding)]
 
                 rospy.loginfo("%d in room before clustering", len(in_room_detections))
 
