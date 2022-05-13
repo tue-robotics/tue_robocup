@@ -53,10 +53,10 @@ jobs:
     steps:
     - task: Cache@2
       inputs:
-        key: '"ccache" | "$(Agent.OS)" | "$PACKAGE" | "$BUILD_SOURCEVERSION"'
+        key: 'ccache | "$(Agent.OS)" | "$PACKAGE" | "$BUILD_SOURCEVERSION"'
         restoreKeys: |
-        "ccache" | "$(Agent.OS)" | "$PACKAGE"
-        "ccache" | "$(Agent.OS)"
+        ccache | "$(Agent.OS)" | "$PACKAGE"
+        ccache | "$(Agent.OS)"
     path: $(Pipeline.Workspace)/.ccache
   displayName: Cache Yarn packages
     - task: Bash@3
