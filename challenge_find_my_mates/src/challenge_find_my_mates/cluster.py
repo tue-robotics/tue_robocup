@@ -66,12 +66,12 @@ if __name__ == "__main__":
     import sys
 
     ppl_dicts = pickle.load(open(sys.argv[1]))
-    # ppl_dicts is a list of dicts {'rgb':..., 'person_detection':..., 'map_ps':...}
+    # ppl_dicts is a list of dicts {'rgb':..., 'person_detection':..., 'map_vs':...}
 
     clustered_ppl = cluster_people(ppl_dicts, room_center=np.array([6, 0]), plot=True)
 
-    xs2 = [person['map_ps'].point.x for person in clustered_ppl]
-    ys2 = [person['map_ps'].point.y for person in clustered_ppl]
+    xs2 = [person['map_vs'].point.x for person in clustered_ppl]
+    ys2 = [person['map_vs'].point.y for person in clustered_ppl]
     locations = zip(xs2, ys2)
     pprint.pprint(locations)
 
