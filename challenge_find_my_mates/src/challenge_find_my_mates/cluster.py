@@ -28,7 +28,7 @@ def cluster_people(people_dicts, room_center, plot=False):
     # A dict isn't hashable so can't be dict key. But a tuple can be, so we create ((k, v), (k, v), ...) tuple
     hashable_dicts = [tuple(d.items()) for d in people_dicts]
 
-    # hashable_dicts2label maps elements of people_dicts to their laels
+    # hashable_dicts2label maps elements of people_dicts to their labels
     hashable_dicts2label = dict(zip(hashable_dicts, kmeans.labels_))
 
     label2hashable_dicts = defaultdict(list)
