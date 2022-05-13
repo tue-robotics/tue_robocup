@@ -53,10 +53,11 @@ jobs:
     steps:
     - task: Cache@2
       inputs:
-        key: 'ccache | "$(Agent.OS)" | "$PACKAGE" | "$BUILD_SOURCEVERSION"'
+        key: '"$(Agent.OS)" | ccache | "$(System.TeamProject)" | $(PACKAGE) | "$(Build.SourceVersion)"'
         restoreKeys: |
-          ccache | "$(Agent.OS)" | "$PACKAGE"
-          ccache | "$(Agent.OS)"
+          "$(Agent.OS)" | ccache | "$(System.TeamProject)" | $(PACKAGE)
+          "$(Agent.OS)" | ccache | "$(System.TeamProject)"
+          "$(Agent.OS)" | ccache
         path: $(Pipeline.Workspace)/.ccache
       displayName: Cache ccache
     - task: Bash@3
