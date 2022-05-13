@@ -55,10 +55,10 @@ jobs:
       inputs:
         key: 'ccache | "$(Agent.OS)" | "$PACKAGE" | "$BUILD_SOURCEVERSION"'
         restoreKeys: |
-        ccache | "$(Agent.OS)" | "$PACKAGE"
-        ccache | "$(Agent.OS)"
-    path: $(Pipeline.Workspace)/.ccache
-  displayName: Cache Yarn packages
+          ccache | "$(Agent.OS)" | "$PACKAGE"
+          ccache | "$(Agent.OS)"
+        path: $(Pipeline.Workspace)/.ccache
+      displayName: Cache ccache
     - task: Bash@3
       inputs:
         targetType: 'inline'
