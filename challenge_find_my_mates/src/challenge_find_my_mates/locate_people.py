@@ -154,7 +154,8 @@ class LocatePeople(StateMachine):
 
                 rospy.loginfo("%d in room before clustering", len(in_room_detections))
 
-                clusters = cluster_people(in_room_detections, np.array([6, 0]))
+                center_point = room_entity.pose.frame.p
+                clusters = cluster_people(in_room_detections, np.array([center_point.x, center_point.y]))
 
                 return clusters
 
