@@ -186,10 +186,10 @@ class LocatePeople(StateMachine):
                 x = person_detection['map_vs'].point.x
                 y = person_detection['map_vs'].point.y
 
-                x_image_frame = 9.04 - x
-                y_image_frame = 1.58 + y
+                x_image_frame = 9.04 - x  # ToDo: Hardcoded based on room in Sydney
+                y_image_frame = 1.58 + y  # ToDo: Hardcoded based on room in Sydney
 
-                pixels_per_meter = 158
+                pixels_per_meter = 158  # ToDo: Tuned based on room in Sydney
 
                 px = int(pixels_per_meter * x_image_frame)
                 py = int(pixels_per_meter * y_image_frame)
