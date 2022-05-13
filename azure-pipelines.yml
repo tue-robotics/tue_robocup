@@ -58,7 +58,7 @@ jobs:
           "$(Agent.OS)" | ccache | "$(System.TeamProject)" | $(PACKAGE)
           "$(Agent.OS)" | ccache | "$(System.TeamProject)"
           "$(Agent.OS)" | ccache
-        path: $(Pipeline.Workspace)/.ccache
+        path: .ccache
       displayName: Cache ccache
     - task: Bash@3
       inputs:
