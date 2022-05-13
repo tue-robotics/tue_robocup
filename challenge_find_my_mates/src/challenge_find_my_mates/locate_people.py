@@ -13,14 +13,17 @@ from datetime import datetime
 
 import PyKDL
 from pykdl_ros import VectorStamped
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
 import cv2
+from cv_bridge import CvBridge
 import numpy as np
 import rospkg
 import rospy
-from cv_bridge import CvBridge
-from geometry_msgs.msg import PointStamped
-from robot_skills import get_robot
 from smach import StateMachine, cb_interface, CBState
+
+from ed.entity import Entity
+from robot_skills import get_robot
 from challenge_find_my_mates.cluster import cluster_people
 
 NUM_LOOKS = 2
@@ -102,11 +105,9 @@ class LocatePeople(StateMachine):
                             for person in persons:
                                 if person.face.roi.width > 0 and person.face.roi.height > 0:
                                     try:
+                                        vs = VectorStamped.from_xyz(*person.position, rgb.header.stamp, rgb.header.frame_id)
                                         PERSON_DETECTIONS.append({
-                                            "map_ps": robot.tf_buffer.transform(PointStamped(
-                                                header=rgb.header,
-                                                point=person.position
-                                            ), "map"),
+                                            "map_vs": robot.tf_buffer.transform(vs, "map"),
                                             "person_detection": person,
                                             "rgb": rgb
                                         })
@@ -149,7 +150,7 @@ class LocatePeople(StateMachine):
                 def _in_room(p):
                     return min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
 
-                in_room_detections = [d for d in PERSON_DETECTIONS if _in_room(d['map_ps'].point)]
+                in_room_detections = [d for d in PERSON_DETECTIONS if _in_room(d['map_vs'].vector)]
 
                 rospy.loginfo("%d in room before clustering", len(in_room_detections))
 
@@ -182,8 +183,8 @@ class LocatePeople(StateMachine):
                 calculated_width = int(float(width) / ratio)
                 resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
 
-                x = person_detection['map_ps'].point.x
-                y = person_detection['map_ps'].point.y
+                x = person_detection['map_vs'].point.x
+                y = person_detection['map_vs'].point.y
 
                 x_image_frame = 9.04 - x
                 y_image_frame = 1.58 + y
