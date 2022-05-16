@@ -12,7 +12,7 @@ import rospy
 
 import smach
 
-from challenge_find_my_mates.locate_people import color_map
+from image_recognition_util.image_writer import color_map
 
 
 def shadow(img, text, org, fontFace, fontScale, color, thickness=None, lineType=None, bottomLeftOrigin=None):
@@ -46,7 +46,7 @@ class DisplayOrdersOnMap(smach.State):
                 person_detection_clusters = []
 
             bridge = cv_bridge.CvBridge()
-            c_map = color_map(N=len(person_detection_clusters), normalized=True)
+            c_map = color_map(n=len(person_detection_clusters), normalized=True)
             for i, person_detection in enumerate(person_detection_clusters):
                 image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
                 roi = person_detection['person_detection'].face.roi
