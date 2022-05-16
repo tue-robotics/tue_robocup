@@ -10,14 +10,14 @@ import smach
 
 class ReportPeople(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['done'])
+        smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, ud):
+    def execute(self, userdata=None):
         self._robot.speech.speak(
             "Look at my screen to see where your mates are at so you can have a beer with them",
             mood="excited",
-            block=False
+            block=False,
         )
         self._robot.speech.speak("My job here is done. Goodbye", block=False)
         return "done"
