@@ -11,7 +11,6 @@ import time
 from collections import deque
 from datetime import datetime
 
-import PyKDL
 from pykdl_ros import VectorStamped
 # noinspection PyUnresolvedReferences
 import tf2_pykdl_ros
