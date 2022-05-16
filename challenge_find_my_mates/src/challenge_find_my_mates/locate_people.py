@@ -21,41 +21,14 @@ import rospkg
 import rospy
 from smach import StateMachine, cb_interface, CBState
 
+from image_recognition_util.image_writer import color_map
+
 from ed.entity import Entity
 from robot_skills import get_robot
 from challenge_find_my_mates.cluster import cluster_people
 
 NUM_LOOKS = 2
 PERSON_DETECTIONS = []
-
-
-def color_map(N=256, normalized=False):
-    """
-    Generate an RGB color map of N different colors
-
-    :param N : int amount of colors to generate
-    :param normalized: bool indicating range of each channel: float32 in [0, 1] or int in [0, 255]
-    :return: a numpy.array of shape (N, 3) with a row for each color and each row is [R,G,B]
-    """
-
-    def bitget(byteval, idx):
-        return ((byteval & (1 << idx)) != 0)
-
-    dtype = 'float32' if normalized else 'uint8'
-    cmap = np.zeros((N, 3), dtype=dtype)
-    for i in range(N):
-        r = g = b = 0
-        c = i + 1  # skip the first color (black)
-        for j in range(8):
-            r |= bitget(c, 0) << 7 - j
-            g |= bitget(c, 1) << 7 - j
-            b |= bitget(c, 2) << 7 - j
-            c >>= 3
-
-        cmap[i] = np.array([r, g, b])
-
-    cmap = cmap / 255 if normalized else cmap
-    return cmap
 
 
 class LocatePeople(StateMachine):
@@ -162,7 +135,7 @@ class LocatePeople(StateMachine):
             floorplan_height, floorplan_width, _ = floorplan.shape
 
             bridge = CvBridge()
-            c_map = color_map(N=len(person_detection_clusters), normalized=True)
+            c_map = color_map(n=len(person_detection_clusters), normalized=True)
             for i, person_detection in enumerate(person_detection_clusters):
                 image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
                 roi = person_detection['person_detection'].face.roi
