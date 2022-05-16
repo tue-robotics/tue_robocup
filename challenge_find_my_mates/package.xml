@@ -16,6 +16,7 @@
   <buildtool_depend>python3-setuptools</buildtool_depend>
 
   <depend>geometry_msgs</depend>
+  <depend>image_recognition_util</depend>
   <depend>pykdl_ros</depend>
   <depend>python3-matplotlib</depend>
   <depend>python3-rospkg</depend>
