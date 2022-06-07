@@ -4,6 +4,7 @@ import rospy
 import numpy
 import smach
 from geometry_msgs.msg import WrenchStamped
+import math
 
 # TU/e
 from smach import cb_interface, CBState
@@ -165,11 +166,27 @@ class GrabTrash(smach.State):
             rospy.loginfo("Full weight %s", arm_with_object_weight)
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
-
+        
+        
+        
+        # Go back to make space for arm
+        self._robot.head.look_up()
+        self._robot.head.wait_for_motion_done()
+        self._robot.base.force_drive(-0.07, 0, 0, 2.0)
+        
+        # Lift bag up
+        arm._arm._send_joint_trajectory(
+            [
+             [0.65, -2.2, 0.0, -0.85, 0.0],
+             [0.95, -1, 0.0, -0.85, 0.0]
+            ]
+            )
+        arm.wait_for_motion_done()
+        
         # Go back and pull back arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.5, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.1, 0, 0, 2.0)
 
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
@@ -180,7 +197,7 @@ class GrabTrash(smach.State):
         # if weight_object < self._minimal_weight:
         #     return "failed"
 
-        self._robot.speech.speak("Look at this I can pick up the trash!")
+        self._robot.speech.speak("Look at this, I can pick up the trash!")
         handed_entity = ds.EntityByIdDesignator(robot=self._robot, uuid="trash").resolve()  # type: Entity
         arm.gripper.occupied_by = handed_entity
 
@@ -301,11 +318,12 @@ class PickUpTrash(smach.StateMachine):
                     return "failed"  # ToDo: fix
                 # Send to grab trash pose
                 arm._arm._send_joint_trajectory(
-                    [[0.01, 0.0, -1.57, -1.57, 0.0],
+                    [
+                     [0.01, 0.0, -1.57, -1.57, 0.0],
                      [0.69, 0.0, -1.57, -1.57, 0.0],
                      [0.65, -2.2, -1.57, -1.57, 0.],
                      [0.65, -2.2, 0.0, -0.85, 0.]
-                     ]
+                    ]
                 )
                 arm.wait_for_motion_done()
                 return 'done'
@@ -315,7 +333,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'done': 'GO_TO_NEW_BIN'})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.6,
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.45,
                                                      yaw_offset=-0.2),
                                    transitions={"done": "PREPARE_AND_GRAB"})
 
