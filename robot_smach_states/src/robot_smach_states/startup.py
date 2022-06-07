@@ -162,7 +162,15 @@ class WaitForDoorOpen(smach.State):
         if front_index < 2 or front_index > number_beams - 2:
             raise IndexError("Base laser can't see in front of the robot")
 
-        ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
+        for range_width in range(2, 10):
+            if front_index < range_width or front_index > number_beams - range_width:
+                break
+
+            ranges_at_center = scan_msg.ranges[front_index - range_width:front_index + range_width]  # Get some points around the middle
+            rospy.logdebug(f"{ranges_at_center=}")
+            if not all(map(math.isnan, ranges_at_center)):
+                break
+
         distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
         rospy.logdebug("AVG distance: {}".format(distance_to_door))
         self.distances += [distance_to_door]  # store all distances
