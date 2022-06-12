@@ -43,11 +43,12 @@ class LocatePeople(StateMachine):
             global PERSON_DETECTIONS
             global NUM_LOOKS
 
-            # with open('/home/rein/mates/floorplan-2019-07-05-11-06-52.pickle', 'r') as f:
+            # with open(os.path.expanduser('~/floorplan-2022-06-12-17-53-28.pickle'), 'rb') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
             #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
-            #
-            #
+            #     for det in PERSON_DETECTIONS:
+            #         det['map_vs'].header.stamp = rospy.Time(0)
+            #         det['rgb'].header.stamp = rospy.Time(0)
             # return "done"
 
             look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
