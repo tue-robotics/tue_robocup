@@ -88,7 +88,7 @@ class LocatePeople(StateMachine):
                                             "rgb": rgb
                                         })
                                     except Exception as e:
-                                        rospy.logerr("Failed to transform valid person detection to map frame")
+                                        rospy.logerr(f"Failed to transform valid person detection to map frame: {e}")
 
                         rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now, len(PERSON_DETECTIONS))
 
