@@ -11,7 +11,11 @@ import time
 from collections import deque
 from datetime import datetime
 
+import tf2_ros
+from geometry_msgs.msg import PointStamped
 from pykdl_ros import VectorStamped
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
 # noinspection PyUnresolvedReferences
 import tf2_pykdl_ros
 import cv2
@@ -77,7 +81,8 @@ class LocatePeople(StateMachine):
                             for person in persons:
                                 if person.face.roi.width > 0 and person.face.roi.height > 0:
                                     try:
-                                        vs = VectorStamped.from_xyz(*person.position, rgb.header.stamp, rgb.header.frame_id)
+                                        point_stamped = PointStamped(rgb.header, person.position)
+                                        vs = tf2_ros.convert(point_stamped, VectorStamped)
                                         PERSON_DETECTIONS.append({
                                             "map_vs": robot.tf_buffer.transform(vs, "map"),
                                             "person_detection": person,
@@ -147,8 +152,8 @@ class LocatePeople(StateMachine):
                 calculated_width = int(float(width) / ratio)
                 resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
 
-                x = person_detection['map_vs'].point.x
-                y = person_detection['map_vs'].point.y
+                x = person_detection['map_vs'].vector.x()
+                y = person_detection['map_vs'].vector.y()
 
                 x_image_frame = 9.04 - x  # ToDo: Hardcoded based on room in Sydney
                 y_image_frame = 1.58 + y  # ToDo: Hardcoded based on room in Sydney
