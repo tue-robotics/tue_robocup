@@ -2,12 +2,9 @@ from __future__ import print_function
 
 import pickle
 from collections import defaultdict
-import pprint
 import numpy as np
 
 import matplotlib.pyplot as plt
-
-from os.path import expanduser
 
 from sklearn.cluster import KMeans
 
@@ -63,9 +60,15 @@ def cluster_people(people_dicts, room_center, plot=False):
 
 
 if __name__ == "__main__":
+    import os.path
+    import pprint
     import sys
 
-    ppl_dicts = pickle.load(open(sys.argv[1]))
+    filename = os.path.expanduser(sys.argv[1])
+    filename_base = os.path.splitext(filename)[0]
+
+    with open(filename, 'br') as f:
+        ppl_dicts = pickle.load(f)
     # ppl_dicts is a list of dicts {'rgb':..., 'person_detection':..., 'map_vs':...}
 
     clustered_ppl = cluster_people(ppl_dicts, room_center=np.array([6, 0]), plot=True)
@@ -73,7 +76,7 @@ if __name__ == "__main__":
     xs2 = [person['map_vs'].point.x for person in clustered_ppl]
     ys2 = [person['map_vs'].point.y for person in clustered_ppl]
     locations = zip(xs2, ys2)
-    pprint.pprint(locations)
+    pprint.pprint(list(locations))
 
-    with open(expanduser('~') + '/kmeans_output.pickle', 'w') as dumpfile:
-        pickle.dump(clustered_ppl, dumpfile)
+    with open(filename_base + '_kmeans_output.pickle', 'wb') as f:
+        pickle.dump(list(clustered_ppl), f)
