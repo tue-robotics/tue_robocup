@@ -42,7 +42,6 @@ def setup_statemachine(robot):
                                transitions={'preempted': 'aborted',
                                             'waited': 'GO_TO_SEARCH_POSE'})
 
-        # noinspection PyUnusedLocal
         @smach.cb_interface(outcomes=["done"])
         def _rise_for_the_people(userdata=None):
             """ Resets the location hmi attempt so that each operator gets three attempts """
@@ -63,7 +62,6 @@ def setup_statemachine(robot):
                                             }
                                )
 
-        # noinspection PyUnusedLocal
         @smach.cb_interface(outcomes=["done"])
         def _reset_for_driving(userdata=None):
             """ Resets the location hmi attempt so that each operator gets three attempts """
