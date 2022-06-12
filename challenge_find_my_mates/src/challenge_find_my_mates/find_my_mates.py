@@ -66,8 +66,8 @@ def setup_statemachine(robot):
         def _reset_for_driving(userdata=None):
             """ Resets the location hmi attempt so that each operator gets three attempts """
             robot.speech.speak("Thank you for your attention", block=False)
-            robot.arms.values()[0]._send_joint_trajectory([[0.01, -1.9, 0.0, -1.57, 0.0],  # Inspect with q0 low
-                                                           [0.01, 0.0, -1.57, -1.57, 0.0]])  # Reset
+            list(robot.arms.values())[0]._send_joint_trajectory([[0.01, -1.9, 0.0, -1.57, 0.0],  # Inspect with q0 low
+                                                                 [0.01, 0.0, -1.57, -1.57, 0.0]])  # Reset
             return "done"
 
         smach.StateMachine.add("RESET_FOR_DRIVING",
