@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # Test data
     user_data = smach.UserData()
 
-    with open('/home/amigo/Downloads/floorplan-2019-07-05-12-02-17.pickle', 'r') as f:
+    with open('/home/amigo/Downloads/floorplan-2019-07-05-12-02-17.pickle', 'rb') as f:
         raw_detections = pickle.load(f)
         rospy.loginfo("Loaded %d persons", len(raw_detections))
 
