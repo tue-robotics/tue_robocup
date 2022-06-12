@@ -101,7 +101,7 @@ class LocatePeople(StateMachine):
             global PERSON_DETECTIONS
 
             try:
-                with open(os.path.expanduser('~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'w') as f:
+                with open(os.path.expanduser('~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'wb') as f:
                     pickle.dump(PERSON_DETECTIONS, f)
             except Exception:
                 pass
