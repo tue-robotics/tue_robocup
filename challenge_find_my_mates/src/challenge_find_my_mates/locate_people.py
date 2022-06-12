@@ -28,7 +28,6 @@ from smach import StateMachine, cb_interface, CBState
 from image_recognition_util.image_writer import color_map
 
 from ed.entity import Entity
-from robot_skills import get_robot
 from challenge_find_my_mates.cluster import cluster_people
 
 NUM_LOOKS = 2
@@ -199,7 +198,11 @@ class LocatePeople(StateMachine):
 
 
 if __name__ == '__main__':
+    from robocup_knowledge import load_knowledge
+    from robot_skills import get_robot
+
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    robot_instance = get_robot("hero")
-    robot_instance.reset()
-    LocatePeople(robot_instance, 'living_room').execute()
+    robot = get_robot("hero", 0)
+    # robot.reset()
+    challenge_knowledge = load_knowledge('challenge_find_my_mates')
+    LocatePeople(robot, challenge_knowledge.room).execute()
