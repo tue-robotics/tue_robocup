@@ -21,6 +21,48 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
+class StateCharacteristics(smach.State):
+    #todo
+    # Checks how many tasks have been done and if another task is needed
+    # Does this check with the database in the reasoner
+    def __init__(self, robot_name, entity_des):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot_name
+        self.entity = entity_des.resolve()
+        self.name = entity_des.person_properties.name
+
+    def execute(self, userdata=None):
+        if not self.name == "John":
+            if self.entity.person_properties.gender == 1:
+                gender = 'female'
+            else:
+                gender = 'male'
+            age = self.entity.person_properties.age
+            shirt_color = self.entity.person_properties.shirt_colors
+            self.robot.speech.speak("This is {name} and is a {gender}, is {age} years old and wears a {shirt_color}"
+                                    " shirt.".format(name=self.name, gender=gender, age=age, shirt_color=shirt_color))
+        return "done"
+
+
+# class CustomEntityDesignator(ds.Designator):
+#     def __init__(self, entity):
+#         super(CustomEntityDesignator, self).__init__(resolve_type=str)
+#         self.entity = entity
+#
+#     def _resolve(self):
+#         name = self.entity.person_properties.name
+#
+#         if self.entity.person_properties.gender == 1:
+#             gender = 'female'
+#         else:
+#             gender = 'male'
+#         age = self.entity.person_properties.age
+#         shirt_color = self.entity.person_properties.shirt_colors
+#
+#         return "This is {name} and is a {gender}, is {age} years old and wears a {shirt_color} shirt."\
+#             .format(name=name, gender=gender, age=age, shirt_color=shirt_color)
+
+
 class GuestDescriptionStrDesignator(ds.Designator):
     def __init__(self, guest_name_des, drinkname, name=None):
         super(GuestDescriptionStrDesignator, self).__init__(resolve_type=str, name=name)
@@ -47,6 +89,13 @@ class IntroduceGuest(smach.StateMachine):
 
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
         current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
+
+        if assume_john:
+            post_introduce_guest_point = 'RESET_ARM'
+            # post_introduce_guest_point = 'STATE_CHARACTERISTICS'
+        else:
+            # post_introduce_guest_point = 'STATE_CHARACTERISTICS'
+            post_introduce_guest_point = 'RESET_ARM'
 
         # For each person:
         #   0. Go to the person (old guest)
@@ -84,6 +133,8 @@ class IntroduceGuest(smach.StateMachine):
                                                 'unreachable': 'SAY_LOOK_AT_GUEST',
                                                 'goal_not_defined': 'SAY_LOOK_AT_GUEST'})
 
+            ## Save position head?
+
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
                                    Say(robot,
                                        ["Hi {name}, let me show you our guest"],
@@ -94,6 +145,7 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('TURN_TO_GUEST',
                                    ForceDrive(robot, 0, 0, 1.05, 3.0),
                                    transitions={"done": "FIND_GUEST"})
+            ## Todo: Turns 180 degree?
 
             smach.StateMachine.add('FIND_GUEST',
                                    FindPerson(robot=robot,
@@ -112,11 +164,23 @@ class IntroduceGuest(smach.StateMachine):
                                    transitions={"succeeded": "INTRODUCE_GUEST_BY_POINTING",
                                                 "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
 
+            # TODO: check if this works lookat john/current_old_guest
+
             smach.StateMachine.add('INTRODUCE_GUEST_BY_POINTING',
                                    Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
-                                              block=True,
-                                              look_at_standing_person=True),
-                                   transitions={'spoken': 'RESET_ARM'})
+                                       block=True,
+                                       look_at_standing_person=True),        # todo: look if this should be false
+                                   transitions={'spoken': post_introduce_guest_point})
+
+            # TODO: give 4 characteristics (age, gender, shirt colour, pose?) of guest 1 to guest 2
+            # TODO: test this
+            # TODO: look at guest 2: point_at_guest_1?
+            # TODO differentiate between John and guest1 in finding person
+
+            # if post_introduce_guest_point == "STATE_CHARACTERISTICS":
+                # smach.StateMachine.add('STATE_CHARACTERISTICS',
+                #                        StateCharacteristics(robot, current_old_guest),
+                #                        transitions={'spoken': 'RESET_ARM'})
 
             smach.StateMachine.add('INTRODUCE_GUEST_WITHOUT_POINTING',
                                    Say(robot,
