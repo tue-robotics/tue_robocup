@@ -2,14 +2,15 @@
 State machine startup
 
 Usage:
-  {challenge_name} ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no-execute]
+  {challenge_name} ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no-execute] [-t TIMEOUT]
 
 Options:
-  -h --help                     Show this screen.
-  --initial=<init>              Initial state
-  --initial_pose=<init_pose>    Initial state
-  --debug                       Run the IntrospectionServer
-  --no-execute                  Only construct state machine, do not execute it, i.e. only do checks.
+  -h --help                                Show this screen.
+  --initial=<init>                         Initial state
+  --initial_pose=<init_pose>               Initial state
+  --debug                                  Run the IntrospectionServer
+  --no-execute                             Only construct state machine, do not execute it, i.e. only do checks.
+  -t TIMEOUT --connection-timeout=TIMEOUT  Timeout for connecting ROS connections [default: {default_timeout}]
 """
 
 from __future__ import absolute_import
@@ -28,6 +29,7 @@ import smach_ros
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot, ROBOTS
+from robot_skills.robot import DEFAULT_CONNECTION_TIMEOUT
 
 
 def startup(
@@ -55,6 +57,7 @@ def startup(
             __doc__.format(
                 robot="|".join(available_robots),
                 challenge_name=challenge_name if challenge_name else os.path.basename(__main__.__file__),
+                default_timeout=DEFAULT_CONNECTION_TIMEOUT,
             ),
             argv=argv[1:],
             version="robot_smach_states startup 2.0",
@@ -63,13 +66,14 @@ def startup(
         rospy.logfatal(f"Invalid command-line arguments provided: {argv}\nDocopt could not match it against:\n{e.usage}")
         sys.exit(1)
 
-    robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
+    robot_name = [robotname for robotname in available_robots if arguments[robotname]][0]
     initial_state = arguments["--initial"]
     initial_pose = arguments["--initial_pose"]
     enable_debug = arguments["--debug"]
     no_execute = arguments["--no-execute"]
+    connection_timeout = arguments["--connection-timeout"]
 
-    robot = get_robot(robot_name)
+    robot = get_robot(robot_name, connection_timeout=connection_timeout)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
 

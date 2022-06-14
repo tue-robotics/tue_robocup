@@ -31,7 +31,7 @@ class TestVariableDesignator(unittest.TestCase):
     def test_current_deprecated(self):
         v = VariableDesignator('Hello')
         with self.assertRaises(DeprecationWarning):
-            result = v.current
+            result = v.current  # noqa
 
     def test_write_not_possible(self):
         v = VariableDesignator('Hello')
@@ -51,50 +51,54 @@ class TestVariableDesignator(unittest.TestCase):
         class MyVariableDesignator(VariableDesignator):
             def __init__(self):
                 super(MyVariableDesignator, self).__init__(resolve_type=[object])
+
             def _resolve(self):
                 return None
 
         v = MyVariableDesignator()
-        self.assertEquals(v.resolve(), None)
+        self.assertEqual(v.resolve(), None)
 
     def test_empty_list_value(self):
         # Resolve a [object] to an empty list value.
         class MyVariableDesignator(VariableDesignator):
             def __init__(self):
                 super(MyVariableDesignator, self).__init__(resolve_type=[str])
+
             def _resolve(self):
                 return []
 
         v = MyVariableDesignator()
-        self.assertEquals(v.resolve(), [])
+        self.assertEqual(v.resolve(), [])
 
     def test_none_list_value(self):
         # Resolve a [object] to a [None] list value.
         class MyVariableDesignator(VariableDesignator):
             def __init__(self):
                 super(MyVariableDesignator, self).__init__(resolve_type=[str])
+
             def _resolve(self):
                 return [None]
 
         v = MyVariableDesignator()
         with self.assertRaises(TypeError):
-            self.assertEquals(v.resolve(), [None])
+            self.assertEqual(v.resolve(), [None])
 
     def test_empty_list_type(self):
         with self.assertRaises(TypeError):
-            v = VariableDesignator(resolve_type=[])
+            v = VariableDesignator(resolve_type=[])  # noqa
 
     def test_none_type_in_list(self):
         with self.assertRaises(TypeError):
-            v = VariableDesignator(resolve_type=[None])
+            v = VariableDesignator(resolve_type=[None])  # noqa
 
     def test_multi_element_type(self):
         with self.assertRaises(TypeError):
-            v = VariableDesignator(resolve_type=[str, bool])
+            v = VariableDesignator(resolve_type=[str, bool])  # noqa
 
     def test_none_type_singular(self):
         with self.assertRaises(TypeError):
-            v = VariableDesignator(resolve_type=None)
+            v = VariableDesignator(resolve_type=None)  # noqa
+
 
 class TestVariableWriter(unittest.TestCase):
     def test_basics(self):

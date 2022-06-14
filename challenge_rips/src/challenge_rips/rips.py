@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import rospy
-
 import smach
 from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction import AskContinue, Say
@@ -9,7 +7,6 @@ from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.reset import ResetED
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator, analyse_designators
-from robot_smach_states.util.startup import startup
 
 challenge_knowledge = load_knowledge('challenge_rips')
 
@@ -54,16 +51,16 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("ASK_CONTINUE",
                                AskContinue(robot, 30),
-                               transitions={'continue': 'SAY_CONTINUEING',
-                                            'no_response': 'SAY_CONTINUEING'})
+                               transitions={'continue': 'SAY_CONTINUING',
+                                            'no_response': 'SAY_CONTINUING'})
 
-        smach.StateMachine.add('SAY_CONTINUEING',
+        smach.StateMachine.add('SAY_CONTINUING',
                                Say(robot,
-                                          ["I heard continue, so I will move to the exit now. See you guys later!"],
-                                          block=False),
+                                   ["I heard continue, so I will move to the exit now. See you guys later!"],
+                                   block=False),
                                transitions={'spoken': 'GO_TO_EXIT'})
 
-        # Amigo goes to the exit (waypoint stated in knowledge base)
+        # Robot goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
                                NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_1), radius=0.7),
                                transitions={'arrived': 'AT_END',
@@ -86,16 +83,10 @@ def setup_statemachine(robot):
                                ResetED(robot),
                                transitions={'done': 'GO_TO_EXIT'})
 
-        # Finally amigo will stop and says 'goodbye' to show that he's done.
+        # Finally, the robot will stop and says 'goodbye' to show that he's done.
         smach.StateMachine.add('AT_END',
                                Say(robot, "Goodbye"),
                                transitions={'spoken': 'Done'})
 
     analyse_designators(sm, "rips")
     return sm
-
-
-if __name__ == '__main__':
-    rospy.init_node('rips_exec')
-
-    startup(setup_statemachine, challenge_name="rips")

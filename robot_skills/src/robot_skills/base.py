@@ -30,6 +30,82 @@ from robot_skills.robot_part import RobotPart
 from robot_skills.util import nav_analyzer, transformations
 
 
+def _abs_max(value, max_value):
+    """
+    Robust max function, which ignores the sign of the max_value. And can handle inf/NaN as max_value.
+
+    >>> _abs_max(1.0, 2.0)
+    1.0
+    >>> _abs_max(1.0, -2.0)
+    1.0
+    >>> _abs_max(1.0, 1.0)
+    1.0
+    >>> _abs_max(1.0, -1.0)
+    1.0
+    >>> _abs_max(1.0, 0.5)
+    0.5
+    >>> _abs_max(1.0, -0.5)
+    0.5
+    >>> _abs_max(1.0, 0.0)
+    0.0
+    >>> _abs_max(1.0, -0.0)
+    0.0
+    >>> _abs_max(-1.0, 2.0)
+    -1.0
+    >>> _abs_max(-1.0, -2.0)
+    -1.0
+    >>> _abs_max(-1.0, 1.0)
+    -1.0
+    >>> _abs_max(-1.0, -1.0)
+    -1.0
+    >>> _abs_max(-1.0, 0.5)
+    -0.5
+    >>> _abs_max(-1.0, -0.5)
+    -0.5
+    >>> _abs_max(-1.0, 0.0)
+    -0.0
+    >>> _abs_max(-1.0, -0.0)
+    -0.0
+
+    >>> _abs_max(0.0, 1.0)
+    0.0
+    >>> _abs_max(0.0, -1.0)
+    0.0
+    >>> _abs_max(0.0, 0.0)
+    0.0
+    >>> _abs_max(0.0, -0.0)
+    0.0
+
+    >>> _abs_max(-0.0, 1.0)
+    0.0
+    >>> _abs_max(-0.0, -1.0)
+    0.0
+    >>> _abs_max(-0.0, 0.0)
+    0.0
+    >>> _abs_max(-0.0, -0.0)
+    0.0
+
+    >>> _abs_max(1.0, float("inf"))
+    1.0
+    >>> _abs_max(-1.0, float("inf"))
+    -1.0
+    >>> _abs_max(1.0, float("-inf"))
+    1.0
+    >>> _abs_max(-1.0, float("-inf"))
+    -1.0
+    >>> _abs_max(1.0, float("NaN"))
+    1.0
+    >>> _abs_max(-1.0, float("NaN"))
+    -1.0
+    >>> _abs_max(1.0, float("-NaN"))
+    1.0
+    >>> _abs_max(-1.0, float("-NaN"))
+    -1.0
+    """
+    # max_value should be 2nd arg, so in case of inf/NaN `min` returns `value`
+    return sign(value) * min(abs(value), abs(max_value))
+
+
 class LocalPlanner(RobotPart):
     def __init__(self, robot_name, tf_buffer, analyzer):
         super(LocalPlanner, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
@@ -246,19 +322,15 @@ class Base(RobotPart):
         t_start = rospy.Time.now()
         t_end = t_start + rospy.Duration.from_sec(timeout)
 
-        def _abs_max(value, max_value):
-            return sign(value) * min(abs(max_value), abs(value))
-
         # Drive
         rate = rospy.Rate(loop_rate)
         while rospy.Time.now() < t_end:
             seconds_from_start = rospy.Time.now().to_sec() - t_start.to_sec()
 
-            # 0 * inf =  NaN, so in case 'seconds_from_start' is close to zero, aka in the first loop iteration,
-            # use zero to prevent NaNs
-            v.linear.x = _abs_max(vx, ax * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
-            v.linear.y = _abs_max(vy, ay * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
-            v.angular.z = _abs_max(vth, ath * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            # 0 * inf =  NaN. This can be the case when 'seconds_from_start' is close to zero.
+            v.linear.x = _abs_max(vx, ax * seconds_from_start)
+            v.linear.y = _abs_max(vy, ay * seconds_from_start)
+            v.angular.z = _abs_max(vth, ath * seconds_from_start)
             self._cmd_vel.publish(v)
             rate.sleep()
 
