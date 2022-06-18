@@ -15,7 +15,8 @@ from pykdl_ros import VectorStamped
 from ed.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
 
 class FindPeople(smach.State):
     """
@@ -167,25 +168,40 @@ class FindPeople(smach.State):
 
             robot_pose = self._robot.base.get_location()
             # TODO: Check probable bug here
-            found_people = filter(lambda x: (x.pose.frame.p - robot_pose.frame.p).Norm() < self._look_distance,
-                                  found_people)
+            # found_people = filter(lambda x: (x.pose.frame.p - robot_pose.frame.p).Norm() < self._look_distance,
+            #                       found_people)
+            for z in range(len(list(found_people))):
+                y = list(found_people)[z]
+                rospy.loginfo(" Position of found_people  is {}".format(y.pose))
+                if (y.pose.frame.p - robot_pose.frame.p).Norm() > self._look_distance:
+                    list(found_people).pop(z)
 
-            rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
+            rospy.loginfo("{} people remaining after distance < {}-check".format(len(list(found_people)), self._look_distance))
 
             if self._properties:
                 for k, v in self._properties.items():
                     found_people = filter(lambda x:
                             self._check_person_property(x, k, v), found_people)
-                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
+                    rospy.loginfo("{} people remaining after {}={} check".format(len(list(found_people)), k, v))
 
             result_people = []
 
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
-                    result_people = filter(lambda x: query_entity.in_volume(VectorStamped.from_framestamped(x.pose), 'in'),
-                                           found_people)
-                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
+                    # result_people = filter(lambda x: query_entity.in_volume(VectorStamped.from_framestamped(x.pose), 'in'),
+                    #                        found_people)
+
+                    result_people = found_people
+                    for z in range(len(list(found_people))):
+                        y = list(found_people)[z]
+                        if not query_entity.in_volume(VectorStamped.from_framestamped(y.pose), 'in'):
+                            list(result_people).pop(z)
+
+                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(list(result_people)), query_entity.uuid))
+                    #TODO: test if this code is necessary, assume not
+                    if len(list(result_people)) == 0:
+                        result_people = False
 
                     # If people not in query_entity then try if query_entity in
                     # people
@@ -196,7 +212,10 @@ class FindPeople(smach.State):
                             result_people = filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
                                                    found_people)
                             rospy.loginfo(
-                                "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
+                                "{} result_people remaining after 'in'-'{}' check".format(len(list(result_people)), query_entity.uuid))
+                            if len(list(result_people)) == 0:
+                                result_people = False
+
                         except Exception:
                             pass
             else:
@@ -495,13 +514,13 @@ class FindPeopleInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   states.NavigateToWaypoint(robot=robot,
+                                   NavigateToWaypoint(robot=robot,
                                                              waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot=robot,
                                                                              entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
