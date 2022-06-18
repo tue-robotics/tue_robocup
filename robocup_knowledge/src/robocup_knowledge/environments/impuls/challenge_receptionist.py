@@ -3,6 +3,8 @@ common = knowledge_loader.load_knowledge("common")
 
 operator_name = "john"
 
+operator_drink = "beer"
+
 starting_point = "initial_pose"
 
 waypoint_door = {'id': 'entry_door', 'radius': 0.5}
