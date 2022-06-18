@@ -10,6 +10,7 @@ import math
 from smach import cb_interface, CBState
 
 import robot_smach_states as states
+from robot_smach_states.world_model import look_at_segmentation_area
 import robot_smach_states.util.designators as ds
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arm.arms import PublicArm
@@ -62,17 +63,17 @@ class GetTrashBin(smach.State):
         self._trashbin = trashbin
 
     def execute(self, userdata=None):
-        return "succeeded"
         e = self._trashbin.resolve()
 
         if not e:
-            raise Exception("trashbin designator is empty")
+            rospy.logerror("trashbin designator did not resolve")
+            return 'failed'
 
         # get original entity pose
         frame_original = self._robot.ed.get_entity(uuid=e.uuid).pose.frame
 
         # inspect and update entity
-        states.look_at_segmentation_area(self._robot, self._robot.ed.get_entity(uuid=e.uuid), 'on_top_of')
+        look_at_segmentation_area(self._robot, self._robot.ed.get_entity(uuid=e.uuid), 'on_top_of')
         self._robot.ed.update_kinect("{} {}".format('on_top_of', e.uuid))
         pose_updated = self._robot.ed.get_entity(uuid=e.uuid).pose
 
@@ -81,11 +82,7 @@ class GetTrashBin(smach.State):
 
         # new_frame.header.stamp
         self._robot.ed.update_entity(self._robot, e.uuid, frame_stamped=pose_updated)
-        if e:
-            return "succeeded"
-        else:
-            return "failed"
-
+        return "succeeded"
 
 class GrabTrash(smach.State):
     """
@@ -166,14 +163,14 @@ class GrabTrash(smach.State):
             rospy.loginfo("Full weight %s", arm_with_object_weight)
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
-        
-        
-        
+
+
+
         # Go back to make space for arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
         self._robot.base.force_drive(-0.07, 0, 0, 2.0)
-        
+
         # Lift bag up
         arm._arm._send_joint_trajectory(
             [
@@ -182,7 +179,7 @@ class GrabTrash(smach.State):
             ]
             )
         arm.wait_for_motion_done()
-        
+
         # Go back and pull back arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
