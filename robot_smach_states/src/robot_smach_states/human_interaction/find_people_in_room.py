@@ -178,8 +178,7 @@ class FindPeople(smach.State):
 
             if self._properties:
                 for k, v in self._properties.items():
-                    found_people = filter(lambda x:
-                            self._check_person_property(x, k, v), found_people)
+                    found_people = [x for x in found_people if self._check_person_property(x, k, v)]
                     rospy.loginfo("{} people remaining after {}={} check".format(len(list(found_people)), k, v))
 
             result_people = []
@@ -193,23 +192,16 @@ class FindPeople(smach.State):
                         if not query_entity.in_volume(VectorStamped.from_framestamped(y.pose), 'in'):
                             list(result_people).pop(z)
 
-                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(list(result_people)), query_entity.uuid))
-                    #TODO: test if this code is necessary, assume not
-                    if len(list(result_people)) == 0:
-                        result_people = False
+                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
-                    # If people not in query_entity then try if query_entity in
-                    # people
+                    # If people not in query_entity then try if query_entity in people
                     if not result_people:
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
-                                                   found_people)
+                            result_people = [x for x in found_people if x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in')]
                             rospy.loginfo(
-                                "{} result_people remaining after 'in'-'{}' check".format(len(list(result_people)), query_entity.uuid))
-                            if len(list(result_people)) == 0:
-                                result_people = False
+                                "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
                         except Exception:
                             pass
