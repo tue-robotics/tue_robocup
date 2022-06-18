@@ -18,6 +18,7 @@ import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
 
+
 class FindPeople(smach.State):
     """
     Smach state to find a person. The robot looks around and tries to find
@@ -342,7 +343,7 @@ class FindFirstPerson(smach.StateMachine):
                      })
 
             self.add("GET_FIRST_ITERATE",
-                     states.IterateDesignator(found_people_designator,
+                     states.designator_iterator.IterateDesignator(found_people_designator,
                                               found_person_designator),
                      transitions={'next': 'found',
                                   'stop_iteration': 'failed'})
@@ -432,7 +433,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                      })
 
             self.add("UPDATE_POSE",
-                     states.UpdateDestEntityPoseWithSrcEntity(
+                     states.world_model.UpdateDestEntityPoseWithSrcEntity(
                          robot=robot,
                          src_entity_designator=found_person_designator,
                          dst_entity_designator=dst_entity_designator,
