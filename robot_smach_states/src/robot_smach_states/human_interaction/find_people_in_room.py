@@ -329,7 +329,7 @@ class FindFirstPerson(smach.StateMachine):
                      })
 
             self.add("GET_FIRST_ITERATE",
-                     states.IterateDesignator(found_people_designator,
+                     states.designator_iterator.IterateDesignator(found_people_designator,
                                               found_person_designator),
                      transitions={'next': 'found',
                                   'stop_iteration': 'failed'})
