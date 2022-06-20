@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 
 
-def cluster_people(people_dicts, room_center, plot=False):
+def cluster_people(people_dicts, room_center, n_clusters=4, plot=False):
     xs = [person['map_vs'].vector.x() for person in people_dicts]
     ys = [person['map_vs'].vector.y() for person in people_dicts]
 
@@ -18,7 +18,7 @@ def cluster_people(people_dicts, room_center, plot=False):
 
     people_pos = np.array([xs, ys]).T  # people_pos is a np.array of [(x, y)]
 
-    kmeans = KMeans(n_clusters=4, random_state=0)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
     kmeans.fit(people_pos)
 
     label2detection = defaultdict(list)
