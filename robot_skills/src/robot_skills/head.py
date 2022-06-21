@@ -40,7 +40,7 @@ class Head(RobotPart):
         return self.look_at_point(reset_goal, timeout=timeout)
 
     def look_at_ground_in_front_of_robot(self, distance=2):
-        goal = VectorStamped.from_xyz(x=distance, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
+        goal = VectorStamped.from_xyz(distance, 0, 0, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
 
         return self.look_at_point(goal)
 
