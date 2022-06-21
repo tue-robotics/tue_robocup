@@ -3,7 +3,7 @@ import rospy
 from ed.entity import Entity
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, LearnPerson, HearOptionsExtra
+from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, LearnPerson, HearOptionsExtra, AskYesNo
 from robot_smach_states.reset import ResetArms
 
 import robot_smach_states.util.designators as ds
@@ -30,6 +30,8 @@ class LearnGuest(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
+        guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
+        guest_drink_name_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
@@ -65,9 +67,19 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('ASK_GUEST_NAME',
                                    AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
-                                   transitions={'succeeded': 'LEARN_PERSON',
+                                   transitions={'succeeded': 'SAY_HEARD_CORRECT_NAME',
                                                 'failed': 'SAY_HELLO',
                                                 'timeout': 'SAY_HELLO'})
+
+            smach.StateMachine.add('SAY_HEARD_CORRECT_NAME',
+                                   Say(robot, "I heard your name is {name}, is this correct?",
+                                       name=guest_name_des),
+                                   transitions={'spoken': 'HEAR_NAME_CORRECT'})
+
+            smach.StateMachine.add("HEAR_NAME_CORRECT", AskYesNo(robot),
+                                   transitions={"yes": "LEARN_PERSON",
+                                                "no": "ASK_GUEST_NAME",
+                                                "no_result": "ASK_GUEST_NAME"})
 
             smach.StateMachine.add('LEARN_PERSON',
                                    LearnPerson(robot, name_designator=guest_name_des),
@@ -91,8 +103,18 @@ class LearnGuest(smach.StateMachine):
                                    HearOptionsExtra(robot,
                                                            self.drink_spec_des,
                                                            guest_drink_des.writeable),
-                                   transitions={'heard': 'RESET_1',
+                                   transitions={'heard': 'SAY_DRINK_CORRECT_NAME',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
+
+            smach.StateMachine.add('SAY_DRINK_CORRECT_NAME',
+                                   Say(robot, "I heard your favorite drink is {drink}, is this correct?",
+                                       drink=guest_drink_name_des),
+                                   transitions={'spoken': 'HEAR_DRINK_CORRECT'})
+
+            smach.StateMachine.add("HEAR_DRINK_CORRECT", AskYesNo(robot),
+                                   transitions={"yes": "RESET_1",
+                                                "no": "SAY_DRINK_QUESTION",
+                                                "no_result": "SAY_DRINK_QUESTION"})
 
             smach.StateMachine.add('RESET_1',
                                    ResetArms(robot),
