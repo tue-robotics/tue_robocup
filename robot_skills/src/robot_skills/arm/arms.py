@@ -174,7 +174,7 @@ class PublicArm(object):
                        "Specify get_arm(..., force_sensor_required=True)")
         return hasattr(self._arm, "force_sensor")
 
-    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01, distance_move_down=2.0):
+    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01, distance_move_down=None):
         self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
                        "Specify get_arm(..., force_sensor_required=True)")
         return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance,
