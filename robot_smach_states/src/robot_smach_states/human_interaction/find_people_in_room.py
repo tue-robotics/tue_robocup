@@ -178,9 +178,9 @@ class FindPeople(smach.State):
 
             if self._properties:
                 for k, v in self._properties.items():
-                    found_people = filter(lambda x:
-                            self._check_person_property(x, k, v), found_people)
-                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
+                    found_people = list(filter(lambda x:
+                            self._check_person_property(x, k, v), found_people))
+                    rospy.loginfo("{} people remaining after {}={} check".format(len(list(found_people)), k, v))
 
             result_people = []
 
@@ -196,8 +196,8 @@ class FindPeople(smach.State):
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
-                                                   found_people)
+                            result_people = list(filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
+                                                   found_people))
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
                         except Exception:
@@ -209,7 +209,7 @@ class FindPeople(smach.State):
                 if self._nearest:
                     result_people.sort(key=lambda e: (e.pose.frame.p - robot_pose.frame.p).Norm())
                 if person_label and \
-                    filter(lambda x: self._check_person_property(x, "id", person_label), result_people) \
+                    list(filter(lambda x: self._check_person_property(x, "id", person_label), result_people)) \
                     and self._speak:
                     self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
@@ -235,7 +235,7 @@ class FindPeople(smach.State):
                 # Making the conditon less strict to increase search domain
                 rospy.loginfo("Executing strict=True")
                 if isinstance(person_attr_val, list):
-                    sub_list = filter(lambda x: x in prop_value, person_attr_val)
+                    sub_list = list(filter(lambda x: x in prop_value, person_attr_val))
                     return sub_list == prop_value
                 else:
                     return person_attr_val == prop_value
