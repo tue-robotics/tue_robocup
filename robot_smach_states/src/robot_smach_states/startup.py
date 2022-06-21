@@ -162,7 +162,7 @@ class WaitForDoorOpen(smach.State):
         if front_index < 2 or front_index > number_beams - 2:
             raise IndexError("Base laser can't see in front of the robot")
 
-        # Start with 5, center -/+ 2, beams. If these are all NaN, increase number of beams up to max 21
+        # It is possible for the selected ranges to be all NaN, when the door is open. In that case we expand the number of laser points we check. Starting with 5, center -/+ 2, beams. If these are all NaN, increase number of beams up to max 21
         for range_width in range(2, 10):
             if front_index < range_width or front_index > number_beams - range_width:
                 break
