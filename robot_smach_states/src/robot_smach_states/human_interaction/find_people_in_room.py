@@ -168,18 +168,18 @@ class FindPeople(smach.State):
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
             robot_pose = self._robot.base.get_location()
-            for z in range(len(list(found_people))):
-                y = list(found_people)[z]
+            for z in range(len(found_people)):
+                y = found_people[z]
                 rospy.loginfo(" Position of found_people  is {}".format(y.pose))
                 if (y.pose.frame.p - robot_pose.frame.p).Norm() > self._look_distance:
-                    list(found_people).pop(z)
+                    found_people.pop(z)
 
             rospy.loginfo("{} people remaining after distance < {}-check".format(len(list(found_people)), self._look_distance))
 
             if self._properties:
                 for k, v in self._properties.items():
                     found_people = [x for x in found_people if self._check_person_property(x, k, v)]
-                    rospy.loginfo("{} people remaining after {}={} check".format(len(list(found_people)), k, v))
+                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
             result_people = []
 
@@ -187,10 +187,10 @@ class FindPeople(smach.State):
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
                     result_people = found_people
-                    for z in range(len(list(found_people))):
-                        y = list(found_people)[z]
+                    for z in range(len(found_people)):
+                        y = found_people[z]
                         if not query_entity.in_volume(VectorStamped.from_framestamped(y.pose), 'in'):
-                            list(result_people).pop(z)
+                            result_people.pop(z)
 
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
