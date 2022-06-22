@@ -57,21 +57,19 @@ def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, re
 
 
 def _create_lower_force_sensing_goal(self, distance_move_down, timeout):
-    # Gets current joint state
     current_joint_state = self.get_joint_states()
 
-    # Sets the joint state to move down a certain distance (or 0 if distance is not set)
-    if distance_move_down is not None:
-        current_joint_state['arm_lift_joint'] = max(0, current_joint_state['arm_lift_joint'] - distance_move_down)
-    else:
+    # Sets the joint state to move down a certain distance (or to 0 if distance is not set)
+    if distance_move_down is None:
         current_joint_state['arm_lift_joint'] = 0  # TODO make this function not HERO-specific
+    else:
+        current_joint_state['arm_lift_joint'] = max(0, current_joint_state['arm_lift_joint'] - distance_move_down)
 
     # Creates goal for force_sensor
     return create_force_sensing_goal(self.joint_names, current_joint_state, timeout)
 
 
 def _create_retract_force_sensing_goal(self, retract_distance, timeout):
-    # Gets current joint states
     current_joint_state = self.get_joint_states()
 
     # Changes state to retract arm after force sensor edge up
@@ -82,9 +80,7 @@ def _create_retract_force_sensing_goal(self, retract_distance, timeout):
 
 
 def create_force_sensing_goal(joint_names, current_joint_state, timeout):
-    positions = []
-    for name in joint_names:
-        positions.append(current_joint_state[name])
+    positions = [current_joint_state[name] for name in joint_names]
 
     points = [JointTrajectoryPoint(
         positions=positions,
