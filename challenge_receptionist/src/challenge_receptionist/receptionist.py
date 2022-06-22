@@ -31,8 +31,7 @@ class HandleSingleGuest(smach.StateMachine):
 
         guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
         guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')
-        guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
-        guest_drinkname_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
+        guest_drink_des = ds.VariableDesignator('drink', name='guest_drink')
 
         with self:
             smach.StateMachine.add('LEARN_GUEST',
@@ -47,7 +46,7 @@ class HandleSingleGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
                                    Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. Please follow me"],
-                                                       name=guest_name_des, drink=guest_drinkname_des,
+                                                       name=guest_name_des, drink=guest_drink_des,
                                                        block=True,
                                                        look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_LIVINGROOM'})
@@ -64,7 +63,7 @@ class HandleSingleGuest(smach.StateMachine):
                                    IntroduceGuest(robot,
                                                   guest_entity_des,
                                                   guest_name_des,
-                                                  guest_drinkname_des,
+                                                  guest_drink_des,
                                                   assume_john=assume_john),
                                    transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
                                                 'abort': 'FIND_SEAT_FOR_GUEST'})

@@ -8,6 +8,7 @@ from robot_smach_states.reset import ResetArms
 
 import robot_smach_states.util.designators as ds
 import smach
+from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
 from hmi import HMIResult
 
@@ -30,7 +31,7 @@ class LearnGuest(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
-        guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
+        guest_drink_hmi_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
         guest_drink_name_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
 
         with self:
@@ -101,14 +102,25 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                    HearOptionsExtra(robot,
-                                                           self.drink_spec_des,
-                                                           guest_drink_des.writeable),
-                                   transitions={'heard': 'SAY_DRINK_CORRECT_NAME',
+                                                    self.drink_spec_des,
+                                                    guest_drink_hmi_des.writeable),
+                                   transitions={'heard': 'WRITE_DRINK_NAME',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
+
+            @cb_interface(outcomes=['done'])
+            def _write_drink_name(answer, drink_name_designator):
+                name = answer.resolve()
+                drink_name_designator.write(name)
+                return 'done'
+
+            smach.StateMachine.add("WRITE_DRINK_NAME",
+                                   CBState(_write_drink_name,
+                                           cb_args=[guest_drink_name_des, guest_drink_des.writeable]),
+                                   transitions={'done': 'SAY_DRINK_CORRECT_NAME'})
 
             smach.StateMachine.add('SAY_DRINK_CORRECT_NAME',
                                    Say(robot, "I heard your favorite drink is {drink}, is this correct?",
-                                       drink=guest_drink_name_des),
+                                       drink=guest_drink_des),
                                    transitions={'spoken': 'HEAR_DRINK_CORRECT'})
 
             smach.StateMachine.add("HEAR_DRINK_CORRECT", AskYesNo(robot),
