@@ -45,7 +45,7 @@ def setup_statemachine(robot):
         @smach.cb_interface(outcomes=["done"])
         def _rise_for_the_people(userdata=None):
             """ Resets the location hmi attempt so that each operator gets three attempts """
-            list(robot.arms.values())[0]._send_joint_trajectory([[0.70, -1.9, 0.0, -1.57, 0.0]])
+            list(robot.arms.values())[0]._send_joint_trajectory([[0.65, -1.9, 0.0, -1.57, 0.0]])
             robot.speech.speak("Hi there. My Name is Hero. I'm looking for the mates of my operator", block=False)
             return "done"
 
