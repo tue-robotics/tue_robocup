@@ -32,7 +32,7 @@ class LearnGuest(smach.StateMachine):
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
         guest_drink_hmi_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
-        guest_drink_name_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
+        guest_drink_name_des = ds.FieldOfHMIResult(guest_drink_hmi_des, semantics_path='drink', name='guest_drinkname')
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
@@ -108,7 +108,7 @@ class LearnGuest(smach.StateMachine):
                                                 'no_result': 'SAY_DRINK_QUESTION'})
 
             @cb_interface(outcomes=['done'])
-            def _write_drink_name(answer, drink_name_designator):
+            def _write_drink_name(ud, answer, drink_name_designator):
                 name = answer.resolve()
                 drink_name_designator.write(name)
                 return 'done'
