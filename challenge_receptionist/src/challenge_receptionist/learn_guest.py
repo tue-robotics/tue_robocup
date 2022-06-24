@@ -30,8 +30,6 @@ class LearnGuest(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
-        guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
-        guest_drink_name_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
@@ -108,7 +106,7 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_DRINK_CORRECT_NAME',
                                    Say(robot, "I heard your favorite drink is {drink}, is this correct?",
-                                       drink=guest_drink_name_des),
+                                       drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink')),
                                    transitions={'spoken': 'HEAR_DRINK_CORRECT'})
 
             smach.StateMachine.add("HEAR_DRINK_CORRECT", AskYesNo(robot),
