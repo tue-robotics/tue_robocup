@@ -25,7 +25,7 @@ class LearnGuest(smach.StateMachine):
         :param door_waypoint: Entity-designator resolving to a waypoint Where are guests expected to come in
         :param guest_ent_des: Entity of the guest
         :param guest_name_des: designator that the name (str) of the guest is written to
-        :param guest_drink_des: designator that the drink type (str) of the drink the guest wants
+        :param guest_drink_des: designator that the drink type (HMIResult) of the drink the guest wants
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
 
