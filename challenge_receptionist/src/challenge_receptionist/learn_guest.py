@@ -98,8 +98,7 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'spoken': 'HEAR_DRINK_ANSWER'})
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
-                                   HearOptionsExtra(robot,
-                                                           self.drink_spec_des,
+                                   HearOptionsExtra(robot, self.drink_spec_des,
                                                            guest_drink_des.writeable),
                                    transitions={'heard': 'SAY_DRINK_CORRECT_NAME',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
