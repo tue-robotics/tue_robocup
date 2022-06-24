@@ -44,14 +44,14 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_OPEN_DOOR',
                                    Say(robot, ["Someone please open the door, I'm expecting guests"],
-                                              block=True,
-                                              look_at_standing_person=True),
+                                       block=True,
+                                       look_at_standing_person=True),
                                    transitions={'spoken': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_PLEASE_COME_IN',
                                    Say(robot, ["Please come in, I'm waiting for someone to step in front of me"],
-                                              block=True,
-                                              look_at_standing_person=True),
+                                       block=True,
+                                       look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_GUEST'})
 
             smach.StateMachine.add("WAIT_FOR_GUEST",
@@ -61,8 +61,8 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_HELLO',
                                    Say(robot, ["Hi there, I'll learn your face now"],
-                                              block=True,
-                                              look_at_standing_person=True),
+                                       block=True,
+                                       look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
 
             smach.StateMachine.add('ASK_GUEST_NAME',
