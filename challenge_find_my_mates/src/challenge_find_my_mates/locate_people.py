@@ -43,7 +43,7 @@ class LocatePeople(StateMachine):
             global PERSON_DETECTIONS
             global NUM_LOOKS
 
-            # with open(os.path.expanduser('~/floorplan-2022-06-12-17-53-28.pickle'), 'rb') as f:
+            # with open(os.path.expanduser('~/find_my_mates/floorplan-2022-06-12-17-53-28.pickle'), 'rb') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
             #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
             #     for det in PERSON_DETECTIONS:
