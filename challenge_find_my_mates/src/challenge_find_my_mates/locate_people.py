@@ -21,7 +21,6 @@ import tf2_pykdl_ros
 import cv2
 from cv_bridge import CvBridge
 import numpy as np
-import rospkg
 import rospy
 from smach import StateMachine, cb_interface, CBState
 
@@ -136,8 +135,7 @@ class LocatePeople(StateMachine):
                 robot.speech.speak("Mates, where are you?", block=False)
                 return "failed"
 
-            floorplan = cv2.imread(
-                os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
+            floorplan, img_pose, pixels_per_meter_width, pixels_per_meter_height = robot.ed.get_map([room_id])
             floorplan_height, floorplan_width, _ = floorplan.shape
 
             bridge = CvBridge()
@@ -153,16 +151,10 @@ class LocatePeople(StateMachine):
                 calculated_width = int(float(width) / ratio)
                 resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
 
-                x = person_detection['map_vs'].vector.x()
-                y = person_detection['map_vs'].vector.y()
+                vs_image_frame = img_pose.frame.Inverse() * person_detection['map_vs'].vector
 
-                x_image_frame = 9.04 - x  # ToDo: Hardcoded based on room in Sydney
-                y_image_frame = 1.58 + y  # ToDo: Hardcoded based on room in Sydney
-
-                pixels_per_meter = 158  # ToDo: Tuned based on room in Sydney
-
-                px = int(pixels_per_meter * x_image_frame)
-                py = int(pixels_per_meter * y_image_frame)
+                px = int(vs_image_frame.x() * pixels_per_meter_width)
+                py = int(vs_image_frame.y() * pixels_per_meter_height)
 
                 cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
