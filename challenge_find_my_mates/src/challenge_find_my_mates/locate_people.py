@@ -179,7 +179,8 @@ class LocatePeople(StateMachine):
 
                 # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
-            filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+            os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
+            filename = os.path.expanduser('~/find_my_mates/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
             cv2.imwrite(filename, floorplan)
             robot.hmi.show_image(filename, 120)
 
