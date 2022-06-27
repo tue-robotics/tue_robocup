@@ -196,7 +196,7 @@ if __name__ == '__main__':
     from robot_skills import get_robot
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    robot = get_robot("hero", 0)
+    robot = get_robot("hero", 3)
     # robot.reset()
     challenge_knowledge = load_knowledge('challenge_find_my_mates')
     LocatePeople(robot, challenge_knowledge.room).execute()
