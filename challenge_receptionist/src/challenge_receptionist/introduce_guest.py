@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import rospy
 from ed.entity import Entity
-
+from hmi import HMIResult
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.find_people_in_room import FindPeopleInRoom
 from robot_smach_states.designator_iterator import IterateDesignator
@@ -21,17 +21,23 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class SayForIntroduceGuest(smach.State):
-    #todo
-    # Checks how many tasks have been done and if another task is needed
-    # Does this check with the database in the reasoner
-    def __init__(self, robot_name, entity_des):
+    #todo test
+    # todo add fourth person thingy
+    def __init__(self, robot_name, entity_des, guest_drinkname_des, assume_john, previous_guest_drink_des, previous_guest_drinkname_des):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot_name
         self.entity = entity_des.resolve()
+        self.assume_john = assume_john
+        self.guest_drinkname_des = guest_drinkname_des
+        self.previous_guest_drink_des = previous_guest_drink_des
+        self.previous_guest_drinkname_des = previous_guest_drinkname_des
 
     def execute(self, userdata=None):
         if hasattr(self.entity, 'person_properties'):
             name = self.entity.person_properties.name
+
+            if self.assume_john:
+                self.previous_guest_drink_des.write(self.guest_drinkname_des.resolve())
 
             if name == "John":
                 self.robot.speech.speak("This is {name} who likes {drink}".format(name=name,
@@ -44,8 +50,10 @@ class SayForIntroduceGuest(smach.State):
                 age = self.entity.person_properties.age
                 shirt_color = self.entity.person_properties.shirt_colors
                 shirt_color = shirt_color[0]
-                self.robot.speech.speak("This is {name} and is a {gender}, is {age} years old and wears a {shirt_color}"
-                                        " shirt.".format(name=name, gender=gender, age=age, shirt_color=shirt_color))
+                drink = self.previous_guest_drinkname_des.resolve()
+                self.robot.speech.speak("This is {name} and is a {gender}, who likes {drink}, is {age} years old and"
+                                        " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
+                                                                               age=age, shirt_color=shirt_color))
         return "done"
 
 
@@ -94,6 +102,8 @@ class IntroduceGuest(smach.StateMachine):
 
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
         current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
+        previous_guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='previous_guest_drink')
+        previous_guest_drinkname_des = ds.FieldOfHMIResult(previous_guest_drink_des, semantics_path='drink', name='previous_guest_drinkname')
 
         # For each person:
         #   0. Go to the person (old guest)
@@ -187,7 +197,9 @@ class IntroduceGuest(smach.StateMachine):
             # TODO: Test this
 
             smach.StateMachine.add('SAY_FOR_INTRODUCE_GUEST',
-                                   SayForIntroduceGuest(robot, current_old_guest),
+                                   SayForIntroduceGuest(robot, current_old_guest, guest_drinkname_des, assume_john,
+                                                        previous_guest_drink_des.writeable,
+                                                        previous_guest_drinkname_des),
                                    transitions={'done': 'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
