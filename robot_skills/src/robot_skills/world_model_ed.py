@@ -100,6 +100,7 @@ class ED(RobotPart):
         return (super(ED, self).wait_for_connections(timeout, log_failing_connections) and
                 self.navigation.wait_for_connections(timeout, log_failing_connections)
                 )
+
     @property
     def _cv_bridge(self):
         if self.__cv_bridge is None:
