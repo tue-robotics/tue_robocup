@@ -26,7 +26,7 @@ if __name__ == "__main__":
     pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(0.0, 0.0, 0.0)),
                         stamp=rospy.Time.now(),
                         frame_id="map")
-    person_properties = PersonProperties('Freek', 20, 'happy', 1.0, 0.9, 'left', 'standing', 0.9, ['orange', 'black'],
+    person_properties = PersonProperties('John', 20, 'happy', 0.0, 0.9, 'left', 'standing', 0.9, ['orange', 'black'],
                                          '', '', 0, 'map')
     robot.ed.update_entity(uuid=entity_id, frame_stamped=pose)
     shape = RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)],
@@ -34,10 +34,33 @@ if __name__ == "__main__":
     item = Entity(entity_id, "person", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now(),
                   person_properties)
 
-    item = ds.VariableDesignator(item)
+    item_des = ds.VariableDesignator(item)
+    from hmi import HMIResult
+    blaat = HMIResult('coke', {'drink': 'coke'})
+    guest_drinkname_des = ds.VariableDesignator(resolve_type=HMIResult, name='previous_guest_drink').writeable
+    guest_drink_name_des = ds.FieldOfHMIResult(guest_drinkname_des, semantics_path=['drink'], name='previous_guest_drinkname')
+    guest_drinkname_des.write(blaat)
 
-    sm = SayForIntroduceGuest(robot, item)
+    assume_john = True
+    previous_guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='previous_guest_drink')
+    previous_guest_drinkname_des = ds.FieldOfHMIResult(previous_guest_drink_des, semantics_path=['drink'],
+                                                       name='previous_guest_drinkname')
+
+    sm = SayForIntroduceGuest(robot, item_des,guest_drinkname_des, assume_john, previous_guest_drink_des.writeable,
+                              previous_guest_drinkname_des)
 
     sm.execute()
+
+    assume_john = False
+    entity_id2 = "test_item2"
+    person_properties2 = PersonProperties('Anna', 20, 'happy', 1.0, 0.9, 'left', 'standing', 0.9, ['orange', 'black'],
+                                         '', '', 0, 'map')
+    item2 = Entity(entity_id2, "person", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now(),
+                  person_properties2)
+    item2_des = ds.VariableDesignator(item2)
+    sm2 = SayForIntroduceGuest(robot, item2_des, guest_drinkname_des, assume_john, previous_guest_drink_des.writeable,
+                              previous_guest_drinkname_des)
+
+    sm2.execute()
 
     rospy.loginfo("Guest is {}".format(item.resolve()))
