@@ -9,6 +9,7 @@ from std_srvs.srv import Empty
 from image_recognition_msgs.msg import Annotation
 
 # TU/e Robotics
+from image_recognition_msgs.msg import Recognition
 from image_recognition_msgs.srv import Annotate, GetFaceProperties, Recognize, RecognizeResponse
 from people_recognition_msgs.srv import RecognizePeople3D
 from rgbd_msgs.srv import Project2DTo3D
@@ -185,10 +186,21 @@ class Perception(RobotPart):
         """
         if not image:
             image = self.get_image()
+        # ToDo: create a consistent API: either return a tuple, a message or a list
         if stamp:
             return self._get_faces(image).recognitions, image.header.stamp
         else:
             return self._get_faces(image).recognitions
+
+    def detect_face(self, image: Image = None) -> Recognition:
+        """
+        Snap an image with the camera and return the detected face with the largest ROI
+
+        :param image: image to use for recognition
+        :return: image_recognition_msgs/Recognition
+        """
+        # ToDo Arpit
+        raise NotImplementedError("Arpit would implement this (new) method")
 
     @staticmethod
     def get_best_face_recognition(recognitions, desired_label, probability_threshold=4.0):
