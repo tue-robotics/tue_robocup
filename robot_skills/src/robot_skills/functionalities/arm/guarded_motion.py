@@ -30,17 +30,16 @@ class GuardedMotionFunc(RobotFunc):
 def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, retract_distance=0.01,
                                          distance_move_down=None):
     """
-    Move down the arm (hero specific, only joint arm_lift_joint) until one of 3 things:
+    Move down the arm (hero specific, only joint arm_lift_joint) until one of 2 things:
         - Force sensor detects an edge up
         - Timeout
-        - Force sensor has moved down the distance specified
 
     A 'force_sensor.TimeOutException' will be raised if no edge up is detected within timeout
 
     :param force_sensor: ForceSensor of the arm
     :param timeout: Max duration for edge up detection
     :param retract_distance: How much to retract if we have reached a surface
-    :param distance_move_down: How much to move down until we reach a surface
+    :param distance_move_down: Maximum distance to move down the arm_lift_joint
     """
     if force_sensor is None:
         force_sensor = self.parts["force_sensor"]
