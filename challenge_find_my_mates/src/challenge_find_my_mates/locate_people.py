@@ -24,6 +24,8 @@ import numpy as np
 import rospy
 from smach import StateMachine, cb_interface, CBState
 
+from robot_smach_states.human_interaction import Say
+
 from image_recognition_util.image_writer import color_map
 
 from ed.entity import Entity
@@ -96,7 +98,7 @@ class LocatePeople(StateMachine):
 
             return 'done'
 
-        @cb_interface(outcomes=['done', 'failed'])
+        @cb_interface(outcomes=['done', 'retry', 'failed'])
         def _data_association_persons_and_show_image_on_screen(_):
             global PERSON_DETECTIONS
 
@@ -133,9 +135,14 @@ class LocatePeople(StateMachine):
             except ValueError as e:
                 rospy.logerr(e)
                 robot.speech.speak("Mates, where are you?", block=False)
-                return "failed"
+                return "retry"
 
-            floorplan = robot.ed.get_map([room_id])
+            for _ in range(3):
+                floorplan = robot.ed.get_map([room_id])
+                if floorplan is not None:
+                    break
+            else:
+                return "failed"
             floorplan_height, floorplan_width, _ = floorplan.map.shape
 
             bridge = CvBridge()
@@ -189,7 +196,14 @@ class LocatePeople(StateMachine):
         with self:
             self.add_auto('DETECT_PERSONS', CBState(detect_persons), ['done'])
             self.add('DATA_ASSOCIATION_AND_SHOW_IMAGE_ON_SCREEN',
-                     CBState(_data_association_persons_and_show_image_on_screen), transitions={'done': 'done', 'failed': 'DETECT_PERSONS'})
+                     CBState(_data_association_persons_and_show_image_on_screen),
+                     transitions={'done': 'done',
+                                  'retry': 'DETECT_PERSONS',
+                                  'failed': 'SAY_NOT_ABLE_TO_SHOW'})
+            self.add('SAY_NOT_ABLE_TO_SHOW',
+                     Say(robot, ["I was not able to generate a map to show you the people I have seen",
+                                 "Dammn, I am not able to show you where I have seen your mates"]),
+                     transitions={'spoken': 'done'})
 
 
 if __name__ == '__main__':
