@@ -135,8 +135,8 @@ class LocatePeople(StateMachine):
                 robot.speech.speak("Mates, where are you?", block=False)
                 return "failed"
 
-            floorplan, img_pose, pixels_per_meter_width, pixels_per_meter_height = robot.ed.get_map([room_id])
-            floorplan_height, floorplan_width, _ = floorplan.shape
+            floorplan = robot.ed.get_map([room_id])
+            floorplan_height, floorplan_width, _ = floorplan.map.shape
 
             bridge = CvBridge()
             c_map = color_map(n=len(person_detection_clusters), normalized=True)
@@ -151,12 +151,12 @@ class LocatePeople(StateMachine):
                 calculated_width = int(float(width) / ratio)
                 resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
 
-                vs_image_frame = img_pose.frame.Inverse() * person_detection['map_vs'].vector
+                vs_image_frame = floorplan.map_pose.frame.Inverse() * person_detection['map_vs'].vector
 
-                px = int(vs_image_frame.x() * pixels_per_meter_width)
-                py = int(vs_image_frame.y() * pixels_per_meter_height)
+                px = int(vs_image_frame.x() * floorplan.pixels_per_meter_width)
+                py = int(vs_image_frame.y() * floorplan.pixels_per_meter_height)
 
-                cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+                cv2.circle(floorplan.map, (px, py), 3, (0, 0, 255), 5)
 
                 try:
                     px_image = min(max(0, int(px - calculated_width / 2)), floorplan_width - calculated_width - 1)
@@ -164,8 +164,8 @@ class LocatePeople(StateMachine):
 
                     if px_image >= 0 and py_image >= 0:
                         # Could not broadcast input array from shape (150, 150, 3) into shape (106, 150, 3)
-                        floorplan[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
-                        cv2.rectangle(floorplan, (px_image, py_image),
+                        floorplan.map[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
+                        cv2.rectangle(floorplan.map, (px_image, py_image),
                                       (px_image + calculated_width, py_image + desired_height),
                                       (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
                     else:
@@ -175,13 +175,13 @@ class LocatePeople(StateMachine):
 
                 label = "female" if person_detection['person_detection'].gender else "male"
                 label += ", " + str(person_detection['person_detection'].age)
-                cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.putText(floorplan.map, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
 
                 # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
             os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
             filename = os.path.expanduser('~/find_my_mates/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
-            cv2.imwrite(filename, floorplan)
+            cv2.imwrite(filename, floorplan.map)
             robot.hmi.show_image(filename, 120)
 
             return "done"
