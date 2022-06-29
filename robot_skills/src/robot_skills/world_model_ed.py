@@ -243,6 +243,9 @@ class ED(RobotPart):
         req.background = req.WHITE  # default
         if hasattr(req, background.upper()):
             req.background = getattr(req, background.upper())
+        else:
+            rospy.logwarn(f"[ed.get_map] provided background color doesn't exist: '{req.background}'."
+                          f"Using default: 'WHITE'")
         req.print_labels = print_labels
         req.image_width = width
         req.image_height = height
