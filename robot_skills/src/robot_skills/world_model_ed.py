@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from typing import List, Tuple
+from typing import List, Optional
 
 # System
 from dataclasses import dataclass
@@ -229,7 +229,7 @@ class ED(RobotPart):
 
     def get_map(
         self, uuids: List[str], background: str = "white", print_labels: bool = True, width: int = 0, height: int = 0
-    ) -> FloorPlan:
+    ) -> Optional[FloorPlan]:
         """
         :param uuids: Entities that should be in view in the generated map
         :param background: Background color of the map
@@ -247,7 +247,11 @@ class ED(RobotPart):
         req.image_width = width
         req.image_height = height
 
-        res = self._ed_map_srv.call(req)  # type: MapResponse
+        try:
+            res = self._ed_map_srv.call(req)  # type: MapResponse
+        except Exception as e:
+            rospy.logerr(f"Could not get ED map for entities: {uuids}\nreason: {e}")
+            return None
 
         floormap = self._cv_bridge.imgmsg_to_cv2(res.map, 'bgr8')
         fs = tf2_ros.convert(res.pose, FrameStamped)
