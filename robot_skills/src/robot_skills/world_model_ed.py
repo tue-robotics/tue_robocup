@@ -3,6 +3,7 @@ from __future__ import print_function
 from typing import List, Tuple
 
 # System
+from dataclasses import dataclass
 import os
 import traceback
 
@@ -36,6 +37,14 @@ from robot_skills.classification_result import ClassificationResult
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import transformations
 from robot_skills.util.decorators import deprecated
+
+
+@dataclass(frozen=True)
+class FloorPlan:
+    map: np.ndarray
+    map_pose: FrameStamped
+    pixels_per_meter_width: float
+    pixels_per_meter_height: float
 
 
 class Navigation(RobotPart):
@@ -220,7 +229,7 @@ class ED(RobotPart):
 
     def get_map(
         self, uuids: List[str], background: str = "white", print_labels: bool = True, width: int = 0, height: int = 0
-    ) -> Tuple[np.ndarray, FrameStamped, float, float]:
+    ) -> FloorPlan:
         """
         :param uuids: Entities that should be in view in the generated map
         :param background: Background color of the map
@@ -243,7 +252,7 @@ class ED(RobotPart):
         floormap = self._cv_bridge.imgmsg_to_cv2(res.map, 'bgr8')
         fs = tf2_ros.convert(res.pose, FrameStamped)
 
-        return floormap, fs, res.pixels_per_meter_width, res.pixels_per_meter_height
+        return FloorPlan(floormap, fs, res.pixels_per_meter_width, res.pixels_per_meter_height)
 
     # ----------------------------------------------------------------------------------------------------
     #                                             UPDATING
