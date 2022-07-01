@@ -1,6 +1,7 @@
 # ROS
 from pykdl_ros import FrameStamped
 import rospy
+import rospkg
 import numpy
 import smach
 from geometry_msgs.msg import WrenchStamped
@@ -246,8 +247,12 @@ class HandoverFromHumanFigure(smach.StateMachine):
             smach.StateMachine.add("SHOW_IMAGE",
                                    states.human_interaction.ShowImageState(
                                        robot=robot,
-                                       image_filename="~/ros/kinetic/system/src/challenge_take_out_the_garbage/src"
-                                                      "/challenge_take_out_the_garbage/beun_picture.png",
+                                       image_filename=os.path.join(
+                                           rospkg.RosPack().get_path("challenge_take_out_the_garbage"),
+                                           "src",
+                                           "challenge_take_out_the_garbage",
+                                           "beun_picture.png"
+                                       ),
                                        seconds=5),
                                    transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
 
