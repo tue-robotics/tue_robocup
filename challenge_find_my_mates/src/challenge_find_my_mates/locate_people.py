@@ -21,9 +21,10 @@ import tf2_pykdl_ros
 import cv2
 from cv_bridge import CvBridge
 import numpy as np
-import rospkg
 import rospy
 from smach import StateMachine, cb_interface, CBState
+
+from robot_smach_states.human_interaction import Say
 
 from image_recognition_util.image_writer import color_map
 
@@ -43,7 +44,7 @@ class LocatePeople(StateMachine):
             global PERSON_DETECTIONS
             global NUM_LOOKS
 
-            # with open(os.path.expanduser('~/floorplan-2022-06-12-17-53-28.pickle'), 'rb') as f:
+            # with open(os.path.expanduser('~/find_my_mates/floorplan-2022-06-12-17-53-28.pickle'), 'rb') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
             #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
             #     for det in PERSON_DETECTIONS:
@@ -97,12 +98,13 @@ class LocatePeople(StateMachine):
 
             return 'done'
 
-        @cb_interface(outcomes=['done', 'failed'])
+        @cb_interface(outcomes=['done', 'retry', 'failed'])
         def _data_association_persons_and_show_image_on_screen(_):
             global PERSON_DETECTIONS
 
             try:
-                with open(os.path.expanduser('~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'wb') as f:
+                os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
+                with open(os.path.expanduser('~/find_my_mates/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'wb') as f:
                     pickle.dump(PERSON_DETECTIONS, f)
             except Exception:
                 pass
@@ -133,11 +135,15 @@ class LocatePeople(StateMachine):
             except ValueError as e:
                 rospy.logerr(e)
                 robot.speech.speak("Mates, where are you?", block=False)
-                return "failed"
+                return "retry"
 
-            floorplan = cv2.imread(
-                os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
-            floorplan_height, floorplan_width, _ = floorplan.shape
+            for _ in range(3):
+                floorplan = robot.ed.get_map([room_id])
+                if floorplan is not None:
+                    break
+            else:
+                return "failed"
+            floorplan_height, floorplan_width, _ = floorplan.map.shape
 
             bridge = CvBridge()
             c_map = color_map(n=len(person_detection_clusters), normalized=True)
@@ -152,18 +158,12 @@ class LocatePeople(StateMachine):
                 calculated_width = int(float(width) / ratio)
                 resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
 
-                x = person_detection['map_vs'].vector.x()
-                y = person_detection['map_vs'].vector.y()
+                vs_image_frame = floorplan.map_pose.frame.Inverse() * person_detection['map_vs'].vector
 
-                x_image_frame = 9.04 - x  # ToDo: Hardcoded based on room in Sydney
-                y_image_frame = 1.58 + y  # ToDo: Hardcoded based on room in Sydney
+                px = int(vs_image_frame.x() * floorplan.pixels_per_meter_width)
+                py = int(vs_image_frame.y() * floorplan.pixels_per_meter_height)
 
-                pixels_per_meter = 158  # ToDo: Tuned based on room in Sydney
-
-                px = int(pixels_per_meter * x_image_frame)
-                py = int(pixels_per_meter * y_image_frame)
-
-                cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+                cv2.circle(floorplan.map, (px, py), 3, (0, 0, 255), 5)
 
                 try:
                     px_image = min(max(0, int(px - calculated_width / 2)), floorplan_width - calculated_width - 1)
@@ -171,8 +171,8 @@ class LocatePeople(StateMachine):
 
                     if px_image >= 0 and py_image >= 0:
                         # Could not broadcast input array from shape (150, 150, 3) into shape (106, 150, 3)
-                        floorplan[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
-                        cv2.rectangle(floorplan, (px_image, py_image),
+                        floorplan.map[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
+                        cv2.rectangle(floorplan.map, (px_image, py_image),
                                       (px_image + calculated_width, py_image + desired_height),
                                       (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
                     else:
@@ -182,12 +182,13 @@ class LocatePeople(StateMachine):
 
                 label = "female" if person_detection['person_detection'].gender else "male"
                 label += ", " + str(person_detection['person_detection'].age)
-                cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.putText(floorplan.map, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
 
                 # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
-            filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
-            cv2.imwrite(filename, floorplan)
+            os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
+            filename = os.path.expanduser('~/find_my_mates/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+            cv2.imwrite(filename, floorplan.map)
             robot.hmi.show_image(filename, 120)
 
             return "done"
@@ -195,7 +196,14 @@ class LocatePeople(StateMachine):
         with self:
             self.add_auto('DETECT_PERSONS', CBState(detect_persons), ['done'])
             self.add('DATA_ASSOCIATION_AND_SHOW_IMAGE_ON_SCREEN',
-                     CBState(_data_association_persons_and_show_image_on_screen), transitions={'done': 'done', 'failed': 'DETECT_PERSONS'})
+                     CBState(_data_association_persons_and_show_image_on_screen),
+                     transitions={'done': 'done',
+                                  'retry': 'DETECT_PERSONS',
+                                  'failed': 'SAY_NOT_ABLE_TO_SHOW'})
+            self.add('SAY_NOT_ABLE_TO_SHOW',
+                     Say(robot, ["I was not able to generate a map to show you the people I have seen",
+                                 "Dammn, I am not able to show you where I have seen your mates"]),
+                     transitions={'spoken': 'done'})
 
 
 if __name__ == '__main__':
@@ -203,7 +211,7 @@ if __name__ == '__main__':
     from robot_skills import get_robot
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    robot = get_robot("hero", 0)
+    robot = get_robot("hero", 1)
     # robot.reset()
     challenge_knowledge = load_knowledge('challenge_find_my_mates')
     LocatePeople(robot, challenge_knowledge.room).execute()
