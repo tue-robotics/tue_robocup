@@ -129,11 +129,10 @@ def setup_statemachine(robot):
 
 
 if __name__ == '__main__':
+    from robot_skills import get_robot
     rospy.init_node('automatic_side_detection')
 
-    from robot_skills.robot import Amigo
-
-    robot = Amigo()
+    robot = get_robot('hero', '1')
     robot.ed.reset()
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
