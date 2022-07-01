@@ -1,9 +1,10 @@
 #!/usr/bin/python
 import math
-
 import numpy as np
+import os.path
 
 import robot_smach_states as states
+import rospkg
 import smach
 from ed.entity import Entity
 from .ask_take_order import AskTakeTheOrder
@@ -52,8 +53,12 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SHOW_IMAGE',
                                    states.human_interaction.ShowImageState(
                                        robot,
-                                       "~/ros/kinetic/system/src/challenge_restaurant/"
-                                       "images/waving.jpg", seconds=10),
+                                       os.path.join(
+                                           rospkg.RosPack().get_path('challenge_restaurant'),
+                                           "images",
+                                           "waving.jpg"
+                                       ),
+                                       seconds=10),
                                    transitions={'succeeded': 'STORE_KITCHEN',
                                                 'failed': 'STORE_KITCHEN'})
 

@@ -26,6 +26,7 @@
   <exec_depend>pykdl_ros</exec_depend>
   <exec_depend>python3-markdown</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-rospkg</exec_depend>
   <exec_depend>python-xhtml2pdf-pip</exec_depend>
   <exec_depend>robot_skills</exec_depend>
   <exec_depend>robot_smach_states</exec_depend>
