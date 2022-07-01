@@ -19,7 +19,6 @@
   <depend>image_recognition_util</depend>
   <depend>pykdl_ros</depend>
   <depend>python3-matplotlib</depend>
-  <depend>python3-rospkg</depend>
   <depend>python3-sklearn</depend>
   <depend>rospy</depend>
   <depend>smach</depend>
