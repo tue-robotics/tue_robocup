@@ -27,7 +27,7 @@ if __name__ == "__main__":
                         stamp=rospy.Time.now(),
                         frame_id="map")
     person_properties = PersonProperties('John', 20, 'happy', 0.0, 0.9, 'left', 'standing', 0.9, ['orange', 'black'],
-                                         '', '', 0, 'map')
+                                         'LStanding', '', 0, 'map')
     robot.ed.update_entity(uuid=entity_id, frame_stamped=pose)
     shape = RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)],
                        -0.1, 0.1)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     assume_john = False
     entity_id2 = "test_item2"
     person_properties2 = PersonProperties('Anna', 20, 'happy', 1.0, 0.9, 'left', 'standing', 0.9, ['orange', 'black'],
-                                         '', '', 0, 'map')
+                                         ['LStanding'], '', 0, 'map')
     item2 = Entity(entity_id2, "person", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now(),
                   person_properties2)
     item2_des = ds.VariableDesignator(item2)
@@ -63,4 +63,4 @@ if __name__ == "__main__":
 
     sm2.execute()
 
-    rospy.loginfo("Guest is {}".format(item.resolve()))
+    rospy.loginfo("Guest is {}".format(item_des.resolve()))
