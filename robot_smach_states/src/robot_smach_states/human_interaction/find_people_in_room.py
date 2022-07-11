@@ -17,9 +17,12 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
+<<<<<<< HEAD
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.world_model import UpdateDestEntityPoseWithSrcEntity
 
+=======
+>>>>>>> receptionist
 
 class FindPeople(smach.State):
     """
@@ -172,7 +175,7 @@ class FindPeople(smach.State):
             robot_pose = self._robot.base.get_location()
             found_people = [p for p in found_people if (p.pose.frame.p - robot_pose.frame.p).Norm() <= self._look_distance]
 
-            rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
+            rospy.loginfo("{} people remaining after distance < {}-check".format(len(list(found_people)), self._look_distance))
 
             if self._properties:
                 for k, v in self._properties.items():
@@ -503,6 +506,7 @@ class FindPeopleInRoom(smach.StateMachine):
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
                                    NavigateToRoom(robot=robot,
                                                   entity_designator_room=room_designator),
+
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})

@@ -89,6 +89,6 @@ class ResetArmsTorsoHead(smach.State):
 
     def execute(self, userdata=None):
         self.robot.reset_all_arms()
-        self.robot.head.reset(timeout=self.timeout)
+        self.robot.head.reset()
         self.robot.torso.reset()
         return "done"
