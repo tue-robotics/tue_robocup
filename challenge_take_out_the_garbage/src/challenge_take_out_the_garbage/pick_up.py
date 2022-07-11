@@ -167,16 +167,11 @@ class GrabTrash(smach.State):
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
-        # Go back to make space for arm
-        self._robot.head.look_up()
-        self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.05, 0, 0, 2.0)
-
         # Lift bag up
         arm._arm._send_joint_trajectory(
             [
                 [0.65, -2.2, 0.0, -0.85, 0.0],
-                [0.95, -1, 0.0, -0.85, 0.0]
+                [0.85, -1, 0.0, -0.85, 0.0]
             ]
         )
         arm.wait_for_motion_done()
@@ -324,9 +319,9 @@ class PickUpTrash(smach.StateMachine):
                 arm._arm._send_joint_trajectory(
                     [
                         [0.01, 0.0, -1.57, -1.57, 0.0],
-                        [0.69, 0.0, -1.57, -1.57, 0.0],
-                        [0.65, -2.2, -1.57, -1.57, 0.],
-                        [0.65, -2.2, 0.0, -0.85, 0.]
+                        [0.59, 0.0, -1.57, -1.57, 0.0],
+                        [0.55, -2.2, -1.57, -1.57, 0.],
+                        [0.55, -2.2, 0.0, -0.85, 0.]
                     ]
                 )
                 arm.wait_for_motion_done()
@@ -337,7 +332,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'done': 'GO_TO_NEW_BIN'})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.45,
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.4,
                                                      yaw_offset=-0.2),
                                    transitions={"done": "PREPARE_AND_GRAB"})
 
