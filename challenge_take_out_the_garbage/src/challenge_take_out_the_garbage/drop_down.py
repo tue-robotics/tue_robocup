@@ -31,7 +31,7 @@ class DropTrash(smach.State):
             return "failed"
 
         # Torso up (non-blocking)
-        self._robot.torso.reset()
+        #self._robot.torso.reset()
 
         # Arm to position in a safe way
         arm.send_joint_goal('handover')
