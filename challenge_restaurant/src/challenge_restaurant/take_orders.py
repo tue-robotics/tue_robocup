@@ -39,18 +39,32 @@ class TakeOrder(smach.State):
         ds.check_type(entity_designator, Entity)
         self._entity_designator = entity_designator
         self._orders = orders
-        self._max_tries = 5
+        self.number_of_tries = 0
+        self._max_tries = 2
 
     def _confirm(self):
         try:
-            speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
-                                                                                          "T[False] -> no", target="T")
+            if self.number_of_tries == 0:
+                speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+                                                                                              "T[False] -> no",
+                                                      target="T")
+                self.number_of_tries += 1
+
+            else:
+                try:
+                    speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
+                                                          target="T")
+                except TimeoutException:
+                    return True
+
         except TimeoutException:
             return False
 
         return speech_result.semantics
 
     def execute(self, userdata=None):
+        self.number_of_tries = 0
+
         person = self._entity_designator.resolve()
         if person:
             self._robot.head.look_at_point(VectorStamped.from_framestamped(person.pose), timeout=0.0)
@@ -66,23 +80,33 @@ class TakeOrder(smach.State):
             rospy.loginfo('nr_tries: %d', nr_tries)
 
             self._robot.speech.speak("What would you like to order?")
+            self._robot.speech.speak("Please speak fast without breaks.")
             count = 0
             while not rospy.is_shutdown():
                 count += 1
 
                 try:
                     speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                          grammar=knowledge.order_grammar, target="O")
+                                                        grammar=knowledge.order_grammar, target="O")
                     break
                 except TimeoutException:
-                    if count < 5:
-                        self._robot.speech.speak(random.choice(["I'm sorry, can you repeat",
-                                                                "Please repeat your order, I didn't hear you",
-                                                                "I didn't get your order, can you repeat it",
-                                                                "Please speak up, as I didn't hear your order"]))
+                    if count < 3:
+                        self._robot.speech.speak("Please speak even louder and directly into my microphone")
                     else:
-                        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+                        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
+                        drink = random.choice(potential_orders)
+                        self._robot.speech.speak("I understood that you would like a {}, "
+                                                 "is this correct?".format(drink), block=True)
+                        try:
+                            self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
+                                                  target="T")
+                        except TimeoutException:
+                            pass
+                        self._orders.append(drink)
                         self._robot.head.cancel_goal()
+                        self._robot.speech.speak("Ok, I will get your order", block=False)
+
+                        # self._robot.head.cancel_goal()
                         return "failed"
 
             try:
@@ -94,14 +118,26 @@ class TakeOrder(smach.State):
 
             if self._confirm():
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
-                for item in speech_result.semantics:
+                for item in speech_result.semantics.values():
                     self._orders.append(item)
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
 
-        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
+        drink = random.choice(potential_orders)
+        self._robot.speech.speak("I understood that you would like a {}, "
+                                 "is this correct?".format(drink), block=True)
+        try:
+            self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
+                                  target="T")
+        except TimeoutException:
+            pass
+        self._orders.append(drink)
         self._robot.head.cancel_goal()
+        self._robot.speech.speak("Ok, I will get your order", block=False)
+        # self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+        # self._robot.head.cancel_goal()
         return "failed"
 
 
@@ -134,6 +170,10 @@ class ReciteOrders(smach.State):
         #                                                           self._orders["food2"])
 
         self._robot.speech.speak(sentence)
+
+        if "water" in self._orders:
+            water_sentence = "I am too weak to carry the water, please bring that yourself. And please make me stronger."
+            self._robot.speech.speak(water_sentence)
 
         self._robot.head.cancel_goal()
 
@@ -186,4 +226,3 @@ if __name__ == '__main__':
     sm.execute()
 
     rospy.loginfo("Orders {}".format(orders))
-
