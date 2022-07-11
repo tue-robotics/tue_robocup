@@ -170,9 +170,7 @@ class FindPeople(smach.State):
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
             robot_pose = self._robot.base.get_location()
-            # TODO: Check probable bug here
-            found_people = filter(lambda x: (x.pose.frame.p - robot_pose.frame.p).Norm() < self._look_distance,
-                                  found_people)
+            found_people = [p for p in found_people if (p.pose.frame.p - robot_pose.frame.p).Norm() <= self._look_distance]
 
             rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
 
@@ -180,15 +178,14 @@ class FindPeople(smach.State):
                 for k, v in self._properties.items():
                     found_people = list(filter(lambda x:
                             self._check_person_property(x, k, v), found_people))
-                    rospy.loginfo("{} people remaining after {}={} check".format(len(list(found_people)), k, v))
+                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
             result_people = []
 
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
-                    result_people = filter(lambda x: query_entity.in_volume(VectorStamped.from_framestamped(x.pose), 'in'),
-                                           found_people)
+                    result_people = [p for p in found_people if query_entity.in_volume(VectorStamped.from_framestamped(p.pose), 'in')]
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
                     # If people not in query_entity then try if query_entity in people
@@ -196,10 +193,10 @@ class FindPeople(smach.State):
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = list(filter(lambda x: x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in'),
-                                                   found_people))
+                            result_people = [p for p in found_people if p.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in')]
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
+
                         except Exception:
                             pass
             else:
