@@ -1,4 +1,4 @@
-from __future__ import absolute_import, print_function
+#! /usr/bin/env python3
 
 # System
 from contextlib import redirect_stdout
@@ -15,6 +15,10 @@ from pykdl_ros import VectorStamped
 from ed.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.world_model import UpdateDestEntityPoseWithSrcEntity
 
 
 class FindPeople(smach.State):
@@ -187,8 +191,7 @@ class FindPeople(smach.State):
                                            found_people)
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
-                    # If people not in query_entity then try if query_entity in
-                    # people
+                    # If people not in query_entity then try if query_entity in people
                     if not result_people:
                         # This is for a future feature when object recognition
                         # becomes more advanced
@@ -329,8 +332,8 @@ class FindFirstPerson(smach.StateMachine):
                      })
 
             self.add("GET_FIRST_ITERATE",
-                     states.IterateDesignator(found_people_designator,
-                                              found_person_designator),
+                     IterateDesignator(found_people_designator,
+                                       found_person_designator),
                      transitions={'next': 'found',
                                   'stop_iteration': 'failed'})
 
@@ -419,7 +422,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                      })
 
             self.add("UPDATE_POSE",
-                     states.UpdateDestEntityPoseWithSrcEntity(
+                     UpdateDestEntityPoseWithSrcEntity(
                          robot=robot,
                          src_entity_designator=found_person_designator,
                          dst_entity_designator=dst_entity_designator,
@@ -495,14 +498,15 @@ class FindPeopleInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   states.NavigateToWaypoint(robot=robot,
-                                                             waypoint_designator=waypoint_designator, radius=0.15),
+                                   NavigateToWaypoint(robot=robot,
+                                                      waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
-                                                                             entity_designator_room=room_designator),
+            smach.StateMachine.add("NAVIGATE_TO_ROOM",
+                                   NavigateToRoom(robot=robot,
+                                                  entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
