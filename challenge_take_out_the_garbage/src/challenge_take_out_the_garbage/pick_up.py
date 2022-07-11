@@ -71,19 +71,10 @@ class GetTrashBin(smach.State):
             rospy.logerror("trashbin designator did not resolve")
             return 'failed'
 
-        # get original entity pose
-        frame_original = self._robot.ed.get_entity(uuid=e.uuid).pose.frame
-
-        # inspect and update entity
+        # Inspect and update entity
         look_at_segmentation_area(self._robot, self._robot.ed.get_entity(uuid=e.uuid), 'on_top_of')
         self._robot.ed.update_kinect("{} {}".format('on_top_of', e.uuid))
-        pose_updated = self._robot.ed.get_entity(uuid=e.uuid).pose
 
-        # update entity with original orientation
-        pose_updated.frame.M = frame_original.M
-
-        # new_frame.header.stamp
-        self._robot.ed.update_entity(self._robot, e.uuid, frame_stamped=pose_updated)
         return "succeeded"
 
 
@@ -167,11 +158,17 @@ class GrabTrash(smach.State):
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
+        # Make space for arm (So it doesn't hit the wall behind trashbin)
+        arm._arm._send_joint_trajectory([[0.85, -2.2, 0.0, -0.85, 0.0]])
+        self._robot.head.look_up()
+        self._robot.head.wait_for_motion_done()
+        self._robot.base.force_drive(-0.05, 0, 0, 2.0)
+
         # Lift bag up
         arm._arm._send_joint_trajectory(
             [
                 [0.65, -2.2, 0.0, -0.85, 0.0],
-                [0.85, -1, 0.0, -0.85, 0.0]
+                [0.75, -1, 0.0, -0.85, 0.0]
             ]
         )
         arm.wait_for_motion_done()
@@ -315,6 +312,7 @@ class PickUpTrash(smach.StateMachine):
                 if not arm:
                     rospy.logerr("Could not resolve arm")
                     return "failed"  # ToDo: fix
+
                 # Send to grab trash pose
                 arm._arm._send_joint_trajectory(
                     [
