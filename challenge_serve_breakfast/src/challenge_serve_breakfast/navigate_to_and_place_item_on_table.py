@@ -5,17 +5,25 @@
 # \author Rein Appeldoorn
 
 import copy
-import math
 import os
 import sys
 
-import PyKDL
 import rospy
 import visualization_msgs.msg
 from geometry_msgs.msg import PoseStamped, Vector3
-from std_msgs.msg import ColorRGBA
-from tf_conversions import toMsg
 
+from challenge_serve_breakfast.tuning import (
+    JOINTS_PRE_PRE_PLACE,
+    JOINTS_PRE_PLACE_HORIZONTAL,
+    JOINTS_PRE_PLACE_VERTICAL,
+    ITEM_VECTOR_DICT,
+    item_vector_to_item_frame,
+    item_frame_to_pose,
+    JOINTS_PLACE_HORIZONTAL,
+    JOINTS_PLACE_VERTICAL,
+    JOINTS_RETRACT,
+    COLOR_DICT, REQUIRED_ITEMS,
+)
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
@@ -23,54 +31,6 @@ from robot_smach_states.navigation.control_to_pose import ControlParameters, Con
 from robot_smach_states.util.designators import EdEntityDesignator
 from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
-
-item_vector_dict = {
-    "spoon": PyKDL.Vector(0, -0.25, 0),
-    "bowl": PyKDL.Vector(0, 0, 0),
-    "milk_carton": PyKDL.Vector(0, -0.2, 0),
-    "cereal_box": PyKDL.Vector(0, 0.15, 0),
-}
-
-color_dict = {
-    "spoon": ColorRGBA(1, 0, 1, 1),
-    "bowl": ColorRGBA(0, 1, 1, 1),
-    "milk_carton": ColorRGBA(0, 0, 1, 1),
-    "cereal_box": ColorRGBA(1, 1, 0, 1),
-}
-
-p_pre_place_horizontal = [0.69, -1.2, 0, -1.57, 0]
-p_place_horizontal = [0.58, -1.75, -1.4, -1.5, 0.3]
-p_post_place_horizontal = [0.69, -1.75, -1.0, -1.5, 0.3]
-
-p_pre_place_vertical = [0.69, -1.2, 0, -1.57, 0.3]
-p_place_vertical = [0.58, -1.75, -1.4, -1.5, 0.3]
-p_post_place_vertical = [0.69, -1.75, -1.0, -1.5, 0.3]
-
-p_retract = [0.69, 0, -1.57, 0, 0]
-
-
-def item_vector_to_item_frame(item_vector):
-    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, -math.pi / 2), PyKDL.Vector(-0.05, 0.75, 0))
-
-    item_placement_vector = item_vector
-    item_frame = frame
-    item_frame.p = frame * item_placement_vector
-    rospy.loginfo(
-        "Placing at frame ({f}) * item_placement_vector ({ipv}) = {itf}".format(
-            f=frame, ipv=item_placement_vector, itf=item_frame
-        )
-    )
-
-    return item_frame
-
-
-def item_frame_to_pose(item_frame, frame_id):
-    goal_pose = PoseStamped()
-    goal_pose.header.stamp = rospy.Time.now()
-    goal_pose.header.frame_id = frame_id
-    goal_pose.pose = toMsg(item_frame)
-
-    return goal_pose
 
 
 class PlaceItemOnTable(StateMachine):
@@ -85,27 +45,33 @@ class PlaceItemOnTable(StateMachine):
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
-        def send_gripper_goal(open_close_string):
+        def send_gripper_goal(open_close_string, wait_for_motion_done=True):
             arm.gripper.send_goal(open_close_string)
-            rospy.sleep(1.0)  # Does not work with motion_done apparently
+            if wait_for_motion_done:
+                rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         @cb_interface(outcomes=["done"], input_keys=["item_picked"])
         def _pre_place(user_data):
             item_name = user_data["item_picked"]
             rospy.loginfo(f"Preplacing {item_name}...")
+
+            robot.speech.speak(f"I am going to place the {item_name}")
+
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
+            send_joint_goal(JOINTS_PRE_PRE_PLACE)
+
             if item_name in ["milk_carton", "cereal_box"]:
-                send_joint_goal(p_pre_place_horizontal)
+                send_joint_goal(JOINTS_PRE_PLACE_HORIZONTAL)
             else:
-                send_joint_goal(p_pre_place_vertical)
+                send_joint_goal(JOINTS_PRE_PLACE_VERTICAL)
 
             return "done"
 
         @cb_interface(outcomes=["done"], input_keys=["item_picked"])
         def _align_with_table(user_data):
-            item_placement_vector = item_vector_dict[user_data["item_picked"]]
+            item_placement_vector = ITEM_VECTOR_DICT[user_data["item_picked"]]
             item_frame = item_vector_to_item_frame(item_placement_vector)
 
             goal_pose = item_frame_to_pose(item_frame, table_id)
@@ -120,21 +86,24 @@ class PlaceItemOnTable(StateMachine):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
             if item_name in ["milk_carton", "cereal_box"]:
-                send_joint_goal(p_place_horizontal)
+                send_joint_goal(JOINTS_PLACE_HORIZONTAL)
             else:
-                send_joint_goal(p_place_vertical)
+                send_joint_goal(JOINTS_PLACE_VERTICAL)
 
             rospy.loginfo("Dropping...")
             send_gripper_goal("open")
-            send_joint_goal(p_post_place_vertical)
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
-            rospy.loginfo("Retract...")
-            send_joint_goal(p_retract)
-            send_gripper_goal("close")
-            robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
-            arm.send_joint_goal("carrying_pose")
+            if item_name != "cereal_box":
+                rospy.loginfo("Retract...")
+                send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
+                robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
+                send_gripper_goal("close", wait_for_motion_done=False)
+                arm.send_joint_goal("carrying_pose")
+
+            robot.head.reset()
+
             return "done"
 
         with self:
@@ -187,11 +156,10 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             )
 
 
-def _publish_item_poses(robot, items):
+def _publish_item_poses(marker_array_pub, items):
     """
     Publishes item poses as a visualization marker array
 
-    :param robot: (Robot) robot API object
     :param items: (dict) ...
     """
     array_msg = visualization_msgs.msg.MarkerArray()
@@ -210,8 +178,7 @@ def _publish_item_poses(robot, items):
         marker_msg.pose = posestamped.pose
         marker_msg.pose.position.z += 1.0
         marker_msg.scale = Vector3(0.05, 0.05, 0.05)
-        marker_msg.color = color_dict[k]
-        marker_msg.lifetime = rospy.Duration(30.0)
+        marker_msg.color = COLOR_DICT[k]
         array_msg.markers.append(marker_msg)
 
         marker_id += 1
@@ -222,26 +189,26 @@ def _publish_item_poses(robot, items):
         marker_msg2.text = k
         array_msg.markers.append(marker_msg2)
 
-    robot.marker_array_pub.publish(array_msg)
+    marker_array_pub.publish(array_msg)
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1] not in REQUIRED_ITEMS:
+        print(f"Please specify an item, e.g {REQUIRED_ITEMS}")
+        sys.exit(1)
+
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
 
-    item_frames = {k: item_vector_to_item_frame(v) for k, v in item_vector_dict.items()}
-    import pprint
+    entity_id = "dinner_table"
 
-    print("Item frames:")
-    pprint.pprint(item_frames)
+    item_frames = {k: item_vector_to_item_frame(v) for k, v in ITEM_VECTOR_DICT.items()}
+    item_poses = {k: item_frame_to_pose(v, entity_id) for k, v in item_frames.items()}
 
-    item_poses = {k: item_frame_to_pose(v, "kitchen_table") for k, v in item_frames.items()}
-    print("Item poses:")
-    pprint.pprint(item_poses)
+    marker_array_pub = rospy.Publisher('/markers', visualization_msgs.msg.MarkerArray, queue_size=1, latch=True)
+
+    _publish_item_poses(marker_array_pub, item_poses)
 
     robot_instance = get_robot("hero")
-    _publish_item_poses(robot_instance, item_poses)
-    robot_instance.reset()
-
-    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, "kitchen_table", "right_of_close")
+    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, entity_id, "in_front_of")
     state_machine.userdata["item_picked"] = sys.argv[1]
     state_machine.execute()
