@@ -3,12 +3,12 @@
 # All rights reserved.
 #
 # \author Rein Appeldoorn
-
 import os
 
 import rospkg
 import rospy
 
+from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER, PICK_ROTATION
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
@@ -21,11 +21,9 @@ item_img_dict = {
     "milk_carton": "images/milk_carton.jpg",
 }
 
-p_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
-
 
 class PickItem(StateMachine):
-    def __init__(self, robot, required_items):
+    def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
@@ -53,16 +51,22 @@ class PickItem(StateMachine):
                     rospy.logerr("Could not show image {}: {}".format(path, e))
             return "succeeded"
 
+        @cb_interface(outcomes=["done"])
+        def _rotate(_):
+            vyaw = 0.5
+            robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
+            return "done"
+
         @cb_interface(outcomes=["succeeded", "failed"], output_keys=["item_picked"])
         def _ask_user(user_data):
-            leftover_items = [item for item in required_items if item not in picked_items]
+            leftover_items = [item for item in REQUIRED_ITEMS if item not in picked_items]
             if not leftover_items:
                 robot.speech.speak("We picked 'm all apparently")
                 return "failed"
 
             item_name = leftover_items[0]
 
-            send_joint_goal(p_handover)
+            send_joint_goal(JOINTS_HANDOVER)
 
             picked_items.append(item_name)
 
@@ -82,11 +86,12 @@ class PickItem(StateMachine):
             return "succeeded"
 
         with self:
+            self.add("ROTATE", CBState(_rotate), transitions={"done": "ASK_USER"})
             self.add("ASK_USER", CBState(_ask_user), transitions={"succeeded": "succeeded", "failed": "failed"})
 
 
 class NavigateToAndPickItem(StateMachine):
-    def __init__(self, robot, pick_spot_id, pick_spot_navigation_area, required_items):
+    def __init__(self, robot, pick_spot_id, pick_spot_navigation_area):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
 
         pick_spot = EdEntityDesignator(robot=robot, uuid=pick_spot_id)
@@ -98,13 +103,11 @@ class NavigateToAndPickItem(StateMachine):
                 transitions={"arrived": "PICK_ITEM", "unreachable": "failed", "goal_not_defined": "failed"},
             )
 
-            StateMachine.add(
-                "PICK_ITEM", PickItem(robot, required_items), transitions={"succeeded": "succeeded", "failed": "failed"}
-            )
+            StateMachine.add("PICK_ITEM", PickItem(robot), transitions={"succeeded": "succeeded", "failed": "failed"})
 
 
 if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItem(robot_instance, "cupboard", "aside_of", ["bowl"]).execute()
+    NavigateToAndPickItem(robot_instance, "dinner_table", "in_front_of").execute()

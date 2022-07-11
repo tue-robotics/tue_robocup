@@ -13,9 +13,10 @@ from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
 from .navigate_to_and_pick_item import NavigateToAndPickItem
 from .navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
+from .pick_pour_place_cereal import PickPourPlaceCereal
+from .tuning import REQUIRED_ITEMS
 
 items_picked = []
-required_items = ["bowl", "spoon", "cereal_box", "milk_carton"]
 iteration = 0
 max_iterations = 10
 
@@ -36,11 +37,13 @@ def check_if_we_have_it_all(user_data, robot):
     else:
         rospy.logwarn("Invalid item picked: %s", item_picked)
 
-    missing_items = [item for item in required_items if item not in items_picked]
+    missing_items = [item for item in REQUIRED_ITEMS if item not in items_picked]
 
-    robot.speech.speak("So far we have: {}".format(" ".join(items_picked)), block=False)
     if missing_items:
+        robot.speech.speak("So far we have: {}".format(" ".join(items_picked)), block=False)
         robot.speech.speak("Still missing the {}".format(missing_items), block=False)
+    else:
+        robot.speech.speak("We have everything now", block=False)
 
     return "keep_going" if missing_items else "we_have_it_all"
 
@@ -48,6 +51,11 @@ def check_if_we_have_it_all(user_data, robot):
 def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
+    pick_id = "dinner_table"
+    pick_area_id = "in_front_of"
+    place_id = "dinner_table"
+    place_area_id = "in_front_of"
+    exit_id = "exit"
 
     with state_machine:
         # Intro
@@ -62,7 +70,7 @@ def setup_statemachine(robot):
             "SAY_START",
             Say(
                 robot,
-                "Lets serve from breakfast baby! If there are any chairs near the kitchen_table, please remove them",
+                f"Lets serve some breakfast baby! If there are any chairs near the {place_id}, please remove them",
                 block=False,
             ),
             transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
@@ -72,13 +80,13 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM",
-            NavigateToAndPickItem(robot, "kitchen_cabinet", "in_front_of", required_items),
+            NavigateToAndPickItem(robot, pick_id, pick_area_id),
             transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "CHECK_IF_WE_HAVE_IT_ALL"},
         )
 
         StateMachine.add(
             "PLACE_ITEM_ON_TABLE",
-            NavigateToAndPlaceItemOnTable(robot, "kitchen_table", "right_of_close"),
+            NavigateToAndPlaceItemOnTable(robot, place_id, place_area_id),
             transitions={"succeeded": "CHECK_IF_WE_HAVE_IT_ALL", "failed": "WAIT"},
         )
 
@@ -89,10 +97,16 @@ def setup_statemachine(robot):
         StateMachine.add(
             "CHECK_IF_WE_HAVE_IT_ALL",
             CBState(check_if_we_have_it_all, cb_args=[robot]),
-            transitions={"we_have_it_all": "SAY_END_CHALLENGE", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
+            transitions={"we_have_it_all": "PICK_POUR_PLACE_CEREAL", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
         )
 
         # Outro
+
+        StateMachine.add(
+            "PICK_POUR_PLACE_CEREAL",
+            PickPourPlaceCereal(robot, place_id),
+            transitions={"succeeded": "SAY_END_CHALLENGE"},
+        )
 
         StateMachine.add(
             "SAY_END_CHALLENGE",
@@ -100,6 +114,20 @@ def setup_statemachine(robot):
             transitions={"spoken": "NAVIGATE_TO_EXIT"},
         )
 
-        StateMachine.add("NAVIGATE_TO_EXIT", NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid="exit")))
+        StateMachine.add(
+            "NAVIGATE_TO_EXIT",
+            NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid=exit_id)),
+            transitions={
+                "arrived": "GOODBYE",
+                "unreachable": "GOODBYE",
+                "goal_not_defined": "GOODBYE",
+            },
+        )
+
+        StateMachine.add(
+            "GOODBYE",
+            Say(robot, "Goodbye!"),
+            transitions={"spoken": "done"},
+        )
 
     return state_machine
