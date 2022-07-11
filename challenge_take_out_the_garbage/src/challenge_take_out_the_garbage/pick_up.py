@@ -176,7 +176,7 @@ class GrabTrash(smach.State):
         arm._arm._send_joint_trajectory(
             [
                 [0.65, -2.2, 0.0, -0.85, 0.0],
-                [1, -1, 0.0, -0.85, 0.0]
+                [0.95, -1, 0.0, -0.85, 0.0]
             ]
         )
         arm.wait_for_motion_done()
