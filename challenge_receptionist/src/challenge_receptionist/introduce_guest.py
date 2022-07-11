@@ -57,7 +57,8 @@ class SayForIntroduceGuest(smach.State):
                                             " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                    age=age, pose=pose, shirt_color=shirt_color))
             else:
-                self.robot.speech.speak("Since I could not recognize you, I can not introduce you. Sorry ")
+                self.robot.speech.speak("Since I could not recognize the person who is already inside,"
+                                        " I can not introduce you. Sorry ")
         return "done"
 
 
