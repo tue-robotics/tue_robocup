@@ -9,7 +9,7 @@ class TestChallengeConstruction(unittest.TestCase):
         """
         os.environ["ROBOT_ENV"] = "robotics_testlabs"
         from robot_skills.mockbot import Mockbot
-        from challenge_hand_me_that import setup_statemachine
+        from challenge_hand_me_that.hand_me_that import HandMeThat
         robot = Mockbot()
         setup_statemachine(robot)
 
