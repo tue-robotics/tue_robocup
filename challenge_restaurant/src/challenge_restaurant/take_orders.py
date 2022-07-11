@@ -94,7 +94,7 @@ class TakeOrder(smach.State):
 
             if self._confirm():
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
-                for item in speech_result.semantics:
+                for item in speech_result.semantics.values():
                     self._orders.append(item)
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
