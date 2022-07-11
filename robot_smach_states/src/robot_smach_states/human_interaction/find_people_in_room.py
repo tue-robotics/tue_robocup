@@ -231,15 +231,15 @@ class FindPeople(smach.State):
                 # Making the conditon less strict to increase search domain
                 rospy.loginfo("Executing strict=True")
                 if isinstance(person_attr_val, list):
-                    sub_list = list(filter(lambda x: x in prop_value, person_attr_val))
+                    sub_list = [x for x in person_attr_val if x in prop_value]
                     return sub_list == prop_value
                 else:
                     return person_attr_val == prop_value
             else:
+                rospy.loginfo("Executing strict=False")
                 if (isinstance(person_attr_val, list)
                         and list(filter(lambda x: x in prop_value, person_attr_val))
                     ) or person_attr_val in prop_value:
-                    rospy.loginfo("Executing strict=False")
                     return True
         else:
             if person_attr_val:
