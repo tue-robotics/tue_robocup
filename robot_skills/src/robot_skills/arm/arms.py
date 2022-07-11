@@ -174,10 +174,11 @@ class PublicArm(object):
                        "Specify get_arm(..., force_sensor_required=True)")
         return hasattr(self._arm, "force_sensor")
 
-    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
+    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01, distance_move_down=None):
         self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
                        "Specify get_arm(..., force_sensor_required=True)")
-        return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
+        return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance,
+                                                              distance_move_down=distance_move_down)
 
     # salvaged deprecated functionality
     def send_gripper_goal(self, state, timeout=5.0, gripper_type=None, max_torque=0.1):
