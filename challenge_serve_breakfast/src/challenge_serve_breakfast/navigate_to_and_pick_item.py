@@ -66,7 +66,7 @@ class PickItem(StateMachine):
 
             item_name = leftover_items[0]
 
-            send_joint_goal(JOINTS_HANDOVER)
+            send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
 
             picked_items.append(item_name)
 

@@ -55,10 +55,9 @@ class PlaceItemOnTable(StateMachine):
             item_name = user_data["item_picked"]
             rospy.loginfo(f"Preplacing {item_name}...")
 
-            robot.speech.speak(f"I am going to place the {item_name}")
+            robot.speech.speak(f"I am going to place the {item_name}", block=False)
 
             robot.head.look_up()
-            robot.head.wait_for_motion_done()
 
             send_joint_goal(JOINTS_PRE_PRE_PLACE)
 
@@ -77,7 +76,6 @@ class PlaceItemOnTable(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, table_id)
             rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
             robot.head.look_down()
-            robot.head.wait_for_motion_done()
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return "done"
 
@@ -93,7 +91,6 @@ class PlaceItemOnTable(StateMachine):
             rospy.loginfo("Dropping...")
             send_gripper_goal("open")
             robot.head.look_up()
-            robot.head.wait_for_motion_done()
 
             if item_name != "cereal_box":
                 rospy.loginfo("Retract...")
