@@ -36,18 +36,14 @@ if __name__ == "__main__":
 
     item_des = ds.VariableDesignator(item)
     from hmi import HMIResult
-    blaat = HMIResult('coke', {'drink': 'coke'})
-    guest_drinkname_des = ds.VariableDesignator(resolve_type=HMIResult, name='previous_guest_drink').writeable
-    guest_drink_name_des = ds.FieldOfHMIResult(guest_drinkname_des, semantics_path=['drink'], name='previous_guest_drinkname')
+    blaat ='coke'
+    guest_drinkname_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink').writeable
     guest_drinkname_des.write(blaat)
 
     assume_john = True
-    previous_guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='previous_guest_drink')
-    previous_guest_drinkname_des = ds.FieldOfHMIResult(previous_guest_drink_des, semantics_path=['drink'],
-                                                       name='previous_guest_drinkname')
+    previous_guest_drink_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink')
 
-    sm = SayForIntroduceGuest(robot, item_des,guest_drinkname_des, assume_john, previous_guest_drink_des.writeable,
-                              previous_guest_drinkname_des)
+    sm = SayForIntroduceGuest(robot, item_des, guest_drinkname_des, assume_john, previous_guest_drink_des.writeable)
 
     sm.execute()
 
@@ -58,8 +54,7 @@ if __name__ == "__main__":
     item2 = Entity(entity_id2, "person", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now(),
                   person_properties2)
     item2_des = ds.VariableDesignator(item2)
-    sm2 = SayForIntroduceGuest(robot, item2_des, guest_drinkname_des, assume_john, previous_guest_drink_des.writeable,
-                              previous_guest_drinkname_des)
+    sm2 = SayForIntroduceGuest(robot, item2_des, guest_drinkname_des, assume_john, previous_guest_drink_des.writeable)
 
     sm2.execute()
 
