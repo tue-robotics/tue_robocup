@@ -61,7 +61,7 @@ class GetFurnitureFromOperatorPose(State):
             else:
                 final_result = result
 
-        entity_designator.write(robot.ed.get_entity(final_result.entity_id))
+        self.entity_designator.write(self._robot.ed.get_entity(final_result.entity_id))
         self._robot.speech.speak("You pointed at %s" % final_result.entity_id)
         return 'succeeded'
 
