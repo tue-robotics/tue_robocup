@@ -1,14 +1,19 @@
 # ROS
 from pykdl_ros import FrameStamped
 import rospy
+import os
+import rospkg
 import numpy
 import smach
 from geometry_msgs.msg import WrenchStamped
+import math
 
 # TU/e
 from smach import cb_interface, CBState
 
 import robot_smach_states as states
+from robot_smach_states.world_model import look_at_segmentation_area
+import robot_smach_states.util.designators as ds
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arm.arms import PublicArm
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
@@ -16,7 +21,7 @@ from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBi
 
 from ed_msgs.msg import EntityInfo
 
-from robot_skills.force_sensor import TimeOutException
+from robot_skills.arm.force_sensor import TimeOutException
 
 
 class MeasureForce(object):
@@ -60,17 +65,17 @@ class GetTrashBin(smach.State):
         self._trashbin = trashbin
 
     def execute(self, userdata=None):
-        return "succeeded"
         e = self._trashbin.resolve()
 
         if not e:
-            raise Exception("trashbin designator is empty")
+            rospy.logerror("trashbin designator did not resolve")
+            return 'failed'
 
         # get original entity pose
         frame_original = self._robot.ed.get_entity(uuid=e.uuid).pose.frame
 
         # inspect and update entity
-        states.look_at_segmentation_area(self._robot, self._robot.ed.get_entity(uuid=e.uuid), 'on_top_of')
+        look_at_segmentation_area(self._robot, self._robot.ed.get_entity(uuid=e.uuid), 'on_top_of')
         self._robot.ed.update_kinect("{} {}".format('on_top_of', e.uuid))
         pose_updated = self._robot.ed.get_entity(uuid=e.uuid).pose
 
@@ -79,10 +84,7 @@ class GetTrashBin(smach.State):
 
         # new_frame.header.stamp
         self._robot.ed.update_entity(self._robot, e.uuid, frame_stamped=pose_updated)
-        if e:
-            return "succeeded"
-        else:
-            return "failed"
+        return "succeeded"
 
 
 class GrabTrash(smach.State):
@@ -145,7 +147,7 @@ class GrabTrash(smach.State):
 
             # Go down and grab
             try:
-                arm.move_down_until_force_sensor_edge_up(timeout=7)
+                arm.move_down_until_force_sensor_edge_up(timeout=5)
             except TimeOutException:
                 rospy.logwarn("No forces were felt, however no action is taken!")
                 pass
@@ -165,10 +167,19 @@ class GrabTrash(smach.State):
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
+        # Lift bag up
+        arm._arm._send_joint_trajectory(
+            [
+                [0.65, -2.2, 0.0, -0.85, 0.0],
+                [0.85, -1, 0.0, -0.85, 0.0]
+            ]
+        )
+        arm.wait_for_motion_done()
+
         # Go back and pull back arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.5, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.1, 0, 0, 2.0)
 
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
@@ -179,8 +190,8 @@ class GrabTrash(smach.State):
         # if weight_object < self._minimal_weight:
         #     return "failed"
 
-        self._robot.speech.speak("Look at this I can pick up the trash!")
-        handed_entity = EntityInfo(id="trash")
+        self._robot.speech.speak("Look at this, I can pick up the trash!")
+        handed_entity = ds.EntityByIdDesignator(robot=self._robot, uuid="trash").resolve()  # type: Entity
         arm.gripper.occupied_by = handed_entity
 
         return "succeeded"
@@ -223,17 +234,22 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                                                                  OPEN),
                                    transitions={'succeeded': 'SAY1', 'failed': 'SAY1'})
 
-            smach.StateMachine.add("SAY1", states.Say(robot, 'Please hand over the trash by putting the top of the bag'
-                                                             ' between my grippers and push firmly into my camera as'
-                                                             ' will be shown on my screen.'),
+            smach.StateMachine.add("SAY1", states.human_interaction.Say(robot,
+                                                                        'Please hand over the trash by putting the top of the bag'
+                                                                        ' between my grippers and push firmly into my camera as'
+                                                                        ' will be shown on my screen.'),
                                    transitions={'spoken': 'SHOW_IMAGE'})
 
             smach.StateMachine.add("SHOW_IMAGE",
-                                   states.ShowImageState(
-                                        robot=robot,
-                                        image_filename="~/ros/kinetic/system/src/challenge_take_out_the_garbage/src"
-                                                       "/challenge_take_out_the_garbage/beun_picture.png",
-                                        seconds=5),
+                                   states.human_interaction.ShowImageState(
+                                       robot=robot,
+                                       image_filename=os.path.join(
+                                           rospkg.RosPack().get_path("challenge_take_out_the_garbage"),
+                                           "src",
+                                           "challenge_take_out_the_garbage",
+                                           "beun_picture.png"
+                                       ),
+                                       seconds=5),
                                    transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
 
             smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(
@@ -261,6 +277,9 @@ class PickUpTrash(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
         place_pose_designator = EmptySpotDesignator(robot, trashbin_designator, arm_designator)
 
+        if not place_pose_designator:
+            rospy.loginfo("Cannot resolve place_pose_designator")
+
         with self:
             # @cb_interface(outcomes=['done'])
             # def _joint_goal(_):
@@ -278,8 +297,9 @@ class PickUpTrash(smach.StateMachine):
             #                        transitions={'done': 'GO_BIN'})
 
             smach.StateMachine.add("GO_BIN",
-                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
-                                                          arm_designator=arm_designator),
+                                   states.navigation.NavigateToSymbolic(robot=robot, entity_designator_area_name_map={
+                                       trashbin_designator: "in_front_of"},
+                                                                        entity_lookat_designator=trashbin_designator),
                                    transitions={"arrived": "GET_BIN_POSITION",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
@@ -297,11 +317,12 @@ class PickUpTrash(smach.StateMachine):
                     return "failed"  # ToDo: fix
                 # Send to grab trash pose
                 arm._arm._send_joint_trajectory(
-                    [[0.01, 0.0, -1.57, -1.57, 0.0],
-                     [0.69, 0.0, -1.57, -1.57, 0.0],
-                     [0.65, -2.2, -1.57, -1.57, 0.],
-                     [0.65, -2.2, 0.0, -0.85, 0.]
-                     ]
+                    [
+                        [0.01, 0.0, -1.57, -1.57, 0.0],
+                        [0.59, 0.0, -1.57, -1.57, 0.0],
+                        [0.55, -2.2, -1.57, -1.57, 0.],
+                        [0.55, -2.2, 0.0, -0.85, 0.]
+                    ]
                 )
                 arm.wait_for_motion_done()
                 return 'done'
@@ -320,9 +341,10 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "ANNOUNCE_PICKUP_FAIL"})
 
             smach.StateMachine.add("ANNOUNCE_PICKUP_FAIL",
-                                   states.Say(robot, "Unfortunately I could not pick up the trash myself, let's go to"
-                                                     "plan B!",
-                                              block=False),
+                                   states.human_interaction.Say(robot,
+                                                                "Unfortunately I could not pick up the trash myself, let's go to"
+                                                                "plan B!",
+                                                                block=False),
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
             # Ask human to handover the trash bag
@@ -335,18 +357,20 @@ class PickUpTrash(smach.StateMachine):
             arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={"required_goals": ["reset"
                                                                                                                ]})
 
-            smach.StateMachine.add("LOWER_ARM", states.ArmToJointConfig(robot=robot,
-                                                                        arm_designator=arm_occupied_designator,
-                                                                        configuration="reset"),
+            smach.StateMachine.add("LOWER_ARM", states.manipulation.ArmToJointConfig(robot=robot,
+                                                                                     arm_designator=arm_occupied_designator,
+                                                                                     configuration="reset"),
                                    transitions={"succeeded": "RECEIVED_TRASH_BAG",
                                                 "failed": "RECEIVED_TRASH_BAG"})
 
-            smach.StateMachine.add("RECEIVED_TRASH_BAG", states.Say(robot, "I received the thrash bag. I will throw"
-                                                                           " it away, please move away.", block=True),
+            smach.StateMachine.add("RECEIVED_TRASH_BAG",
+                                   states.human_interaction.Say(robot, "I received the thrash bag. I will throw"
+                                                                       " it away, please move away.", block=True),
                                    transitions={'spoken': 'succeeded'})
 
-            smach.StateMachine.add("TIMEOUT", states.Say(robot, "I have not received anything, so I will just continue",
-                                                         block=False),
+            smach.StateMachine.add("TIMEOUT", states.human_interaction.Say(robot,
+                                                                           "I have not received anything, so I will just continue",
+                                                                           block=False),
                                    transitions={'spoken': "failed"})
 
 
