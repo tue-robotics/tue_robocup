@@ -330,7 +330,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'done': 'GO_TO_NEW_BIN'})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.4,
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.uuid, radius=0.3,
                                                      yaw_offset=-0.2),
                                    transitions={"done": "PREPARE_AND_GRAB"})
 
