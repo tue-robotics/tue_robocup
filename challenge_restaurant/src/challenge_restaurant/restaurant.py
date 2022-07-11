@@ -7,9 +7,9 @@ import robot_smach_states as states
 import rospkg
 import smach
 from ed.entity import Entity
-from .ask_take_order import AskTakeTheOrder
-from .store_waypoint import StoreWaypoint
-from .take_orders import TakeOrder, ReciteOrders, ClearOrders
+from challenge_restaurant.ask_take_order import AskTakeTheOrder
+from challenge_restaurant.store_waypoint import StoreWaypoint
+from challenge_restaurant.take_orders import TakeOrder, ReciteOrders, ClearOrders
 
 V_TH = 0.5
 
@@ -227,3 +227,22 @@ class Restaurant(smach.StateMachine):
                                    transitions={'arrived': 'WAIT_FOR_CUSTOMER',
                                                 'unreachable': 'WAIT_FOR_CUSTOMER',
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
+
+
+if __name__ == '__main__':
+    from challenge_restaurant.restaurant import Restaurant
+    from robot_skills import get_robot
+    import sys
+    import rospy
+
+    if len(sys.argv) < 2:
+        print("Please provide robot name as argument.")
+        sys.exit(1)
+
+    rospy.init_node('test_find_emtpy_seat')
+
+    robot_name = sys.argv[1]
+    robot = get_robot(robot_name)
+
+    sm = Restaurant(robot)
+    sm.execute()
