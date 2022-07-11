@@ -20,16 +20,16 @@ iteration = 0
 max_iterations = 10
 
 
-@cb_interface(outcomes=['we_have_it_all', 'keep_going'], input_keys=['item_picked'])
+@cb_interface(outcomes=["we_have_it_all", "keep_going"], input_keys=["item_picked"])
 def check_if_we_have_it_all(user_data, robot):
     global items_picked
     global iteration
 
     iteration += 1
     if iteration > max_iterations:
-        return 'we_have_it_all'
+        return "we_have_it_all"
 
-    item_picked = user_data['item_picked']
+    item_picked = user_data["item_picked"]
 
     if item_picked and item_picked not in items_picked:
         items_picked.append(item_picked)
@@ -42,57 +42,64 @@ def check_if_we_have_it_all(user_data, robot):
     if missing_items:
         robot.speech.speak("Still missing the {}".format(missing_items), block=False)
 
-    return 'keep_going' if missing_items else 'we_have_it_all'
+    return "keep_going" if missing_items else "we_have_it_all"
 
 
 def setup_statemachine(robot):
-    state_machine = StateMachine(outcomes=['done'])
-    state_machine.userdata['item_picked'] = None
+    state_machine = StateMachine(outcomes=["done"])
+    state_machine.userdata["item_picked"] = None
 
     with state_machine:
         # Intro
 
-        StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, "initial_pose"),
-                         transitions={'Done': 'SAY_START',
-                                      'Aborted': 'done',
-                                      'Failed': 'SAY_START'})
+        StateMachine.add(
+            "START_CHALLENGE_ROBUST",
+            StartChallengeRobust(robot, "initial_pose"),
+            transitions={"Done": "SAY_START", "Aborted": "done", "Failed": "SAY_START"},
+        )
 
         StateMachine.add(
-            'SAY_START',
-            Say(robot,
+            "SAY_START",
+            Say(
+                robot,
                 "Lets serve from breakfast baby! If there are any chairs near the kitchen_table, please remove them",
-                block=False),
-            transitions={'spoken': 'NAVIGATE_AND_PICK_ITEM'})
+                block=False,
+            ),
+            transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
+        )
 
         # Main loop
 
-        StateMachine.add('NAVIGATE_AND_PICK_ITEM',
-                         NavigateToAndPickItem(robot, "kitchen_cabinet", "in_front_of",
-                                               required_items),
-                         transitions={'succeeded': 'PLACE_ITEM_ON_TABLE',
-                                      'failed': 'CHECK_IF_WE_HAVE_IT_ALL'})
+        StateMachine.add(
+            "NAVIGATE_AND_PICK_ITEM",
+            NavigateToAndPickItem(robot, "kitchen_cabinet", "in_front_of", required_items),
+            transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "CHECK_IF_WE_HAVE_IT_ALL"},
+        )
 
-        StateMachine.add('PLACE_ITEM_ON_TABLE',
-                         NavigateToAndPlaceItemOnTable(robot, "kitchen_table", "right_of", "right_of_close"),
-                         transitions={'succeeded': 'CHECK_IF_WE_HAVE_IT_ALL',
-                                      'failed': 'WAIT'})
+        StateMachine.add(
+            "PLACE_ITEM_ON_TABLE",
+            NavigateToAndPlaceItemOnTable(robot, "kitchen_table", "right_of_close"),
+            transitions={"succeeded": "CHECK_IF_WE_HAVE_IT_ALL", "failed": "WAIT"},
+        )
 
-        StateMachine.add('WAIT',
-                         WaitTime(robot, 2),
-                         transitions={'waited': 'CHECK_IF_WE_HAVE_IT_ALL', 'preempted': 'done'})
+        StateMachine.add(
+            "WAIT", WaitTime(robot, 2), transitions={"waited": "CHECK_IF_WE_HAVE_IT_ALL", "preempted": "done"}
+        )
 
-        StateMachine.add('CHECK_IF_WE_HAVE_IT_ALL',
-                         CBState(check_if_we_have_it_all, cb_args=[robot]),
-                         transitions={'we_have_it_all': 'SAY_END_CHALLENGE',
-                                      'keep_going': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER'})
+        StateMachine.add(
+            "CHECK_IF_WE_HAVE_IT_ALL",
+            CBState(check_if_we_have_it_all, cb_args=[robot]),
+            transitions={"we_have_it_all": "SAY_END_CHALLENGE", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
+        )
 
         # Outro
 
-        StateMachine.add('SAY_END_CHALLENGE',
-                         Say(robot, "That was all folks, enjoy your breakfast!"),
-                         transitions={'spoken': 'NAVIGATE_TO_EXIT'})
+        StateMachine.add(
+            "SAY_END_CHALLENGE",
+            Say(robot, "That was all folks, enjoy your breakfast!"),
+            transitions={"spoken": "NAVIGATE_TO_EXIT"},
+        )
 
-        StateMachine.add('NAVIGATE_TO_EXIT',
-                         NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid="exit")))
+        StateMachine.add("NAVIGATE_TO_EXIT", NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid="exit")))
 
     return state_machine
