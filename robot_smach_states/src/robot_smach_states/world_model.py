@@ -224,35 +224,49 @@ class CheckEmpty(smach.State):
     """
     Check whether a volume of an entity is filled
     """
-    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold=None):
+    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold_perc=None,
+                 threshold_val=None):
         """
         Constructor
 
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
         :param volume: string defining which volume of the entity is checked
-        :param threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
-            (None means any entities filling the volume will result in 'occupied')
+        :param threshold_perc: float indicating the free volume percentage above which the area is considered
+        partially_occupied (If both thresholds are None any entities filling the volume will result in 'occupied')
+        :param threshold_val: float [m^3] indicating the free volume above which the area is considered
+        partially_occupied. (If both thresholds are None any entities filling the volume will result in 'occupied')
         """
         smach.State.__init__(self, outcomes=["occupied", "partially_occupied", "empty"])
         self.robot = robot
         self.seen_entities_des = segmented_entity_ids_designator
         self.entity_des = entity_designator
         self.volume = volume
-        self.threshold = threshold
+        self.threshold_perc = threshold_perc
+        self.threshold_val = threshold_val
 
     def execute(self, userdata=None):
         entity = self.entity_des.resolve()  # type: Entity
         seen_entities = self.seen_entities_des.resolve()
         if seen_entities:
-            if self.threshold:
+            if self.threshold_val or self.threshold_perc:
                 vol = entity.volumes[self.volume]  # type: Volume
                 entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
                 occupied_space = sum(entity.shape.size for entity in entities)
                 remaining_space = vol.size - occupied_space
-                rospy.loginfo('Occupied space is {}, remaining space is {}'.format(occupied_space, remaining_space))
-                if remaining_space > self.threshold:
-                    return 'partially_occupied'
+                remaining_space_perc = 1.0 - (occupied_space/vol.size)
+                rospy.loginfo('Occupied space is {}, remaining space is {}, free space percentage is {}'
+                              .format(occupied_space, remaining_space, remaining_space_perc))
+
+                if self.threshold_perc and self.threshold_val:
+                    if remaining_space > self.threshold_val and remaining_space_perc > self.threshold_perc:
+                        return 'partially_occupied'
+                elif self.threshold_perc:
+                    if remaining_space_perc > self.threshold_perc:
+                        return 'partially_occupied'
+                elif self.threshold_val:
+                    if remaining_space > self.threshold_val:
+                        return 'partially_occupied'
             return 'occupied'
         else:
             return 'empty'
@@ -308,14 +322,17 @@ class Inspect(smach.StateMachine):
 
 
 class CheckVolumeEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, volume="on_top_of", volume_threshold=0.0):
+    def __init__(self, robot, entity_des, volume="on_top_of", volume_threshold_per=0.0, volume_threshold_val=0.0):
         """ Constructor
 
         :param robot: robot object
         :param entity_des: EdEntityDesignator indicating the (furniture) object to check
         :param volume: string defining volume of the entity to be checked, default = on_top_of
-        :param volume_threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
-            (None means any entities filling the volume will result in 'occupied')
+        :param volume_threshold_per: float indicating the free volume percentage above which the area is considered
+        partially_occupied (If both thresholds are None any entities filling the volume will result in 'occupied')
+        :param volume_threshold_val: float [m^3] indicating the free volume above which the area is considered
+        partially_occupied. (If both thresholds are None any entities filling the volume will result in 'occupied')
+
         """
         smach.StateMachine.__init__(self, outcomes=['empty', 'occupied',  'partially_occupied', 'failed'])
 
@@ -328,7 +345,8 @@ class CheckVolumeEmpty(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add('CHECK',
-                                   CheckEmpty(robot, seen_entities_des, entity_des, volume, volume_threshold),
+                                   CheckEmpty(robot, seen_entities_des, entity_des, volume, volume_threshold_per,
+                                              volume_threshold_val),
                                    transitions={'empty': 'empty',
                                                 'partially_occupied': 'partially_occupied',
                                                 'occupied': 'occupied'})
