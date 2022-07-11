@@ -1,102 +1,77 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import smach
 from robocup_knowledge import load_knowledge
-from robot_smach_states.human_interaction import AskContinue, Say
-from robot_smach_states.navigation import NavigateToWaypoint
-from robot_smach_states.reset import ResetED
-from robot_smach_states.startup import StartChallengeRobust
-from robot_smach_states.util.designators import EntityByIdDesignator, analyse_designators
+from robot_smach_states.utility import Initialize, SetInitialPose
+from robot_smach_states.navigation import FollowOperator
+from robot_smach_states.human_interaction import AskYesNo, Say
+from robot_smach_states.util.designators import analyse_designators
 
-challenge_knowledge = load_knowledge('challenge_carry_my_luggage')
+challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
 STARTING_POINT = challenge_knowledge.starting_point
-INTERMEDIATE_1 = challenge_knowledge.intermediate_1
-INTERMEDIATE_2 = challenge_knowledge.intermediate_2
-INTERMEDIATE_3 = challenge_knowledge.intermediate_3
-EXIT_1 = challenge_knowledge.exit_1
-EXIT_2 = challenge_knowledge.exit_2
-EXIT_3 = challenge_knowledge.exit_3
 
 
 def setup_statemachine(robot):
-    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+    sm = smach.StateMachine(outcomes=["Done", "Aborted"])
 
     with sm:
-        # Start challenge via StartChallengeRobust
-        smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                               StartChallengeRobust(robot, STARTING_POINT),
-                               transitions={"Done": "GO_TO_INTERMEDIATE_WAYPOINT",
-                                            "Aborted": "GO_TO_INTERMEDIATE_WAYPOINT",
-                                            "Failed": "GO_TO_INTERMEDIATE_WAYPOINT"})
-        # There is no transition to Failed in StartChallengeRobust (28 May)
 
-        smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_1), radius=0.5),
-                               transitions={'arrived': 'ASK_CONTINUE',
-                                            'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                                            'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1'})
+        sm.add(
+            "INITIALIZE",
+            Initialize(robot),
+            transitions={"initialized": "SET_INITIAL_POSE", "abort": "Aborted"},
+        )
 
-        smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_2), radius=0.5),
-                               transitions={'arrived': 'ASK_CONTINUE',
-                                            'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
-                                            'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2'})
+        sm.add(
+            "SET_INITIAL_POSE",
+            SetInitialPose(robot, challenge_knowledge.starting_point),
+            transitions={
+                "done": "FOLLOW_OPERATOR",
+                "preempted": "Aborted",
+                "error": "FOLLOW_OPERATOR",
+            },
+        )
 
-        smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=INTERMEDIATE_3), radius=0.5),
-                               transitions={'arrived': 'ASK_CONTINUE',
-                                            'unreachable': 'ASK_CONTINUE',
-                                            'goal_not_defined': 'ASK_CONTINUE'})
+        sm.add(
+            "FOLLOW_OPERATOR",
+            FollowOperator(robot, operator_timeout=30, ask_follow=True, learn_face=True, replan=True),
+            transitions={
+                "Done": "ASK_FOR_TASK",
+                "Failed": "ASK_FOR_TASK",
+                "Aborted": "FOLLOW_OPERATOR",
+            },
+        )
 
-        smach.StateMachine.add("ASK_CONTINUE",
-                               AskContinue(robot, 30),
-                               transitions={'continue': 'SAY_CONTINUING',
-                                            'no_response': 'SAY_CONTINUING'})
+        sm.add(
+            "ASK_FOR_TASK",
+            Say(robot, ["Are we at the car already?"],
+                block=True,
+                look_at_standing_person=True,
+            ),
+            transitions={
+                "spoken": "WAIT_FOR_TASK",
+                },
+        )
 
-        smach.StateMachine.add('SAY_CONTINUING',
-                               Say(robot,
-                                   ["I heard continue, so I will move to the exit now. See you guys later!"],
-                                   block=False),
-                               transitions={'spoken': 'GO_TO_EXIT'})
+        sm.add(
+            "WAIT_FOR_TASK",
+            AskYesNo(robot),
+            transitions={
+                "yes": "REENTER_ARENA",
+                "no": "FOLLOW_OPERATOR",
+                "no_result": "ASK_FOR_TASK"
+            }
+        )
 
-        # Robot goes to the exit (waypoint stated in knowledge base)
-        smach.StateMachine.add('GO_TO_EXIT',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_1), radius=0.7),
-                               transitions={'arrived': 'AT_END',
-                                            'unreachable': 'GO_TO_EXIT_2',
-                                            'goal_not_defined': 'GO_TO_EXIT_2'})
-
-        smach.StateMachine.add('GO_TO_EXIT_2',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_2), radius=0.5),
-                               transitions={'arrived': 'AT_END',
-                                            'unreachable': 'GO_TO_EXIT_3',
-                                            'goal_not_defined': 'GO_TO_EXIT_3'})
-
-        smach.StateMachine.add('GO_TO_EXIT_3',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, uuid=EXIT_3), radius=0.5),
-                               transitions={'arrived': 'AT_END',
-                                            'unreachable': 'RESET_ED_TARGET',
-                                            'goal_not_defined': 'AT_END'})
-
-        smach.StateMachine.add('RESET_ED_TARGET',
-                               ResetED(robot),
-                               transitions={'done': 'GO_TO_EXIT'})
-
-        # Finally, the robot will stop and says 'goodbye' to show that he's done.
-        smach.StateMachine.add('AT_END',
-                               Say(robot, "Goodbye"),
-                               transitions={'spoken': 'Done'})
-
-    analyse_designators(sm, "rips")
+    analyse_designators(sm, "carry_my_luggage")
     return sm
 
 
-if __name__ == '__main__':
+def main():
     import rospy
-
     from robot_smach_states.util.startup import startup
 
-    rospy.init_node('carry_my_luggage_exec')
+    rospy.init_node("carry_my_luggage_exec")
 
     startup(setup_statemachine, challenge_name="carry_my_luggage")
