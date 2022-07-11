@@ -1,6 +1,7 @@
 # ROS
 from pykdl_ros import FrameStamped
 import rospy
+import os
 import rospkg
 import numpy
 import smach
@@ -169,13 +170,13 @@ class GrabTrash(smach.State):
         # Go back to make space for arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.07, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.05, 0, 0, 2.0)
 
         # Lift bag up
         arm._arm._send_joint_trajectory(
             [
                 [0.65, -2.2, 0.0, -0.85, 0.0],
-                [0.95, -1, 0.0, -0.85, 0.0]
+                [1, -1, 0.0, -0.85, 0.0]
             ]
         )
         arm.wait_for_motion_done()
