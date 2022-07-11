@@ -57,5 +57,5 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    ControlToTrashBin(robot_instance, 'trash_bin', 0.3, -0.2).execute()
+    ControlToTrashBin(robot_instance, 'trash_bin', 0.4, -0.2).execute()
     robot_instance.leftArm().send_joint_goal('grab_trash_bag')
