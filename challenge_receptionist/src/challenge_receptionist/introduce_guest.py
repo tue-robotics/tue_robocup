@@ -51,29 +51,12 @@ class SayForIntroduceGuest(smach.State):
                 shirt_color = self.entity.person_properties.shirt_colors
                 shirt_color = shirt_color[0]
                 drink = self.previous_guest_drinkname_des.resolve()
-                self.robot.speech.speak("This is {name} and is a {gender}, who likes {drink}, is {age} years old and"
+                pose = self.entity.person_properties.posture
+                self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, is {pose} and"
                                         " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
-                                                                               age=age, shirt_color=shirt_color))
+                                                                               age=age, pose=pose, shirt_color=shirt_color))
         return "done"
 
-
-# class CustomEntityDesignator(ds.Designator):
-#     def __init__(self, entity):
-#         super(CustomEntityDesignator, self).__init__(resolve_type=str)
-#         self.entity = entity
-#
-#     def _resolve(self):
-#         name = self.entity.person_properties.name
-#
-#         if self.entity.person_properties.gender == 1:
-#             gender = 'female'
-#         else:
-#             gender = 'male'
-#         age = self.entity.person_properties.age
-#         shirt_color = self.entity.person_properties.shirt_colors
-#
-#         return "This is {name} and is a {gender}, is {age} years old and wears a {shirt_color} shirt."\
-#             .format(name=name, gender=gender, age=age, shirt_color=shirt_color)
 
 
 class GuestDescriptionStrDesignator(ds.Designator):
