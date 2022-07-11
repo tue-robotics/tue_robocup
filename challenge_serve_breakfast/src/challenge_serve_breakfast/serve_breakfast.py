@@ -55,7 +55,7 @@ def setup_statemachine(robot):
     pick_area_id = "in_front_of"
     place_id = "dinner_table"
     place_area_id = "in_front_of"
-    exit_id = "exit"
+    exit_id = "starting_pose"
 
     with state_machine:
         # Intro
