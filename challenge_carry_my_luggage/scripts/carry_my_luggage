@@ -1,0 +1,6 @@
+#! /usr/bin/env python3
+
+if __name__ == "__main__":
+    from challenge_carry_my_luggage.carry_my_luggage import main
+
+    main()
