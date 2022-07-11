@@ -7,4 +7,4 @@ rospy.init_node('test_mode_down_until_force_sensor_edge_up', anonymous=True)
 robot = get_robot("hero")
 arm = robot.get_arm(force_sensor_required=True)
 
-arm.move_down_until_force_sensor_edge_up()
+arm.move_down_until_force_sensor_edge_up(distance_move_down=None, timeout=10)
