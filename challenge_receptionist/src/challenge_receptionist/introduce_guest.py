@@ -51,7 +51,8 @@ class SayForIntroduceGuest(smach.State):
                 shirt_color = self.entity.person_properties.shirt_colors
                 shirt_color = shirt_color[0]
                 drink = self.previous_guest_drinkname_des.resolve()
-                pose = self.entity.person_properties.posture
+                pose = self.entity.person_properties.tags
+                pose = pose[0][1:]
                 self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, is {pose} and"
                                         " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                age=age, pose=pose, shirt_color=shirt_color))
