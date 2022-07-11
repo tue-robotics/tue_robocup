@@ -46,7 +46,6 @@ class DropTrash(smach.State):
              [0.4, -1.0, 0.0, -1.0, -0.5],
              [0.4, -1.0, 0.0, -1.57, 0.0]])
         arm.wait_for_motion_done()
-        rospy.sleep(1)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
         # arm.gripper.send_goal('close')
