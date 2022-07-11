@@ -19,6 +19,7 @@ Robot picks an item. Robot drives to the table. Robot places item at the correct
 3. Outro
 
 ```
+Robot poos the cereal into the bowl
 Robot leaves the arena.
 ```
 
