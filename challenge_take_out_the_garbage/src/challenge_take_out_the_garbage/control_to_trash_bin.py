@@ -28,7 +28,7 @@ class ControlToTrashBin(StateMachine):
 
             angle = math.atan2(trash_bin_to_base_vector.y(), trash_bin_to_base_vector.x())
             min_angle = min(angle, 2*math.pi - angle)
-            
+
             goal_pose = PoseStamped(
                 header=Header(
                     stamp=rospy.Time.now(),
@@ -57,5 +57,5 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    ControlToTrashBin(robot_instance, 'trash_bin', 0.45, -0.2).execute()
+    ControlToTrashBin(robot_instance, 'trash_bin', 0.4, -0.2).execute()
     robot_instance.leftArm().send_joint_goal('grab_trash_bag')
