@@ -205,7 +205,7 @@ class FindPeople(smach.State):
                 if self._nearest:
                     result_people.sort(key=lambda e: (e.pose.frame.p - robot_pose.frame.p).Norm())
                 if person_label and \
-                    list(filter(lambda x: self._check_person_property(x, "id", person_label), result_people)) \
+                    [x for x in result_people if self._check_person_property(x, "id", person_label)] \
                     and self._speak:
                     self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
@@ -238,7 +238,7 @@ class FindPeople(smach.State):
             else:
                 rospy.loginfo("Executing strict=False")
                 if (isinstance(person_attr_val, list)
-                        and list(filter(lambda x: x in prop_value, person_attr_val))
+                        and [x for x in person_attr_val if x in prop_value]
                     ) or person_attr_val in prop_value:
                     return True
         else:
