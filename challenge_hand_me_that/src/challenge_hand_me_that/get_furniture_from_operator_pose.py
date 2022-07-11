@@ -49,31 +49,16 @@ class GetFurnitureFromOperatorPose(StateMachine):
             robot.ed.reset()
             robot.head.reset()
             robot.speech.speak("Let's point, please stand in front of me!", block=False)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
+            for _ in range(10):
+                _show_view(timeout=2)
+                rospy.sleep(0.4)
+
             _show_view(timeout=2)
             robot.speech.speak("Please point at the object you want me to hand you", block=False)  # hmm, weird sentence
             rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
-            _show_view(timeout=2)
-            rospy.sleep(0.4)
+            for _ in range(2):
+                _show_view(timeout=2)
+                rospy.sleep(0.4)
 
             _show_view(timeout=1)
             robot.speech.speak("Three")
@@ -146,7 +131,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                 else:
                     rospy.loginfo("{} is not furniture".format(result.entity_id))
                     robot.speech.speak("That's not furniture, you dummy.")
-                    rospy.sleep(3)
+                    rospy.sleep(1)
                     OPERATOR = None
                     robot.get_arm().send_joint_goal("reset")
                     return 'failed'
