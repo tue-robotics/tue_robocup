@@ -176,8 +176,7 @@ class FindPeople(smach.State):
 
             if self._properties:
                 for k, v in self._properties.items():
-                    found_people = list(filter(lambda x:
-                            self._check_person_property(x, k, v), found_people))
+                    found_people = [x for x in found_people if self._check_person_property(x, k, v)]
                     rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
             result_people = []
