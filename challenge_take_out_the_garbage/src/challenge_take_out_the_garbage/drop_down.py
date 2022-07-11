@@ -31,21 +31,26 @@ class DropTrash(smach.State):
             return "failed"
 
         # Torso up (non-blocking)
-        self._robot.torso.reset()
+        #self._robot.torso.reset()
 
         # Arm to position in a safe way
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
         arm.gripper.send_goal('open')
         arm.wait_for_motion_done()
+
+        # Drop the trash
         arm._arm._send_joint_trajectory(
-            [[0.4, -1.0, 0.0, -1.0, 0.0],[0.4, -1.0, 0.0, -1.57, 0.0], [0.4, -1.0, 0.0, -1.0, 0.0],
+            [[0.4, -1.0, 0.0, -1.0, 0.0],
+             [0.4, -1.0, 0.0, -1.57, 0.5],
+             [0.4, -1.0, 0.0, -1.0, -0.5],
              [0.4, -1.0, 0.0, -1.57, 0.0]])
         arm.wait_for_motion_done()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
         # arm.gripper.send_goal('close')
         # arm.wait_for_motion_done()
+        self._arm_designator.lock()
         return "succeeded"
 
 
@@ -91,14 +96,15 @@ class DropDownTrash(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        arm_designator = ds.OccupiedArmDesignator(
+        arm_designator = ds.ArmDesignator(
             robot=robot,
             arm_properties={"required_goals": ["handover", "reset", "handover_to_human"],
-                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
+                            "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
+        arm_designator.lock()
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=drop_zone_id),
+                                   states.navigation.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=drop_zone_id),
                                                              radius=0.5),
 
                                    transitions={"arrived": "DROP_TRASH",
@@ -106,16 +112,16 @@ class DropDownTrash(smach.StateMachine):
                                                 "unreachable": "OPEN_DOOR_PLEASE"})
 
             smach.StateMachine.add("OPEN_DOOR_PLEASE",
-                                   states.Say(robot, "Can you please open the door for me? It seems blocked!"),
+                                   states.human_interaction.Say(robot, "Can you please open the door for me? It seems blocked!"),
                                    transitions={"spoken": "WAIT_FOR_DOOR_OPEN"})
 
             smach.StateMachine.add("WAIT_FOR_DOOR_OPEN",
-                                   states.WaitTime(robot=robot, waittime=5),
+                                   states.utility.WaitTime(robot=robot, waittime=5),
                                    transitions={"waited": "GO_TO_COLLECTION_ZONE2",
                                                 "preempted": "GO_TO_COLLECTION_ZONE2"})
 
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE2",
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=drop_zone_id),
+                                   states.navigation.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=drop_zone_id),
                                                              radius=0.5),
 
                                    transitions={"arrived": "DROP_TRASH",
@@ -127,7 +133,7 @@ class DropDownTrash(smach.StateMachine):
                                                 "failed": "HANDOVER"})
 
             smach.StateMachine.add("HANDOVER",
-                                   states.HandoverToHuman(robot=robot, arm_designator=arm_designator),
+                                   states.manipulation.HandoverToHuman(robot=robot, arm_designator=arm_designator),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
 

@@ -4,6 +4,7 @@ import rospy
 
 # Robot smach states
 import robot_smach_states as states
+import robot_smach_states.util.designators as ds
 from robocup_knowledge import load_knowledge
 from robot_skills.arm import arms
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
@@ -24,14 +25,16 @@ class TakeOutGarbage(smach.StateMachine):
 
         # Create designators
         trashbin_designator = ds.EdEntityDesignator(robot=robot,
-                                                    id=CHALLENGE_KNOWLEDGE.trashbin_id,
+                                                    uuid=CHALLENGE_KNOWLEDGE.trashbin_id,
                                                     name='trashbin_designator')
+        test = trashbin_designator.resolve()
+        rospy.loginfo("Test: {}".format(test))
 
         # Look if there is a second trash bin present
         # trashbin_designator2 = None
         if hasattr(CHALLENGE_KNOWLEDGE, "trashbin_id2"):
             trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
-                                                         id=CHALLENGE_KNOWLEDGE.trashbin_id2,
+                                                         uuid=CHALLENGE_KNOWLEDGE.trashbin_id2,
                                                          name='trashbin_designator2')
             next_state = "HELPER_WAYPOINT"
             rospy.loginfo("There is a second trash bin")
@@ -42,21 +45,22 @@ class TakeOutGarbage(smach.StateMachine):
         # drop_zone_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.drop_zone_id)
         helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.helper_waypoint)
         end_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.end_waypoint)
-        arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(
+        arm_designator = ds.UnoccupiedArmDesignator(
             robot,
             {"required_goals": ["handover", "reset", "handover_to_human"], "force_sensor_required": True,
              "required_gripper_types": [arms.GripperTypes.GRASPING]},
-            name="empty_arm_designator")
+            name="empty_arm_designator").lockable()
+        arm_designator.lock()
 
         with self:
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                                   states.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
+                                   states.startup.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
                                    transitions={"Done": "SAY_START_CHALLENGE",
                                                 "Aborted": "SAY_START_CHALLENGE",
                                                 "Failed": "SAY_START_CHALLENGE"})
 
             smach.StateMachine.add("SAY_START_CHALLENGE",
-                                   states.Say(robot, "I will start cleaning up the trash", block= True),
+                                   states.human_interaction.Say(robot, "I will start cleaning up the trash", block= True),
                                    transitions={'spoken': "PICK_UP_TRASH"})
 
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
@@ -72,14 +76,14 @@ class TakeOutGarbage(smach.StateMachine):
                                                 "aborted": "aborted"})
 
             smach.StateMachine.add("ANNOUNCE_TASK",
-                                   states.Say(robot, "First bag has been dropped at the collection zone",
+                                   states.human_interaction.Say(robot, "First bag has been dropped at the collection zone",
                                               block=False),
                                    transitions={'spoken': next_state})
 
             if next_state == "HELPER_WAYPOINT":
 
                 smach.StateMachine.add("HELPER_WAYPOINT",
-                                       states.NavigateToWaypoint(robot=robot,
+                                       states.navigation.NavigateToWaypoint(robot=robot,
                                                                  waypoint_designator=helper_waypoint_designator),
                                        transitions={"arrived": "PICK_UP_TRASH2",
                                                     "goal_not_defined": "PICK_UP_TRASH2",
@@ -99,18 +103,18 @@ class TakeOutGarbage(smach.StateMachine):
                                                     "aborted": "aborted"})
 
                 smach.StateMachine.add("ANNOUNCE_TASK2",
-                                       states.Say(robot, "Second bag has been dropped at the collection zone."
+                                       states.human_interaction.Say(robot, "Second bag has been dropped at the collection zone."
                                                          "All the thrash has been taken care of",
                                                   block=False),
                                        transitions={'spoken': 'ANNOUNCE_END'})
 
             smach.StateMachine.add("ANNOUNCE_END",
-                                   states.Say(robot, "I have finished taking out the trash.",
+                                   states.human_interaction.Say(robot, "I have finished taking out the trash.",
                                               block=False),
                                    transitions={'spoken': 'NAVIGATE_OUT'})
 
             smach.StateMachine.add("NAVIGATE_OUT",
-                                   states.NavigateToWaypoint(robot=robot,
+                                   states.navigation.NavigateToWaypoint(robot=robot,
                                                              waypoint_designator=end_waypoint_designator),
                                    transitions={"arrived": "succeeded",
                                                 "goal_not_defined": "succeeded",
@@ -129,10 +133,12 @@ class TestDummy(smach.StateMachine):
         dummy_arm_designator_un = ds.UnoccupiedArmDesignator(
             dummy_robot,
             {"required_goals": ["handover", "reset", "handover_to_human"], "force_sensor_required": True,
-             "required_gripper_types": [arms.GripperTypes.GRASPING]})
+             "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
+        dummy_arm_designator_un.lock()
         dummy_arm_designator_oc = ds.OccupiedArmDesignator(dummy_robot, {"required_goals": ["handover", "reset"],
                                                                          "required_gripper_types": [
-                                                                             arms.GripperTypes.GRASPING]})
+                                                                             arms.GripperTypes.GRASPING]}).lockable()
+        dummy_arm_designator_oc.lock()
 
         with self:
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(dummy_robot, dummy_trashbin_designator,
