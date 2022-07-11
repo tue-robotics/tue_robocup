@@ -2,6 +2,7 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from smach import State
 from std_msgs.msg import Header
+from robot_smach_states.util.designators import is_writeable
 
 
 class GetFurnitureFromOperatorPose(State):
@@ -9,7 +10,7 @@ class GetFurnitureFromOperatorPose(State):
     Smach state to detect to what piece of furniture an operator is pointing at
     """
 
-    def __init__(self, robot, all_possible_furniture):
+    def __init__(self, robot, entity_designator, all_possible_furniture=None):
         """
         Initialization
 
@@ -17,9 +18,13 @@ class GetFurnitureFromOperatorPose(State):
         :param all_possible_furniture: list with available furniture to be used
         """
         State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        is_writeable(entity_designator)
+
         self._robot = robot
         self.operator = None
         self.all_possible_furniture = all_possible_furniture
+        self.entity_designator = entity_designator
 
     def execute(self, userdata=None):
         final_result = None
@@ -45,13 +50,18 @@ class GetFurnitureFromOperatorPose(State):
             rospy.loginfo("There is a ray intersection with {i} at ({p.x:.4}, {p.y:.4}, {p.z:.4})".format(
                 i=result.entity_id, p=result.intersection_point.point))
 
-            if result.entity_id in self.all_possible_furniture:
-                final_result = result
+            if self.all_possible_furniture:
+                if result.entity_id in self.all_possible_furniture:
+                    final_result = result
+                else:
+                    rospy.loginfo("{} is not furniture".format(result.entity_id))
+                    self._robot.speech.speak("That's not furniture, you dummy.")
+                    self.operator = None
+                    return 'failed'
             else:
-                rospy.loginfo("{} is not furniture".format(result.entity_id))
-                self._robot.speech.speak("That's not furniture, you dummy.")
-                self.operator = None
-                return 'failed'
+                final_result = result
+
+        entity_designator.write(robot.ed.get_entity(final_result.entity_id))
         self._robot.speech.speak("You pointed at %s" % final_result.entity_id)
         return 'succeeded'
 
