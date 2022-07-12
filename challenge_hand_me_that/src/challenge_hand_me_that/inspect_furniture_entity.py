@@ -29,7 +29,7 @@ RATIO_LIMIT = 4.0
 
 
 class InspectFurniture(smach.StateMachine):
-    def __init__(self, robot, furniture_designator, entity_designator):
+    def __init__(self, robot, furniture_designator, entity_designator, max_number_items=2):
         # type: (Robot, object) -> None
         """
         Drives to the designated furniture object, inspects this and selects the entity that will be pointed to
@@ -37,6 +37,7 @@ class InspectFurniture(smach.StateMachine):
         :param robot: (Robot) robot API object
         :param furniture_designator: (EdEntityDesignator) designates the furniture object that was pointed to.
         :param entity_designator: (EdEntityDesignator) writeable EdEntityDesignator
+        :param max_number_items: Max number of items in the entity designator
         """
         # ToDo: we need to add userdata
         smach.StateMachine.__init__(self,
@@ -113,6 +114,7 @@ class InspectFurniture(smach.StateMachine):
                     rospy.logwarn("No 'probable' entities left")
                     return "no_entities"
 
+                candidates_distance = []
                 # Select entity closest to the point where the operator pointed at (i.e., closest in 2D)
                 closest_tuple = (None, None)
                 x_ref = userdata.laser_dot.point.x
@@ -121,14 +123,17 @@ class InspectFurniture(smach.StateMachine):
                 for e in candidates:  # type: Entity
                     x_e = e.pose.frame.p.x()
                     y_e = e.pose.frame.p.y()
-                    distance_2d = math.hypot(x_ref - x_e, y_ref - y_e)
-                    rospy.loginfo("Entity {} at {}, {}: distance = {}".format(e.uuid, x_e, y_e, distance_2d))
+                    d_2d = math.hypot(x_ref - x_e, y_ref - y_e)
+                    rospy.loginfo("Entity {} at {}, {}: distance = {}".format(e.uuid, x_e, y_e, d_2d))
+                    candidates_distance.append((e, d_2d))
 
-                    if closest_tuple[0] is None or distance_2d < closest_tuple[1]:
-                        closest_tuple = (e, distance_2d)
+                    # if closest_tuple[0] is None or distance_2d < closest_tuple[1]:
+                    #     closest_tuple = (e, distance_2d)
+                candidates_distance.sort(key=lambda tup: tup[1], reverse=False)
+                best_candidate = candidates_distance[0]
 
-                rospy.loginfo("Best entity: {} at {}".format(closest_tuple[0].uuid, closest_tuple[1]))
-                entity_designator.write(closest_tuple[0])
+                rospy.loginfo("Best entity: {} at {}".format(best_candidate[0].uuid, best_candidate[1]))
+                entity_designator.write(list(list(zip(*candidates_distance))[0][:max_number_items]))
 
                 return "succeeded"
 

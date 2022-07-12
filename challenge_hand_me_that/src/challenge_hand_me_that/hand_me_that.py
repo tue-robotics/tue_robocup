@@ -32,7 +32,7 @@ class HandMeThat(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done'])
 
         furniture_designator = ds.VariableDesignator(resolve_type=Entity)
-        entity_designator = ds.VariableDesignator(resolve_type=Entity)
+        entity_designator = ds.VariableDesignator(resolve_type=[Entity])
         arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
 
         with self:
@@ -62,10 +62,19 @@ class HandMeThat(smach.StateMachine):
             smach.StateMachine.add('INSPECT_FURNITURE',
                              InspectFurniture(robot, furniture_designator, entity_designator.writeable),
                              transitions={"succeeded": "IDENTIFY_OBJECT",
-                                          "failed": "NAVIGATE_TO_START"})  # If no entities, try again
+                                          "failed": "SAY_NO_OBJECT"})  # If no entities, try again
+
+            # Tell when you failed to
+            smach.StateMachine.add('SAY_NO_OBJECT', Say(robot, ['I did not find any object object there',
+                                                                'I did not what you pointed at']),
+                                   transitions={'spoken': 'NAVIGATE_TO_START'})
 
             # Point at the object
             smach.StateMachine.add('IDENTIFY_OBJECT',
                              IdentifyObject(robot, entity_designator, arm_designator),
                              transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
-                                          'failed': 'NAVIGATE_TO_START'})  # Just keep on going
+                                          'failed': 'SAY_TRY_NEXT'})  # Just keep on going
+
+            smach.StateMachine.add('SAY_TRY_NEXT', Say(robot, ['I am sorry, let me try another one',
+                                                               'I will try another item']),
+                                   transitions={'spoken': 'NAVIGATE_TO_START'})

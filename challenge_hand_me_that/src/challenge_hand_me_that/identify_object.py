@@ -9,6 +9,8 @@ import tf2_ros
 from ed.entity import Entity
 
 import robot_smach_states.util.designators as ds
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.human_interaction import AskYesNo, Say
 from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arm.arms import PublicArm
@@ -145,27 +147,33 @@ class PointAt(smach.State):
 
 
 class IdentifyObject(smach.StateMachine):
-    def __init__(self, robot, item, arm):
+    def __init__(self, robot, items, arm):
         """
         Has the robot points to the object that was pointed to by the operator.
 
         This is based on the 'Grab' state, with difference that pickup is changed, i.e., without closing gripper.
 
         :param robot: Robot to use
-        :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
+        :param items: Designator that resolves to the list of items to point.
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
         :return:
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        ds.check_type(item, Entity)
+        ds.check_type(items, [Entity])
         ds.check_type(arm, PublicArm)
+
+        item = ds.VariableDesignator(resolve_type=Entity)
 
         with self:
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
-                                   transitions={'succeeded': 'NAVIGATE_TO_POINT',
+                                   transitions={'succeeded': 'ITERATE_ITEM',
                                                 'failed': 'failed'})
+
+            smach.StateMachine.add("ITERATE_ITEM", IterateDesignator(items, item.writeable),
+                                   transitions={'next': 'NAVIGATE_TO_POINT',
+                                                'stop_iteration': 'failed'})
 
             smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
@@ -177,8 +185,20 @@ class IdentifyObject(smach.StateMachine):
                                                 'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('POINT', PointAt(robot, arm, item),
-                                   transitions={'succeeded': 'done',
+                                   transitions={'succeeded': 'ASK_CORRECT',
                                                 'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add("ASK_CORRECT", Say(robot, ["Is this the object you pointed at?",
+                                                              "Did I got the correct object?"
+                                                              ],
+                                                      block=True,
+                                                      look_at_standing_person=True),
+                                   transitions={'spoken': 'LISTEN_ANSWER'})
+
+            smach.StateMachine.add("LISTEN_ANSWER", AskYesNo(robot),
+                                   transitions={'yes': 'done',
+                                                'no': 'ITERATE_ITEM',
+                                                'no_result': 'done'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
