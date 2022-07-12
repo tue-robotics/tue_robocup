@@ -10,7 +10,7 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.world_model import CheckVolumeEmpty
 from robot_smach_states.reset import ResetArms
-from robot_smach_states.manipulation.point_at import PointAt
+from challenge_receptionist.point_at_receptionist import PointAtReception
 import robot_smach_states.util.designators as ds
 import smach
 
@@ -55,6 +55,12 @@ class FindEmptySeat(smach.StateMachine):
 
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
+        #TODO eventually get this into the robocup knowledge and make it generic such that it is changable per seat
+        volumes = ['on_top_of_l', 'on_top_of_m', 'on_top_of_r']
+        #todo assert?
+        if not volumes:
+            raise RuntimeError('Empty volumes')
+
         if seat_is_for:
             ds.check_type(seat_is_for, str)
         else:
@@ -70,22 +76,37 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('ITERATE_NEXT_SEAT',
                                    IterateDesignator(seats, seat_ent_des.writeable),
-                                   transitions={'next': 'CHECK_SEAT_EMPTY',
+                                   transitions={'next': f'CHECK_SEAT_EMPTY_{volumes[0].upper()}',
                                                 'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
 
-            smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of', None, 0.2,
-                                                    fit_supporting_entity=fit_supporting_entity),
+            # TODO: apparently the inspect can handle (internally) designators as an input for the volumes so we
+            #  can work with a designator iterator for the volumes
+            # volumes_per_entity[entity_id.resolve()]
+            for volume_from, volume_to in zip(volumes, volumes[1:]):
+                smach.StateMachine.add(f'CHECK_SEAT_EMPTY_{volume_from.upper()}',
+                                       CheckVolumeEmpty(robot, seat_ent_des, volume_from, None, 0.2),
+                                       transitions={'occupied': f'CHECK_SEAT_EMPTY_{volume_to.upper()}',
+                                                    'empty': 'POINT_AT_EMPTY_SEAT',
+                                                    'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
+                                                    'failed': f'CHECK_SEAT_EMPTY_{volume_to.upper()}'})
+
+            smach.StateMachine.add(f'CHECK_SEAT_EMPTY_{volumes[-1].upper()}',
+                                   CheckVolumeEmpty(robot, seat_ent_des, volumes[-1], None, 0.2),
                                    transitions={'occupied': 'ITERATE_NEXT_SEAT',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
                                                 'failed': 'ITERATE_NEXT_SEAT'})
 
+            # TODO: test this
+            if not volume_from:
+                volume_from = volumes[-1]
+
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
-                                   PointAt(robot=robot,
-                                                  arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
-                                                  point_at_designator=seat_ent_des,
-                                                  look_at_designator=seat_ent_des),
+                                   PointAtReception(robot=robot,
+                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                                                    point_at_designator=seat_ent_des,
+                                                    volume=volume_from,
+                                                    look_at_designator=seat_ent_des),
                                    transitions={"succeeded": "SAY_SEAT_EMPTY",
                                                 "failed": "SAY_SEAT_EMPTY"})
 
@@ -98,10 +119,11 @@ class FindEmptySeat(smach.StateMachine):
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('POINT_AT_PARTIALLY_OCCUPIED_SEAT',
-                                   PointAt(robot=robot,
-                                                  arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
-                                                  point_at_designator=seat_ent_des,
-                                                  look_at_designator=seat_ent_des),
+                                   PointAtReception(robot=robot,
+                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                                                    point_at_designator=seat_ent_des,
+                                                    volume=volume_from,
+                                                    look_at_designator=seat_ent_des),
                                    transitions={"succeeded": "SAY_SEAT_PARTIALLY_OCCUPIED",
                                                 "failed": "SAY_SEAT_PARTIALLY_OCCUPIED"})
 
