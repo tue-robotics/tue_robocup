@@ -11,7 +11,7 @@ class TestChallengeConstruction(unittest.TestCase):
         from robot_skills.mockbot import Mockbot
         from challenge_hand_me_that.hand_me_that import HandMeThat
         robot = Mockbot()
-        setup_statemachine(robot)
+        HandMeThat(robot)
 
 
 if __name__ == "__main__":
