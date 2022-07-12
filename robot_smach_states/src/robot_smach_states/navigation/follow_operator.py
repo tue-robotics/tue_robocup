@@ -434,7 +434,7 @@ class FollowOperator(smach.State):
         if len(kdl_plan) > cutoff:
             del kdl_plan[-cutoff:]
 
-        ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+        ros_plan = [*frame_stampeds_to_pose_stampeds(kdl_plan)]
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             rospy.loginfo("Breadcrumb plan is blocked, removing blocked points")
