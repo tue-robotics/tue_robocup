@@ -112,7 +112,7 @@ class CarryMyLuggage(StateMachine):
             )
 
             # workaround to remove dependency from simulating raytracing
-            StateMachine.add("GET_ENTITY_POSE", CBState(place, cb_args=[self.entity_designator.writeable, robot]),
+            StateMachine.add("GET_ENTITY_POSE", CBState(place, cb_args=[self.entity_designator.writeable, self.robot]),
                              transitions={"done": "GRAB_BAG"})
 
             # StateMachine.add(
