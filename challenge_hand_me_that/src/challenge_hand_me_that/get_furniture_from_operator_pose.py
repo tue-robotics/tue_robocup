@@ -16,21 +16,10 @@ from std_msgs.msg import Header
 
 
 OPERATOR = None
-all_possible_furniture = ['kitchen_cabinet',
-                          'kitchen_table',
-                          'island',
-                          'sink',
-                          'dishwasher',
-                          'desk',
-                          'coffee_table',
-                          # 'couch',
-                          # 'armchair',
-                          'display_cabinet',
-                          'sideboard']
 
 
 class GetFurnitureFromOperatorPose(StateMachine):
-    def __init__(self, robot, furniture_designator):
+    def __init__(self, robot, furniture_designator, possible_furniture):
         # type: (robot.Robot, VariableDesignator) -> None
         StateMachine.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
 
@@ -126,7 +115,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                 # result.entity_id: string
                 rospy.loginfo("There is a ray intersection with {i} at ({p.x:.4}, {p.y:.4}, {p.z:.4})".format(i=result.entity_id, p=result.intersection_point.point))
 
-                if result.entity_id in all_possible_furniture:
+                if result.entity_id in possible_furniture:
                     final_result = result
                 else:
                     rospy.loginfo("{} is not furniture".format(result.entity_id))
