@@ -14,6 +14,8 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
+from robocup_knowledge import load_knowledge
+CHALLENGE_KNOWLEDGE = load_knowledge('challenge_set_the_table')
 
 
 items_picked = []
@@ -57,7 +59,7 @@ def setup_statemachine(robot):
         #                  Initialize(robot),
         #                  transitions={'initialized': 'SAY_START', 'abort': 'done'})
 
-        StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, "initial_pose"),  # ToDo: in knowledge
+        StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
                          transitions={'Done': 'SAY_START',
                                       'Aborted': 'done',
                                       'Failed': 'SAY_START'})
@@ -69,8 +71,9 @@ def setup_statemachine(robot):
                          transitions={'spoken': 'NAVIGATE_AND_OPEN_CUPBOARD'})
 
         # The pre-work
+        
         StateMachine.add('NAVIGATE_AND_OPEN_CUPBOARD',
-                         NavigateToAndOpenCupboard(robot, "kitchen_cabinet", "in_front_of"),
+                         NavigateToAndOpenCupboard(robot, CHALLENGE_KNOWLEDGE.cupboard_id, "in_front_of"),
                          transitions={'succeeded': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
                                       'failed': 'SAY_OPEN_FAILED'})
 
@@ -88,13 +91,13 @@ def setup_statemachine(robot):
 
         # The loop
         StateMachine.add('NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
-                         NavigateToAndPickItemFromCupboardDrawer(robot, "kitchen_cabinet", "in_front_of",
+                         NavigateToAndPickItemFromCupboardDrawer(robot, CHALLENGE_KNOWLEDGE.cupboard_id, "in_front_of",
                                                                  required_items),
                          transitions={'succeeded': 'PLACE_ITEM_ON_TABLE',
                                       'failed': 'CHECK_IF_WE_HAVE_IT_ALL'})
 
         StateMachine.add('PLACE_ITEM_ON_TABLE',
-                         NavigateToAndPlaceItemOnTable(robot, "kitchen_table", "right_of", "right_of_close"),
+                         NavigateToAndPlaceItemOnTable(robot, CHALLENGE_KNOWLEDGE.dinner_table_id, "right_of", "in_front_of"),
                          transitions={'succeeded': 'CHECK_IF_WE_HAVE_IT_ALL',
                                       'failed': 'WAIT'})
 
@@ -113,7 +116,7 @@ def setup_statemachine(robot):
                          transitions={'spoken': 'done'})
 
         StateMachine.add('NAVIGATE_AND_CLOSE_CUPBOARD',
-                         NavigateToAndCloseCupboard(robot, "cupboard", "in_front_of"),
+                         NavigateToAndCloseCupboard(robot, CHALLENGE_KNOWLEDGE.cupboard_id, "in_front_of"),
                          transitions={'succeeded': 'done',
                                       'failed': 'done'})
 
