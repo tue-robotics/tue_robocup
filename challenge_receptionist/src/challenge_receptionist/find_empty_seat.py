@@ -92,7 +92,7 @@ class FindEmptySeat(smach.StateMachine):
                                    Say(robot,
                                             ["Please sit on the {seat}, {name}"],
                                              name=seat_is_for,
-                                             seat=ds.AttrDesignator(seat_ent_des, 'id', resolve_type=str),
+                                             seat=ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str),
                                              block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
