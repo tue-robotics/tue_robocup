@@ -86,7 +86,7 @@ class CarryMyLuggage(StateMachine):
                 transitions={
                     "succeeded": "FOLLOW_OPERATOR",
                     "failed": "SAY_BAG_HANDOVER_FAILED",
-                    "timeout": "FOLLOW_OPERATOR"  # TODO: should this be SAY_BAG_HANDOVER_FAILED?
+                    "timeout": "SAY_BAG_HANDOVER_FAILED"
                     },
             )
 
@@ -104,7 +104,7 @@ class CarryMyLuggage(StateMachine):
             # Choice 2: Try to pick up the bag
             StateMachine.add(
                 "POINT_BAG",
-                Say(self.robot, ["Please point at the bag you want me to carry and await further instruction!"],
+                Say(self.robot, ["Please point at the bag you want me to carry and await further instructions!"],
                     block=True,
                     look_at_standing_person=True,
                     ),
@@ -128,7 +128,18 @@ class CarryMyLuggage(StateMachine):
                 'GRAB_BAG',
                 Grab(self.robot, self.entity_designator, self.arm_designator),
                 transitions={"done": "FOLLOW_OPERATOR",
-                             "failed": "FOLLOW_OPERATOR"} #todo: change this?
+                             "failed": "SAY_BAG_GRAB_FAILED"}
+            )
+
+            StateMachine.add(
+                "SAY_BAG_GRAB_FAILED",
+                Say(self.robot, ["I'm unable to grab your bag... Let me just accompany you to your car!"],
+                    block=True,
+                    look_at_standing_person=True,
+                    ),
+                transitions={
+                    "spoken": "FOLLOW_OPERATOR",  # ToDo: Change this to handover bag handover?
+                    },
             )
 
             # End of choices
@@ -197,4 +208,3 @@ if __name__ == '__main__':
     robot = get_robot(robot_name)
 
     CarryMyLuggage(robot)
-
