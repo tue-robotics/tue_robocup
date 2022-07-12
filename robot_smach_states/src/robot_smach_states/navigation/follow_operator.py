@@ -336,6 +336,7 @@ class FollowOperator(smach.State):
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
                 self._operator_id = None
+                rospy.loginfo(f"Operator ID is reset to {self._operator_id}")
                 self._robot.speech.speak("Stop! I lost you! Until I find you again, please wait there.", block=False)
             return False
 
@@ -507,7 +508,7 @@ class FollowOperator(smach.State):
                 if recovered_operator:
                     rospy.loginfo("Found one!")
                     self._operator_id = recovered_operator.uuid
-                    rospy.loginfo("Recovered operator id: %s" % self._operator_id)
+                    rospy.loginfo(f"Recovered operator id: {self._operator_id}")
                     self._operator = recovered_operator
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
                     self._robot.head.close()
@@ -655,6 +656,7 @@ class FollowOperator(smach.State):
             operator_id = self._operator_id_des.resolve()
             if operator_id:
                 self._operator_id = operator_id
+                rospy.loginfo(f"Operator ID is: {self._operator_id}")
 
         self._robot.head.close()
 
