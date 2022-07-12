@@ -37,7 +37,8 @@ class DropTrash(smach.State):
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
         arm.gripper.send_goal('open')
-        rospy.sleep(2.5)
+        arm.wait_for_motion_done()
+        rospy.sleep(3)
 
         # Drop the trash
         arm._arm._send_joint_trajectory(
