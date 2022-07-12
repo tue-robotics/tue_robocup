@@ -14,10 +14,23 @@ from hmi import HMIResult
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
+class DrinkNotHeard(smach.State):
+    def __init__(self, robot_name, guest_drink_des, default_drink=HMIResult('coke', {'drink': 'coke'})):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot_name
+        self.guest_drink_des = guest_drink_des
+        self.default_drink = default_drink
+
+    def execute(self, userdata=None):
+        self.guest_drink_des.write(self.default_drink)
+        return "done"
+
+
 class LearnGuest(smach.StateMachine):
     def __init__(self, robot,
                  door_waypoint, guest_ent_des,
-                 guest_name_des, guest_drink_des):
+                 guest_name_des, guest_drink_des, default_name,
+                 default_drink):
         """
         Learn what a guest looks like and what his/her favourite drink is
 
@@ -64,10 +77,19 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
 
             smach.StateMachine.add('ASK_GUEST_NAME',
-                                   AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
+                                   AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names,
+                                                 default_name=default_name),
                                    transitions={'succeeded': 'LEARN_PERSON',
-                                                'failed': 'SAY_HELLO',
-                                                'timeout': 'SAY_HELLO'})
+                                                'failed': 'ASK_NAME_FAILED',
+                                                'timeout': 'ASK_NAME_FAILED'})
+
+            smach.StateMachine.add('ASK_NAME_FAILED',
+                                   Say(robot, ["Sorry i couldn't hear you, let's continue because we run out of time. "
+                                               "I'll call you {name}"],
+                                       name=guest_name_des,
+                                       block=False,
+                                       look_at_standing_person=True),
+                                   transitions={'spoken': 'LEARN_PERSON'})
 
             # smach.StateMachine.add('SAY_HEARD_CORRECT_NAME',
             #                        Say(robot, "I heard your name is {name}, is this correct?",
@@ -126,7 +148,20 @@ class LearnGuest(smach.StateMachine):
                                    HearOptionsExtra(robot, self.drink_spec_des,
                                                     guest_drink_des.writeable),
                                    transitions={'heard': 'RESET_1',
-                                                'no_result': 'SAY_DRINK_QUESTION'})
+                                                'no_result': 'DEFAULT_DRINK'})
+
+            smach.StateMachine.add('DEFAULT_DRINK',
+                                   DrinkNotHeard(robot, guest_drink_des.writeable, default_drink=default_drink),
+                                   transitions={'done': 'ASK_DRINK_FAILED'})
+
+            smach.StateMachine.add('ASK_DRINK_FAILED',
+                                   Say(robot, ["Sorry i couldn't hear you, let's continue because we run out of time. "
+                                               "I'll guess your favorite drink is {drink}"],
+                                       drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink'),
+                                       block=False,
+                                       look_at_standing_person=True),
+                                   transitions={'spoken': 'RESET_1'})
+
 
             # smach.StateMachine.add('SAY_DRINK_CORRECT_NAME',
             #                        Say(robot, "I heard your favorite drink is {drink}, is this correct?",
