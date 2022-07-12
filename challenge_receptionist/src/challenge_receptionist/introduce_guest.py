@@ -130,56 +130,60 @@ class IntroduceGuest(smach.StateMachine):
                                    Say(robot,
                                        ["Hi {name}, let me show you our guest"],
                                         name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
-                                        block=True),
-                                   transitions={'spoken': 'TURN_TO_GUEST'})
+                                        block=False),
+                                   transitions={'spoken': 'INTRODUCE_GUEST_WITHOUT_POINTING'})
 
-            smach.StateMachine.add('TURN_TO_GUEST',
-                                   ForceDrive(robot, 0, 0, 1.05, 3.0),
-                                   transitions={"done": "FIND_GUEST"})
-
-            smach.StateMachine.add('FIND_GUEST',
-                                   FindPerson(robot=robot,
-                                                     person_label=guest_name_des,
-                                                     search_timeout=30,
-                                                     found_entity_designator=guest_ent_des.writeable,
-                                                     speak_when_found=False),
-                                   transitions={"found": "POINT_AT_GUEST",
-                                                "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
-
-            smach.StateMachine.add('POINT_AT_GUEST',
-                                   PointAt(robot=robot,
-                                                  arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
-                                                  point_at_designator=guest_ent_des,
-                                                  look_at_designator=current_old_guest),
-                                   transitions={"succeeded": "INTRODUCE_GUEST_BY_POINTING",
-                                                "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
-
-            # TODO: check if this works lookat john/current_old_guest
-
-            smach.StateMachine.add('INTRODUCE_GUEST_BY_POINTING',
-                                   Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
-                                       block=True,
-                                       look_at_standing_person=True),        # todo: look if this should be false
-                                   transitions={'spoken': "POINT_AT_OLD_GUEST"})
-
-            smach.StateMachine.add('POINT_AT_OLD_GUEST',
-                                   PointAt(robot=robot,
-                                                  arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
-                                                  point_at_designator=current_old_guest,
-                                                  look_at_designator=guest_ent_des),
-                                   transitions={"succeeded": "SAY_FOR_INTRODUCE_GUEST",
-                                                "failed": "SAY_FOR_INTRODUCE_GUEST"})
+            # smach.StateMachine.add('TURN_TO_GUEST',
+            #                        ForceDrive(robot, 0, 0, 1.05, 3.0),
+            #                        transitions={"done": "FIND_GUEST"})
+            #
+            # smach.StateMachine.add('FIND_GUEST',
+            #                        FindPerson(robot=robot,
+            #                                          person_label=guest_name_des,
+            #                                          search_timeout=30,
+            #                                          found_entity_designator=guest_ent_des.writeable,
+            #                                          speak_when_found=False),
+            #                        transitions={"found": "POINT_AT_GUEST",
+            #                                     "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
+            #
+            # smach.StateMachine.add('POINT_AT_GUEST',
+            #                        PointAt(robot=robot,
+            #                                       arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
+            #                                       point_at_designator=guest_ent_des,
+            #                                       look_at_designator=current_old_guest),
+            #                        transitions={"succeeded": "INTRODUCE_GUEST_BY_POINTING",
+            #                                     "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
+            #
+            #
+            #
+            # smach.StateMachine.add('INTRODUCE_GUEST_BY_POINTING',
+            #                        Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
+            #                            block=False,
+            #                            look_at_standing_person=True),
+            #                        transitions={'spoken': "POINT_AT_OLD_GUEST"})
+            #
+            # smach.StateMachine.add('POINT_AT_OLD_GUEST',
+            #                        PointAt(robot=robot,
+            #                                       arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
+            #                                       point_at_designator=current_old_guest,
+            #                                       look_at_designator=guest_ent_des),
+            #                        transitions={"succeeded": "SAY_FOR_INTRODUCE_GUEST",
+            #                                     "failed": "SAY_FOR_INTRODUCE_GUEST"})
 
             smach.StateMachine.add('INTRODUCE_GUEST_WITHOUT_POINTING',
                                    Say(robot,
                                             ["Our new guest is {name} who likes {drink}"],
                                             name=guest_name_des, drink=guest_drinkname_des,
-                                            block=True,
+                                            block=False,
                                             look_at_standing_person=True),
-                                   transitions={'spoken': 'SAY_FOR_INTRODUCE_GUEST'})
+                                   transitions={'spoken': 'TURN_TO_GUEST'})
 
             # TODO: still need to add 1 characteristics (pose) of guest 1 to guest 2
             # TODO: Test this
+            smach.StateMachine.add('TURN_TO_GUEST',
+                                    ForceDrive(robot, 0, 0, 1.05, 3.0),
+                                    transitions={"done": "SAY_FOR_INTRODUCE_GUEST"})
+
 
             smach.StateMachine.add('SAY_FOR_INTRODUCE_GUEST',
                                    SayForIntroduceGuest(robot, current_old_guest, guest_drinkname_des, assume_john,
