@@ -59,47 +59,49 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_HELLO',
                                    Say(robot, ["Hi there, please speak loud to me because i'm deaf. I'll learn your face now"],
-                                       block=True,
+                                       block=False,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
 
             smach.StateMachine.add('ASK_GUEST_NAME',
                                    AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
-                                   transitions={'succeeded': 'SAY_HEARD_CORRECT_NAME',
+                                   transitions={'succeeded': 'LEARN_PERSON',
                                                 'failed': 'SAY_HELLO',
                                                 'timeout': 'SAY_HELLO'})
 
-            smach.StateMachine.add('SAY_HEARD_CORRECT_NAME',
-                                   Say(robot, "I heard your name is {name}, is this correct?",
-                                       name=guest_name_des),
-                                   transitions={'spoken': 'HEAR_NAME_CORRECT'})
-
-            smach.StateMachine.add("HEAR_NAME_CORRECT", AskYesNo(robot),
-                                   transitions={"yes": "LEARN_PERSON",
-                                                "no": "ASK_GUEST_NAME_2",
-                                                "no_result": "ASK_GUEST_NAME_2"})
-
-            smach.StateMachine.add('SAY_HELLO_2',
-                                   Say(robot, ["Hi there, I'll learn your face now"],
-                                       block=True,
-                                       look_at_standing_person=True),
-                                   transitions={'spoken': 'ASK_GUEST_NAME'})
-
-            smach.StateMachine.add('ASK_GUEST_NAME_2',
-                                   AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
-                                   transitions={'succeeded': 'SAY_HEARD_CORRECT_NAME_2',
-                                                'failed': 'SAY_HELLO_2',
-                                                'timeout': 'SAY_HELLO_2'})
-
-            smach.StateMachine.add('SAY_HEARD_CORRECT_NAME_2',
-                                   Say(robot, "I heard your name is {name}, is this correct?",
-                                       name=guest_name_des),
-                                   transitions={'spoken': 'HEAR_NAME_CORRECT_2'})
-
-            smach.StateMachine.add("HEAR_NAME_CORRECT_2", AskYesNo(robot),
-                                   transitions={"yes": "LEARN_PERSON",
-                                                "no": "LEARN_PERSON",
-                                                "no_result": "LEARN_PERSON"})
+            # smach.StateMachine.add('SAY_HEARD_CORRECT_NAME',
+            #                        Say(robot, "I heard your name is {name}, is this correct?",
+            #                            name=guest_name_des,
+            #                            block=True),
+            #                        transitions={'spoken': 'HEAR_NAME_CORRECT'})
+            #
+            # smach.StateMachine.add("HEAR_NAME_CORRECT", AskYesNo(robot),
+            #                        transitions={"yes": "LEARN_PERSON",
+            #                                     "no": "ASK_GUEST_NAME_2",
+            #                                     "no_result": "ASK_GUEST_NAME_2"})
+            #
+            # smach.StateMachine.add('SAY_HELLO_2',
+            #                        Say(robot, ["Hi there, I'll learn your face now"],
+            #                            block=False,
+            #                            look_at_standing_person=True),
+            #                        transitions={'spoken': 'ASK_GUEST_NAME'})
+            #
+            # smach.StateMachine.add('ASK_GUEST_NAME_2',
+            #                        AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
+            #                        transitions={'succeeded': 'SAY_HEARD_CORRECT_NAME_2',
+            #                                     'failed': 'SAY_HELLO_2',
+            #                                     'timeout': 'SAY_HELLO_2'})
+            #
+            # smach.StateMachine.add('SAY_HEARD_CORRECT_NAME_2',
+            #                        Say(robot, "I heard your name is {name}, is this correct?",
+            #                            name=guest_name_des,
+            #                            block=True),
+            #                        transitions={'spoken': 'HEAR_NAME_CORRECT_2'})
+            #
+            # smach.StateMachine.add("HEAR_NAME_CORRECT_2", AskYesNo(robot),
+            #                        transitions={"yes": "LEARN_PERSON",
+            #                                     "no": "LEARN_PERSON",
+            #                                     "no_result": "LEARN_PERSON"})
 
             smach.StateMachine.add('LEARN_PERSON',
                                    LearnPerson(robot, name_designator=guest_name_des),
@@ -108,11 +110,12 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_FAILED_LEARNING',
                                    Say(robot, ["Not sure if I remember you, but I'll do my best"],
-                                              block=False),
+                                       block=False),
                                    transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_GUEST_LEARNED',
-                                   Say(robot, ["Okidoki, now I know what you look like"], block=True),
+                                   Say(robot, ["Okidoki, now I know what you look like"],
+                                       block=False),
                                    transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_DRINK_QUESTION',
@@ -121,39 +124,42 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                    HearOptionsExtra(robot, self.drink_spec_des,
-                                                           guest_drink_des.writeable),
-                                   transitions={'heard': 'SAY_DRINK_CORRECT_NAME',
+                                                    guest_drink_des.writeable),
+                                   transitions={'heard': 'RESET_1',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
 
-            smach.StateMachine.add('SAY_DRINK_CORRECT_NAME',
-                                   Say(robot, "I heard your favorite drink is {drink}, is this correct?",
-                                       drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink')),
-                                   transitions={'spoken': 'HEAR_DRINK_CORRECT'})
-
-            smach.StateMachine.add("HEAR_DRINK_CORRECT", AskYesNo(robot),
-                                   transitions={"yes": "RESET_1",
-                                                "no": "SAY_DRINK_QUESTION_2",
-                                                "no_result": "SAY_DRINK_QUESTION_2"})
-
-            smach.StateMachine.add('SAY_DRINK_QUESTION_2',
-                                   Say(robot, ["What's your favorite drink?"], block=True),
-                                   transitions={'spoken': 'HEAR_DRINK_ANSWER_2'})
-
-            smach.StateMachine.add('HEAR_DRINK_ANSWER_2',
-                                   HearOptionsExtra(robot, self.drink_spec_des,
-                                                           guest_drink_des.writeable),
-                                   transitions={'heard': 'SAY_DRINK_CORRECT_NAME_2',
-                                                'no_result': 'SAY_DRINK_QUESTION_2'})
-
-            smach.StateMachine.add('SAY_DRINK_CORRECT_NAME_2',
-                                   Say(robot, "I heard your favorite drink is {drink}, is this correct?",
-                                       drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink')),
-                                   transitions={'spoken': 'HEAR_DRINK_CORRECT_2'})
-
-            smach.StateMachine.add("HEAR_DRINK_CORRECT_2", AskYesNo(robot),
-                                   transitions={"yes": "RESET_1",
-                                                "no": "RESET_1",
-                                                "no_result": "RESET_1"})
+            # smach.StateMachine.add('SAY_DRINK_CORRECT_NAME',
+            #                        Say(robot, "I heard your favorite drink is {drink}, is this correct?",
+            #                            drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink'),
+            #                            block=True),
+            #                        transitions={'spoken': 'HEAR_DRINK_CORRECT'})
+            #
+            # smach.StateMachine.add("HEAR_DRINK_CORRECT", AskYesNo(robot),
+            #                        transitions={"yes": "RESET_1",
+            #                                     "no": "SAY_DRINK_QUESTION_2",
+            #                                     "no_result": "SAY_DRINK_QUESTION_2"})
+            #
+            # smach.StateMachine.add('SAY_DRINK_QUESTION_2',
+            #                        Say(robot, ["What's your favorite drink?"],
+            #                            block=True),
+            #                        transitions={'spoken': 'HEAR_DRINK_ANSWER_2'})
+            #
+            # smach.StateMachine.add('HEAR_DRINK_ANSWER_2',
+            #                        HearOptionsExtra(robot, self.drink_spec_des,
+            #                                                guest_drink_des.writeable),
+            #                        transitions={'heard': 'SAY_DRINK_CORRECT_NAME_2',
+            #                                     'no_result': 'SAY_DRINK_QUESTION_2'})
+            #
+            # smach.StateMachine.add('SAY_DRINK_CORRECT_NAME_2',
+            #                        Say(robot, "I heard your favorite drink is {drink}, is this correct?",
+            #                            drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink'),
+            #                            block=True),
+            #                        transitions={'spoken': 'HEAR_DRINK_CORRECT_2'})
+            #
+            # smach.StateMachine.add("HEAR_DRINK_CORRECT_2", AskYesNo(robot),
+            #                        transitions={"yes": "RESET_1",
+            #                                     "no": "RESET_1",
+            #                                     "no_result": "RESET_1"})
 
             smach.StateMachine.add('RESET_1',
                                    ResetArms(robot),
