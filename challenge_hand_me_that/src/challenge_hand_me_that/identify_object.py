@@ -88,6 +88,9 @@ class PointAt(smach.State):
         # Grasp point determination
         goal_bl = self._get_pointing_pose(point_entity)
 
+        # Pointing with gripper closed is better
+        arm.gripper.send_goal('close')
+
         # Grasp
         rospy.loginfo('Start pointing')
         for x_offset in [-0.15, 0.0]:  # Hack because Hero does not pre-grasp reliably
