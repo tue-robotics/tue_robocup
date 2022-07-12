@@ -48,7 +48,7 @@ class HandleSingleGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
                                    Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. Please follow me"],
                                                        name=guest_name_des, drink=guest_drinkname_des,
-                                                       block=True,
+                                                       block=False,
                                                        look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_LIVINGROOM'})
 

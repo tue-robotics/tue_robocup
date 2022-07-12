@@ -3,7 +3,6 @@ import PyKDL as kdl
 import rospy
 from pykdl_ros import FrameStamped
 from ed.shape import RightPrism
-from ed.entity import PersonProperties
 from smach import StateMachine, cb_interface, CBState
 from ed.entity import Entity
 from robocup_knowledge import load_knowledge
@@ -11,7 +10,6 @@ from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
 from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFromOperatorPose
 from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
-from robot_smach_states.util.designators import analyse_designators
 import robot_smach_states.util.designators as ds
 from robot_skills.arm import arms
 
@@ -60,7 +58,7 @@ class CarryMyLuggage(StateMachine):
 
             StateMachine.add(
                 "SET_INITIAL_POSE",
-                SetInitialPose(self.robot, challenge_knowledge.starting_point),
+                SetInitialPose(self.robot, STARTING_POINT),
                 transitions={
                     "done": "ASK_BAG_HANDOVER", # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
                     "preempted": "Aborted", #todo: change this?
@@ -86,7 +84,7 @@ class CarryMyLuggage(StateMachine):
                 transitions={
                     "succeeded": "FOLLOW_OPERATOR",
                     "failed": "SAY_BAG_HANDOVER_FAILED",
-                    "timeout": "FOLLOW_OPERATOR"  # TODO: should this be SAY_BAG_HANDOVER_FAILED?
+                    "timeout": "SAY_BAG_HANDOVER_FAILED"
                     },
             )
 
@@ -104,7 +102,7 @@ class CarryMyLuggage(StateMachine):
             # Choice 2: Try to pick up the bag
             StateMachine.add(
                 "POINT_BAG",
-                Say(self.robot, ["Please point at the bag you want me to carry and await further instruction!"],
+                Say(self.robot, ["Please point at the bag you want me to carry and await further instructions!"],
                     block=True,
                     look_at_standing_person=True,
                     ),
@@ -114,7 +112,7 @@ class CarryMyLuggage(StateMachine):
             )
 
             # workaround to remove dependency from simulating raytracing
-            StateMachine.add("GET_ENTITY_POSE", CBState(place, cb_args=[self.entity_designator.writeable, robot]),
+            StateMachine.add("GET_ENTITY_POSE", CBState(place, cb_args=[self.entity_designator.writeable, self.robot]),
                              transitions={"done": "GRAB_BAG"})
 
             # StateMachine.add(
@@ -128,7 +126,18 @@ class CarryMyLuggage(StateMachine):
                 'GRAB_BAG',
                 Grab(self.robot, self.entity_designator, self.arm_designator),
                 transitions={"done": "FOLLOW_OPERATOR",
-                             "failed": "FOLLOW_OPERATOR"} #todo: change this?
+                             "failed": "SAY_BAG_GRAB_FAILED"}
+            )
+
+            StateMachine.add(
+                "SAY_BAG_GRAB_FAILED",
+                Say(self.robot, ["I'm unable to grab your bag... Let me just accompany you to your car!"],
+                    block=True,
+                    look_at_standing_person=True,
+                    ),
+                transitions={
+                    "spoken": "FOLLOW_OPERATOR",  # ToDo: Change this to handover bag handover?
+                    },
             )
 
             # End of choices
@@ -197,4 +206,3 @@ if __name__ == '__main__':
     robot = get_robot(robot_name)
 
     CarryMyLuggage(robot)
-

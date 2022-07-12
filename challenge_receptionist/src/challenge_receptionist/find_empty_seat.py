@@ -93,7 +93,7 @@ class FindEmptySeat(smach.StateMachine):
                                             ["Please sit on the {seat}, {name}"],
                                              name=seat_is_for,
                                              seat=ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str),
-                                             block=True),
+                                             block=False),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('POINT_AT_PARTIALLY_OCCUPIED_SEAT',
@@ -108,14 +108,14 @@ class FindEmptySeat(smach.StateMachine):
                                    Say(robot,
                                             ["I think there's some space left here where you can sit {name}"],
                                              name=seat_is_for,
-                                             block=True),
+                                             block=False),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
                                    Say(robot,
                                             ["Sorry, there are no empty seats. I guess you just have to stand {name}"],
                                              name=seat_is_for,
-                                             block=True),
+                                             block=False),
                                    transitions={'spoken': 'RESET_FAIL'})
 
             smach.StateMachine.add('RESET_FAIL',

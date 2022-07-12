@@ -30,7 +30,7 @@ def frame_stampeds_to_pose_stampeds(frame_stampeds):
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0,
+    def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2,
                  start_timeout=10, operator_timeout=20, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
                  operator_standing_still_timeout=3.0, replan=False):
@@ -41,7 +41,6 @@ class FollowOperator(smach.State):
         :param learn_face:
         :param operator_radius:
         :param lookat_radius:
-        :param timeout:
         :param start_timeout:
         :param operator_timeout:
         :param lost_timeout: How long to look for the operator when we lost him/her?
