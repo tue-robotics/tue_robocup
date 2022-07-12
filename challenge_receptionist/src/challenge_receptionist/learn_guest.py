@@ -58,7 +58,7 @@ class LearnGuest(smach.StateMachine):
                                                 'failed': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_HELLO',
-                                   Say(robot, ["Hi there, I'll learn your face now"],
+                                   Say(robot, ["Hi there, please speak loud to me because i'm deaf. I'll learn your face now"],
                                        block=True,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
