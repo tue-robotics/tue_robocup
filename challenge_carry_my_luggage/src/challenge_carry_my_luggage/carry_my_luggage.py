@@ -58,7 +58,7 @@ class CarryMyLuggage(StateMachine):
 
             StateMachine.add(
                 "SET_INITIAL_POSE",
-                SetInitialPose(self.robot, challenge_knowledge.starting_point),
+                SetInitialPose(self.robot, STARTING_POINT),
                 transitions={
                     "done": "ASK_BAG_HANDOVER", # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
                     "preempted": "Aborted", #todo: change this?
