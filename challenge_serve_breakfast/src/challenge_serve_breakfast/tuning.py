@@ -47,7 +47,7 @@ JOINTS_POST_PICK = [0.7, -1.2, 0, 0, 0]
 
 JOINTS_PRE_POUR = [0.6, -1.2, -1.5, 0, 0]
 
-JOINTS_POUR = [0.6, -1.2, -2.3, 0, 0]
+JOINTS_POUR = [0.6, -1.2, -2.5, 0, 0]
 
 POUR_OFFSET_X = 0.03
 POUR_OFFSET_Y = 0.15
