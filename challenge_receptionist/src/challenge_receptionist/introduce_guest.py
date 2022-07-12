@@ -101,7 +101,7 @@ class IntroduceGuest(smach.StateMachine):
                                             ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
                                             name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
                                             guest_name=guest_name_des,
-                                            block=False),
+                                            block=True),
                                    transitions={'spoken': 'FIND_OLD_GUESTS'})
 
             smach.StateMachine.add('FIND_OLD_GUESTS',
@@ -131,7 +131,7 @@ class IntroduceGuest(smach.StateMachine):
                                    Say(robot,
                                        ["Hi {name}, let me show you our guest"],
                                         name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
-                                        block=False),
+                                        block=True),
                                    transitions={'spoken': 'INTRODUCE_GUEST_WITHOUT_POINTING'})
 
             # smach.StateMachine.add('TURN_TO_GUEST',
@@ -175,7 +175,7 @@ class IntroduceGuest(smach.StateMachine):
                                    Say(robot,
                                             ["Our new guest is {name} who likes {drink}"],
                                             name=guest_name_des, drink=guest_drinkname_des,
-                                            block=False,
+                                            block=True,
                                             look_at_standing_person=True),
                                    transitions={'spoken': 'TURN_TO_GUEST'})
 
