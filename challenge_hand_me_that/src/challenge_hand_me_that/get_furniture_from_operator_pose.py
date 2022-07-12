@@ -79,10 +79,10 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
                 return True
 
-            # Shortcut people recognition; For testing
-            OPERATOR = Person3D()
-            OPERATOR.header.frame_id = "map"
-            OPERATOR.position.z = 5
+            # # Shortcut people recognition; For testing
+            # OPERATOR = Person3D()
+            # OPERATOR.header.frame_id = "map"
+            # OPERATOR.position.z = 5
 
             while not rospy.is_shutdown() and OPERATOR is None:
                 persons = robot.perception.detect_person_3d(*_show_view())
@@ -113,14 +113,14 @@ class GetFurnitureFromOperatorPose(StateMachine):
                             ),
                             pose=OPERATOR.pointing_pose
                         ), "map")
-                        # result = robot.ed.ray_trace(map_pose)
+                        result = robot.ed.ray_trace(map_pose)
                         # For testing
-                        result = RayTraceResponse()
-                        result.entity_id = "desk"
-                        result.intersection_point.header.frame_id = "map"
-                        result.intersection_point.point.x = 3.73
-                        result.intersection_point.point.y = 6.05
-                        result.intersection_point.point.z = 0.75
+                        # result = RayTraceResponse()
+                        # result.entity_id = "desk"
+                        # result.intersection_point.header.frame_id = "map"
+                        # result.intersection_point.point.x = 3.73
+                        # result.intersection_point.point.y = 6.05
+                        # result.intersection_point.point.z = 0.75
                     except Exception as e:
                         rospy.logerr("Could not get ray trace from closest person: {}".format(e))
                     rospy.sleep(1.)
