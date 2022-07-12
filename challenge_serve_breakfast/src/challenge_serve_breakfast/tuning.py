@@ -16,7 +16,7 @@ REQUIRED_ITEMS = ["spoon", "bowl", "milk_carton", "cereal_box"]
 
 ITEM_VECTOR_DICT = {
     "spoon": PyKDL.Vector(0, -0.15, 0),
-    "bowl": PyKDL.Vector(0, 0, 0),
+    "bowl": PyKDL.Vector(0.1, -0.04, 0),
     "milk_carton": PyKDL.Vector(-0.1, 0.3, 0),
     "cereal_box": PyKDL.Vector(-0.1, -0.3, 0),
 }
@@ -36,6 +36,7 @@ JOINTS_PRE_PRE_PLACE = [0.69, 0, 0, -0.7, 0]
 
 JOINTS_PRE_PLACE_HORIZONTAL = [0.8, -1.2, 0, 0, 0]
 JOINTS_PLACE_HORIZONTAL = [0.65, -1.75, 0, 0, 0]
+JOINTS_PLACE_HORIZONTAL_MILK = [0.6, -1.75, 0, 0, 0]
 
 JOINTS_PRE_PLACE_VERTICAL = [0.8, -1.2, 0, -1.57, 0]
 JOINTS_PLACE_VERTICAL = [0.65, -1.57, 0, -1.57, 0]
@@ -48,7 +49,7 @@ JOINTS_PRE_POUR = [0.7, -1.2, -1.5, 0, 0]
 
 JOINTS_POUR = [0.7, -1.2, -1.8, 0, 0]
 
-POUR_OFFSET_X = 0
+POUR_OFFSET_X = 0.03
 POUR_OFFSET_Y = 0.1
 
 

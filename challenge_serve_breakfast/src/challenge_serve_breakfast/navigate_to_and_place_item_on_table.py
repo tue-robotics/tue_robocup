@@ -20,6 +20,7 @@ from challenge_serve_breakfast.tuning import (
     item_vector_to_item_frame,
     item_frame_to_pose,
     JOINTS_PLACE_HORIZONTAL,
+    JOINTS_PLACE_HORIZONTAL_MILK,
     JOINTS_PLACE_VERTICAL,
     JOINTS_RETRACT,
     COLOR_DICT, REQUIRED_ITEMS,
@@ -46,7 +47,7 @@ class PlaceItemOnTable(StateMachine):
                 arm.wait_for_motion_done()
 
         def send_gripper_goal(open_close_string, wait_for_motion_done=True):
-            arm.gripper.send_goal(open_close_string)
+            arm.gripper.send_goal(open_close_string, timeout=0.0)
             if wait_for_motion_done:
                 rospy.sleep(1.0)  # Does not work with motion_done apparently
 
@@ -84,7 +85,9 @@ class PlaceItemOnTable(StateMachine):
         def _place_and_retract(user_data):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
-            if item_name in ["milk_carton", "cereal_box"]:
+            if item_name in ["milk_carton"]:
+                send_joint_goal(JOINTS_PLACE_HORIZONTAL_MILK)
+            elif item_name in ["milk_carton", "cereal_box"]:
                 send_joint_goal(JOINTS_PLACE_HORIZONTAL)
             else:
                 send_joint_goal(JOINTS_PLACE_VERTICAL)
