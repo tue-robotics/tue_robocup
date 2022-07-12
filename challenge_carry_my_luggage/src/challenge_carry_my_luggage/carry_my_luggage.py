@@ -10,9 +10,11 @@ from robocup_knowledge import load_knowledge
 from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
 from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFromOperatorPose
-from robot_smach_states.manipulation import Grab, HandoverToHuman
+from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
 from robot_smach_states.util.designators import analyse_designators
 import robot_smach_states.util.designators as ds
+from robot_skills.arm import arms
+
 
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
@@ -22,7 +24,7 @@ STARTING_POINT = challenge_knowledge.starting_point
 @cb_interface(outcomes=["done"])
 def place(userdata, designator, robot):
     entity_id = "bag"
-    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(1.0, 3.0, 0.7)),
+    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(1.0, 3.0, 0.3)),
                         stamp=rospy.Time.now(),
                         frame_id="map")
     robot.ed.update_entity(uuid=entity_id, frame_stamped=pose)
@@ -42,7 +44,10 @@ class CarryMyLuggage(StateMachine):
         StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         self.robot = robot
         self.entity_designator = ds.VariableDesignator(resolve_type=Entity)
-        self.arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
+        self.arm_designator = ds.UnoccupiedArmDesignator(
+            robot,
+            {"required_goals": ["reset", "handover_to_human", "carrying_pose"],
+             "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
         self.waypoint_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
 
         with self:
@@ -57,12 +62,46 @@ class CarryMyLuggage(StateMachine):
                 "SET_INITIAL_POSE",
                 SetInitialPose(self.robot, challenge_knowledge.starting_point),
                 transitions={
-                    "done": "POINT_BAG",
+                    "done": "ASK_BAG_HANDOVER", # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
                     "preempted": "Aborted", #todo: change this?
-                    "error": "POINT_BAG",
+                    "error": "ASK_BAG_HANDOVER",  # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
                 },
             )
 
+            # Choice 1; Do no try to pick up the bag
+            StateMachine.add(
+                "ASK_BAG_HANDOVER",
+                Say(self.robot, ["I am unable to pick up the bag, please put it in my gripper"],
+                    block=True,
+                    look_at_standing_person=True,
+                    ),
+                transitions={
+                    "spoken": "BAG_HANDOVER_FROM_HUMAN",
+                    },
+            )
+
+            StateMachine.add(
+                "BAG_HANDOVER_FROM_HUMAN",
+                HandoverFromHuman(self.robot, self.arm_designator, "bag", None, 15),
+                transitions={
+                    "succeeded": "FOLLOW_OPERATOR",
+                    "failed": "SAY_BAG_HANDOVER_FAILED",
+                    "timeout": "FOLLOW_OPERATOR"  # TODO: should this be SAY_BAG_HANDOVER_FAILED?
+                    },
+            )
+
+            StateMachine.add(
+                "SAY_BAG_HANDOVER_FAILED",
+                Say(self.robot, ["It seems the handing over failed... Let me just accompany you to your car!"],
+                    block=True,
+                    look_at_standing_person=True,
+                    ),
+                transitions={
+                    "spoken": "FOLLOW_OPERATOR",
+                    },
+            )
+
+            # Choice 2: Try to pick up the bag
             StateMachine.add(
                 "POINT_BAG",
                 Say(self.robot, ["Please point at the bag you want me to carry and await further instruction!"],
@@ -74,6 +113,7 @@ class CarryMyLuggage(StateMachine):
                     },
             )
 
+            # workaround to remove dependency from simulating raytracing
             StateMachine.add("GET_ENTITY_POSE", CBState(place, cb_args=[self.entity_designator.writeable, robot]),
                              transitions={"done": "GRAB_BAG"})
 
@@ -91,6 +131,7 @@ class CarryMyLuggage(StateMachine):
                              "failed": "FOLLOW_OPERATOR"} #todo: change this?
             )
 
+            # End of choices
             StateMachine.add(
                 "FOLLOW_OPERATOR",
                 FollowOperator(self.robot, operator_timeout=30, ask_follow=True, learn_face=True, replan=True),
