@@ -39,6 +39,8 @@ class Face:
                         self.py = face.py + self.image_height
                     else:
                         self.py = face.py - self.image_height
+                return True
+        return False
 
     def draw(self, target_image, color):
         cv2.circle(target_image, (self._px, self._py), 10, (color[2] * 255, color[1] * 255, color[0] * 255), 5)
@@ -119,7 +121,10 @@ def get_image(robot, room_id, person_detections):
 
         try:
             face = Face(px, py, resized_roi_image)
-            face.correct(faces)
+            for _ in range(0, 10):  # Prevent inf loop
+                if not face.correct(faces):
+                    break
+                rospy.loginfo("Correct face")
             face.draw(floorplan.map, c_map[i])
             faces.append(face)
         except Exception as e:
