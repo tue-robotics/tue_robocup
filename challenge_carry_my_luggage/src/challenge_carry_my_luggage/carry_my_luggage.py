@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-
-from smach import StateMachine
+import PyKDL as kdl
+import rospy
+from pykdl_ros import FrameStamped
+from ed.shape import RightPrism
+from ed.entity import PersonProperties
+from smach import StateMachine, cb_interface, CBState
 from ed.entity import Entity
 from robocup_knowledge import load_knowledge
 from robot_smach_states.utility import Initialize, SetInitialPose
@@ -13,6 +17,20 @@ import robot_smach_states.util.designators as ds
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
 STARTING_POINT = challenge_knowledge.starting_point
+
+
+@cb_interface(outcomes=["done"])
+def place(userdata, designator, robot):
+    entity_id = "bag"
+    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(1.0, 3.0, 0.7)),
+                        stamp=rospy.Time.now(),
+                        frame_id="map")
+    robot.ed.update_entity(uuid=entity_id, frame_stamped=pose)
+    shape = RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)],
+                       -0.1, 0.1)
+    item = Entity(entity_id, "bag", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now())
+    designator.write(item)
+    return "done"
 
 
 class CarryMyLuggage(StateMachine):
@@ -56,12 +74,15 @@ class CarryMyLuggage(StateMachine):
                     },
             )
 
-            StateMachine.add(
-                'GET_ENTITY_POSE',
-                GetFurnitureFromOperatorPose(self.robot, self.entity_designator.writeable),
-                transitions={'succeeded': 'GRAB_BAG',
-                             'failed': 'GRAB_BAG'} #todo: change this?
-            )
+            StateMachine.add("GET_ENTITY_POSE", CBState(place, cb_args=[self.entity_designator.writeable, robot]),
+                             transitions={"done": "GRAB_BAG"})
+
+            # StateMachine.add(
+            #     'GET_ENTITY_POSE',
+            #     GetFurnitureFromOperatorPose(self.robot, self.entity_designator.writeable),
+            #     transitions={'succeeded': 'GRAB_BAG',
+            #                  'failed': 'GRAB_BAG'} #todo: change this?
+            # )
 
             StateMachine.add(
                 'GRAB_BAG',
