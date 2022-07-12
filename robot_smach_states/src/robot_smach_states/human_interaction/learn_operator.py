@@ -54,7 +54,7 @@ class LearnOperator(smach.State):
 
             operator = self._robot.ed.get_closest_laser_entity(
                 radius=0.5,
-                center_point=VectorStamped.from_xyz(1, 0, 1, rospy.Time.now(),self._robot.base_link_frame))
+                center_point=VectorStamped.from_xyz(1, 0, 1, rospy.Time(0),self._robot.base_link_frame))
             rospy.loginfo("Operator: {op}".format(op=operator))
             if not operator:
                 options = ["Please stand in front of me.",
