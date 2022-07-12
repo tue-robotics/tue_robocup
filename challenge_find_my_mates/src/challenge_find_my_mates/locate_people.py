@@ -25,7 +25,7 @@ from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from smach import StateMachine, cb_interface, CBState
 
-NUM_LOOKS = 2
+NUM_LOOKS = 1
 PERSON_DETECTIONS = []
 
 
@@ -57,7 +57,9 @@ class LocatePeople(StateMachine):
                 "You are all looking great today! Keep looking at my camera. I like it when everybody is staring at me!"
             ])
             while len(PERSON_DETECTIONS) < 4 and not rospy.is_shutdown():
+                rospy.loginfo("Looking for people loop")
                 for _ in range(NUM_LOOKS):
+                    rospy.loginfo("Looking for people..")
                     sentences.rotate(1)
                     robot.speech.speak(sentences[0], block=False)
                     for head_goal in head_goals:
@@ -108,7 +110,12 @@ class LocatePeople(StateMachine):
 
             rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
 
-            image_filename = get_image(robot, room_id, PERSON_DETECTIONS)
+            try:
+                image_filename = get_image(robot, room_id, PERSON_DETECTIONS)
+            except:
+                rospy.logwarn("Could not get a proper image, retrying..")
+                return "retry"
+
             robot.hmi.show_image(image_filename, 120)
 
             return "done"
