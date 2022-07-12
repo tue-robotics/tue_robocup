@@ -81,7 +81,12 @@ def setup_statemachine(robot):
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM",
             NavigateToAndPickItem(robot, pick_id, pick_area_id),
-            transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "CHECK_IF_WE_HAVE_IT_ALL"},
+            transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
+        )
+
+        StateMachine.add(
+            "NAVIGATE_AND_PICK_ITEM_FAILED", WaitTime(robot, 2),
+            transitions={"waited": "NAVIGATE_AND_PICK_ITEM", "preempted": "done"}
         )
 
         StateMachine.add(
