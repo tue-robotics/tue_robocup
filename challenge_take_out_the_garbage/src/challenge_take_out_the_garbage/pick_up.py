@@ -162,7 +162,7 @@ class GrabTrash(smach.State):
         arm._arm._send_joint_trajectory([[0.85, -2.2, 0.0, -0.85, 0.0]])
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.06, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.07, 0, 0, 2.0)
 
         # Lift bag up
         arm._arm._send_joint_trajectory(
