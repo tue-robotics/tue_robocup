@@ -141,7 +141,8 @@ class SegmentObjects(smach.State):
     Look at an entity and segment objects within the area desired.
     """
     def __init__(self, robot, segmented_entity_ids_designator, entity_to_inspect_designator,
-                 segmentation_area="on_top_of", unknown_threshold=0.0, filter_threshold=0.0):
+                 segmentation_area="on_top_of", unknown_threshold=0.0, filter_threshold=0.0,
+                 fit_supporting_entity=True):
         """ Constructor
 
         :param robot: robot object
@@ -151,12 +152,14 @@ class SegmentObjects(smach.State):
         :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
         :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
+        :param fit_supporting_entity: Fit or not fit the supporting entity
         """
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
         self.unknown_threshold = unknown_threshold
         self.filter_threshold = filter_threshold
+        self.fit_supporting_entity = fit_supporting_entity
 
         ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
@@ -184,7 +187,9 @@ class SegmentObjects(smach.State):
             time.sleep(0.5)
 
         # Inspect 'on top of' the entity
-        res = self.robot.ed.update_kinect("{} {}".format(segmentation_area, entity_to_inspect.uuid))
+        res = self.robot.ed.update_kinect(area_description="{} {}".format(segmentation_area, entity_to_inspect.uuid),
+                                          fit_supporting_entity=self.fit_supporting_entity)
+
         segmented_object_ids = res.new_ids + res.updated_ids
 
         if segmented_object_ids:
@@ -278,7 +283,7 @@ class Inspect(smach.StateMachine):
     Note that when inspecting a high entity the robot will end the Inspect in a high position.
     """
     def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area="",
-                 unknown_threshold=0.0, filter_threshold=0.0):
+                 unknown_threshold=0.0, filter_threshold=0.0, fit_supporting_entity=True):
         """
         Constructor
 
@@ -291,6 +296,7 @@ class Inspect(smach.StateMachine):
         :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
         :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
+        :param fit_supporting_entity: Fit or not fit the supporting entity
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -317,12 +323,14 @@ class Inspect(smach.StateMachine):
             smach.StateMachine.add('SEGMENT',
                                    SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
                                                   unknown_threshold=unknown_threshold,
-                                                  filter_threshold=filter_threshold),
+                                                  filter_threshold=filter_threshold,
+                                                  fit_supporting_entity=fit_supporting_entity),
                                    transitions={'done': 'done'})
 
 
 class CheckVolumeEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, volume="on_top_of", volume_threshold_per=0.0, volume_threshold_val=0.0):
+    def __init__(self, robot, entity_des, volume="on_top_of", volume_threshold_per=0.0, volume_threshold_val=0.0,
+                 fit_supporting_entity=True):
         """ Constructor
 
         :param robot: robot object
@@ -332,6 +340,7 @@ class CheckVolumeEmpty(smach.StateMachine):
         partially_occupied (If both thresholds are None any entities filling the volume will result in 'occupied')
         :param volume_threshold_val: float [m^3] indicating the free volume above which the area is considered
         partially_occupied. (If both thresholds are None any entities filling the volume will result in 'occupied')
+        :param fit_supporting_entity: Fit or not fit the supporting entity
 
         """
         smach.StateMachine.__init__(self, outcomes=['empty', 'occupied',  'partially_occupied', 'failed'])
@@ -340,9 +349,12 @@ class CheckVolumeEmpty(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('INSPECT',
-                                   Inspect(robot, entity_des, searchArea=volume, objectIDsDes=seen_entities_des),
+                                   Inspect(robot, entity_des, searchArea=volume, objectIDsDes=seen_entities_des,
+                                           fit_supporting_entity=fit_supporting_entity),
                                    transitions={"done": "CHECK",
                                                 "failed": "failed"})
+
+            # UpdateEntity(uuid:"couch", pose:orig_pose)
 
             smach.StateMachine.add('CHECK',
                                    CheckEmpty(robot, seen_entities_des, entity_des, volume, volume_threshold_per,

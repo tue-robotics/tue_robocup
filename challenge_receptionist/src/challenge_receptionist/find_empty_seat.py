@@ -50,7 +50,7 @@ class FindEmptySeat(smach.StateMachine):
     That can be done with an Inspect and then query for any Entities inside that volume.
     If there are none, then the seat is empty
     """
-    def __init__(self, robot, seats_to_inspect, room, seat_is_for=None):
+    def __init__(self, robot, seats_to_inspect, room, fit_supporting_entity=False, seat_is_for=None ):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
@@ -74,7 +74,8 @@ class FindEmptySeat(smach.StateMachine):
                                                 'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of', None, 0.2),
+                                   CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of', None, 0.2,
+                                                    fit_supporting_entity=fit_supporting_entity),
                                    transitions={'occupied': 'ITERATE_NEXT_SEAT',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
