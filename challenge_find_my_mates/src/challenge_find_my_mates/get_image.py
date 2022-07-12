@@ -88,8 +88,8 @@ def get_image(robot, room_id, person_detections):
         person_detection_clusters = _get_clusters()
     except ValueError as e:
         rospy.logerr(e)
-        robot.speech.speak("Mates, where are you?", block=False)
-        return "retry"
+        robot.speech.speak("Mates, where are you? Something went wrong", block=False)
+        raise RuntimeError()
 
     for _ in range(3):
         floorplan = robot.ed.get_map([room_id])
@@ -97,7 +97,7 @@ def get_image(robot, room_id, person_detections):
             break
     else:
         rospy.logerr("Could not fetch map robot.ed.get_map([room_id])")
-        return "failed"
+        raise RuntimeError()
     floorplan_height, floorplan_width, _ = floorplan.map.shape
 
     bridge = CvBridge()
@@ -143,6 +143,11 @@ def get_image(robot, room_id, person_detections):
         '~/find_my_mates/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
     cv2.imwrite(filename, floorplan.map)
     rospy.loginfo(f"Wrote image to {filename}")
+
+    if len(person_detection_clusters) < 4:
+        rospy.logwarn(f"Did not find enough ppl in room: {len(person_detection_clusters)}")
+        robot.speech.speak("Mates, where are you?", block=False)
+        raise RuntimeError()
 
     return filename
 
