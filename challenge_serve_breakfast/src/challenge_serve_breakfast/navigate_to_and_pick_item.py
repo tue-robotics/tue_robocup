@@ -81,7 +81,7 @@ class PickItem(StateMachine):
             # Set output data
             user_data["item_picked"] = item_name
 
-            arm.send_joint_goal("carrying_pose")
+            arm.send_joint_goal("carrying_pose", timeout=0.)
 
             return "succeeded"
 
