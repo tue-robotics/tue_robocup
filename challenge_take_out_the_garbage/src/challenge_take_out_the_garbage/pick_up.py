@@ -158,31 +158,35 @@ class GrabTrash(smach.State):
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
-        # Make space for arm (So it doesn't hit the wall behind trashbin)
+        # Lift bag up (Should be enough for small trashbag)
         arm._arm._send_joint_trajectory([[0.85, -2.2, 0.0, -0.85, 0.0]])
-        self._robot.head.look_up()
-        self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.07, 0, 0, 2.0)
+        
+        # Next block can be commented out if trashbag is too large
+        # ---------------------------------------------------------
+        #self._robot.head.look_up()
+        #self._robot.head.wait_for_motion_done()
+        #self._robot.base.force_drive(-0.07, 0, 0, 2.0)
 
-        # Lift bag up
-        arm._arm._send_joint_trajectory(
-            [
-                [0.8, -2.2, 0.0, -0.85, 0.0],
-                [0.8, -1, 0.0, -0.85, 0.0]
-            ]
-        )
-        arm.wait_for_motion_done()
+        # # Lift bag up complex
+        # arm._arm._send_joint_trajectory(
+        #     [
+        #         [0.8, -2.2, 0.0, -0.85, 0.0],
+        #         [0.8, -1, 0.0, -0.85, 0.0]
+        #     ]
+        # )
+        # arm.wait_for_motion_done()
+        # ---------------------------------------------------------
 
         # Go back and pull back arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.1, 0, 0, 2.0)
-
+        self._robot.base.force_drive(-0.25, 0, 0, 2.0)
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
         self._robot.head.reset()
+        
         #
         # if weight_object < self._minimal_weight:
         #     return "failed"
