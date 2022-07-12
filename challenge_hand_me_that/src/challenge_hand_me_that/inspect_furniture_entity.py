@@ -50,7 +50,7 @@ class InspectFurniture(smach.StateMachine):
 
             smach.StateMachine.add("SAY_GO",
                                    Say(robot, "Let's go to the {furniture_object}",
-                                       furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                       furniture_object=ds.AttrDesignator(furniture_designator, "uuid",
                                                                           resolve_type=str)),
                                    transitions={"spoken": "INSPECT_FURNITURE"})
 
