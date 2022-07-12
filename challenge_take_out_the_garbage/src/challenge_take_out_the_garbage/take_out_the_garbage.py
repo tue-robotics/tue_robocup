@@ -36,14 +36,13 @@ class TakeOutGarbage(smach.StateMachine):
             trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
                                                          uuid=CHALLENGE_KNOWLEDGE.trashbin_id2,
                                                          name='trashbin_designator2')
-            next_state = "HELPER_WAYPOINT"
+            next_state = "PICK_UP_TRASH2"
             rospy.loginfo("There is a second trash bin")
         else:
             rospy.loginfo("There is no second trash bin")
             next_state = "ANNOUNCE_END"
 
         # drop_zone_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.drop_zone_id)
-        helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.helper_waypoint)
         end_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.end_waypoint)
         arm_designator = ds.UnoccupiedArmDesignator(
             robot,
@@ -66,7 +65,7 @@ class TakeOutGarbage(smach.StateMachine):
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
                                                                 arm_designator=arm_designator),
                                    transitions={"succeeded": "DROP_DOWN_TRASH",
-                                                "failed": "HELPER_WAYPOINT",
+                                                "failed": "PICK_UP_TRASH2",
                                                 "aborted": "ANNOUNCE_END"})
 
             smach.StateMachine.add("DROP_DOWN_TRASH",
@@ -80,14 +79,7 @@ class TakeOutGarbage(smach.StateMachine):
                                               block=False),
                                    transitions={'spoken': next_state})
 
-            if next_state == "HELPER_WAYPOINT":
-
-                smach.StateMachine.add("HELPER_WAYPOINT",
-                                       states.navigation.NavigateToWaypoint(robot=robot,
-                                                                 waypoint_designator=helper_waypoint_designator),
-                                       transitions={"arrived": "PICK_UP_TRASH2",
-                                                    "goal_not_defined": "PICK_UP_TRASH2",
-                                                    "unreachable": "PICK_UP_TRASH2"})
+            if next_state == "PICK_UP_TRASH2":
 
                 smach.StateMachine.add("PICK_UP_TRASH2", PickUpTrash(robot=robot,
                                                                      trashbin_designator=trashbin_designator2,
