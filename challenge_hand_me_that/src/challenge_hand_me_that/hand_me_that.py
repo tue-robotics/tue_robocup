@@ -22,6 +22,7 @@ challenge_knowledge = load_knowledge('challenge_hand_me_that')
 
 STARTING_POINT = challenge_knowledge.starting_point  # Location where the challenge starts
 HOME_LOCATION = challenge_knowledge.home_location  # Location where the robot will go and look at the operator
+POSSIBLE_FURNITURE = challenge_knowledge.all_possible_furniture
 
 
 class HandMeThat(smach.StateMachine):
@@ -54,7 +55,7 @@ class HandMeThat(smach.StateMachine):
 
             # The pre-work
             smach.StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
-                             GetFurnitureFromOperatorPose(robot, furniture_designator.writeable),
+                             GetFurnitureFromOperatorPose(robot, furniture_designator.writeable, POSSIBLE_FURNITURE),
                              transitions={'done': 'INSPECT_FURNITURE'})
 
             # Go to the furniture object that was pointing to see what's there
