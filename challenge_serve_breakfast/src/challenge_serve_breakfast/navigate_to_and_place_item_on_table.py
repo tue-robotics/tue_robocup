@@ -77,7 +77,6 @@ class PlaceItemOnTable(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, table_id)
             rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
             robot.head.look_down()
-            robot.head.wait_for_motion_done()
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return "done"
 
