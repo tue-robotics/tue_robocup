@@ -38,7 +38,7 @@ def setup_statemachine(robot):
                                             'unreachable': 'WAIT_SEARCH_POSE'})
 
         smach.StateMachine.add('WAIT_SEARCH_POSE',
-                               WaitTime(robot, 5),
+                               WaitTime(robot, 1),
                                transitions={'preempted': 'aborted',
                                             'waited': 'GO_TO_SEARCH_POSE'})
 
