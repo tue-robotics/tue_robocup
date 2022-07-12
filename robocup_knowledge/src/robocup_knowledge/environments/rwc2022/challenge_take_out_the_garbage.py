@@ -6,7 +6,7 @@ from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
 starting_point = "initial_pose"
-trashbin_id = "trashbin1"
-trashbin_id2 = "trashbin"
+trashbin_id = "bin"
+trashbin_id2 = "kitchen_bin"
 drop_zone_id = "take_out_garbage_drop_zone"
 end_waypoint = "initial_pose"
