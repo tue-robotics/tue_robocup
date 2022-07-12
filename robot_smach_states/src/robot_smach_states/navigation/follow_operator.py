@@ -354,7 +354,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.action = Marker.ADD
 
         for crumb in self._breadcrumbs:
-            breadcrumbs_msg.points.append(tf2_ros.convert(crumb.pose, PointStamped).point)
+            breadcrumbs_msg.points.append(tf2_ros.convert(crumb.pose, PoseStamped).pose.position)
 
         self._breadcrumb_pub.publish(breadcrumbs_msg)
 
