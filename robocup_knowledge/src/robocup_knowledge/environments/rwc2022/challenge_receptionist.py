@@ -5,9 +5,9 @@ operator_name = "john"
 
 operator_drink = "beer"
 
-starting_point = "starting_pose"
+starting_point = "entry_door"
 
-waypoint_door = {'id': 'entry_door', 'radius': 0.25}
+waypoint_door = {'id': 'entry_door', 'radius': 0.5}
 
 waypoint_livingroom = {'id': 'living_room', 'radius': 0.5}
 
