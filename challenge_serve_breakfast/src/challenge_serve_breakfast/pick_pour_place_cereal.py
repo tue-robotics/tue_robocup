@@ -30,7 +30,7 @@ class PickPourPlaceCereal(StateMachine):
                 arm.wait_for_motion_done()
 
         def send_gripper_goal(open_close_string, max_torque=0.1, wait_for_motion_done=True):
-            arm.gripper.send_goal(open_close_string, max_torque=max_torque)
+            arm.gripper.send_goal(open_close_string, max_torque=max_torque, timeout=0)
             if wait_for_motion_done:
                 rospy.sleep(1.0)  # Does not work with motion_done apparently
 
