@@ -104,7 +104,6 @@ class FindPeople(smach.State):
         self._query_entity_designator = query_entity_designator
 
     def execute(self, userdata=None):
-        look_angles = None
         person_label = None
 
         if self._properties:
@@ -138,7 +137,6 @@ class FindPeople(smach.State):
         i = 0
         attempts = 0
 
-        rate = rospy.Rate(2)
         while not rospy.is_shutdown() and attempts < self._attempts and (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
             if self.preempt_requested():
                 return 'failed'
@@ -172,7 +170,7 @@ class FindPeople(smach.State):
             robot_pose = self._robot.base.get_location()
             found_people = [p for p in found_people if (p.pose.frame.p - robot_pose.frame.p).Norm() <= self._look_distance]
 
-            rospy.loginfo("{} people remaining after distance < {}-check".format(len(list(found_people)), self._look_distance))
+            rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
 
             if self._properties:
                 for k, v in self._properties.items():
