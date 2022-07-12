@@ -40,11 +40,11 @@ class Perception(RobotPart):
         self._camera_cv = Condition()
         self._camera_last_image = None
 
-        self._annotate_srv = self.create_service_client(
+        self._annotate_srv = rospy.ServiceProxy(
             '/' + robot_name + '/people_recognition/face_recognition/annotate', Annotate)
-        self._recognize_srv = self.create_service_client(
+        self._recognize_srv = rospy.ServiceProxy(
             '/' + robot_name + '/people_recognition/face_recognition/recognize', Recognize)
-        self._clear_srv = self.create_service_client(
+        self._clear_srv = rospy.ServiceProxy(
             '/' + robot_name + '/people_recognition/face_recognition/clear', Empty)
 
         self._image_data = (None, None, None)
@@ -56,7 +56,8 @@ class Perception(RobotPart):
         self._person_recognition_3d_srv = \
             self.create_service_client('/' + robot_name + '/people_recognition/detect_people_3d', RecognizePeople3D)
 
-        self._locate_handle_client = self.create_simple_action_client('/' + robot_name + '/handle_locator/locate_handle', LocateDoorHandleAction)
+        self._locate_handle_client = actionlib.SimpleActionClient('/' + robot_name + '/handle_locator/locate_handle',
+                                                                  LocateDoorHandleAction)
 
     def close(self):
         pass
