@@ -36,7 +36,7 @@ class PickItem(StateMachine):
                 arm.wait_for_motion_done()
 
         def send_gripper_goal(open_close_string, max_torque=0.1):
-            arm.gripper.send_goal(open_close_string, max_torque=max_torque)
+            arm.gripper.send_goal(open_close_string, max_torque=max_torque, timeout=0.)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         def show_image(package_name, path_to_image_in_package):
@@ -53,6 +53,7 @@ class PickItem(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _rotate(_):
+            arm.gripper.send_goal("close", timeout=0.)
             vyaw = 0.5
             robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
             return "done"
