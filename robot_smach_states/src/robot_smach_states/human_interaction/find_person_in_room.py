@@ -124,7 +124,7 @@ class FindPerson(smach.State):
 
             if found_person:
                 rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.uuid, person_label,
-                                                                           VectorStamped(found_person.pose),
+                                                                           VectorStamped.from_framestamped(found_person.pose),
                                                                            block=False))
                 if self.speak_when_found:
                     self._robot.speech.speak("I think I found {}.".format(person_label, block=False))

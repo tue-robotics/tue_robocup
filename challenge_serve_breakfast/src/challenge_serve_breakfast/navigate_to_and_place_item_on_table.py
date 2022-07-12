@@ -58,6 +58,7 @@ class PlaceItemOnTable(StateMachine):
             robot.speech.speak(f"I am going to place the {item_name}", block=False)
 
             robot.head.look_up()
+            robot.head.wait_for_motion_done()
 
             send_joint_goal(JOINTS_PRE_PRE_PLACE)
 
@@ -91,6 +92,7 @@ class PlaceItemOnTable(StateMachine):
             rospy.loginfo("Dropping...")
             send_gripper_goal("open")
             robot.head.look_up()
+            robot.head.wait_for_motion_done()
 
             if item_name != "cereal_box":
                 rospy.loginfo("Retract...")
@@ -112,6 +114,13 @@ class PlaceItemOnTable(StateMachine):
 class NavigateToAndPlaceItemOnTable(StateMachine):
     def __init__(self, robot, table_id, table_close_navigation_area):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
+
+        item_frames = {k: item_vector_to_item_frame(v) for k, v in ITEM_VECTOR_DICT.items()}
+        item_poses = {k: item_frame_to_pose(v, table_id) for k, v in item_frames.items()}
+
+        marker_array_pub = rospy.Publisher('/markers', visualization_msgs.msg.MarkerArray, queue_size=1, latch=True)
+
+        _publish_item_poses(marker_array_pub, item_poses)
 
         table = EdEntityDesignator(robot=robot, uuid=table_id)
 
@@ -196,16 +205,7 @@ if __name__ == "__main__":
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
 
-    entity_id = "dinner_table"
-
-    item_frames = {k: item_vector_to_item_frame(v) for k, v in ITEM_VECTOR_DICT.items()}
-    item_poses = {k: item_frame_to_pose(v, entity_id) for k, v in item_frames.items()}
-
-    marker_array_pub = rospy.Publisher('/markers', visualization_msgs.msg.MarkerArray, queue_size=1, latch=True)
-
-    _publish_item_poses(marker_array_pub, item_poses)
-
     robot_instance = get_robot("hero")
-    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, entity_id, "in_front_of")
+    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, "dinner_table", "in_front_of")
     state_machine.userdata["item_picked"] = sys.argv[1]
     state_machine.execute()

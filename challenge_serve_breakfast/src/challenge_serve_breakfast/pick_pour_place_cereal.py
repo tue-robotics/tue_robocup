@@ -80,6 +80,7 @@ class PickPourPlaceCereal(StateMachine):
             send_joint_goal(JOINTS_PLACE_HORIZONTAL)
             send_gripper_goal("open")
             robot.head.look_up()
+            robot.head.wait_for_motion_done()
 
             rospy.loginfo("Retract...")
             send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
