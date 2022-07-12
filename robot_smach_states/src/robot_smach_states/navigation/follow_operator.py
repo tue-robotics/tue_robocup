@@ -11,10 +11,6 @@ import smach
 import rospy
 import sys
 import tf2_ros
-# noinspection PyUnresolvedReferences
-import tf2_geometry_msgs
-# noinspection PyUnresolvedReferences
-import tf2_pykdl_ros
 from visualization_msgs.msg import Marker
 
 # TU/e Robotics
@@ -35,7 +31,7 @@ def frame_stampeds_to_pose_stampeds(frame_stampeds):
 
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0,
-                 start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=60, lost_distance=0.8,
+                 start_timeout=10, operator_timeout=20, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
                  operator_standing_still_timeout=3.0, replan=False):
         """ Constructor
@@ -48,7 +44,6 @@ class FollowOperator(smach.State):
         :param timeout:
         :param start_timeout:
         :param operator_timeout:
-        :param distance_threshold:
         :param lost_timeout: How long to look for the operator when we lost him/her?
         :param lost_distance:
         :param operator_id_des:
@@ -303,7 +298,7 @@ class FollowOperator(smach.State):
             # If the operator is still tracked, it is also the last_operator
             self._last_operator = self._operator
 
-            operator_pos = geometry_msgs.msg.PointStamped()
+            operator_pos = PointStamped()
             operator_pos.header.stamp = rospy.get_rostime()
             operator_pos.header.frame_id = self._operator_id
             operator_pos.point.x = 0.0
@@ -321,7 +316,7 @@ class FollowOperator(smach.State):
                     # If the operator is still tracked, it is also the last_operator
                     self._last_operator = self._operator
 
-                    operator_pos = geometry_msgs.msg.PointStamped()
+                    operator_pos = PointStamped()
                     operator_pos.header.stamp = rospy.get_rostime()
                     operator_pos.header.frame_id = self._operator_id
                     operator_pos.point.x = 0.0
@@ -451,7 +446,7 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
 
     def _recover_operator(self):
-        rospy.loginfo( "Trying to recover the operator")
+        rospy.loginfo("Trying to recover the operator")
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
