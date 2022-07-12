@@ -112,9 +112,9 @@ class FollowOperator(smach.State):
                 # Update the last pose
                 self._last_operator_fs = operator_current_fs
             else:
-                rospy.loginfo("Operator is standing still for %f seconds" % (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec())
+                rospy.loginfo("Operator is standing still for %f seconds" % (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec())
                 # Check whether we passed the timeout
-                if (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec() > timeout:
+                if (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec() > timeout:
                     return True
         return False
 
@@ -291,7 +291,7 @@ class FollowOperator(smach.State):
             self._operator = None
 
         if self._operator:
-            if (rospy.Time.now().to_sec() - self._operator.last_update_time) > self._period:
+            if (rospy.Time.now() - self._operator.last_update_time).to_sec() > self._period:
                 self._robot.speech.speak("Not so fast!")
 
             # If the operator is still tracked, it is also the last_operator
