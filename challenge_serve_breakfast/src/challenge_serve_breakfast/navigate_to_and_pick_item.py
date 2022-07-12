@@ -53,6 +53,7 @@ class PickItem(StateMachine):
         @cb_interface(outcomes=["done"])
         def _rotate(_):
             arm.gripper.send_goal("close", timeout=0.)
+            robot.head.look_up()
             vyaw = 0.5
             robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
             return "done"
@@ -76,7 +77,8 @@ class PickItem(StateMachine):
             send_gripper_goal("open")
             rospy.sleep(5.0)
             robot.speech.speak("Thanks for that!", block=False)
-            send_gripper_goal("close", max_torque=0.7)
+            send_gripper_goal("close", max_torque=0.6)
+            robot.head.reset()
 
             # Set output data
             user_data["item_picked"] = item_name
