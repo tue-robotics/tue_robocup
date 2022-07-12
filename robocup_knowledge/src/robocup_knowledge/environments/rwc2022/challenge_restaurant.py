@@ -23,10 +23,11 @@ if __name__ == "__main__":
     from robot_skills.api import Api
 
     rospy.init_node('blaat')
-    a = Api("", None)
+    a = Api("hero", None)
     rospy.sleep(rospy.Duration(0.5))
-    while True:
-        result = a.query("blaat", order_grammar, "O")
-        import ipdb;
-
-        ipdb.set_trace()
+    while not rospy.is_shutdown():
+        try:
+            result = a.query("blaat", order_grammar, "O")
+        except:
+            pass
+        rospy.sleep(rospy.Duration(3.0))
