@@ -138,7 +138,7 @@ class GrabTrash(smach.State):
 
             # Go down and grab
             try:
-                arm.move_down_until_force_sensor_edge_up(timeout=5)
+                arm.move_down_until_force_sensor_edge_up(timeout=5, distance_move_down=0.3)
             except TimeOutException:
                 rospy.logwarn("No forces were felt, however no action is taken!")
                 pass
