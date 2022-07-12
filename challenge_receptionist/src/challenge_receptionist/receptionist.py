@@ -104,7 +104,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'aborted': 'HANDLE_GUEST_2'})
 
             smach.StateMachine.add('HANDLE_GUEST_2',
-                                   HandleSingleGuest(robot, assume_john=False, default_name='Laura',
+                                   HandleSingleGuest(robot, assume_john=False, default_name='Max',
                                                      default_drink=HMIResult('water', {'drink': 'water'})),
                                    transitions={'succeeded': 'SAY_DONE',
                                                 'aborted': 'SAY_DONE'})

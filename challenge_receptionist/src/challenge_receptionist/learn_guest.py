@@ -15,9 +15,8 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class DrinkNotHeard(smach.State):
-    def __init__(self, robot_name, guest_drink_des, default_drink=HMIResult('coke', {'drink': 'coke'})):
+    def __init__(self, guest_drink_des, default_drink=HMIResult('coke', {'drink': 'coke'})):
         smach.State.__init__(self, outcomes=["done"])
-        self.robot = robot_name
         self.guest_drink_des = guest_drink_des
         self.default_drink = default_drink
 
@@ -151,7 +150,7 @@ class LearnGuest(smach.StateMachine):
                                                 'no_result': 'DEFAULT_DRINK'})
 
             smach.StateMachine.add('DEFAULT_DRINK',
-                                   DrinkNotHeard(robot, guest_drink_des.writeable, default_drink=default_drink),
+                                   DrinkNotHeard(guest_drink_des.writeable, default_drink=default_drink),
                                    transitions={'done': 'ASK_DRINK_FAILED'})
 
             smach.StateMachine.add('ASK_DRINK_FAILED',
