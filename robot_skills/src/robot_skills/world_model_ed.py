@@ -400,13 +400,14 @@ class ED(RobotPart):
     #                                  KINECT INTEGRATION AND PERCEPTION
     # ----------------------------------------------------------------------------------------------------
 
-    def update_kinect(self, area_description="", background_padding=0):
+    def update_kinect(self, area_description="", background_padding=0, fit_supporting_entity=True):
         """
         Update ED based on kinect (depth) images
 
         :param area_description: An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
         :param background_padding: The maximum distance to which kinect data points are associated to existing objects (in meters).
                Or, in other words: the padding that is added to existing objects before they are removed from the point cloud
+        :param fit_supporting_entity: Fit or not fit the supporting entity
         :return: Update result
         """
         # Check the area description
@@ -416,7 +417,9 @@ class ED(RobotPart):
         # Save the image (logging)
         self.save_image(path_suffix=area_description.replace(" ", "_"))
 
-        res = self._ed_kinect_update_srv(area_description=area_description, background_padding=background_padding)
+        res = self._ed_kinect_update_srv(area_description=area_description,
+                                         background_padding=background_padding,
+                                         fit_supporting_entity=fit_supporting_entity)
         if res.error_msg:
             rospy.logerr("Could not segment objects: %s" % res.error_msg)
 
