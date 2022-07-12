@@ -159,7 +159,7 @@ class FollowOperator(smach.State):
         self._robot.head.look_at_standing_person()
 
         if self._operator_id:
-            operator = self._robot.ed.get_entity( id=self._operator_id )
+            operator = self._robot.ed.get_entity(uuid=self._operator_id)
         else:
             operator = None
 
@@ -273,7 +273,7 @@ class FollowOperator(smach.State):
             rospy.loginfo("Trying to register operator again")
             self._robot.speech.speak("Oops, let's try this again...", block=False)
             self._register_operator()
-            self._operator = self._robot.ed.get_entity( id=self._operator_id )
+            self._operator = self._robot.ed.get_entity(uuid=self._operator_id )
 
         if self._operator:
             self._last_operator = self._operator
@@ -286,7 +286,7 @@ class FollowOperator(smach.State):
         distance to the last operator
         """
         if self._operator_id:
-            self._operator = self._robot.ed.get_entity( id=self._operator_id )
+            self._operator = self._robot.ed.get_entity(uuid=self._operator_id)
         else:
             self._operator = None
 
