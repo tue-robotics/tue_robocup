@@ -49,6 +49,7 @@ class PickPourPlaceCereal(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, table_id)
             rospy.loginfo("Moving to pouring pose at {}".format(goal_pose))
             robot.head.look_down()
+            robot.head.wait_for_motion_done()
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return "done"
 
@@ -70,6 +71,7 @@ class PickPourPlaceCereal(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, table_id)
             rospy.loginfo("Moving to place pose at {}".format(goal_pose))
             robot.head.look_down()
+            robot.head.wait_for_motion_done()
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return "done"
 
@@ -80,6 +82,7 @@ class PickPourPlaceCereal(StateMachine):
             send_joint_goal(JOINTS_PLACE_HORIZONTAL)
             send_gripper_goal("open")
             robot.head.look_up()
+            robot.head.wait_for_motion_done()
 
             rospy.loginfo("Retract...")
             send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
