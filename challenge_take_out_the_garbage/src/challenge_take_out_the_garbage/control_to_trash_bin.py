@@ -11,6 +11,10 @@ from tf_conversions import transformations
 
 
 class ControlToTrashBin(StateMachine):
+    """
+    Positions the robot to the trashbin and aligns arm
+    """
+    
     def __init__(self, robot, trashbin_id, radius, yaw_offset):
         StateMachine.__init__(self, outcomes=['done'])
 
