@@ -24,7 +24,7 @@ class TopologicalPlanner(RobotPart):
         super(TopologicalPlanner, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
         # Topological action planner
-        self._planner_srv = self.create_service_client(
+        self._planner_srv = rospy.ServiceProxy(
             "/" + self.robot_name + "/topological_action_planner/get_plan",
             Plan,
         )
