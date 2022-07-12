@@ -33,7 +33,7 @@ class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2,
                  start_timeout=10, operator_timeout=20, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
-                 operator_standing_still_timeout=3.0, replan=False):
+                 operator_standing_still_timeout=3.0, replan=False, update_period=0.5):
         """ Constructor
 
         :param robot: robot object
@@ -49,6 +49,7 @@ class FollowOperator(smach.State):
         :param standing_still_timeout:
         :param operator_standing_still_timeout:
         :param replan:
+        :param update_period: Time period for tracking updates in seconds
         """
         smach.State.__init__(self, outcomes=["stopped", 'lost_operator', "no_operator"])
         self._robot = robot
@@ -88,7 +89,7 @@ class FollowOperator(smach.State):
         self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
         self._replan_attempts = 0
         self._max_replan_attempts = 3
-        self._period = 0.5
+        self._period = update_period
 
     def _operator_standing_still_for_x_seconds(self, timeout):
         """
@@ -336,6 +337,7 @@ class FollowOperator(smach.State):
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
                 self._operator_id = None
+                rospy.loginfo(f"Operator ID is reset to {self._operator_id}")
                 self._robot.speech.speak("Stop! I lost you! Until I find you again, please wait there.", block=False)
             return False
 
@@ -354,7 +356,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.action = Marker.ADD
 
         for crumb in self._breadcrumbs:
-            breadcrumbs_msg.points.append(tf2_ros.convert(crumb.pose, PointStamped).point)
+            breadcrumbs_msg.points.append(tf2_ros.convert(crumb.pose, PoseStamped).pose.position)
 
         self._breadcrumb_pub.publish(breadcrumbs_msg)
 
@@ -434,7 +436,7 @@ class FollowOperator(smach.State):
         if len(kdl_plan) > cutoff:
             del kdl_plan[-cutoff:]
 
-        ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+        ros_plan = [*frame_stampeds_to_pose_stampeds(kdl_plan)]
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             rospy.loginfo("Breadcrumb plan is blocked, removing blocked points")
@@ -507,7 +509,7 @@ class FollowOperator(smach.State):
                 if recovered_operator:
                     rospy.loginfo("Found one!")
                     self._operator_id = recovered_operator.uuid
-                    rospy.loginfo("Recovered operator id: %s" % self._operator_id)
+                    rospy.loginfo(f"Recovered operator id: {self._operator_id}")
                     self._operator = recovered_operator
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
                     self._robot.head.close()
@@ -655,6 +657,7 @@ class FollowOperator(smach.State):
             operator_id = self._operator_id_des.resolve()
             if operator_id:
                 self._operator_id = operator_id
+                rospy.loginfo(f"Operator ID is: {self._operator_id}")
 
         self._robot.head.close()
 
