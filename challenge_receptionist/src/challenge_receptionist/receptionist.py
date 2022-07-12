@@ -18,7 +18,7 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class HandleSingleGuest(smach.StateMachine):
-    def __init__(self, robot, assume_john):
+    def __init__(self, robot, assume_john, default_name, default_drink):
         """
 
         :param robot:
@@ -40,13 +40,14 @@ class HandleSingleGuest(smach.StateMachine):
                                               door_waypoint,
                                               guest_entity_des,
                                               guest_name_des,
-                                              guest_drink_des),
+                                              guest_drink_des, default_name, default_drink),
                                    transitions={'succeeded': 'SAY_GOTO_OPERATOR',
                                                 'aborted': 'SAY_GOTO_OPERATOR',
                                                 'failed': 'SAY_GOTO_OPERATOR'})
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
-                                   Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. Please follow me"],
+                                   Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. "
+                                               "Please follow me closely until i'll point you a seat"],
                                                        name=guest_name_des, drink=guest_drinkname_des,
                                                        block=False,
                                                        look_at_standing_person=True),
@@ -97,12 +98,14 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'error': 'HANDLE_GUEST_1'})
 
             smach.StateMachine.add('HANDLE_GUEST_1',
-                                   HandleSingleGuest(robot, assume_john=True),
+                                   HandleSingleGuest(robot, assume_john=True, default_name='Ava',
+                                                     default_drink=HMIResult('coke', {'drink': 'coke'})),
                                    transitions={'succeeded': 'HANDLE_GUEST_2',
                                                 'aborted': 'HANDLE_GUEST_2'})
 
             smach.StateMachine.add('HANDLE_GUEST_2',
-                                   HandleSingleGuest(robot, assume_john=False),
+                                   HandleSingleGuest(robot, assume_john=False, default_name='Laura',
+                                                     default_drink=HMIResult('water', {'drink': 'water'})),
                                    transitions={'succeeded': 'SAY_DONE',
                                                 'aborted': 'SAY_DONE'})
 
