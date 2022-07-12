@@ -3,7 +3,6 @@ import PyKDL as kdl
 import rospy
 from pykdl_ros import FrameStamped
 from ed.shape import RightPrism
-from ed.entity import PersonProperties
 from smach import StateMachine, cb_interface, CBState
 from ed.entity import Entity
 from robocup_knowledge import load_knowledge
@@ -11,7 +10,6 @@ from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
 from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFromOperatorPose
 from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
-from robot_smach_states.util.designators import analyse_designators
 import robot_smach_states.util.designators as ds
 from robot_skills.arm import arms
 
