@@ -11,25 +11,19 @@ import time
 from collections import deque
 from datetime import datetime
 
-import tf2_ros
-from geometry_msgs.msg import PointStamped
-from pykdl_ros import VectorStamped
+import numpy as np
+import rospy
 # noinspection PyUnresolvedReferences
 import tf2_geometry_msgs
 # noinspection PyUnresolvedReferences
 import tf2_pykdl_ros
-import cv2
-from cv_bridge import CvBridge
-import numpy as np
-import rospy
-from smach import StateMachine, cb_interface, CBState
+import tf2_ros
+from geometry_msgs.msg import PointStamped
 
+from challenge_find_my_mates.get_image import get_image
+from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
-
-from image_recognition_util.image_writer import color_map
-
-from ed.entity import Entity
-from challenge_find_my_mates.cluster import cluster_people
+from smach import StateMachine, cb_interface, CBState
 
 NUM_LOOKS = 2
 PERSON_DETECTIONS = []
@@ -92,7 +86,8 @@ class LocatePeople(StateMachine):
                                     except Exception as e:
                                         rospy.logerr(f"Failed to transform valid person detection to map frame: {e}")
 
-                        rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now, len(PERSON_DETECTIONS))
+                        rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now,
+                                      len(PERSON_DETECTIONS))
 
             rospy.loginfo("Detected %d persons", len(PERSON_DETECTIONS))
 
@@ -104,92 +99,17 @@ class LocatePeople(StateMachine):
 
             try:
                 os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
-                with open(os.path.expanduser('~/find_my_mates/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'wb') as f:
+                with open(os.path.expanduser(
+                    '~/find_my_mates/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))),
+                    'wb') as f:
                     pickle.dump(PERSON_DETECTIONS, f)
             except Exception:
                 pass
 
             rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
 
-            room_entity = robot.ed.get_entity(uuid=room_id)  # type: Entity
-            if room_entity is None:
-                msg = f"Could not find room: '{room_id}"
-                rospy.logerr(msg)
-                raise ValueError(msg)
-
-            padding = -0.3
-
-            def _get_clusters():
-                in_room_detections = [d for d in PERSON_DETECTIONS if room_entity.in_volume(d['map_vs'], "in", padding)]
-
-                rospy.loginfo("%d in room before clustering", len(in_room_detections))
-
-                center_point = room_entity.pose.frame.p
-                clusters = cluster_people(in_room_detections, np.array([center_point.x, center_point.y]))
-
-                return clusters
-
-            # filter in room and perform clustering until we have 4 options
-            try:
-                person_detection_clusters = _get_clusters()
-            except ValueError as e:
-                rospy.logerr(e)
-                robot.speech.speak("Mates, where are you?", block=False)
-                return "retry"
-
-            for _ in range(3):
-                floorplan = robot.ed.get_map([room_id])
-                if floorplan is not None:
-                    break
-            else:
-                return "failed"
-            floorplan_height, floorplan_width, _ = floorplan.map.shape
-
-            bridge = CvBridge()
-            c_map = color_map(n=len(person_detection_clusters), normalized=True)
-            for i, person_detection in enumerate(person_detection_clusters):
-                image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
-                roi = person_detection['person_detection'].face.roi
-                roi_image = image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
-
-                desired_height = 150
-                height, width, channel = roi_image.shape
-                ratio = float(height) / float(desired_height)
-                calculated_width = int(float(width) / ratio)
-                resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
-
-                vs_image_frame = floorplan.map_pose.frame.Inverse() * person_detection['map_vs'].vector
-
-                px = int(vs_image_frame.x() * floorplan.pixels_per_meter_width)
-                py = int(vs_image_frame.y() * floorplan.pixels_per_meter_height)
-
-                cv2.circle(floorplan.map, (px, py), 3, (0, 0, 255), 5)
-
-                try:
-                    px_image = min(max(0, int(px - calculated_width / 2)), floorplan_width - calculated_width - 1)
-                    py_image = min(max(0, int(py - desired_height / 2)), floorplan_height - desired_height - 1)
-
-                    if px_image >= 0 and py_image >= 0:
-                        # Could not broadcast input array from shape (150, 150, 3) into shape (106, 150, 3)
-                        floorplan.map[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
-                        cv2.rectangle(floorplan.map, (px_image, py_image),
-                                      (px_image + calculated_width, py_image + desired_height),
-                                      (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
-                    else:
-                        rospy.logerr("bound error")
-                except Exception as e:
-                    rospy.logerr("Drawing image roi failed: {}".format(e))
-
-                label = "female" if person_detection['person_detection'].gender else "male"
-                label += ", " + str(person_detection['person_detection'].age)
-                cv2.putText(floorplan.map, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
-
-                # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
-
-            os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
-            filename = os.path.expanduser('~/find_my_mates/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
-            cv2.imwrite(filename, floorplan.map)
-            robot.hmi.show_image(filename, 120)
+            image_filename = get_image(robot, room_id, PERSON_DETECTIONS)
+            robot.hmi.show_image(image_filename, 120)
 
             return "done"
 
