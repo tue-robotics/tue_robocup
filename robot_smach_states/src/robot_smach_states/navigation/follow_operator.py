@@ -33,7 +33,7 @@ class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2,
                  start_timeout=10, operator_timeout=20, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
-                 operator_standing_still_timeout=3.0, replan=False):
+                 operator_standing_still_timeout=3.0, replan=False, update_period=0.5):
         """ Constructor
 
         :param robot: robot object
@@ -49,6 +49,7 @@ class FollowOperator(smach.State):
         :param standing_still_timeout:
         :param operator_standing_still_timeout:
         :param replan:
+        :param update_period: Time period for tracking updates in seconds
         """
         smach.State.__init__(self, outcomes=["stopped", 'lost_operator', "no_operator"])
         self._robot = robot
@@ -88,7 +89,7 @@ class FollowOperator(smach.State):
         self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
         self._replan_attempts = 0
         self._max_replan_attempts = 3
-        self._period = 0.5
+        self._period = update_period
 
     def _operator_standing_still_for_x_seconds(self, timeout):
         """
