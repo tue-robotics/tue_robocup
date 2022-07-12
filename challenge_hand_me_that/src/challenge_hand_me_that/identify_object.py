@@ -48,7 +48,7 @@ class PointAt(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped(0, 0, 0, rospy.Time.now(), point_entity.uuid)
+        goal_map = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), point_entity.uuid)
 
         try:
             # Transform to base link frame
@@ -69,7 +69,7 @@ class PointAt(smach.State):
         rospy.sleep(0.5)
 
         # Resolve the entity again because we want the latest pose
-        updated_point_entity = self.point_entity_designator.resolve()
+        updated_point_entity = self.point_entity_designator.resolve()  # type: Entity
 
         rospy.loginfo("ID to update: {0}".format(point_entity.uuid))
         if not updated_point_entity:
@@ -82,6 +82,7 @@ class PointAt(smach.State):
                            updated_point_entity.pose.frame.p.y() - point_entity.pose.frame.p.y(),
                            updated_point_entity.pose.frame.p.z() - point_entity.pose.frame.p.z()))
             point_entity = updated_point_entity
+            point_entity._last_update_time = rospy.Time()  # Just the most recent time ToDo: Hack
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
@@ -90,8 +91,8 @@ class PointAt(smach.State):
         # Grasp
         rospy.loginfo('Start pointing')
         for x_offset in [-0.15, 0.0]:  # Hack because Hero does not pre-grasp reliably
-            _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), rospy.Time.now(),
-                                    goal_bl.frame_id)
+            _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), rospy.Time(),
+                                    goal_bl.header.frame_id)
             if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.uuid]):
                 self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
                 rospy.logerr('Grasp failed')

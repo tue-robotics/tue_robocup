@@ -13,6 +13,8 @@ from robot_skills import get_robot, robot
 from robot_smach_states.util.designators import is_writeable, VariableDesignator
 from smach import StateMachine, cb_interface, CBState
 from std_msgs.msg import Header
+from ed_sensor_integration_msgs.srv import RayTraceResponse
+from people_recognition_msgs.msg import Person3D
 
 
 OPERATOR = None
@@ -77,6 +79,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
                 return True
 
+            # Shortcut people recognition; For testing
+            OPERATOR = Person3D()
+            OPERATOR.header.frame_id = "map"
+            OPERATOR.position.z = 5
+
             while not rospy.is_shutdown() and OPERATOR is None:
                 persons = robot.perception.detect_person_3d(*_show_view())
                 if persons:
@@ -106,7 +113,14 @@ class GetFurnitureFromOperatorPose(StateMachine):
                             ),
                             pose=OPERATOR.pointing_pose
                         ), "map")
-                        result = robot.ed.ray_trace(map_pose)
+                        # result = robot.ed.ray_trace(map_pose)
+                        # For testing
+                        result = RayTraceResponse()
+                        result.entity_id = "desk"
+                        result.intersection_point.header.frame_id = "map"
+                        result.intersection_point.point.x = 3.73
+                        result.intersection_point.point.y = 6.05
+                        result.intersection_point.point.z = 0.75
                     except Exception as e:
                         rospy.logerr("Could not get ray trace from closest person: {}".format(e))
                     rospy.sleep(1.)
@@ -122,11 +136,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     robot.speech.speak("That's not furniture, you dummy.")
                     rospy.sleep(1)
                     OPERATOR = None
-                    robot.get_arm().send_joint_goal("reset")
+                    robot.get_arm(required_goals=["reset"]).send_joint_goal("reset")
                     return 'failed'
 
             robot.speech.speak("You pointed at %s" % final_result.entity_id)
-            robot.get_arm().send_joint_goal("reset")
+            robot.get_arm(required_goals=["reset"]).send_joint_goal("reset")
             # Fill the designator and user data the furniture inspection
             furniture_designator.write(robot.ed.get_entity(final_result.entity_id))
             user_data['laser_dot'] = result.intersection_point

@@ -1,4 +1,4 @@
-starting_point = "initial_pose"
+starting_point = "hand_me_that_home_location"  # "initial_pose"
 home_location = "hand_me_that_home_location"
 
 all_possible_furniture = ['kitchen_cabinet',
@@ -7,7 +7,7 @@ all_possible_furniture = ['kitchen_cabinet',
                           'sink',
                           'dishwasher',
                           'desk',
-                          'coffee_table',
+                          'salon_table',
                           # 'couch',
                           # 'armchair',
                           'display_cabinet',
