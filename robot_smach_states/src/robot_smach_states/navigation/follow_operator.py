@@ -182,7 +182,7 @@ class FollowOperator(smach.State):
                     if answer.sentence == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(
                             radius=0.5,
-                            center_point=VectorStamped.from_xyz(1, 0, 1, rospy.Time.now(), self._robot.base_link_frame))
+                            center_point=VectorStamped.from_xyz(1, 0, 1, rospy.Time(0), self._robot.base_link_frame))
                         rospy.loginfo("Operator: {op}".format(op=operator))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
@@ -208,7 +208,7 @@ class FollowOperator(smach.State):
             else:
                 operator = self._robot.ed.get_closest_laser_entity(
                     radius=1,
-                    center_point=VectorStamped(1.5, 0, 1, rospy.Time.now(), self._robot.base_link_frame))
+                    center_point=VectorStamped(1.5, 0, 1, rospy.Time(0), self._robot.base_link_frame))
                 if not operator:
                     rospy.sleep(1)
 
@@ -257,14 +257,14 @@ class FollowOperator(smach.State):
         """This only happens when the operator was just registered, and never tracked"""
         rospy.loginfo("Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1")
         self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time.now(), self._robot.base_link_frame))
+            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(0), self._robot.base_link_frame))
         if self._operator:
             return True
         else:
             rospy.loginfo("Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1")
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                      center_point=VectorStamped.from_xyz(
-                                                                         1.5, 0, 1, rospy.Time.now(),
+                                                                         1.5, 0, 1, rospy.Time(0),
                                                                          self._robot.base_link_frame))
 
         if self._operator:
