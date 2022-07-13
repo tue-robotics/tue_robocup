@@ -1,18 +1,17 @@
 import PyKDL
 from std_msgs.msg import ColorRGBA
 
+ITEMS_PLATE = ["plate"]
+ITEMS_MUG_BOWL = ["mug", "bowl"]
 ITEMS_CUTLERY = ["knife", "spoon"]
-ITEM_MUG = "mug"
-ITEM_PLATE = "plate"
-ITEM_BOWL = "bowl"
-ITEMS = ITEMS_CUTLERY + [ITEM_PLATE] + [ITEM_MUG] + [ITEM_BOWL]
+ITEMS = ITEMS_PLATE + ITEMS_MUG_BOWL + ITEMS_CUTLERY
 
 ITEM_VECTOR_DICT = {
-    "knife": PyKDL.Vector(-0.75, -0.15, 0),
-    "spoon": PyKDL.Vector(-0.75, -0.04, 0),
-    "mug": PyKDL.Vector(-0.75, 0.3, 0),
-    "plate": PyKDL.Vector(-0.75, -0.3, 0),
-    "bowl": PyKDL.Vector(-0.75, 0.3, 0),
+    "knife": PyKDL.Vector(-0.66, -0.285, 0),
+    "spoon": PyKDL.Vector(-0.66, -0.285, 0),
+    "mug": PyKDL.Vector(-0.4, -0.285, 0),
+    "plate": PyKDL.Vector(-0.4, 0.07, 0),
+    "bowl": PyKDL.Vector(-0.65, 0.07, 0),
 }
 
 ITEM_COLOR_DICT = {
@@ -51,15 +50,12 @@ JOINTS_HANDOVER = [0, -0.3, 0, 0.3, 1.57]
 
 JOINTS_PRE_PRE_PLACE = [0.69, 0, 0, -0.7, 0]
 
-JOINTS_PRE_PLACE_CUTLERY = [0.8, -1.2, 0, 0, 0]
-JOINTS_PRE_PLACE_MUG = [0.8, -1.2, 0, 0, 0]
-JOINTS_PRE_PLACE_PLATE = [0.8, -1.2, 0, 0, 0]
-JOINTS_PRE_PLACE_BOWL = [0.8, -1.2, 0, 0, 0]
+JOINTS_PRE_PLACE = [0.8, -1.57, 0, -1.57, 0]
 
-JOINTS_PLACE_CUTLERY = [0.65, -1.75, 0, 0, 0]
-JOINTS_PLACE_MUG = [0.65, -1.75, 0, 0, 0]
-JOINTS_PLACE_PLATE = [0.65, -1.75, 0, 0, 0]
-JOINTS_PLACE_BOWL = [0.8, -1.2, 0, 0, 0]
+LAST_JOINTS_PLACE = [-1.57, 0, -1.57, 0]
+JOINTS_PLACE_PLATE = [0.57] + LAST_JOINTS_PLACE
+JOINTS_PLACE_MUG_BOWL = [0.4] + LAST_JOINTS_PLACE
+JOINTS_PLACE_CUTLERY = [0.5] + LAST_JOINTS_PLACE
 
 JOINTS_RETRACT = [0.7, 0, 0, -1.57, 0]
 
