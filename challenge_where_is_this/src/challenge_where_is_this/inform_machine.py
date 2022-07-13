@@ -19,6 +19,7 @@ from robot_smach_states.utility import WaitTime
 from .simulation import mock_detect_operator
 
 if is_sim_mode():
+    rospy.loginfo("In Sim Mode. Using mock_detect_operator for detecting operator behind the robot")
     guidance._detect_operator_behind_robot = mock_detect_operator
 
 # Load and extract knowledge here so that stuff fails on startup if not defined
