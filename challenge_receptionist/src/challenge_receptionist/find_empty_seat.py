@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+import random
+
 import rospy
 from ed.entity import Entity
 import robot_smach_states as states
@@ -56,7 +58,9 @@ class FindEmptySeat(smach.StateMachine):
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
         #TODO eventually get this into the robocup knowledge and make it generic such that it is changable per seat
-        volumes = ds.Designator(['on_top_of_l', 'on_top_of_m', 'on_top_of_r'])
+        volumes = ['on_top_of_l', 'on_top_of_m', 'on_top_of_r']
+        random.shuffle(volumes)
+        volumes = ds.Designator(volumes)
         volumes_des = ds.VariableDesignator(resolve_type=str)
         #todo assert?
         if not volumes:
