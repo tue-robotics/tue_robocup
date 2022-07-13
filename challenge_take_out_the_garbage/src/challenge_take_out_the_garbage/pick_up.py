@@ -106,19 +106,27 @@ class GrabTrash(smach.State):
         try_current = 0
 
         measure_force = MeasureForce(self._robot)
+
         # To be able to determine the weight of the object the difference between the default weight and the weight with
         # the object needs to be taken. Note that initially the weight with the object is set to the default weight to
         # be able to enter the while loop below.
+
+        # FORCE SENSOR ---------------------------------------------------------
         arm_weight = measure_force.get_force()
         arm_with_object_weight = arm_weight
         weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
+        # ----------------------------------------------------------------------
 
+        # FORCE SENSOR ---------------------------------------------------------
         while weight_object < self._minimal_weight and try_current < self._try_num:
+            # ----------------------------------------------------------------------
             if try_current == 0:
                 self._robot.speech.speak("Let me try to pick up the garbage")
             else:
                 self._robot.speech.speak("I failed to pick up the trash, let me try again")
+                # FORCE SENSOR ---------------------------------------------------------
                 rospy.loginfo("The weight I felt is %s", weight_object)
+                # ----------------------------------------------------------------------
             try_current += 1
 
             # This opening and closing is to make sure that the gripper is empty and closed before measuring the forces
@@ -129,23 +137,21 @@ class GrabTrash(smach.State):
             # arm.gripper.send_goal('close', max_torque=1.0)
             # arm.wait_for_motion_done()
 
+            # FORCE SENSOR ---------------------------------------------------------
             arm_weight = measure_force.get_force()
             rospy.loginfo("Empty weight %s", arm_weight)
+            # ----------------------------------------------------------------------
 
-            # Open gripper
             arm.gripper.send_goal('open')
             arm.wait_for_motion_done()
 
-            # Go down and grab
+            # Go down 35cm and grab
             try:
                 arm.move_down_until_force_sensor_edge_up(timeout=5, distance_move_down=0.35)
             except TimeOutException:
                 rospy.logwarn("No forces were felt, however no action is taken!")
                 pass
 
-            # self._robot.torso.send_goal("grab_trash_down")
-            # self._robot.torso.wait_for_motion_done()
-            # rospy.sleep(3)
             arm.gripper.send_goal('close', max_torque=1.0)
             arm.wait_for_motion_done()
 
@@ -153,19 +159,21 @@ class GrabTrash(smach.State):
             self._robot.torso.send_goal("grab_trash_up")
             self._robot.torso.wait_for_motion_done()
 
+            # FORCE SENSOR ---------------------------------------------------------
             arm_with_object_weight = measure_force.get_force()
             rospy.loginfo("Full weight %s", arm_with_object_weight)
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
+            # ----------------------------------------------------------------------
 
         # Lift bag up (Should be enough for small trashbag)
         arm._arm._send_joint_trajectory([[0.85, -2.2, 0.0, -0.85, 0.0]])
-        
-        # Next block can be commented out if trashbag is too large
+
+        # Next block can be uncommented if trashbag is too large
         # ---------------------------------------------------------
-        #self._robot.head.look_up()
-        #self._robot.head.wait_for_motion_done()
-        #self._robot.base.force_drive(-0.07, 0, 0, 2.0)
+        # self._robot.head.look_up()
+        # self._robot.head.wait_for_motion_done()
+        # self._robot.base.force_drive(-0.07, 0, 0, 2.0)
 
         # # Lift bag up complex
         # arm._arm._send_joint_trajectory(
@@ -186,7 +194,7 @@ class GrabTrash(smach.State):
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
         self._robot.head.reset()
-        
+
         #
         # if weight_object < self._minimal_weight:
         #     return "failed"
