@@ -104,8 +104,10 @@ class GetFurnitureFromOperatorPose(StateMachine):
             final_result = None
             while not rospy.is_shutdown() and final_result is None:
                 result = None
-                while not rospy.is_shutdown() and result is None:
+                attempts = 0
+                while not rospy.is_shutdown() and attempts < 5:
                     try:
+                        attempts += 1
                         map_pose = robot.tf_buffer.transform(PoseStamped(
                             header=Header(
                                 frame_id=OPERATOR.header.frame_id,
@@ -114,6 +116,8 @@ class GetFurnitureFromOperatorPose(StateMachine):
                             pose=OPERATOR.pointing_pose
                         ), "map")
                         result = robot.ed.ray_trace(map_pose)
+                        if result is not None:
+                            break
                         # For testing
                         # result = RayTraceResponse()
                         # result.entity_id = "desk"
@@ -123,7 +127,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
                         # result.intersection_point.point.z = 0.75
                     except Exception as e:
                         rospy.logerr("Could not get ray trace from closest person: {}".format(e))
-                    rospy.sleep(1.)
+                    rospy.sleep(0.5)
+                else:
+                    rospy.logerr("Could not find an entity with the current operator pose. Let him point again")
+                    return "failed"
+
 
                 # result.intersection_point type: PointStamped
                 # result.entity_id: string
