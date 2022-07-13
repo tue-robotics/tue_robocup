@@ -44,6 +44,7 @@ class TakeOutGarbage(smach.StateMachine):
             next_state = "ANNOUNCE_END"
 
         # drop_zone_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.drop_zone_id)
+        helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.helper_waypoint)
         end_waypoint_designator = ds.EdEntityDesignator(robot=robot, uuid=CHALLENGE_KNOWLEDGE.end_waypoint)
         arm_designator = ds.UnoccupiedArmDesignator(
             robot,
@@ -61,7 +62,14 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("SAY_START_CHALLENGE",
                                    states.human_interaction.Say(robot, "I will start cleaning up the trash", block= True),
-                                   transitions={'spoken': "PICK_UP_TRASH"})
+                                   transitions={'spoken': "NAVIGATE_TO_HELPER"})
+
+            smach.StateMachine.add("NAVIGATE_TO_HELPER",
+                                   states.navigation.NavigateToWaypoint(robot=robot,
+                                                                        waypoint_designator=helper_waypoint_designator),
+                                   transitions={"arrived": "PICK_UP_TRASH",
+                                                "goal_not_defined": "PICK_UP_TRASH",
+                                                "unreachable": "PICK_UP_TRASH"})
 
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
                                                                 arm_designator=arm_designator),
