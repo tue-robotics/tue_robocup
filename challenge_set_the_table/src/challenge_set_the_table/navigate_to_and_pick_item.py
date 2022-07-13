@@ -25,7 +25,7 @@ item_img_dict = {
 
 plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
 JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
-PICK_ROTATION = 2.
+PICK_ROTATION = 2
 
 
 class PickItem(StateMachine):
