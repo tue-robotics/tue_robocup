@@ -130,7 +130,7 @@ class WhereIsThis(smach.StateMachine):
                                        transitions={"initialized": "STORE_STARTING_POSE",
                                                     "abort": "Aborted"})
 
-            # This is purely for a back up scenario until the range iterator
+            # This is purely for a back-up scenario until the range iterator
             @smach.cb_interface(outcomes=["succeeded"])
             def store_pose(userdata=None):
                 base_loc = robot.base.get_location()
