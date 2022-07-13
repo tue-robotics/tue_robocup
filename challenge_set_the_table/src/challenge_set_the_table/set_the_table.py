@@ -54,9 +54,6 @@ def setup_statemachine(robot):
 
     with state_machine:
         # Intro
-        # StateMachine.add('START_CHALLENGE_ROBUST',
-        #                  Initialize(robot),
-        #                  transitions={'initialized': 'SAY_START', 'abort': 'done'})
 
         StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
                          transitions={'Done': 'SAY_START',
@@ -64,16 +61,14 @@ def setup_statemachine(robot):
                                       'Failed': 'SAY_START'})
 
         StateMachine.add('SAY_START',
-                         Say(robot,
-                             "Let's set the table baby!",
-                             block=False),
+                         Say(robot, "Let's set the table baby!", block=False),
                          transitions={'spoken': 'NAVIGATE_AND_OPEN_CUPBOARD'})
 
         # The pre-work
 
         StateMachine.add('NAVIGATE_AND_OPEN_CUPBOARD',
                          NavigateToAndOpenCupboard(robot, CHALLENGE_KNOWLEDGE.cupboard_id, "in_front_of"),
-                         transitions={'succeeded': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
+                         transitions={'succeeded': 'NAVIGATE_AND_PICK_ITEM',
                                       'failed': 'SAY_OPEN_FAILED'})
 
         StateMachine.add('SAY_OPEN_FAILED',
@@ -86,10 +81,10 @@ def setup_statemachine(robot):
 
         StateMachine.add('SAY_OPEN_THANKS',
                          Say(robot, "Thank you darling"),
-                         transitions={'spoken': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER'})
+                         transitions={'spoken': 'NAVIGATE_AND_PICK_ITEM'})
 
         # The loop
-        StateMachine.add('NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
+        StateMachine.add('NAVIGATE_AND_PICK_ITEM',
                          NavigateToAndPickItem(robot, CHALLENGE_KNOWLEDGE.dinner_table_id, "in_front_of",
                                                required_items),
                          transitions={'succeeded': 'PLACE_ITEM_ON_TABLE',
@@ -108,7 +103,7 @@ def setup_statemachine(robot):
         StateMachine.add('CHECK_IF_WE_HAVE_IT_ALL',
                          CBState(check_if_we_have_it_all, cb_args=[robot]),
                          transitions={'we_have_it_all': 'SAY_END_CHALLENGE',
-                                      'keep_going': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER'})
+                                      'keep_going': 'NAVIGATE_AND_PICK_ITEM'})
 
         # Outro
         StateMachine.add('SAY_END_CHALLENGE',
