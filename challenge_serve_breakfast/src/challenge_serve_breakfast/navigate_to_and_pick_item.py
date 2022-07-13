@@ -75,7 +75,7 @@ class PickItem(StateMachine):
             show_image("challenge_serve_breakfast", item_img_dict[item_name])
 
             send_gripper_goal("open")
-            rospy.sleep(7.0)
+            rospy.sleep(10.0)
             robot.speech.speak("Thanks for that!", block=False)
             send_gripper_goal("close", max_torque=0.6)
             robot.head.reset()
