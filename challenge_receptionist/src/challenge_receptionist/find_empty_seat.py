@@ -98,7 +98,7 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
                                    PointAtReception(robot=robot,
-                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals': ['point_at']}),
                                                     point_at_designator=seat_ent_des,
                                                     volume=volumes_des,
                                                     look_at_designator=seat_ent_des),
