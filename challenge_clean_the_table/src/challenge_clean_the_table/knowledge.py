@@ -9,8 +9,8 @@ ITEMS = ITEMS_PLATE + ITEMS_MUG_BOWL + ITEMS_CUTLERY
 ITEM_VECTOR_DICT = {
     "knife": PyKDL.Vector(-0.63, -0.365, 0),
     "spoon": PyKDL.Vector(-0.63, -0.365, 0),
-    "mug": PyKDL.Vector(-0.43, -0.345, 0),
-    "plate": PyKDL.Vector(-0.43, -0.025, 0),
+    "mug": PyKDL.Vector(-0.46, -0.325, 0),
+    "plate": PyKDL.Vector(-0.46, -0.025, 0),
     "bowl": PyKDL.Vector(-0.63, -0.085, 0),
 }
 
