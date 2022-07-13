@@ -16,6 +16,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>challenge_cleanup</exec_depend>
+  <exec_depend>challenge_clean_the_table</exec_depend>
   <exec_depend>challenge_carry_my_luggage</exec_depend>
   <exec_depend>challenge_demo</exec_depend>
   <exec_depend>challenge_eegpsr</exec_depend>
