@@ -96,13 +96,13 @@ class IntroduceGuest(smach.StateMachine):
         #   2. Say 'Hi <person name>, this is <guest name>
 
         with self:
-            smach.StateMachine.add('SAY_INTRO',
-                                   Say(robot,
-                                            ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
-                                            name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
-                                            guest_name=guest_name_des,
-                                            block=True),
-                                   transitions={'spoken': 'FIND_OLD_GUESTS'})
+            # smach.StateMachine.add('SAY_INTRO',
+            #                        Say(robot,
+            #                                 ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
+            #                                 name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
+            #                                 guest_name=guest_name_des,
+            #                                 block=True),
+            #                        transitions={'spoken': 'FIND_OLD_GUESTS'})
 
             smach.StateMachine.add('FIND_OLD_GUESTS',
                                    FindPeopleInRoom(robot,
