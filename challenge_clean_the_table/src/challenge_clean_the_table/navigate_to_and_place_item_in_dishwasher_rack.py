@@ -20,17 +20,9 @@ from challenge_clean_the_table.knowledge import (
     PLACE_ID,
     PLACE_AREA_ID,
     JOINTS_PRE_PRE_PLACE,
-    ITEMS_CUTLERY,
-    JOINTS_PRE_PLACE_CUTLERY,
-    ITEM_MUG,
-    JOINTS_PRE_PLACE_MUG,
-    JOINTS_PRE_PLACE_PLATE,
-    ITEM_PLATE,
-    JOINTS_RETRACT,
-    JOINTS_PLACE_CUTLERY,
-    JOINTS_PLACE_MUG,
-    JOINTS_PLACE_PLATE,
-)
+    ITEMS_PLATE,
+    JOINTS_PLACE_MUG_BOWL,
+    JOINTS_PLACE_PLATE, ITEMS_MUG_BOWL, JOINTS_PLACE_CUTLERY, JOINTS_PRE_PLACE, )
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_frame_to_pose
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
@@ -66,13 +58,6 @@ class PlaceItemInDishwasherRack(StateMachine):
 
             send_joint_goal(JOINTS_PRE_PRE_PLACE)
 
-            if item_name in ITEMS_CUTLERY:
-                send_joint_goal(JOINTS_PRE_PLACE_CUTLERY)
-            elif item_name == ITEM_MUG:
-                send_joint_goal(JOINTS_PRE_PLACE_MUG)
-            elif item_name == ITEM_PLATE:
-                send_joint_goal(JOINTS_PRE_PLACE_PLATE)
-
             return "done"
 
         @cb_interface(outcomes=["done"], input_keys=["item_picked"])
@@ -91,25 +76,27 @@ class PlaceItemInDishwasherRack(StateMachine):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
 
-            if item_name in ITEMS_CUTLERY:
-                send_joint_goal(JOINTS_PLACE_CUTLERY)
-            elif item_name == ITEM_MUG:
-                send_joint_goal(JOINTS_PLACE_MUG)
-            elif item_name == ITEM_PLATE:
+            send_joint_goal(JOINTS_PRE_PLACE)
+
+            if item_name in ITEMS_PLATE:
                 send_joint_goal(JOINTS_PLACE_PLATE)
+            elif item_name in ITEMS_MUG_BOWL:
+                send_joint_goal(JOINTS_PLACE_MUG_BOWL)
+            else:
+                send_joint_goal(JOINTS_PLACE_CUTLERY)
 
-            rospy.loginfo("Dropping...")
-            send_gripper_goal("open")
-            robot.head.look_up()
-            robot.head.wait_for_motion_done()
-
-            rospy.loginfo("Retract...")
-            send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
-            robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
-            send_gripper_goal("close", wait_for_motion_done=False)
-            arm.send_joint_goal("carrying_pose")
-
-            robot.head.reset()
+            # rospy.loginfo("Dropping...")
+            # send_gripper_goal("open")
+            # robot.head.look_up()
+            # robot.head.wait_for_motion_done()
+            #
+            # rospy.loginfo("Retract...")
+            # send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
+            # robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
+            # send_gripper_goal("close", wait_for_motion_done=False)
+            # arm.send_joint_goal("carrying_pose")
+            #
+            # robot.head.reset()
 
             return "done"
 

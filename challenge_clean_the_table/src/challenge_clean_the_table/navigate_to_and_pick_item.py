@@ -15,7 +15,7 @@ from challenge_clean_the_table.knowledge import (
     ITEM_IMG_DICT,
     PICK_ROTATION,
     ITEMS_CUTLERY,
-    ITEM_PLATE,
+    ITEMS_PLATE,
     JOINTS_HANDOVER,
 )
 from robot_skills import get_robot
@@ -69,7 +69,7 @@ class PickItem(StateMachine):
 
             item_name = leftover_items[0]
 
-            if item_name == ITEM_PLATE:
+            if item_name == ITEMS_PLATE:
                 send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
             else:
                 send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
