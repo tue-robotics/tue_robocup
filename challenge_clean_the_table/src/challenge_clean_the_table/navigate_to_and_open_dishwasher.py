@@ -67,7 +67,7 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _grab_handle(_):
-            send_gripper_goal("close", max_torque=0.2)
+            send_gripper_goal("close", max_torque=0.6)
             rospy.sleep(1.0)
             return "done"
 
