@@ -86,10 +86,10 @@ class PickItem(StateMachine):
             show_image('challenge_set_the_table', item_img_dict[item_name])
 
             send_gripper_goal("open")
-            rospy.sleep(5.0)
+            rospy.sleep(8.0)
             robot.speech.speak("Please hold it steady now!", block=False)
             send_gripper_goal("close", max_torque=0.08)
-            rospy.sleep(0.5)
+            rospy.sleep(1.0)
             robot.speech.speak("Thanks for that!", block=False)
 
             if item_name == 'plate':
