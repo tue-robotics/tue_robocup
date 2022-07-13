@@ -243,8 +243,7 @@ class WaitForLocalPlanner(smach.State):
 
     def execute(self, userdate=None):
         rospy.loginfo("Waiting for local planner footprint")
-        footprint_topic = "/{}/local_planner/local_costmap/robot_footprint/footprint_stamped".\
-            format(self._robot.robot_name)
+        footprint_topic = f"/{self._robot.robot_name}/local_planner/local_costmap/footprint"
 
         ready_event = Event()
 
