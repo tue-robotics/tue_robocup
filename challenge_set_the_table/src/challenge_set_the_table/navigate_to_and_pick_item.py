@@ -24,9 +24,11 @@ item_img_dict = {
 }
 
 plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
+JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
+PICK_ROTATION = 2.
 
 
-class PickItemFromCupboardDrawer(StateMachine):
+class PickItem(StateMachine):
     def __init__(self, robot, cupboard_id, required_items):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
         # noinspection PyProtectedMember
@@ -41,7 +43,6 @@ class PickItemFromCupboardDrawer(StateMachine):
 
         def send_gripper_goal(open_close_string, max_torque=0.1):
             arm.gripper.send_goal(open_close_string, max_torque=max_torque)
-            rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         def show_image(package_name, path_to_image_in_package):
             path = os.path.join(rospkg.RosPack().get_path(package_name), path_to_image_in_package)
@@ -53,7 +54,15 @@ class PickItemFromCupboardDrawer(StateMachine):
                     robot.hmi.show_image(path, 10)
                 except Exception as e:
                     rospy.logerr("Could not show image {}: {}".format(path, e))
-            return 'succeeded'
+            return "succeeded"
+
+        @cb_interface(outcomes=["done"])
+        def _rotate(_):
+            arm.gripper.send_goal("close", timeout=0.)
+            robot.head.look_up()
+            vyaw = 0.5
+            robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
+            return "done"
 
         @cb_interface(outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
         def _ask_user(user_data):
@@ -67,14 +76,14 @@ class PickItemFromCupboardDrawer(StateMachine):
             if item_name == 'plate':
                 send_joint_goal(plate_handover)
             else:
-                arm.send_joint_goal("carrying_pose")
+                send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
             picked_items.append(item_name)
 
             robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
             show_image('challenge_set_the_table', item_img_dict[item_name])
 
             send_gripper_goal("open")
-            rospy.sleep(5.0)
+            rospy.sleep(10.0)
             robot.speech.speak("Thanks for that!", block=False)
             if item_name == 'plate':
                 send_gripper_goal("close", max_torque=0.7)
@@ -89,10 +98,11 @@ class PickItemFromCupboardDrawer(StateMachine):
             return 'succeeded'
 
         with self:
+            self.add("ROTATE", CBState(_rotate), transitions={"done": "ASK_USER"})
             self.add('ASK_USER', CBState(_ask_user), transitions={'succeeded': 'succeeded', 'failed': 'failed'})
 
 
-class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
+class NavigateToAndPickItem(StateMachine):
     def __init__(self, robot, cupboard_id, cupboard_navigation_area, required_items):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
 
@@ -105,7 +115,7 @@ class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
                                           'unreachable': 'failed',
                                           'goal_not_defined': 'failed'})
 
-            StateMachine.add("PICK_ITEM_FROM_CUPBOARD", PickItemFromCupboardDrawer(robot, cupboard_id, required_items),
+            StateMachine.add("PICK_ITEM_FROM_CUPBOARD", PickItem(robot, cupboard_id, required_items),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 
@@ -114,4 +124,4 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItemFromCupboardDrawer(robot_instance, 'cupboard', 'aside_of').execute()
+    NavigateToAndPickItem(robot_instance, 'dinner_table', 'in_front_of').execute()
