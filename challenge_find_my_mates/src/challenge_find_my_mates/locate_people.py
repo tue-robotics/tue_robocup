@@ -25,7 +25,7 @@ from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from smach import StateMachine, cb_interface, CBState
 
-NUM_LOOKS = 1
+NUM_LOOKS = 2 
 PERSON_DETECTIONS = []
 
 
