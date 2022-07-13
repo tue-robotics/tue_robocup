@@ -30,7 +30,7 @@ def frame_stampeds_to_pose_stampeds(frame_stampeds):
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2,
+    def __init__(self, robot, learn_face=True, learn_face_timeout=10, operator_radius=1, lookat_radius=1.2,
                  start_timeout=10, operator_timeout=20, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
                  operator_standing_still_timeout=3.0, replan=False, update_period=0.5):
@@ -63,8 +63,8 @@ class FollowOperator(smach.State):
         self._breadcrumbs = []  # List of Entity's
         self._breadcrumb_distance = 0.1  # meters between dropped breadcrumbs
         self._operator_timeout = operator_timeout
-        self._ask_follow = ask_follow
         self._learn_face = learn_face
+        self._learn_face_timeout = learn_face_timeout
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
         self._standing_still_timeout = standing_still_timeout
@@ -171,47 +171,27 @@ class FollowOperator(smach.State):
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return False
 
-            if self._ask_follow:
-                sentence = "Should I follow you?"
-                self._robot.speech.speak(sentence, block=True)
-                try:
-                    answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
-                except TimeoutException as e:
-                    self._robot.speech.speak("I did not hear you!")
-                    rospy.sleep(2)
-                else:
-                    if answer.sentence == "yes":
-                        operator = self._robot.ed.get_closest_laser_entity(
-                            radius=1,
-                            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(0), self._robot.base_link_frame))
-                        rospy.loginfo("Operator: {op}".format(op=operator))
-                        if not operator:
-                            self._robot.speech.speak("Please stand in front of me")
-                        else:
-                            if self._learn_face:
-                                self._robot.speech.speak("Please look at me while I learn to recognize you.",
-                                                         block=True)
-                                self._robot.speech.speak("Just in case...",
-                                                         block=False)
-                                self._robot.head.look_at_standing_person()
-                                learn_person_start_time = rospy.Time.now()
-                                learn_person_timeout = 10.0  # TODO: Parameterize
-                                num_detections = 0
-                                while num_detections < 5:
-                                    if self._robot.perception.learn_person(self._operator_name):
-                                        num_detections += 1
-                                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
-                                        self._robot.speech.speak("Please stand in front of me and look at me")
-                                        operator = None
-                                        break
-                    else:
-                        return False
+            operator = self._robot.ed.get_closest_laser_entity(
+                radius=1,
+                center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(0), self._robot.base_link_frame))
+            rospy.loginfo("Operator: {op}".format(op=operator))
+            if not operator:
+                self._robot.speech.speak("Please stand in front of me", block=True)
+                rospy.sleep(1)
             else:
-                operator = self._robot.ed.get_closest_laser_entity(
-                    radius=1,
-                    center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(0), self._robot.base_link_frame))
-                if not operator:
-                    rospy.sleep(1)
+                if self._learn_face:
+                    self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
+                    self._robot.speech.speak("Just in case...", block=False)
+                    self._robot.head.look_at_standing_person()
+                    learn_person_start_time = rospy.Time.now()
+                    num_detections = 0
+                    while num_detections < 5:
+                        if self._robot.perception.learn_person(self._operator_name):
+                            num_detections += 1
+                        elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_face_timeout:
+                            self._robot.speech.speak("I could not learn your face. Please stand in front of me.")
+                            operator = None
+                            break
 
         rospy.loginfo("We have a new operator: %s" % operator.uuid)
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
