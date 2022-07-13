@@ -7,7 +7,7 @@ import smach
 
 # TU/e Robotics
 import robot_smach_states.util.designators as ds
-from robot_smach_states.human_interaction import HearOptions, HearOptionsExtra, Say
+from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic, NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import Initialize, WaitTime
