@@ -33,9 +33,13 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GO_TO_SEARCH_POSE',
                                NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, uuid=SEARCH_POINT),
                                                   radius=0.375),
-                               transitions={'arrived': 'RISE_FOR_THE_PEOPLE',
+                               transitions={'arrived': 'GREET_OPERATOR',
                                             'goal_not_defined': 'failed',
                                             'unreachable': 'WAIT_SEARCH_POSE'})
+
+        smach.StateMachine.add('GREET_OPERATOR',
+                               Say(robot, "Hi beautiful operator, I'll go and find your mates!", block=True),
+                               transitions={'spoken': 'RISE_FOR_THE_PEOPLE'})
 
         smach.StateMachine.add('WAIT_SEARCH_POSE',
                                WaitTime(robot, 1),
