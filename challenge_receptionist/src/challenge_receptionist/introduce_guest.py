@@ -23,7 +23,7 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 class SayForIntroduceGuest(smach.State):
     #todo test
-    # todo add fourth person thingy
+    # todo make sure that has person_properties
     def __init__(self, robot_name, entity_des, guest_drinkname_des, assume_john, previous_guest_drink_des):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot_name
@@ -31,6 +31,7 @@ class SayForIntroduceGuest(smach.State):
         self.assume_john = assume_john
         self.guest_drinkname_des = guest_drinkname_des
         self.previous_guest_drink_des = previous_guest_drink_des
+        self._number_of_executions = 0
 
     def execute(self, userdata=None):
         if self.assume_john:
@@ -56,9 +57,16 @@ class SayForIntroduceGuest(smach.State):
                     self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, is {pose} and"
                                             " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                    age=age, pose=pose, shirt_color=shirt_color))
+            # else:
+            #     self.robot.speech.speak("This is {name} who likes {drink}".format(name="charlie",
+            #                                                                           drink=challenge_knowledge.operator_drink))
+            if self._number_of_executions == 0:
+                self.robot.speech.speak("This is {name} who likes {drink}".format(name="ava",
+                                                                                  drink="coke"))
+                self._number_of_executions += 1
             else:
-                self.robot.speech.speak("This is {name} who likes {drink}".format(name="charlie",
-                                                                                      drink=challenge_knowledge.operator_drink))
+                self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
+                                                                                  drink=challenge_knowledge.operator_drink))
 
             # else:
             #     self.robot.speech.speak("Since I could not recognize the person who is already inside,"
@@ -96,6 +104,8 @@ class IntroduceGuest(smach.StateMachine):
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
         current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
         previous_guest_drink_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink')
+        previous_guest_name_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_name')
+
 
         # For each person:
         #   0. Go to the person (old guest)
@@ -126,6 +136,10 @@ class IntroduceGuest(smach.StateMachine):
                     return "continue"
 
                 if check_correct_num_people:
+                    if len(check_correct_num_people) == 1 and assume_john:
+                        IntroduceGuest.num_tries = 0
+                        return "correct"
+
                     if len(check_correct_num_people) == 2 and not assume_john:
                         return "correct"
 
@@ -154,9 +168,7 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
                                    Say(robot,
                                        ["Hi {name}, let me show you our guest"],
-                                        name=ds.Designator(challenge_knowledge.operator_name) if assume_john
-                                        else (ds.AttrDesignator(current_old_guest,'person_properties_name',resolve_type=str) if hasattr(current_old_guest, 'person_properties')
-                                                            else ds.Designator(challenge_knowledge.operator_name)),
+                                        name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator(""),
                                         block=True),
                                    transitions={'spoken': 'INTRODUCE_GUEST_WITHOUT_POINTING'})
 
@@ -205,12 +217,10 @@ class IntroduceGuest(smach.StateMachine):
                                             look_at_standing_person=True),
                                    transitions={'spoken': 'TURN_TO_GUEST'})
 
-            # TODO: still need to add 1 characteristics (pose) of guest 1 to guest 2
             # TODO: Test the todo above (it is implemented)
             smach.StateMachine.add('TURN_TO_GUEST',
                                     ForceDrive(robot, 0, 0, 1.05, 3.0),
                                     transitions={"done": "SAY_FOR_INTRODUCE_GUEST"})
-
 
             smach.StateMachine.add('SAY_FOR_INTRODUCE_GUEST',
                                    SayForIntroduceGuest(robot, current_old_guest, guest_drinkname_des, assume_john,
