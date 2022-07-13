@@ -4,14 +4,14 @@ from std_msgs.msg import ColorRGBA
 ITEMS_PLATE = ["plate"]
 ITEMS_MUG_BOWL = ["mug", "bowl"]
 ITEMS_CUTLERY = ["knife", "spoon"]
-ITEMS = ITEMS_PLATE + ITEMS_MUG_BOWL + ITEMS_CUTLERY
+ITEMS = ITEMS_CUTLERY + ITEMS_MUG_BOWL + ITEMS_PLATE
 
 ITEM_VECTOR_DICT = {
-    "knife": PyKDL.Vector(-0.63, -0.365, 0),
-    "spoon": PyKDL.Vector(-0.63, -0.365, 0),
+    "knife": PyKDL.Vector(-0.63, -0.325, 0),
+    "spoon": PyKDL.Vector(-0.63, -0.325, 0),
     "mug": PyKDL.Vector(-0.46, -0.325, 0),
-    "plate": PyKDL.Vector(-0.46, -0.125, 0),
-    "bowl": PyKDL.Vector(-0.63, -0.085, 0),
+    "plate": PyKDL.Vector(-0.46, -0.155, 0),
+    "bowl": PyKDL.Vector(-0.63, -0.155, 0),
 }
 
 ITEM_COLOR_DICT = {
@@ -30,8 +30,8 @@ ITEM_IMG_DICT = {
     "bowl": "images/bowl.jpg",
 }
 
-OPEN_DISHWASHER_VECTOR = PyKDL.Vector(-1.0, 0, 0)
-OPEN_DISHWASHER_VECTOR_OPEN = PyKDL.Vector(OPEN_DISHWASHER_VECTOR.x() - 0.3, 0, 0.1)
+OPEN_DISHWASHER_VECTOR = PyKDL.Vector(-1.01, -0.16, 0)
+OPEN_DISHWASHER_VECTOR_OPEN = PyKDL.Vector(OPEN_DISHWASHER_VECTOR.x() - 0.45, OPEN_DISHWASHER_VECTOR.y(), OPEN_DISHWASHER_VECTOR.z())
 
 PICK_ID = "table_salon"
 PICK_AREA_ID = "in_front_of"
@@ -54,7 +54,7 @@ JOINTS_PRE_PLACE = [0.8, -1.57, 0, -1.57, 0]
 
 LAST_JOINTS_PLACE = [-1.57, 0, -1.57, 0]
 JOINTS_PLACE_PLATE = [0.62] + LAST_JOINTS_PLACE
-JOINTS_PLACE_MUG_BOWL = [0.45] + LAST_JOINTS_PLACE
+JOINTS_PLACE_MUG_BOWL = [0.47] + LAST_JOINTS_PLACE
 JOINTS_PLACE_CUTLERY = [0.5] + LAST_JOINTS_PLACE
 
 JOINTS_RETRACT = [0.7, 0, 0, -1.57, 0]
