@@ -6,13 +6,11 @@
 import rospy
 
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
-from robot_smach_states.util.designators import EdEntityDesignator
 from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
-from .knowledge import ITEMS, EXIT_ID
-from .navigate_to_and_open_dishwasher import OpenDishwasher
+from .knowledge import ITEMS
+from .navigate_to_and_open_dishwasher import NavigateToAndOpenDishwasher
 from .navigate_to_and_pick_item import NavigateToAndPickItem
 from .navigate_to_and_place_item_in_dishwasher_rack import NavigateToAndPlaceItemInDishwasherRack
 
@@ -94,25 +92,21 @@ def setup_statemachine(robot):
         StateMachine.add(
             "CHECK_IF_WE_HAVE_IT_ALL",
             CBState(check_if_we_have_it_all, cb_args=[robot]),
-            transitions={"we_have_it_all": "PICK_POUR_PLACE_CEREAL", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
+            transitions={"we_have_it_all": "NAVIGATE_TO_AND_OPEN_DISHWASHER", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
         )
 
         # Outro
 
         StateMachine.add(
-            "PICK_POUR_PLACE_CEREAL", OpenDishwasher(robot), transitions={"succeeded": "SAY_END_CHALLENGE"}
+            "NAVIGATE_TO_AND_OPEN_DISHWASHER",
+            NavigateToAndOpenDishwasher(robot),
+            transitions={"succeeded": "SAY_END_CHALLENGE", "failed": "done"},
         )
 
         StateMachine.add(
             "SAY_END_CHALLENGE",
-            Say(robot, "That was all folks, good luck with the Bowl!"),
-            transitions={"spoken": "NAVIGATE_TO_EXIT"},
-        )
-
-        StateMachine.add(
-            "NAVIGATE_TO_EXIT",
-            NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid=EXIT_ID)),
-            transitions={"arrived": "GOODBYE", "unreachable": "GOODBYE", "goal_not_defined": "GOODBYE"},
+            Say(robot, "That was all folks, good luck with that Bowl!"),
+            transitions={"spoken": "GOODBYE"},
         )
 
         StateMachine.add("GOODBYE", Say(robot, "Goodbye!"), transitions={"spoken": "done"})
