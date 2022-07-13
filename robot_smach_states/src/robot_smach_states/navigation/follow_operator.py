@@ -182,8 +182,8 @@ class FollowOperator(smach.State):
                 else:
                     if answer.sentence == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(
-                            radius=0.5,
-                            center_point=VectorStamped.from_xyz(1, 0, 1, rospy.Time(0), self._robot.base_link_frame))
+                            radius=1,
+                            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(0), self._robot.base_link_frame))
                         rospy.loginfo("Operator: {op}".format(op=operator))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
@@ -222,7 +222,7 @@ class FollowOperator(smach.State):
         self._robot.head.close()
 
         rospy.loginfo("NOW!!!")
-        rospy.sleep(3)
+        rospy.sleep(1)
 
         return True
 
@@ -595,7 +595,7 @@ class FollowOperator(smach.State):
         # Try to recover operator if lost and reached last seen operator position
         rospy.loginfo("Operator is at %f meters distance" % self._operator_distance)
         # TODO: HACK! Magic number!
-        if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(1.0):
+        if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(self._standing_still_timeout):
             rospy.loginfo("lost operator and within lookat radius and standing still for 1 second")
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
