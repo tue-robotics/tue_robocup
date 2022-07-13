@@ -258,7 +258,7 @@ class CheckEmpty(smach.State):
             if self.threshold_val or self.threshold_perc:
                 vol = entity.volumes[self.volume]  # type: Volume
                 entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
-                occupied_space = sum(entity.shape.size for entity in entities)
+                occupied_space = sum(entity.shape.size for entity in entities if entity is not None)
                 remaining_space = vol.size - occupied_space
                 # TODO: the remaining space percentage can be negative, for now this does not break anything but fix it!
                 remaining_space_perc = 1.0 - (occupied_space/vol.size)
