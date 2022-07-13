@@ -53,7 +53,7 @@ class SayForIntroduceGuest(smach.State):
                                             " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                    age=age, pose=pose, shirt_color=shirt_color))
             else:
-                self.robot.speech.speak("This is {name} who likes {drink}".format(name="John",
+                self.robot.speech.speak("This is {name} who likes {drink}".format(name="charlie",
                                                                                       drink=challenge_knowledge.operator_drink))
 
             # else:
