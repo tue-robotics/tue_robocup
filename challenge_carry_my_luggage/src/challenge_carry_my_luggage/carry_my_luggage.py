@@ -204,7 +204,7 @@ class CarryMyLuggage(StateMachine):
             # End of choices
             StateMachine.add(
                 "FOLLOW_OPERATOR",
-                FollowOperator(self.robot, operator_timeout=30, ask_follow=True, learn_face=False, replan=True),
+                FollowOperator(self.robot, operator_timeout=30, learn_face=True, replan=True),
                 transitions={
                     "stopped": "ASK_FOR_TASK",
                     "lost_operator": "ASK_FOR_TASK",
