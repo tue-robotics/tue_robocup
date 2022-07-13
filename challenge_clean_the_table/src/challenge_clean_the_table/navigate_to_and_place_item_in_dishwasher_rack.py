@@ -22,7 +22,7 @@ from challenge_clean_the_table.knowledge import (
     JOINTS_PRE_PRE_PLACE,
     ITEMS_PLATE,
     JOINTS_PLACE_MUG_BOWL,
-    JOINTS_PLACE_PLATE, ITEMS_MUG_BOWL, JOINTS_PLACE_CUTLERY, JOINTS_PRE_PLACE, )
+    JOINTS_PLACE_PLATE, ITEMS_MUG_BOWL, JOINTS_PLACE_CUTLERY, JOINTS_PRE_PLACE, JOINTS_RETRACT, )
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_frame_to_pose
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
@@ -85,18 +85,18 @@ class PlaceItemInDishwasherRack(StateMachine):
             else:
                 send_joint_goal(JOINTS_PLACE_CUTLERY)
 
-            # rospy.loginfo("Dropping...")
-            # send_gripper_goal("open")
-            # robot.head.look_up()
-            # robot.head.wait_for_motion_done()
-            #
-            # rospy.loginfo("Retract...")
-            # send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
-            # robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
-            # send_gripper_goal("close", wait_for_motion_done=False)
-            # arm.send_joint_goal("carrying_pose")
-            #
-            # robot.head.reset()
+            rospy.loginfo("Dropping...")
+            send_gripper_goal("open")
+            robot.head.look_up()
+            robot.head.wait_for_motion_done()
+
+            rospy.loginfo("Retract...")
+            send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
+            robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
+            send_gripper_goal("close", wait_for_motion_done=False)
+            arm.send_joint_goal("carrying_pose")
+
+            robot.head.reset()
 
             return "done"
 
