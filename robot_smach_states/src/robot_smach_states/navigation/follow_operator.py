@@ -169,6 +169,7 @@ class FollowOperator(smach.State):
                 return False
 
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
+                rospy.logerr("Detecting operator timed out")
                 return False
 
             operator = self._robot.ed.get_closest_laser_entity(
