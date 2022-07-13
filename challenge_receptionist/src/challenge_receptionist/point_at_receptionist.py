@@ -71,14 +71,7 @@ class PointAtReception(smach.State):
         # TODO: make arm point at some pose
         if self._volume:
             rospy.loginfo("Volume to point at: {}".format(self._volume))
-            volume_min_corner = point_at_ent.volumes[self._volume].min_corner
-            volume_max_corner = point_at_ent.volumes[self._volume].max_corner
-            volume_center_point_offset = kdl.Vector(
-                (volume_min_corner[0] + volume_max_corner[0])/2,
-                (volume_min_corner[1] + volume_max_corner[1])/2,
-                (volume_min_corner[2] + volume_max_corner[2])/2)
-
-            vs = VectorStamped(volume_center_point_offset, rospy.Time(), point_at_ent.uuid)
+            vs = VectorStamped(point_at_ent.volumes[self._volume].center_point, rospy.Time(), point_at_ent.uuid)
         else:
             vs = VectorStamped.from_framestamped(point_at_ent.pose)
         rospy.loginfo("Point at the following pose {}".format(vs))
