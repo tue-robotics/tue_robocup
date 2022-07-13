@@ -15,8 +15,7 @@ from smach import StateMachine, cb_interface, CBState
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.utility import WaitTime
 
-
-item_img_dict = {
+item_img_dict = {   # ToDo Update photos
     "plate": 'images/plate.jpg',
     "cup": 'images/cup.jpg',
     "bowl": 'images/bowl.jpg',
@@ -33,7 +32,7 @@ PICK_ROTATION = 1.6
 
 class PickItem(StateMachine):
     def __init__(self, robot, required_items):
-        StateMachine.__init__(self, outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
+        StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'is_cup'], output_keys=["item_picked"])
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
         picked_items = []
@@ -59,6 +58,13 @@ class PickItem(StateMachine):
                     rospy.logerr("Could not show image {}: {}".format(path, e))
             return "succeeded"
 
+        @cb_interface(outcomes=['succeeded', 'failed'])
+        def _check_cup(_):
+            # Only grasp cup
+            if required_items[0] is not "cup":
+                return 'failed'
+            return 'succeeded'
+
         @cb_interface(outcomes=["done"])
         def _rotate(_):
             arm.gripper.send_goal("close", timeout=0.)
@@ -75,7 +81,6 @@ class PickItem(StateMachine):
                 return 'failed'
 
             item_name = leftover_items[0]
-
             if item_name == 'plate':
                 send_joint_goal(plate_handover)
             else:
@@ -107,32 +112,51 @@ class PickItem(StateMachine):
             return 'succeeded'
 
         with self:
+            self.add("CHECK_CUP", CBState(_check_cup), transitions={"succeeded": "is_cup", "failed": "ROTATE"})
             self.add("ROTATE", CBState(_rotate), transitions={"done": "ASK_USER"})
             self.add('ASK_USER', CBState(_ask_user), transitions={'succeeded': 'succeeded', 'failed': 'failed'})
 
 
+class PickCup(StateMachine):
+    def __init__(self, robot, required_items):
+        StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+        # noinspection PyProtectedMember
+        arm = robot.get_arm()._arm
+
+        with self:
+            pass  # ToDo Implement
+
+
 class NavigateToAndPickItem(StateMachine):
-    def __init__(self, robot, table_id, required_items):
+    def __init__(self, robot, cupboard_id, required_items):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
 
-        table_designator = EdEntityDesignator(robot=robot, uuid=table_id)
+        cupboard_designator = EdEntityDesignator(robot=robot, uuid=cupboard_id)
 
         with self:
             StateMachine.add("NAVIGATE_TO_PICKUP",
                              NavigateToSymbolic(robot=robot, entity_designator_area_name_map={
-                                       table_designator: "in_front_of"},
-                                                entity_lookat_designator=table_designator),
+                                 cupboard_designator: "in_front_of"},
+                                                entity_lookat_designator=cupboard_designator),
                              transitions={'arrived': 'PICK_ITEM_FROM_PICKUP',
                                           'unreachable': 'failed',
                                           'goal_not_defined': 'failed'})
 
-            StateMachine.add("PICK_ITEM_FROM_PICKUP", PickItem(robot, required_items),
+            StateMachine.add("PICK_ITEM_FROM_PICKUP",
+                             PickItem(robot, required_items),
+                             transitions={'succeeded': 'succeeded',
+                                          'is_cup': 'PICK_UP_CUP',
+                                          'failed': 'failed'})
+
+            StateMachine.add("PICK_UP_CUP",
+                             PickCup(robot, required_items),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 
 
 if __name__ == '__main__':
+    # For testing
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItem(robot_instance, 'dinner_table', 'in_front_of').execute()
+    NavigateToAndPickItem(robot_instance, 'cupboard', 'in_front_of').execute()
