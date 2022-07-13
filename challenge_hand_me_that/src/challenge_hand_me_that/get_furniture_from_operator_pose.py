@@ -115,6 +115,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                             ),
                             pose=OPERATOR.pointing_pose
                         ), "map")
+                        rospy.logwarn(f"{map_pose=}")
                         result = robot.ed.ray_trace(map_pose)
                         if result is not None:
                             break
