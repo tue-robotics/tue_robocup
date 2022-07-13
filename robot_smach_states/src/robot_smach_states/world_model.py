@@ -194,7 +194,6 @@ class SegmentObjects(smach.State):
 
         if segmented_object_ids:
             _color_info(">> Segmented %d objects!" % len(segmented_object_ids))
-
             # Classify and update IDs
             object_classifications = self.robot.ed.classify(uuids=segmented_object_ids, unknown_threshold=self.unknown_threshold)
 
@@ -251,6 +250,8 @@ class CheckEmpty(smach.State):
         self.threshold_val = threshold_val
 
     def execute(self, userdata=None):
+        self.volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
+
         entity = self.entity_des.resolve()  # type: Entity
         seen_entities = self.seen_entities_des.resolve()
         if seen_entities:
@@ -259,6 +260,7 @@ class CheckEmpty(smach.State):
                 entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
                 occupied_space = sum(entity.shape.size for entity in entities)
                 remaining_space = vol.size - occupied_space
+                # TODO: the remaining space percentage can be negative, for now this does not break anything but fix it!
                 remaining_space_perc = 1.0 - (occupied_space/vol.size)
                 rospy.loginfo('Occupied space is {}, remaining space is {}, free space percentage is {}'
                               .format(occupied_space, remaining_space, remaining_space_perc))
