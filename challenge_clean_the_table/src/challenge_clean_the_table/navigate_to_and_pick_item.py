@@ -13,11 +13,10 @@ from challenge_clean_the_table.knowledge import (
     PICK_ID,
     PICK_AREA_ID,
     ITEM_IMG_DICT,
-    JOINTS_HANDOVER,
     PICK_ROTATION,
     ITEMS_CUTLERY,
     ITEM_PLATE,
-    JOINTS_HANDOVER_PLATE,
+    JOINTS_HANDOVER,
 )
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic
@@ -71,7 +70,7 @@ class PickItem(StateMachine):
             item_name = leftover_items[0]
 
             if item_name == ITEM_PLATE:
-                send_joint_goal(JOINTS_HANDOVER_PLATE, wait_for_motion_done=False)
+                send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
             else:
                 send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
 
