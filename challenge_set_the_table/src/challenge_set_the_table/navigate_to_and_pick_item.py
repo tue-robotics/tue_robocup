@@ -12,6 +12,9 @@ from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.utility import WaitTime
+
 
 item_img_dict = {
     "plate": 'images/plate.jpg',
@@ -25,11 +28,11 @@ item_img_dict = {
 
 plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
 JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
-PICK_ROTATION = 2
+PICK_ROTATION = 1.6
 
 
 class PickItem(StateMachine):
-    def __init__(self, robot, cupboard_id, required_items):
+    def __init__(self, robot, required_items):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
@@ -84,11 +87,17 @@ class PickItem(StateMachine):
 
             send_gripper_goal("open")
             rospy.sleep(10.0)
+            robot.speech.speak("Please hold it steady now!", block=False)
+            send_gripper_goal("close", max_torque=0.08)
+            rospy.sleep(3.0)
             robot.speech.speak("Thanks for that!", block=False)
+
             if item_name == 'plate':
-                send_gripper_goal("close", max_torque=0.7)
+                send_gripper_goal("close", max_torque=0.6)
             else:
                 send_gripper_goal("close")
+
+            robot.head.reset()
 
             # Set output data
             user_data['item_picked'] = item_name
@@ -103,19 +112,21 @@ class PickItem(StateMachine):
 
 
 class NavigateToAndPickItem(StateMachine):
-    def __init__(self, robot, cupboard_id, cupboard_navigation_area, required_items):
+    def __init__(self, robot, table_id, required_items):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
 
-        cupboard = EdEntityDesignator(robot=robot, uuid=cupboard_id)
+        table_designator = EdEntityDesignator(robot=robot, uuid=table_id)
 
         with self:
-            StateMachine.add("NAVIGATE_TO_CUPBOARD",
-                             NavigateToSymbolic(robot, {cupboard: cupboard_navigation_area}, cupboard),
-                             transitions={'arrived': 'PICK_ITEM_FROM_CUPBOARD',
+            StateMachine.add("NAVIGATE_TO_PICKUP",
+                             NavigateToSymbolic(robot=robot, entity_designator_area_name_map={
+                                       table_designator: "in_front_of"},
+                                                entity_lookat_designator=table_designator),
+                             transitions={'arrived': 'PICK_ITEM_FROM_PICKUP',
                                           'unreachable': 'failed',
                                           'goal_not_defined': 'failed'})
 
-            StateMachine.add("PICK_ITEM_FROM_CUPBOARD", PickItem(robot, cupboard_id, required_items),
+            StateMachine.add("PICK_ITEM_FROM_PICKUP", PickItem(robot, required_items),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 

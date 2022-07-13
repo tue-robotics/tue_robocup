@@ -182,25 +182,12 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",
                              NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
                              transitions={'arrived': 'PLACE_ITEM_ON_TABLE',
-                                          'unreachable': 'SAY_PICK_AWAY_THE_CHAIR',
+                                          'unreachable': 'FORCE_DRIVE',
                                           'goal_not_defined': 'failed'})
 
             StateMachine.add("FORCE_DRIVE",
                              ForceDrive(robot, -0.1, 0, 0, 5.0),
-                             transitions={'done': 'SAY_PICK_AWAY_THE_CHAIR'})
-
-            StateMachine.add("SAY_PICK_AWAY_THE_CHAIR",
-                             Say(robot,
-                                 "Please pick away the chair, I cannot get close enough to the {}".format(table_id)),
-                             transitions={'spoken': 'WAIT_FOR_PICK_AWAY_CHAIR'})
-
-            StateMachine.add('WAIT_FOR_PICK_AWAY_CHAIR',
-                             WaitTime(robot, 5),
-                             transitions={'waited': 'SAY_THANKS', 'preempted': 'failed'})
-
-            StateMachine.add('SAY_THANKS',
-                             Say(robot, "Thank you darling"),
-                             transitions={'spoken': 'NAVIGATE_TO_TABLE_CLOSE'})
+                             transitions={'done': 'NAVIGATE_TO_TABLE_CLOSE'})
 
             StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id, placement_height),
                              transitions={'succeeded': 'succeeded',
