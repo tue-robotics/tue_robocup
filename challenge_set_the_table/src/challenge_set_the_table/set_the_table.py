@@ -20,7 +20,7 @@ from robot_smach_states.utility import WaitTime
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_set_the_table')
 
 items_picked = []
-required_items = ["plate", "napkin", "knife", "fork", "bowl"]
+required_items = ["cup", "napkin", "knife", "fork", "spoon"]
 iteration = 0
 max_iterations = 10
 
