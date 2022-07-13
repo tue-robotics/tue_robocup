@@ -398,7 +398,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = tf2_ros.convert(self._last_operator.pose, PointStamped).point
+            o.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -537,7 +537,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = tf2_ros.convert(self._last_operator.pose, PointStamped).point
+            o.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
         dx = operator_position.x() - robot_position.x()
         dy = operator_position.y() - robot_position.y()
