@@ -60,7 +60,7 @@ class CarryMyLuggage(StateMachine):
                 "SET_INITIAL_POSE",
                 SetInitialPose(self.robot, STARTING_POINT),
                 transitions={
-                    "done": "ASK_BAG_HANDOVER", # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
+                    "done": "FOLLOW_OPERATOR", # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
                     "preempted": "Aborted", #todo: change this?
                     "error": "ASK_BAG_HANDOVER",  # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
                 },
@@ -143,11 +143,11 @@ class CarryMyLuggage(StateMachine):
             # End of choices
             StateMachine.add(
                 "FOLLOW_OPERATOR",
-                FollowOperator(self.robot, operator_timeout=30, ask_follow=True, learn_face=True, replan=True),
+                FollowOperator(self.robot, operator_timeout=30, ask_follow=True, learn_face=False, replan=True),
                 transitions={
-                    "stopped": "ASK_FOR_TASK",
-                    "lost_operator": "ASK_FOR_TASK",
-                    "no_operator": "ASK_FOR_TASK",
+                    "stopped": "FOLLOW_OPERATOR",
+                    "lost_operator": "FOLLOW_OPERATOR",
+                    "no_operator": "FOLLOW_OPERATOR",
                 },
             )
 
