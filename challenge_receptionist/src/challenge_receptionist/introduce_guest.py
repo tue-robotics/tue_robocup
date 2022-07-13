@@ -39,14 +39,10 @@ class SayForIntroduceGuest(smach.State):
         else:
             if hasattr(self.entity, 'person_properties'):
                 name = self.entity.person_properties.name
-                if name == "John":
-                    self.robot.speech.speak("This is {name} who likes {drink}".format(name=name,
-                                                                                      drink=challenge_knowledge.operator_drink))
+                if self.entity.person_properties.gender == 1.0:
+                    gender = 'female'
                 else:
-                    if self.entity.person_properties.gender == 1.0:
-                        gender = 'female'
-                    else:
-                        gender = 'male'
+                    gender = 'male'
                     age = self.entity.person_properties.age
                     shirt_color = self.entity.person_properties.shirt_colors
                     shirt_color = shirt_color[0]
@@ -57,8 +53,12 @@ class SayForIntroduceGuest(smach.State):
                                             " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                    age=age, pose=pose, shirt_color=shirt_color))
             else:
-                self.robot.speech.speak("Since I could not recognize the person who is already inside,"
-                                        " I can not introduce you. Sorry ")
+                self.robot.speech.speak("This is {name} who likes {drink}".format(name="John",
+                                                                                      drink=challenge_knowledge.operator_drink))
+
+            # else:
+            #     self.robot.speech.speak("Since I could not recognize the person who is already inside,"
+            #                             " I can not introduce you. Sorry ")
         return "done"
 
 
@@ -129,7 +129,9 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
                                    Say(robot,
                                        ["Hi {name}, let me show you our guest"],
-                                        name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                        name=ds.Designator(challenge_knowledge.operator_name) if assume_john
+                                        else (ds.AttrDesignator(current_old_guest,'person_properties_name',resolve_type=str) if hasattr(current_old_guest, 'person_properties')
+                                                            else ds.Designator(challenge_knowledge.operator_name)),
                                         block=True),
                                    transitions={'spoken': 'INTRODUCE_GUEST_WITHOUT_POINTING'})
 
