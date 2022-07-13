@@ -70,7 +70,7 @@ class LearnGuest(smach.StateMachine):
                                                 'failed': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_HELLO',
-                                   Say(robot, ["Hi there, please speak loud to me because i'm deaf. I'll learn your face now"],
+                                   Say(robot, ["Hi there, please speak loudly and directly into my microphone because i'm deaf. I'll learn your face now"],
                                        block=False,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
@@ -83,8 +83,7 @@ class LearnGuest(smach.StateMachine):
                                                 'timeout': 'ASK_NAME_FAILED'})
 
             smach.StateMachine.add('ASK_NAME_FAILED',
-                                   Say(robot, ["Sorry i couldn't hear you, let's continue because we run out of time. "
-                                               "I'll call you {name}"],
+                                   Say(robot, ["I heard your name is {name}"],
                                        name=guest_name_des,
                                        block=False,
                                        look_at_standing_person=True),
@@ -140,7 +139,7 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_DRINK_QUESTION',
-                                   Say(robot, ["What's your favorite drink?"], block=True),
+                                   Say(robot, ["What's your favorite drink? Please speak loudly and directly into my microphone"], block=True),
                                    transitions={'spoken': 'HEAR_DRINK_ANSWER'})
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
@@ -154,8 +153,7 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'done': 'ASK_DRINK_FAILED'})
 
             smach.StateMachine.add('ASK_DRINK_FAILED',
-                                   Say(robot, ["Sorry i couldn't hear you, let's continue because we run out of time. "
-                                               "I'll guess your favorite drink is {drink}"],
+                                   Say(robot, ["I heard your favorite drink is {drink}"],
                                        drink=ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink'),
                                        block=False,
                                        look_at_standing_person=True),
