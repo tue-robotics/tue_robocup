@@ -35,12 +35,15 @@ class HandMeThat(smach.StateMachine):
         entity_designator = ds.VariableDesignator(resolve_type=[Entity])
         arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
 
+        TESTING = False
+
         with self:
-            # Intro
-            smach.StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
-                             transitions={'Done': 'SAY_START',
-                                          'Aborted': 'done',
-                                          'Failed': 'SAY_START'})
+            if not TESTING:
+                # Intro
+                smach.StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
+                                 transitions={'Done': 'SAY_START',
+                                              'Aborted': 'done',
+                                              'Failed': 'SAY_START'})
 
             # Say we're gonna start
             smach.StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
