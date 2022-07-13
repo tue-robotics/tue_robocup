@@ -15,6 +15,7 @@ from robot_smach_states.reset import ResetArms
 
 import robot_smach_states.util.designators as ds
 import smach
+from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
@@ -48,7 +49,10 @@ class SayForIntroduceGuest(smach.State):
                     shirt_color = shirt_color[0]
                     drink = self.previous_guest_drink_des.resolve()
                     pose = self.entity.person_properties.tags
-                    pose = pose[0][1:]
+                    if len(pose) > 1:
+                        pose = pose[1][1:]
+                    else:
+                        pose = pose[0][1:]
                     self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, is {pose} and"
                                             " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                    age=age, pose=pose, shirt_color=shirt_color))
@@ -78,7 +82,10 @@ class GuestDescriptionStrDesignator(ds.Designator):
         return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drinkname)
 
 
+
 class IntroduceGuest(smach.StateMachine):
+    num_tries = 0
+
     def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des, assume_john=False):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
@@ -108,8 +115,26 @@ class IntroduceGuest(smach.StateMachine):
                                    FindPeopleInRoom(robot,
                                                     room=challenge_knowledge.waypoint_livingroom['id'],
                                                     found_people_designator=all_old_guests.writeable),
-                                   transitions = {'found': 'ITERATE_OLD_GUESTS',
-                                                   'not_found': 'ITERATE_OLD_GUESTS'})
+                                   transitions = {'found': 'CHECK_NUM_PEOPLE',
+                                                   'not_found': 'CHECK_NUM_PEOPLE'})
+
+            @cb_interface(outcomes=["incorrect", "correct", "continue"])
+            def check_num_people(_):
+                check_correct_num_people = all_old_guests.resolve()
+                IntroduceGuest.num_tries += 1
+                if IntroduceGuest.num_tries > 2:
+                    return "continue"
+
+                if check_correct_num_people:
+                    if len(check_correct_num_people) == 2 and not assume_john:
+                        return "correct"
+
+                return "incorrect"
+
+            smach.StateMachine.add("CHECK_NUM_PEOPLE", CBState(check_num_people),
+                                   transitions={"correct": "ITERATE_OLD_GUESTS",
+                                                "incorrect": "FIND_OLD_GUESTS",
+                                                "continue": "ITERATE_OLD_GUESTS"})
 
             smach.StateMachine.add('ITERATE_OLD_GUESTS',
                                    IterateDesignator(all_old_guests,
@@ -219,7 +244,8 @@ if __name__ == "__main__":
     sm = IntroduceGuest(robot,
                         guest_entity_des,
                         guest_name_des,
-                        guest_drinkname_des)
+                        guest_drinkname_des,
+                        assume_john=True)
 
     sm.execute()
 
