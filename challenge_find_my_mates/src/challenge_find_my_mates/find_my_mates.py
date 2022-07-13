@@ -38,7 +38,7 @@ def setup_statemachine(robot):
                                             'unreachable': 'WAIT_SEARCH_POSE'})
 
         smach.StateMachine.add('GREET_OPERATOR',
-                               Say(robot, "Hi beautiful operator, I'll go and find your mates!", block=True),
+                               Say(robot, "Hi beautiful operator, I'll go and find your mates! Please stand behind me, so I don't get confused", block=True),
                                transitions={'spoken': 'RISE_FOR_THE_PEOPLE'})
 
         smach.StateMachine.add('WAIT_SEARCH_POSE',
