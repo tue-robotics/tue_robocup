@@ -143,8 +143,7 @@ class FollowOperator(smach.State):
                 self._last_pose_stamped = current_frame
                 self._last_pose_stamped_time = rospy.Time.now()
             else:
-
-                rospy.loginfo( "Robot dit not move for x seconds: %f"%(now - self._last_pose_stamped_time).to_sec())
+                rospy.loginfo("Robot did not move for x seconds: %f"%(now - self._last_pose_stamped_time).to_sec())
 
                 # Check whether we passed the timeout
                 if (now - self._last_pose_stamped_time).to_sec() > timeout:
@@ -552,7 +551,7 @@ class FollowOperator(smach.State):
         if not ros_plan or not self._robot.base.global_planner.checkPlan(ros_plan):
             rospy.loginfo("No global plan possible")
         else:
-            self._robot.speech.speak("Just a sec, let me try this way.")
+            self._robot.speech.speak("Let me try a new way to follow you.")
             rospy.loginfo("Found a global plan, sending it to local planner")
             self._replan_time = rospy.Time.now()
             self._replan_active = True
@@ -576,8 +575,8 @@ class FollowOperator(smach.State):
         # Try to recover operator if lost and reached last seen operator position
         rospy.loginfo("Operator is at %f meters distance" % self._operator_distance)
         # TODO: HACK! Magic number!
-        if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(self._standing_still_timeout):
-            rospy.loginfo("lost operator and within lookat radius and standing still for 1 second")
+        if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(3):
+            rospy.loginfo("lost operator and within lookat radius and standing still for 3 seconds")
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 self._robot.speech.speak("I am unable to recover you")
@@ -595,6 +594,7 @@ class FollowOperator(smach.State):
             # try a global plan and wait for the local planner to get us out of here
             # - Not following an operator, planner is in local minimum: try a global plan and wait for
             # the local planner to get us out of here
+            self._robot.speech.speak("Wait for me, my path seems blocked")
             self._robot.base.local_planner.cancelCurrentPlan()
             if self._replan_allowed:
                 if self._replan_attempts < self._max_replan_attempts:
