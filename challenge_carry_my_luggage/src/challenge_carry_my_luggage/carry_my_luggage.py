@@ -12,6 +12,7 @@ from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFrom
 from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
 import robot_smach_states.util.designators as ds
 from robot_skills.arm import arms
+from robot_smach_states.utility import WaitTime
 
 
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
@@ -53,25 +54,39 @@ class CarryMyLuggage(StateMachine):
             },
         ).lockable()
         self.waypoint_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
+        # noinspection PyProtectedMember
+        self._arm = robot.get_arm()._arm
 
         with self:
             StateMachine.add(
                 "INITIALIZE",
                 Initialize(self.robot),
-                transitions={"initialized": "SET_INITIAL_POSE", "abort": "Aborted"},  # todo: change this?
+                transitions={"initialized": "SET_INITIAL_POSE", "abort": "SET_INITIAL_POSE"},
             )
 
             StateMachine.add(
                 "SET_INITIAL_POSE",
                 SetInitialPose(self.robot, STARTING_POINT),
                 transitions={
-                    "done": "FOLLOW_OPERATOR",  # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
-                    "preempted": "Aborted",  # todo: change this?
-                    "error": "ASK_BAG_HANDOVER",  # Choice here; try to pick up the bag or not: ASK_BAG_HANDOVER or POINT_BAG
+                    "done": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
+                    "preempted": "MOVE_CUSTOM_CARRY",  # todo: change this?
+                    "error": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
                 },
             )
 
             # Choice 1; Do no try to pick up the bag
+            @cb_interface(outcomes=["done"])
+            def move_to_custom_carry_pose(_):
+                p = [0.15, 0, -1.1, -1.37, 0]
+                # noinspection PyProtectedMember
+                self._arm._send_joint_trajectory([p], timeout=rospy.Duration(0))
+                self._arm.wait_for_motion_done()
+                self._arm.gripper.send_goal('open')
+                self._arm.wait_for_motion_done()
+                return "done"
+
+            self.add("MOVE_CUSTOM_CARRY", CBState(move_to_custom_carry_pose), transitions={"done": "ASK_BAG_HANDOVER"})
+
             StateMachine.add(
                 "ASK_BAG_HANDOVER",
                 Say(
@@ -81,25 +96,56 @@ class CarryMyLuggage(StateMachine):
                     look_at_standing_person=True,
                 ),
                 transitions={
-                    "spoken": "BAG_HANDOVER_FROM_HUMAN",
+                    "spoken": "WAIT_FOR_OPERATOR",
                 },
             )
 
             StateMachine.add(
-                "BAG_HANDOVER_FROM_HUMAN",
-                HandoverFromHuman(self.robot, self.arm_designator, "bag", None, 15),
+                "WAIT_FOR_OPERATOR",
+                WaitTime(15),
                 transitions={
-                    "succeeded": "FOLLOW_OPERATOR",
-                    "failed": "SAY_BAG_HANDOVER_FAILED",
-                    "timeout": "SAY_BAG_HANDOVER_FAILED",
+                    "waited": "CLOSE_GRIPPER",
+                    "preempted": "CLOSE_GRIPPER"
                 },
             )
 
+            @cb_interface(outcomes=["done"])
+            def gripper_close(_):
+                self._arm.gripper.send_goal('close')
+                self._arm.wait_for_motion_done()
+                return "done"
+
+            self.add("CLOSE_GRIPPER", CBState(gripper_close),
+                     transitions={"done": "SAY_BAG_HANDOVER_SUCCESS"})
+
+            # Old behavior with a handover
+            # StateMachine.add(
+            #     "BAG_HANDOVER_FROM_HUMAN",
+            #     HandoverFromHuman(self.robot, self.arm_designator, "bag", None, 15),
+            #     transitions={
+            #         "succeeded": "SAY_BAG_HANDOVER_SUCCESS",
+            #         "failed": "SAY_BAG_HANDOVER_FAILED",
+            #         "timeout": "SAY_BAG_HANDOVER_FAILED",
+            #     },
+            # )
+            # StateMachine.add(
+            #     "SAY_BAG_HANDOVER_FAILED",
+            #     Say(
+            #         self.robot,
+            #         ["It seems the handing over failed... Let me just accompany you to your car!"],
+            #         block=True,
+            #         look_at_standing_person=True,
+            #     ),
+            #     transitions={
+            #         "spoken": "FOLLOW_OPERATOR",
+            #     },
+            # )
+
             StateMachine.add(
-                "SAY_BAG_HANDOVER_FAILED",
+                "SAY_BAG_HANDOVER_SUCCESS",
                 Say(
                     self.robot,
-                    ["It seems the handing over failed... Let me just accompany you to your car!"],
+                    ["Lets go to your car! I will follow you!"],
                     block=True,
                     look_at_standing_person=True,
                 ),
@@ -108,61 +154,61 @@ class CarryMyLuggage(StateMachine):
                 },
             )
 
-            # Choice 2: Try to pick up the bag
-            StateMachine.add(
-                "POINT_BAG",
-                Say(
-                    self.robot,
-                    ["Please point at the bag you want me to carry and await further instructions!"],
-                    block=True,
-                    look_at_standing_person=True,
-                ),
-                transitions={
-                    "spoken": "GET_ENTITY_POSE",
-                },
-            )
-
-            # workaround to remove dependency from simulating raytracing
-            StateMachine.add(
-                "GET_ENTITY_POSE",
-                CBState(place, cb_args=[self.entity_designator.writeable, self.robot]),
-                transitions={"done": "GRAB_BAG"},
-            )
-
+            # # Choice 2: Try to pick up the bag
             # StateMachine.add(
-            #     'GET_ENTITY_POSE',
-            #     GetFurnitureFromOperatorPose(self.robot, self.entity_designator.writeable),
-            #     transitions={'succeeded': 'GRAB_BAG',
-            #                  'failed': 'GRAB_BAG'} #todo: change this?
+            #     "POINT_BAG",
+            #     Say(
+            #         self.robot,
+            #         ["Please point at the bag you want me to carry and await further instructions!"],
+            #         block=True,
+            #         look_at_standing_person=True,
+            #     ),
+            #     transitions={
+            #         "spoken": "GET_ENTITY_POSE",
+            #     },
             # )
-
-            StateMachine.add(
-                "GRAB_BAG",
-                Grab(self.robot, self.entity_designator, self.arm_designator),
-                transitions={"done": "FOLLOW_OPERATOR", "failed": "SAY_BAG_GRAB_FAILED"},
-            )
-
-            StateMachine.add(
-                "SAY_BAG_GRAB_FAILED",
-                Say(
-                    self.robot,
-                    ["I'm unable to grab your bag... Let me just accompany you to your car!"],
-                    block=True,
-                    look_at_standing_person=True,
-                ),
-                transitions={
-                    "spoken": "FOLLOW_OPERATOR",  # ToDo: Change this to handover bag handover?
-                },
-            )
+            #
+            # # workaround to remove dependency from simulating raytracing
+            # StateMachine.add(
+            #     "GET_ENTITY_POSE",
+            #     CBState(place, cb_args=[self.entity_designator.writeable, self.robot]),
+            #     transitions={"done": "GRAB_BAG"},
+            # )
+            #
+            # # StateMachine.add(
+            # #     'GET_ENTITY_POSE',
+            # #     GetFurnitureFromOperatorPose(self.robot, self.entity_designator.writeable),
+            # #     transitions={'succeeded': 'GRAB_BAG',
+            # #                  'failed': 'GRAB_BAG'} #todo: change this?
+            # # )
+            #
+            # StateMachine.add(
+            #     "GRAB_BAG",
+            #     Grab(self.robot, self.entity_designator, self.arm_designator),
+            #     transitions={"done": "FOLLOW_OPERATOR", "failed": "SAY_BAG_GRAB_FAILED"},
+            # )
+            #
+            # StateMachine.add(
+            #     "SAY_BAG_GRAB_FAILED",
+            #     Say(
+            #         self.robot,
+            #         ["I'm unable to grab your bag... Let me just accompany you to your car!"],
+            #         block=True,
+            #         look_at_standing_person=True,
+            #     ),
+            #     transitions={
+            #         "spoken": "FOLLOW_OPERATOR",  # ToDo: Change this to handover bag handover?
+            #     },
+            # )
 
             # End of choices
             StateMachine.add(
                 "FOLLOW_OPERATOR",
                 FollowOperator(self.robot, operator_timeout=30, ask_follow=True, learn_face=False, replan=True),
                 transitions={
-                    "stopped": "FOLLOW_OPERATOR",
-                    "lost_operator": "FOLLOW_OPERATOR",
-                    "no_operator": "FOLLOW_OPERATOR",
+                    "stopped": "ASK_FOR_TASK",
+                    "lost_operator": "ASK_FOR_TASK",
+                    "no_operator": "ASK_FOR_TASK",
                 },
             )
 
@@ -182,7 +228,7 @@ class CarryMyLuggage(StateMachine):
             StateMachine.add(
                 "WAIT_FOR_TASK",
                 AskYesNo(self.robot),
-                transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "HANDOVER_TO_HUMAN"},
+                transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"}, #todo this last one can create an infitine loop
             )
 
             StateMachine.add(
@@ -200,8 +246,8 @@ class CarryMyLuggage(StateMachine):
                 transitions={
                     "arrived": "Done",
                     "unreachable": "Done",  # todo change this?
-                    "goal_not_defined": "Done",
-                },  # todo change this?
+                    "goal_not_defined": "Done",  # todo change this?
+                },
             )
 
 
