@@ -163,9 +163,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
 
 if __name__ == '__main__':
+    from robocup_knowledge import load_knowledge
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     furniture_designator_ = VariableDesignator(resolve_type=Entity)
     robot_instance = get_robot("hero")
     robot_instance.reset()
+    knowledge = load_knowledge("challenge_hand_me_that")
     while not rospy.is_shutdown():
-        GetFurnitureFromOperatorPose(robot_instance, furniture_designator_.writeable).execute()
+        GetFurnitureFromOperatorPose(robot_instance, furniture_designator_.writeable, knowledge.all_possible_furniture).execute()
