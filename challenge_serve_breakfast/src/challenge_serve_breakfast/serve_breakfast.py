@@ -70,7 +70,8 @@ def setup_statemachine(robot):
             "SAY_START",
             Say(
                 robot,
-                f"Lets serve some breakfast baby! If there are any chairs near the {place_id}, please remove them",
+                #f"Lets serve some breakfast baby! If there are any chairs near the {place_id}, please remove them",
+                "Lets serve some breakfast baby! I will be asking for some fast handovers.",
                 block=False,
             ),
             transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
