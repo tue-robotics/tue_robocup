@@ -47,7 +47,7 @@ class PickItem(StateMachine):
             else:
                 try:
                     rospy.loginfo("Showing {}".format(path))
-                    robot.hmi.show_image(path, 10)
+                    robot.hmi.show_image(path, 20)
                 except Exception as e:
                     rospy.logerr("Could not show image {}: {}".format(path, e))
             return "succeeded"
