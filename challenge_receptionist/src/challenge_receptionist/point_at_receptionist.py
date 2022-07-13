@@ -48,6 +48,8 @@ class PointAtReception(smach.State):
         self._look_at_designator = look_at_designator
 
     def execute(self, userdata=None):
+        self._volume = self._volume.resolve() if hasattr(self._volume, "resolve") else self._volume
+
         point_at_ent = self._point_at_designator.resolve()  # type: Entity
         if not point_at_ent:
             rospy.logerr("Could not resolve _point_at_designator")
@@ -67,6 +69,7 @@ class PointAtReception(smach.State):
 
         # TODO: make arm point at some pose
         if self._volume:
+            rospy.loginfo("Volume to point at: {}".format(self._volume))
             volume_min_corner = point_at_ent.volumes[self._volume].min_corner
             volume_max_corner = point_at_ent.volumes[self._volume].max_corner
             volume_center_point_offset = kdl.Vector(
@@ -77,14 +80,14 @@ class PointAtReception(smach.State):
             vs = VectorStamped(volume_center_point_offset, rospy.Time(), point_at_ent.uuid)
         else:
             vs = VectorStamped.from_framestamped(point_at_ent.pose)
-        rospy.loginfo("volume pos {}".format(vs))
+        rospy.loginfo("Point at the following pose {}".format(vs))
         # First set the robot to the correct position
         arm.send_joint_goal('point_at', timeout=0)
         arm.wait_for_motion_done()
 
         # This frame was chosen since it aligns with the base_link axes in the point_at pose
-        vector_in_bs = self._robot.tf_buffer.transform(vs, 'map')
-        rospy.loginfo("vector in bs {}".format(vector_in_bs))
+        vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame)
+        rospy.loginfo("Vector to point pose in baselink frame {}".format(vector_in_bs))
         # tan(angle) = dy / dx
         # angle = arctan(dy / dx)
         # Arm to position in a safe way
