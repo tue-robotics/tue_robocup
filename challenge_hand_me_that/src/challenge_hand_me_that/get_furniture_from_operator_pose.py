@@ -130,6 +130,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     rospy.sleep(0.5)
                 else:
                     rospy.logerr("Could not find an entity with the current operator pose. Let him point again")
+                    OPERATOR = None
                     return "failed"
 
 
