@@ -7,16 +7,15 @@ import rospy
 
 from challenge_set_the_table.navigate_to_and_close_cupboard_drawer import NavigateToAndCloseCupboard
 from challenge_set_the_table.navigate_to_and_open_cupboard_drawer import NavigateToAndOpenCupboard
-from challenge_set_the_table.navigate_to_and_pick_item_from_cupboard_drawer import \
-    NavigateToAndPickItemFromCupboardDrawer
+from challenge_set_the_table.navigate_to_and_pick_item import NavigateToAndPickItem
 from challenge_set_the_table.navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
 from robocup_knowledge import load_knowledge
-CHALLENGE_KNOWLEDGE = load_knowledge('challenge_set_the_table')
 
+CHALLENGE_KNOWLEDGE = load_knowledge('challenge_set_the_table')
 
 items_picked = []
 required_items = ["plate", "napkin", "knife", "fork", "bowl"]
@@ -66,12 +65,12 @@ def setup_statemachine(robot):
 
         StateMachine.add('SAY_START',
                          Say(robot,
-                             "Let's set the table baby! If there are any chairs near the kitchen_table, please remove them",
+                             "Let's set the table baby!",
                              block=False),
                          transitions={'spoken': 'NAVIGATE_AND_OPEN_CUPBOARD'})
 
         # The pre-work
-        
+
         StateMachine.add('NAVIGATE_AND_OPEN_CUPBOARD',
                          NavigateToAndOpenCupboard(robot, CHALLENGE_KNOWLEDGE.cupboard_id, "in_front_of"),
                          transitions={'succeeded': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
@@ -91,13 +90,14 @@ def setup_statemachine(robot):
 
         # The loop
         StateMachine.add('NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
-                         NavigateToAndPickItemFromCupboardDrawer(robot, CHALLENGE_KNOWLEDGE.cupboard_id, "in_front_of",
-                                                                 required_items),
+                         NavigateToAndPickItem(robot, CHALLENGE_KNOWLEDGE.dinner_table_id, "in_front_of",
+                                               required_items),
                          transitions={'succeeded': 'PLACE_ITEM_ON_TABLE',
                                       'failed': 'CHECK_IF_WE_HAVE_IT_ALL'})
 
         StateMachine.add('PLACE_ITEM_ON_TABLE',
-                         NavigateToAndPlaceItemOnTable(robot, CHALLENGE_KNOWLEDGE.dinner_table_id, "right_of", "in_front_of"),
+                         NavigateToAndPlaceItemOnTable(robot, CHALLENGE_KNOWLEDGE.dinner_table_id, "in_front_of",
+                                                       "in_front_of"),
                          transitions={'succeeded': 'CHECK_IF_WE_HAVE_IT_ALL',
                                       'failed': 'WAIT'})
 
