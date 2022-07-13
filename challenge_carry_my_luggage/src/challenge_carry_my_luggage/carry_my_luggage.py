@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import PyKDL as kdl
 import rospy
+import rospkg
+import os
 from pykdl_ros import FrameStamped
 from ed.shape import RightPrism
 from smach import StateMachine, cb_interface, CBState
@@ -8,7 +10,7 @@ from ed.entity import Entity
 from robocup_knowledge import load_knowledge
 from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
-from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFromOperatorPose
+from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFromOperatorPose, ShowImageState
 from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
 import robot_smach_states.util.designators as ds
 from robot_skills.arm import arms
@@ -18,6 +20,8 @@ from robot_smach_states.utility import WaitTime
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
 STARTING_POINT = challenge_knowledge.starting_point
+ACTUAL_STARTING_POINT = challenge_knowledge.actual_starting_point
+ENTRANCE_DOOR = challenge_knowledge.entrance_door
 
 
 @cb_interface(outcomes=["done"])
@@ -46,14 +50,17 @@ class CarryMyLuggage(StateMachine):
         StateMachine.__init__(self, outcomes=["Done", "Aborted"])
         self.robot = robot
         self.entity_designator = ds.VariableDesignator(resolve_type=Entity)
-        self.arm_designator = ds.UnoccupiedArmDesignator(
+        self.arm_designator = ds.OccupiedArmDesignator(
             robot,
             {
                 "required_goals": ["reset", "handover_to_human", "carrying_pose"],
                 "required_gripper_types": [arms.GripperTypes.GRASPING],
             },
         ).lockable()
-        self.waypoint_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
+        self.starting_point_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
+        self.actual_starting_point_designator = ds.EntityByIdDesignator(robot, uuid=ACTUAL_STARTING_POINT)
+        self.entrance_door = ds.EntityByIdDesignator(robot, uuid=ENTRANCE_DOOR)
+
         # noinspection PyProtectedMember
         self._arm = robot.get_arm()._arm
 
@@ -68,9 +75,19 @@ class CarryMyLuggage(StateMachine):
                 "SET_INITIAL_POSE",
                 SetInitialPose(self.robot, STARTING_POINT),
                 transitions={
-                    "done": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
-                    "preempted": "MOVE_CUSTOM_CARRY",  # todo: change this?
-                    "error": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
+                    "done": "NAVIGATE_TO_ACTUAL_STARTING_POINT",  # Choice here; try to pick up the bag or not: NAVIGATE_TO_ACTUAL_STARTING_POINT or POINT_BAG
+                    "preempted": "NAVIGATE_TO_ACTUAL_STARTING_POINT",  # todo: change this?
+                    "error": "NAVIGATE_TO_ACTUAL_STARTING_POINT",  # Choice here; try to pick up the bag or not: NAVIGATE_TO_ACTUAL_STARTING_POINT or POINT_BAG
+                },
+            )
+
+            StateMachine.add(
+                "NAVIGATE_TO_ACTUAL_STARTING_POINT",
+                NavigateToWaypoint(self.robot, self.actual_starting_point_designator),
+                transitions={
+                    "arrived": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
+                    "unreachable": "MOVE_CUSTOM_CARRY",  # todo: change this?
+                    "goal_not_defined": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
                 },
             )
 
@@ -91,14 +108,27 @@ class CarryMyLuggage(StateMachine):
                 "ASK_BAG_HANDOVER",
                 Say(
                     self.robot,
-                    ["I am unable to pick up the bag, please put it in my gripper"],
+                    ["I am unable to pick up the bag, please put it in my gripper as will be shown on the screen now"],
                     block=True,
                     look_at_standing_person=True,
                 ),
                 transitions={
-                    "spoken": "WAIT_FOR_OPERATOR",
+                    "spoken": "SHOW_IMAGE",
                 },
             )
+
+            StateMachine.add("SHOW_IMAGE",
+                             ShowImageState(
+                                 robot=self.robot,
+                                 image_filename=os.path.join(
+                                     rospkg.RosPack().get_path("challenge_carry_my_luggage"),
+                                     "src",
+                                     "challenge_carry_my_luggage",
+                                     "carry_my_luggage.jpg"
+                                     ),
+                                 seconds=15),
+                             transitions={'succeeded': 'WAIT_FOR_OPERATOR',
+                                          "failed": "WAIT_FOR_OPERATOR"})
 
             StateMachine.add(
                 "WAIT_FOR_OPERATOR",
@@ -216,7 +246,7 @@ class CarryMyLuggage(StateMachine):
                 "ASK_FOR_TASK",
                 Say(
                     self.robot,
-                    ["Are we at the car already?"],
+                    ["Are we at the car already? Please say YES or NO AFTER THE PING."],
                     block=True,
                     look_at_standing_person=True,
                 ),
@@ -228,21 +258,57 @@ class CarryMyLuggage(StateMachine):
             StateMachine.add(
                 "WAIT_FOR_TASK",
                 AskYesNo(self.robot),
-                transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"}, #todo this last one can create an infitine loop
+                transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "COULD_NOT_HEAR"}, #todo this last one can create an infitine loop
             )
 
             StateMachine.add(
-                "HANDOVER_TO_HUMAN",
-                HandoverToHuman(self.robot, self.arm_designator),
+                "COULD_NOT_HEAR",
+                Say(
+                    self.robot,
+                    ["I could not hear you. Please speak LOUDLY and DIRECTLY into the microphone."],
+                    block=True,
+                    look_at_standing_person=True,
+                ),
                 transitions={
-                    "succeeded": "NAVIGATE_TO_ARENA",
-                    "failed": "NAVIGATE_TO_ARENA",  # todo change this?
+                    "spoken": "ASK_FOR_TASK",
+                },
+            )
+
+            @cb_interface(outcomes=["done"])
+            def handover_on_unoccupied_arm(_):
+                self._arm.gripper.send_goal('open')
+                self._arm.wait_for_motion_done()
+                self.robot.speech.speak("Please remove the bag from my gripper, if you don't take it in a few seconds"
+                                        " I will take it back!")
+                rospy.sleep(10)
+                return "done"
+
+            self.add("HANDOVER_TO_HUMAN", CBState(handover_on_unoccupied_arm),
+                     transitions={"done": "NAVIGATE_TO_ARENA_ENTRANCE"})
+
+            # Commented out in favor of a callback state since this seems to crash
+            # StateMachine.add(
+            #     "HANDOVER_TO_HUMAN",
+            #     HandoverToHuman(self.robot, self.arm_designator),
+            #     transitions={
+            #         "succeeded": "NAVIGATE_TO_ARENA",
+            #         "failed": "NAVIGATE_TO_ARENA",  # todo change this?
+            #     },
+            # )
+
+            StateMachine.add(
+                "NAVIGATE_TO_ARENA_ENTRANCE",
+                NavigateToWaypoint(self.robot, self.entrance_door),
+                transitions={
+                    "arrived": "NAVIGATE_IN_ARENA",
+                    "unreachable": "NAVIGATE_IN_ARENA",  # todo change this?
+                    "goal_not_defined": "NAVIGATE_IN_ARENA",  # todo change this?
                 },
             )
 
             StateMachine.add(
-                "NAVIGATE_TO_ARENA",
-                NavigateToWaypoint(self.robot, self.waypoint_designator),
+                "NAVIGATE_IN_ARENA",
+                NavigateToWaypoint(self.robot, self.starting_point_designator),
                 transitions={
                     "arrived": "Done",
                     "unreachable": "Done",  # todo change this?
