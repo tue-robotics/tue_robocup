@@ -7,6 +7,8 @@
 import os
 
 import rospy
+import tf2_ros
+
 from ed.entity import Entity
 from geometry_msgs.msg import PoseStamped
 from robot_skills import get_robot, robot
@@ -16,14 +18,21 @@ from std_msgs.msg import Header
 from ed_sensor_integration_msgs.srv import RayTraceResponse
 from people_recognition_msgs.msg import Person3D
 
+from tf2_ros import TransformBroadcaster, TransformStamped
+import tf2_pykdl_ros
+import tf2_geometry_msgs
 
-OPERATOR = None
+
+OPERATOR = None  # type: Person3D
 
 
 class GetFurnitureFromOperatorPose(StateMachine):
     def __init__(self, robot, furniture_designator, possible_furniture):
         # type: (robot.Robot, VariableDesignator) -> None
         StateMachine.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
+
+        # For Testing
+        self.transform_pub = TransformBroadcaster()
 
         is_writeable(furniture_designator)
 
@@ -36,6 +45,9 @@ class GetFurnitureFromOperatorPose(StateMachine):
         def _prepare_operator(_):
             global OPERATOR
             OPERATOR = None
+
+            # For Testing
+            return 'done'
 
             robot.ed.reset()
             robot.head.reset()
@@ -83,6 +95,31 @@ class GetFurnitureFromOperatorPose(StateMachine):
             # OPERATOR = Person3D()
             # OPERATOR.header.frame_id = "map"
             # OPERATOR.position.z = 5
+            # OPERATOR.pointing_pose.position.x=2.9663838762357257
+            # OPERATOR.pointing_pose.position.y=6.376131050007937
+            # OPERATOR.pointing_pose.position.z=1.1662874869084487
+            # OPERATOR.pointing_pose.orientation.x=-0.45207647756427016
+            # OPERATOR.pointing_pose.orientation.y=0.571821148320176
+            # OPERATOR.pointing_pose.orientation.z=-0.4757615738881142
+            # OPERATOR.pointing_pose.orientation.w=0.4922381106521327
+
+            # OPERATOR.pointing_pose.position.x=3.5245514495275265
+            # OPERATOR.pointing_pose.position.y=7.01266033925749
+            # OPERATOR.pointing_pose.position.z=1.1662874869084487
+            # OPERATOR.pointing_pose.orientation.x=-0.44843423312166364
+            # OPERATOR.pointing_pose.orientation.y=0.3778370454325741
+            # OPERATOR.pointing_pose.orientation.z=-0.16792463126864846
+            # OPERATOR.pointing_pose.orientation.w=0.7924312108168484
+            #
+            # transform = TransformStamped()
+            # transform.header = OPERATOR.header
+            # transform.header.stamp = rospy.Time.now()
+            # transform.child_frame_id = "bla"
+            # transform.transform.rotation = OPERATOR.pointing_pose.orientation
+            # transform.transform.translation.x = OPERATOR.pointing_pose.position.x
+            # transform.transform.translation.y = OPERATOR.pointing_pose.position.y
+            # transform.transform.translation.z = OPERATOR.pointing_pose.position.z
+            # self.transform_pub.sendTransform(transform)
 
             while not rospy.is_shutdown() and OPERATOR is None:
                 persons = robot.perception.detect_person_3d(*_show_view())
