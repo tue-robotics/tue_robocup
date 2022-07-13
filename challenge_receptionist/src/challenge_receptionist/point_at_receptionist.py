@@ -59,7 +59,8 @@ class PointAtReception(smach.State):
             look_at_ent = self._look_at_designator.resolve()  # type: Entity
             if not look_at_ent:
                 rospy.logerr("Could not resolve _look_at_designator")
-                return "failed"
+                look_at_ent = point_at_ent
+                # return "failed"
         else:
             look_at_ent = point_at_ent  # type: Entity
         arm = self._arm_designator.resolve()  # type: PublicArm
