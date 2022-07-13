@@ -146,7 +146,7 @@ class WhereIsThis(smach.StateMachine):
                                    transitions={"succeeded": "RANGE_ITERATOR"})
 
             # Begin setup iterator
-            # The exhausted argument should be set to the prefered state machine outcome
+            # The exhausted argument should be set to the preferred state machine outcome
             range_iterator = smach.Iterator(outcomes=["succeeded", "failed"],  # Outcomes of the iterator state
                                             input_keys=[], output_keys=[],
                                             it=lambda: range(1000),
