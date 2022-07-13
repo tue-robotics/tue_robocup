@@ -206,7 +206,7 @@ class IntroduceGuest(smach.StateMachine):
                                    transitions={'spoken': 'TURN_TO_GUEST'})
 
             # TODO: still need to add 1 characteristics (pose) of guest 1 to guest 2
-            # TODO: Test this
+            # TODO: Test the todo above (it is implemented)
             smach.StateMachine.add('TURN_TO_GUEST',
                                     ForceDrive(robot, 0, 0, 1.05, 3.0),
                                     transitions={"done": "SAY_FOR_INTRODUCE_GUEST"})
