@@ -188,7 +188,7 @@ class GrabTrash(smach.State):
         # Go back and pull back arm
         self._robot.head.look_up()
         self._robot.head.wait_for_motion_done()
-        self._robot.base.force_drive(-0.25, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.25, 0, 0, 0.5)
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
         arm.send_joint_goal('reset')
