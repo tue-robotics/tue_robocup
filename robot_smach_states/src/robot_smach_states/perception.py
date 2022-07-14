@@ -14,15 +14,26 @@ from .state import State
 from .util import designators as ds
 
 
-class LookAtEntity(State):
-    def __init__(self, robot, entity, keep_following=False, waittime=0.0):
+class LookAtEntity(smach.StateMachine):
+    def __init__(self, robot, entity, waittime=0.0, height=None):
+        """
+        :param robot: The robot
+        :param entity: The entity to look at
+        :param waittime: Amount of time the robot look at the entity
+        :param height: Look higher up in the entity
+        """
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+        self._robot = robot
+        self._entity = entity
+        self._waittime = waittime
+        self._height = height if height is not None else 0
+
         ds.check_type(entity, Entity)
 
-        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
+    def execute(self, userdata=None):
 
-    def run(self, robot, entity, keep_following, waittime):
-        if keep_following:
-            rospy.logerr("Look at stuff: keep_following is obsolete")
+        entity = self._entity.resolve() if hasattr(self._entity, 'resolve') else self._entity
+        height = self._height.resolve() if hasattr(self._height, 'resolve') else self._height
 
         if not entity:
             return 'failed'
@@ -31,10 +42,10 @@ class LookAtEntity(State):
         # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         # The added benefit is that the entity's frame actually moves because the entity is tracked.
         # This makes the head track the entity
-        vs = VectorStamped.from_xyz(0, 0, 0, entity.last_update_time, frame_id=entity.uuid)
-        rospy.loginfo('Look at %s' % (repr(vs)))
-        robot.head.look_at_point(vs)
-        rospy.sleep(rospy.Duration(waittime))
+        vs = VectorStamped.from_xyz(0, 0, height, entity.last_update_time, frame_id=entity.uuid)
+        rospy.loginfo(f'Look at {vs}')
+        self._robot.head.look_at_point(vs)
+        rospy.sleep(rospy.Duration(self._waittime))
         return "succeeded"
 
 
