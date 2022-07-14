@@ -95,11 +95,7 @@ class FollowOperator(smach.State):
                              "Every step you take",
                              "I'll be watching you"]
         self._follow_song_counter = 0
-        self._lost_song = ["Since you've gone, I've been lost without a trace",
-                           "I dream at night, I can only see your face",
-                           "I look around, but it's you I can't replace"]
-
-        self._lost_song_counter = 0
+        self._track_operator_counter = 0
     def _operator_standing_still_for_x_seconds(self, timeout):
         """
         Check whether the operator is standing still for X seconds
@@ -298,9 +294,11 @@ class FollowOperator(smach.State):
             f = self._robot.base.get_location().frame
             self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
-            self._robot.speech.speak(self._follow_song[self._follow_song_counter % len(self._follow_song)], block=False)
-            self._follow_song_counter += 1
+            if not self._track_operator_counter % 5:
+                self._robot.speech.speak(self._follow_song[self._follow_song_counter % len(self._follow_song)], block=False)
+                self._follow_song_counter += 1
 
+            self._track_operator_counter += 1
             return True
         else:
             if not self._last_operator:
