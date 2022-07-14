@@ -68,8 +68,7 @@ class HandMeThat(smach.StateMachine):
                                           "failed": "SAY_NO_OBJECT"})  # If no entities, try again
 
             # Tell when you failed to
-            smach.StateMachine.add('SAY_NO_OBJECT', Say(robot, ['I did not find any object object there',
-                                                                'I did not what you pointed at']),
+            smach.StateMachine.add('SAY_NO_OBJECT', Say(robot, ['I did not find any object object there']),
                                    transitions={'spoken': 'NAVIGATE_TO_START'})
 
             # Point at the object
