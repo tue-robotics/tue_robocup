@@ -41,13 +41,13 @@ class HandMeThat(smach.StateMachine):
             if not TESTING:
                 # Intro
                 smach.StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
-                                 transitions={'Done': 'SAY_START',
-                                              'Aborted': 'done',
-                                              'Failed': 'SAY_START'})
+                                       transitions={'Done': 'SAY_START',
+                                                    'Aborted': 'done',
+                                                    'Failed': 'SAY_START'})
 
             # Say we're gonna start
             smach.StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
-                             transitions={'spoken': 'NAVIGATE_TO_START'})
+                                   transitions={'spoken': 'NAVIGATE_TO_START'})
 
             # Drive to the start location
             smach.StateMachine.add('NAVIGATE_TO_START',
@@ -58,14 +58,15 @@ class HandMeThat(smach.StateMachine):
 
             # The pre-work
             smach.StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
-                             GetFurnitureFromOperatorPose(robot, furniture_designator.writeable, POSSIBLE_FURNITURE),
-                             transitions={'done': 'INSPECT_FURNITURE'})
+                                   GetFurnitureFromOperatorPose(robot, furniture_designator.writeable,
+                                                                POSSIBLE_FURNITURE),
+                                   transitions={'done': 'INSPECT_FURNITURE'})
 
             # Go to the furniture object that was pointing to see what's there
             smach.StateMachine.add('INSPECT_FURNITURE',
-                             InspectFurniture(robot, furniture_designator, entity_designator.writeable),
-                             transitions={"succeeded": "IDENTIFY_OBJECT",
-                                          "failed": "SAY_NO_OBJECT"})  # If no entities, try again
+                                   InspectFurniture(robot, furniture_designator, entity_designator.writeable),
+                                   transitions={"succeeded": "IDENTIFY_OBJECT",
+                                                "failed": "SAY_NO_OBJECT"})  # If no entities, try again
 
             # Tell when you failed to
             smach.StateMachine.add('SAY_NO_OBJECT', Say(robot, ['I did not find any object object there']),
@@ -73,9 +74,9 @@ class HandMeThat(smach.StateMachine):
 
             # Point at the object
             smach.StateMachine.add('IDENTIFY_OBJECT',
-                             IdentifyObject(robot, entity_designator, arm_designator),
-                             transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
-                                          'failed': 'SAY_TRY_NEXT'})  # Just keep on going
+                                   IdentifyObject(robot, entity_designator, arm_designator),
+                                   transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
+                                                'failed': 'SAY_TRY_NEXT'})  # Just keep on going
 
             smach.StateMachine.add('SAY_TRY_NEXT', Say(robot, ['I am sorry, let me try another one',
                                                                'I will try another item']),
