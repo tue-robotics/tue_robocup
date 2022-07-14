@@ -62,11 +62,18 @@ class TakeOrder(smach.State):
         self._orders = orders
         self._max_tries = 2
         self._get_intent = GetIntent()
+        self.number_of_tries = 0
 
     def _confirm(self):
         try:
-            speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+            if self.number_of_tries == 0:
+                speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
                                                                                           "T[False] -> no", target="T")
+                self.number_of_tries += 1
+
+            else:
+                speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;", target="T")
+
         except TimeoutException:
             return False
 
@@ -93,22 +100,26 @@ class TakeOrder(smach.State):
                 count += 1
 
                 try:
-                    speech_result = self._get_intent.query()
-                    #speech_result = self._robot.hmi.query(description="Can I please take your order",
-                    #                                    grammar=knowledge.order_grammar, target="O")
+                    #speech_result = self._get_intent.query()
+                    speech_result = self._robot.hmi.query(description="Can I please take your order",
+                                                        grammar=knowledge.order_grammar, target="O")
                     break
                 except TimeoutException:
-                    if count < 2:
+                    if count < 3:
                         self._robot.speech.speak(["Please speak even louder and directly into my microphone and "
                                                   "WAIT FOR THE PING PLEASE"])
                     else:
                         potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
                         random.shuffle(potential_orders)
                         drink = potential_orders[0]
-                        self._robot.speech.speak(
-                            "I understood that you would like to order a {drink}".format(drink=drink),
-                            block=False)
+                        self._robot.speech.speak("I understood that you would like a {}, "
+                                                 "is this correct?".format(drink), block=True)
+                        self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
+                                                              target="T")
                         self._orders.append(drink)
+                        self._robot.head.cancel_goal()
+                        self._robot.speech.speak("Ok, I will get your order", block=False)
+
                         # self._robot.head.cancel_goal()
                         return "failed"
 
@@ -130,9 +141,13 @@ class TakeOrder(smach.State):
         potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
         random.shuffle(potential_orders)
         drink = potential_orders[0]
-        self._robot.speech.speak("I understood that you would like to order a {drink}".format(drink=drink),
-                                 block=False)
+        self._robot.speech.speak("I understood that you would like a {}, "
+                                 "is this correct?".format(drink), block=True)
+        self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
+                                              target="T")
         self._orders.append(drink)
+        self._robot.head.cancel_goal()
+        self._robot.speech.speak("Ok, I will get your order", block=False)
         # self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
         # self._robot.head.cancel_goal()
         return "failed"
