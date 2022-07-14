@@ -1,16 +1,17 @@
 # System
 import enum
-
 # ROS
-import rospy
-import smach
+import math
 
+import rospy
+
+import robot_smach_states.util.designators as ds
+import smach
 # TU/e
 from ed.entity import Entity
-from robot_skills.simulation import is_sim_mode
-import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
+from robot_skills.simulation import is_sim_mode
 from robot_smach_states.human_interaction import (
     GiveDirections,
     HearOptions,
@@ -18,9 +19,8 @@ from robot_smach_states.human_interaction import (
     Say,
     WaitForPersonInFront,
 )
-from robot_smach_states.navigation import guidance, NavigateToSymbolic, NavigateToWaypoint
+from robot_smach_states.navigation import guidance, NavigateToSymbolic, NavigateToWaypoint, ForceDrive
 from robot_smach_states.utility import WaitTime
-
 # Challenge where is this
 from .simulation import mock_detect_operator
 
@@ -220,9 +220,15 @@ class GuideToRoomOrObject(smach.StateMachine):
                 NavigateToSymbolic(robot, {entity_des: "in"}, entity_des),
                 transitions={
                     "arrived": "SAY_ARRIVED",
-                    "unreachable": "unreachable",
+                    "unreachable": "ROOM_NAV_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                 },
+            )
+
+            smach.StateMachine.add(
+                "ROOM_NAV_BACKUP_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "ROOM_NAV_BACKUP"},
             )
 
             smach.StateMachine.add(
@@ -230,9 +236,15 @@ class GuideToRoomOrObject(smach.StateMachine):
                 NavigateToSymbolic(robot, {entity_des: "near"}, entity_des),
                 transitions={
                     "arrived": "SAY_ARRIVED",
-                    "unreachable": "unreachable",
+                    "unreachable": "FURNITURE_NAV_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                 },
+            )
+
+            smach.StateMachine.add(
+                "FURNITURE_NAV_BACKUP_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "FURNITURE_NAV_BACKUP"},
             )
 
             smach.StateMachine.add(
@@ -385,7 +397,19 @@ class InformMachine(smach.StateMachine):
                     ],
                     entity_id=ds.AttrDesignator(self.entity_des, "uuid", resolve_type=str),
                 ),
-                transitions={"spoken": "GIVE_DIRECTIONS"},
+                transitions={"spoken": "INSTRUCT_FOR_WAIT_STEP_BACK"},
+            )
+
+            smach.StateMachine.add(
+                "INSTRUCT_FOR_WAIT_STEP_BACK",
+                Say(robot, "Please move two steps back"),
+                transitions={"spoken": "INSTRUCT_FOR_WAIT_STEP_BACK_WAIT"},
+            )
+
+            smach.StateMachine.add(
+                "INSTRUCT_FOR_WAIT_STEP_BACK_WAIT",
+                WaitTime(robot, 3.0),
+                transitions={"waited": "GIVE_DIRECTIONS", "preempted": "GIVE_DIRECTIONS"},
             )
 
             smach.StateMachine.add(
