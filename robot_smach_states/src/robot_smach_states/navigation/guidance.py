@@ -207,6 +207,9 @@ class ExecutePlanGuidance(smach.State):
         # Look backwards to have the operator in view
         self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, 0.0, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
 
+        rospy.sleep(1)  # Allow robot to drive a bit before speaking
+        self.robot.speech.speak("Keeping looking at me while you follow me", block=True)
+
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
         old_position = self._get_base_position()
@@ -343,23 +346,14 @@ class Guide(smach.StateMachine):
 
             smach.StateMachine.add("RESET_MENTIONED_ENTITIES",
                                    smach.CBState(_reset_mentioned_entities),
-                                   transitions={"done": "SAY_BEHIND"})
+                                   transitions={"done": "GET_AND_SET_PLAN"})
 
-            smach.StateMachine.add("SAY_BEHIND",
-                                   Say(robot, "Please stand behind me and look at me", block=True),
-                                   transitions={"spoken": "WAIT"})
-
-            smach.StateMachine.add("WAIT",
-                                   WaitTime(robot, waittime=3.0),
-                                   transitions={"waited": "GET_PLAN",
-                                                "preempted": "preempted"})
-
-            smach.StateMachine.add("GET_PLAN", navigation.getPlan(self.robot, constraint_function),
+            smach.StateMachine.add("GET_AND_SET_PLAN", navigation.getPlan(self.robot, constraint_function),
                                    transitions={"unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
-                                                "goal_ok": "EXECUTE_PLAN"})
+                                                "goal_ok": "MONITOR_PLAN"})
 
-            smach.StateMachine.add("EXECUTE_PLAN", self.execute_plan,
+            smach.StateMachine.add("MONITOR_PLAN", self.execute_plan,
                                    transitions={"arrived": "arrived",
                                                 "blocked": "PLAN_BLOCKED",
                                                 "preempted": "preempted",
@@ -369,12 +363,12 @@ class Guide(smach.StateMachine):
                                    WaitForOperator(robot=self.robot,
                                                    distance=self.operator_distance,
                                                    radius=self.operator_radius),
-                                   transitions={"is_following": "GET_PLAN",
+                                   transitions={"is_following": "GET_AND_SET_PLAN",
                                                 "is_lost": "lost_operator"})
 
             smach.StateMachine.add("PLAN_BLOCKED", navigation.planBlocked(self.robot),
-                                   transitions={"blocked": "GET_PLAN",
-                                                "free": "EXECUTE_PLAN"})
+                                   transitions={"blocked": "GET_AND_SET_PLAN",
+                                                "free": "MONITOR_PLAN"})
 
 
 class GuideToSymbolic(Guide):
