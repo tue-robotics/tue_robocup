@@ -6,24 +6,24 @@
 
 from __future__ import print_function
 
-import copy
 import math
 import os
 import sys
 
 import PyKDL
 import rospy
-import visualization_msgs.msg
-from geometry_msgs.msg import PoseStamped, Vector3
+from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import ColorRGBA
+from tf_conversions import toMsg
+
+from challenge_set_the_table.knowledge import TABLE_ID, TABLE_NAVIGATION_AREA
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
-from robot_smach_states.utility import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
-from std_msgs.msg import ColorRGBA
-from tf_conversions import toMsg
 
 item_vector_dict = {
     "plate": PyKDL.Vector(0.1, 0.2, 0),
@@ -86,12 +86,6 @@ class PlaceItemOnTable(StateMachine):
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
             arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
-            if wait_for_motion_done:
-                arm.wait_for_motion_done()
-
-        def send_joint_trajectory(goal_array, wait_for_motion_done=True):
-            # noinspection PyProtectedMember
-            arm._send_joint_trajectory(goal_array, timeout=rospy.Duration(0))
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -173,14 +167,14 @@ class PlaceItemOnTable(StateMachine):
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area, placement_height=0.7):
+    def __init__(self, robot, table_id, table_navigation_area, placement_height=0.7):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
 
         table = EdEntityDesignator(robot=robot, uuid=table_id)
 
         with self:
             StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",
-                             NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
+                             NavigateToSymbolic(robot, {table: table_navigation_area}, table),
                              transitions={'arrived': 'PLACE_ITEM_ON_TABLE',
                                           'unreachable': 'SAY_PICK_AWAY_THE_CHAIR',
                                           'goal_not_defined': 'failed'})
@@ -207,58 +201,13 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
                                           'failed': 'failed'})
 
 
-def _publish_item_poses(robot, items):
-    """
-    Publishes item poses as a visualization marker array
-
-    :param robot: (Robot) robot API object
-    :param items: (dict) ...
-    """
-    array_msg = visualization_msgs.msg.MarkerArray()
-
-    marker_id = 1234
-    for k, posestamped in items.items():
-        posestamped = posestamped  # type: PoseStamped
-
-        marker_id += 1
-        marker_msg = visualization_msgs.msg.Marker()
-        marker_msg.header.frame_id = posestamped.header.frame_id
-        marker_msg.header.stamp = rospy.Time.now()
-        marker_msg.id = marker_id
-        marker_msg.type = visualization_msgs.msg.Marker.SPHERE
-        marker_msg.action = 0
-        marker_msg.pose = posestamped.pose
-        marker_msg.pose.position.z += 1.0
-        marker_msg.scale = Vector3(0.05, 0.05, 0.05)
-        marker_msg.color = color_dict[k]
-        marker_msg.lifetime = rospy.Duration(30.0)
-        array_msg.markers.append(marker_msg)
-
-        marker_id += 1
-        marker_msg2 = copy.deepcopy(marker_msg)
-        marker_msg2.id = marker_id
-        marker_msg2.type = visualization_msgs.msg.Marker.TEXT_VIEW_FACING
-        marker_msg2.pose.position.z += 0.1
-        marker_msg2.text = k
-        array_msg.markers.append(marker_msg2)
-
-    robot.marker_array_pub.publish(array_msg)
-
-
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
 
     item_frames = {k: item_vector_to_item_frame(v) for k, v in item_vector_dict.items()}
-    import pprint
-    print('Item frames:')
-    pprint.pprint(item_frames)
-
     item_poses = {k: item_frame_to_pose(v, 'kitchen_table') for k, v in item_frames.items()}
-    print('Item poses:')
-    pprint.pprint(item_poses)
 
     robot_instance = get_robot("hero")
-    _publish_item_poses(robot_instance, item_poses)
     robot_instance.reset()
     try:
         placement_height_ = float(sys.argv[2])
@@ -266,7 +215,7 @@ if __name__ == '__main__':
         rospy.logwarn("You can specify height as a optional parameter")
         placement_height_ = 0.7
     state_machine = NavigateToAndPlaceItemOnTable(
-        robot_instance, 'kitchen_table', 'right_of', 'right_of_close', placement_height_
+        robot_instance, TABLE_ID, TABLE_NAVIGATION_AREA, placement_height_
     )
     state_machine.userdata['item_picked'] = sys.argv[1]
     state_machine.execute()

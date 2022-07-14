@@ -3,13 +3,15 @@
 # All rights reserved.
 #
 # \author Rein Appeldoorn
-
+import math
 import os
 
-import rospy
 import rospkg
+import rospy
+
+from challenge_set_the_table.knowledge import CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA
 from robot_skills import get_robot
-from robot_smach_states.navigation import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 
@@ -27,7 +29,7 @@ plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
 
 
 class PickItemFromCupboardDrawer(StateMachine):
-    def __init__(self, robot, cupboard_id, required_items):
+    def __init__(self, robot, required_items):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
@@ -39,7 +41,7 @@ class PickItemFromCupboardDrawer(StateMachine):
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
-        def send_gripper_goal(open_close_string, max_torque=0.1):
+        def send_gripper_goal(open_close_string, max_torque=0.6):
             arm.gripper.send_goal(open_close_string, max_torque=max_torque)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
@@ -50,7 +52,7 @@ class PickItemFromCupboardDrawer(StateMachine):
             else:
                 try:
                     rospy.loginfo("Showing {}".format(path))
-                    robot.hmi.show_image(path, 10)
+                    robot.hmi.show_image(path, 15)
                 except Exception as e:
                     rospy.logerr("Could not show image {}: {}".format(path, e))
             return 'succeeded'
@@ -74,12 +76,13 @@ class PickItemFromCupboardDrawer(StateMachine):
             show_image('challenge_set_the_table', item_img_dict[item_name])
 
             send_gripper_goal("open")
-            rospy.sleep(5.0)
+            rospy.sleep(10.0)
+            robot.speech.speak("Please hold it steady now!", block=False)
+            send_gripper_goal("close", max_torque=0.08)
+            rospy.sleep(3.0)
+
             robot.speech.speak("Thanks for that!", block=False)
-            if item_name == 'plate':
-                send_gripper_goal("close", max_torque=0.7)
-            else:
-                send_gripper_goal("close")
+            send_gripper_goal("close")
 
             # Set output data
             user_data['item_picked'] = item_name
@@ -102,10 +105,16 @@ class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
             StateMachine.add("NAVIGATE_TO_CUPBOARD",
                              NavigateToSymbolic(robot, {cupboard: cupboard_navigation_area}, cupboard),
                              transitions={'arrived': 'PICK_ITEM_FROM_CUPBOARD',
-                                          'unreachable': 'failed',
+                                          'unreachable': 'NAVIGATE_TO_CUPBOARD_FAILED',
                                           'goal_not_defined': 'failed'})
 
-            StateMachine.add("PICK_ITEM_FROM_CUPBOARD", PickItemFromCupboardDrawer(robot, cupboard_id, required_items),
+            StateMachine.add(
+                "NAVIGATE_TO_CUPBOARD_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "NAVIGATE_TO_CUPBOARD"},
+            )
+
+            StateMachine.add("PICK_ITEM_FROM_CUPBOARD", PickItemFromCupboardDrawer(robot, required_items),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 
@@ -114,4 +123,4 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItemFromCupboardDrawer(robot_instance, 'cupboard', 'aside_of').execute()
+    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA).execute()
