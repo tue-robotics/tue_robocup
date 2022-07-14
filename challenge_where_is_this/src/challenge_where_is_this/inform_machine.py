@@ -177,7 +177,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                 "GUIDE_NEAR_FURNITURE",
                 guidance.GuideToSymbolic(
                     robot,
-                    {entity_des: "near"},
+                    {entity_des: "in_front_of"},
                     entity_des,
                     operator_distance=self.operator_distance,
                     operator_radius=self.operator_radius,
@@ -201,7 +201,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                 "GUIDE_NEAR_FURNITURE_BACKUP",
                 guidance.GuideToSymbolic(
                     robot,
-                    {entity_des: "near"},
+                    {entity_des: "in_front_of"},
                     entity_des,
                     operator_distance=self.operator_distance,
                     operator_radius=self.operator_radius,
@@ -233,7 +233,7 @@ class GuideToRoomOrObject(smach.StateMachine):
 
             smach.StateMachine.add(
                 "FURNITURE_NAV_BACKUP",
-                NavigateToSymbolic(robot, {entity_des: "near"}, entity_des),
+                NavigateToSymbolic(robot, {entity_des: "in_front_of"}, entity_des),
                 transitions={
                     "arrived": "SAY_ARRIVED",
                     "unreachable": "FURNITURE_NAV_BACKUP_FAILED",
