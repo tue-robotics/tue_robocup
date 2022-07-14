@@ -30,7 +30,7 @@ item_vector_dict = {
     "cup": PyKDL.Vector(0.2, -0.2, 0),
     "knife": PyKDL.Vector(0.0, -0.2, 0),
     "fork": PyKDL.Vector(0.0, 0.25, 0),
-    "spoon": PyKDL.Vector(0, -0.25, 0),
+    "spoon": PyKDL.Vector(0.0, -0.2, 0),
     "bowl": PyKDL.Vector(0.05, 0.05, 0),  # Must go on top of the plate
     "napkin": PyKDL.Vector(0.05, 0.35, 0)  # besides the fork
 }
@@ -137,6 +137,14 @@ class PlaceItemOnTable(StateMachine):
             send_joint_goal(pweg)
             robot.head.look_up()
             robot.head.wait_for_motion_done()
+
+            if item_name == 'napkin':
+                robot.base.force_drive(0, 0, -0.5, 0.1)
+                robot.base.force_drive(0, 0, 0.5, 0.1)
+                robot.base.force_drive(0, 0, -0.5, 0.1)
+                robot.base.force_drive(0, 0, 0.5, 0.1)
+                robot.base.force_drive(0, 0, -0.5, 0.1)
+                robot.base.force_drive(0, 0, 0.5, 0.1)
 
             rospy.loginfo("Retract...")
             send_joint_goal([0.69, 0, -1.57, 0, 0])
