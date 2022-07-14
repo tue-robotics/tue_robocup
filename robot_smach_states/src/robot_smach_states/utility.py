@@ -318,7 +318,7 @@ class WriteDesignator(smach.State):
 
     def execute(self, ud=None):
         value = self.value.resolve() if hasattr(self.value, 'resolve') else self.value
-        rospy.loginfo(f"Writing '{value} to designator: {self.write_designator}")
+        rospy.loginfo(f"Writing '{value}' to designator: {self.write_designator}")
         self.write_designator.write(value)
         return 'written'
 
