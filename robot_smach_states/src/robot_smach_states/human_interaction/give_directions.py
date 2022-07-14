@@ -92,6 +92,9 @@ class GiveDirections(smach.State):
         assert(all([p.header.frame_id.endswith("map") for p in path])), "Not all path poses are defined w.r.t. 'map'"
         kdl_path = [tf2_ros.convert(p, VectorStamped).vector for p in path]
 
+        if len(kdl_path) == 1:  # The robot is already in the destination room
+            return "succeeded"
+
         # Get all entities
         entities = self._robot.ed.get_entities()
         room_entities = [room for room in entities if room.etype == "room"]
