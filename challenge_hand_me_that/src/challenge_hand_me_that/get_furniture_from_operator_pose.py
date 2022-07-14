@@ -25,6 +25,30 @@ import tf2_geometry_msgs
 
 OPERATOR = None  # type: Person3D
 
+# For Testing
+# INDEX = 0
+# OPERATORS = [Person3D(), Person3D()]
+# OPERATOR1 = OPERATORS[0]
+# OPERATOR1.header.frame_id = "map"
+# OPERATOR1.position.z = 5
+# OPERATOR1.pointing_pose.position.x = 3.5245514495275265
+# OPERATOR1.pointing_pose.position.y = 7.01266033925749
+# OPERATOR1.pointing_pose.position.z = 1.1662874869084487
+# OPERATOR1.pointing_pose.orientation.x = -0.44843423312166364
+# OPERATOR1.pointing_pose.orientation.y = 0.3778370454325741
+# OPERATOR1.pointing_pose.orientation.z = -0.16792463126864846
+# OPERATOR1.pointing_pose.orientation.w = 0.7924312108168484
+# OPERATOR2 = OPERATORS[1]
+# OPERATOR2.header.frame_id = "map"
+# OPERATOR2.position.z = 5
+# OPERATOR2.pointing_pose.position.x = 2.0
+# OPERATOR2.pointing_pose.position.y = 8.8
+# OPERATOR2.pointing_pose.position.z = 1.2
+# OPERATOR2.pointing_pose.orientation.x = -0.27059805007309845
+# OPERATOR2.pointing_pose.orientation.y = -0.6532814824381882
+# OPERATOR2.pointing_pose.orientation.z = 0.6532814824381883
+# OPERATOR2.pointing_pose.orientation.w = -0.27059805007309845
+
 
 class GetFurnitureFromOperatorPose(StateMachine):
     def __init__(self, robot, furniture_designator, possible_furniture):
@@ -32,7 +56,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
         StateMachine.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
 
         # For Testing
-        self.transform_pub = TransformBroadcaster()
+        # self.transform_pub = TransformBroadcaster()
 
         is_writeable(furniture_designator)
 
@@ -47,7 +71,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
             OPERATOR = None
 
             # For Testing
-            return 'done'
+            # return 'done'
 
             robot.ed.reset()
             robot.head.reset()
@@ -92,24 +116,9 @@ class GetFurnitureFromOperatorPose(StateMachine):
                 return True
 
             # # Shortcut people recognition; For testing
-            # OPERATOR = Person3D()
-            # OPERATOR.header.frame_id = "map"
-            # OPERATOR.position.z = 5
-            # OPERATOR.pointing_pose.position.x=2.9663838762357257
-            # OPERATOR.pointing_pose.position.y=6.376131050007937
-            # OPERATOR.pointing_pose.position.z=1.1662874869084487
-            # OPERATOR.pointing_pose.orientation.x=-0.45207647756427016
-            # OPERATOR.pointing_pose.orientation.y=0.571821148320176
-            # OPERATOR.pointing_pose.orientation.z=-0.4757615738881142
-            # OPERATOR.pointing_pose.orientation.w=0.4922381106521327
-
-            # OPERATOR.pointing_pose.position.x=3.5245514495275265
-            # OPERATOR.pointing_pose.position.y=7.01266033925749
-            # OPERATOR.pointing_pose.position.z=1.1662874869084487
-            # OPERATOR.pointing_pose.orientation.x=-0.44843423312166364
-            # OPERATOR.pointing_pose.orientation.y=0.3778370454325741
-            # OPERATOR.pointing_pose.orientation.z=-0.16792463126864846
-            # OPERATOR.pointing_pose.orientation.w=0.7924312108168484
+            # global INDEX
+            # OPERATOR = OPERATORS[INDEX]
+            # INDEX = (INDEX+1) % 2
             #
             # transform = TransformStamped()
             # transform.header = OPERATOR.header
