@@ -70,7 +70,8 @@ class LearnGuest(smach.StateMachine):
                                                 'failed': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_HELLO',
-                                   Say(robot, ["Hi there, please speak after the beep and speak loudly and directly into my microphone because i'm deaf. I'll learn your face now"],
+                                   Say(robot, ["Hi there, please speak loudly and directly into my microphone because i'm deaf "
+                                               "AND SPEAK AFTER THE PING. I'll learn your face now"],
                                        block=False,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
@@ -139,7 +140,7 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_DRINK_QUESTION',
-                                   Say(robot, ["What's your favorite drink? Please speak after the beep and speak loudly and directly into my microphone"], block=True),
+                                   Say(robot, ["What's your favorite drink? Please speak loudly and directly into my microphone AND SPEAK AFTER THE PING"], block=True),
                                    transitions={'spoken': 'HEAR_DRINK_ANSWER'})
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
