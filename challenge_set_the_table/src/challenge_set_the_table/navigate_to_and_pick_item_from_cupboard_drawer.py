@@ -77,7 +77,7 @@ class PickItemFromCupboardDrawer(StateMachine):
 
             send_gripper_goal("open")
             rospy.sleep(10.0)
-            robot.speech.speak("Please hold it steady now!", block=False)
+            robot.speech.speak("Please hold it in this position until I improve my grip, steady now!", block=False)
             send_gripper_goal("close", max_torque=0.08)
             rospy.sleep(3.0)
 
