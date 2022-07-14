@@ -66,6 +66,9 @@ class PickItemFromCupboardDrawer(StateMachine):
 
             item_name = leftover_items[0]
 
+            if item_name == 'napkin':
+                robot.speech.speak("Please open the cupboard door", block=True)
+
             if item_name == 'plate':
                 send_joint_goal(plate_handover)
             else:
