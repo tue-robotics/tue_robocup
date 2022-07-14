@@ -7,17 +7,42 @@ import random
 
 # ROS
 from pykdl_ros import VectorStamped
+import actionlib
 import rospy
 import smach
 
 # TU/e Robotics
 from ed.entity import Entity
-from hmi import TimeoutException
+from hmi import TimeoutException, HMIResult
+from picovoice_msgs.msg import GetIntentAction, GetIntentGoal
 from robocup_knowledge import knowledge_loader
+from robot_skills.simulation import is_sim_mode
 import robot_smach_states.util.designators as ds
 
 # Knowledge
 knowledge = knowledge_loader.load_knowledge("challenge_restaurant")
+
+
+class GetIntent:
+    def __init__(self):
+        self._client = actionlib.SimpleActionClient("/get_intent", GetIntentAction)
+
+    def query(self):
+        if self._client.send_goal_and_wait(GetIntentGoal(
+            context_url='restaurant',
+            require_endpoint=True
+        ), preempt_timeout=rospy.Duration(10), execute_timeout=rospy.Duration(10)):
+            result = self._client.get_result()
+            if result is None:
+                rospy.logerr("Picovoice result None")
+                raise TimeoutException("Picovoice result None")
+            if not result.is_understood:
+                rospy.logwarn("Not understood")
+                raise TimeoutException("Not understood")
+            return HMIResult(sentence="", semantics={slot.key: slot.value for slot in result.slots})
+        else:
+            rospy.logerr("Picovoice failed")
+            raise TimeoutException("Picovoice failed")
 
 
 class TakeOrder(smach.State):
@@ -41,6 +66,7 @@ class TakeOrder(smach.State):
         self._orders = orders
         self.number_of_tries = 0
         self._max_tries = 2
+        self._get_intent = GetIntent()
 
     def _confirm(self):
         try:
@@ -75,8 +101,12 @@ class TakeOrder(smach.State):
                 count += 1
 
                 try:
-                    speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                        grammar=knowledge.order_grammar, target="O")
+                    if is_sim_mode():
+                        rospy.loginfo("In Sim Mode we don't use picovoice")
+                        speech_result = self._robot.hmi.query(description="Can I please take your order",
+                                                              grammar=knowledge.order_grammar, target="O")
+                    else:
+                        speech_result = self._get_intent.query()
                     break
                 except TimeoutException:
                     if count < 3:
@@ -182,8 +212,9 @@ if __name__ == '__main__':
     pose.position.y = 1.0
     pose.position.z = 1.6
     customer_entity = Entity('random_id', 'person',
-                             'map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
-                             'dummy', # Only pose and frame_id are used
+                             'map',
+                             # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
+                             'dummy',  # Only pose and frame_id are used
                              'shape', 'volumes', 'super_types', 'last_update_time')
     customer_entity.pose = pose  # This takes care of the conversion to KDL for us
     orders = []
