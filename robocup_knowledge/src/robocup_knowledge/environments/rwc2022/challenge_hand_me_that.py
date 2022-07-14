@@ -1,5 +1,6 @@
 starting_point = "initial_pose"
-home_location = "hand_me_that_home_location"
+home_location = "hand_me_that_office"
+room = "office"
 
 all_possible_furniture = [
     "couch_table",
