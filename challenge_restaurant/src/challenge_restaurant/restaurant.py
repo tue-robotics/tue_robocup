@@ -1,15 +1,16 @@
 #!/usr/bin/python
 import math
-import numpy as np
 import os.path
 
-import robot_smach_states as states
+import numpy as np
 import rospkg
+
+import robot_smach_states as states
 import smach
-from ed.entity import Entity
 from challenge_restaurant.ask_take_order import AskTakeTheOrder
 from challenge_restaurant.store_waypoint import StoreWaypoint
 from challenge_restaurant.take_orders import TakeOrder, ReciteOrders, ClearOrders
+from ed.entity import Entity
 
 V_TH = 0.5
 
@@ -37,11 +38,6 @@ class Restaurant(smach.StateMachine):
         orders = []
 
         with self:
-            smach.StateMachine.add('INITIALIZE',
-                                   states.utility.Initialize(robot),
-                                   transitions={'initialized': 'SAY_WAVING',
-                                                'abort': 'STOP'})
-
             smach.StateMachine.add('SAY_WAVING',
                                    states.human_interaction.Say(
                                        robot,
@@ -129,9 +125,9 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_SPEAK_2',
                                    states.human_interaction.Say(
                                        robot,
-                                       "Hi, please make sure that you speak loudly and directly into my microphone "
-                                       "AND SPEAK AFTER THE PING. Like is shown "
-                                       "on my screen", block=True),
+                                       "Hi, please make sure that you speak loudly and directly into my microphone, "
+                                       "like is shown on my screen",
+                                       block=True),
                                    transitions={'spoken': 'SHOW_IMAGE_SPEAK_2'})
 
             smach.StateMachine.add('SHOW_IMAGE_SPEAK_2',
@@ -227,7 +223,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
-                                   states.utility.WaitTime(robot=robot, waittime=10.0),
+                                   states.utility.WaitTime(robot=robot, waittime=15.0),
                                    transitions={'waited': 'BRING_OBJECTS',
                                                 'preempted': 'STOP'})
 
@@ -261,7 +257,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
-                                   states.utility.WaitTime(robot=robot, waittime=10.0),
+                                   states.utility.WaitTime(robot=robot, waittime=15.0),
                                    transitions={'waited': 'RETURN_TO_START',
                                                 'preempted': 'STOP'})
 
