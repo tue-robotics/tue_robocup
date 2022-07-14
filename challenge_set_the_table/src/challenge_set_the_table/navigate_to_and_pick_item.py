@@ -59,7 +59,7 @@ class PickItem(StateMachine):
             return "succeeded"
 
         @cb_interface(outcomes=['succeeded', 'failed'])
-        def _check_cup(_):
+        def _check_cup(user_data):
             # Only grasp cup
             if required_items[0] is not "cup":
                 return 'failed'
@@ -112,12 +112,12 @@ class PickItem(StateMachine):
             return 'succeeded'
 
         with self:
-            self.add("CHECK_CUP", CBState(_check_cup), transitions={"succeeded": "is_cup", "failed": "ROTATE"})
+            self.add("CHECK_CUP", CBState(_check_cup), transitions={"succeeded": "is_cup", "failed": "done"})
             self.add("ROTATE", CBState(_rotate), transitions={"done": "ASK_USER"})
             self.add('ASK_USER', CBState(_ask_user), transitions={'succeeded': 'succeeded', 'failed': 'failed'})
 
 
-class PickCup(StateMachine):
+class PickCup:
     def __init__(self, robot, required_items):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
         # noinspection PyProtectedMember
