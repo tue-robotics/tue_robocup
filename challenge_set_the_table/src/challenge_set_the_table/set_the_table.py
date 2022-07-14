@@ -74,7 +74,7 @@ def setup_statemachine(robot):
         StateMachine.add('NAVIGATE_AND_OPEN_CUPBOARD',
                          NavigateToAndOpenCupboard(robot, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA),
                          transitions={'succeeded': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER',
-                                      'failed': 'SAY_OPEN_FAILED'})
+                                      'failed': 'NAVIGATE_AND_PICK_ITEM_FROM_CUPBOARD_DRAWER'})
 
         StateMachine.add('SAY_OPEN_FAILED',
                          Say(robot, "I failed to open the cupboard drawer"),
