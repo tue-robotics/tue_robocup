@@ -75,7 +75,8 @@ class PickItemFromCupboardDrawer(StateMachine):
                 arm.send_joint_goal("carrying_pose")
             picked_items.append(item_name)
 
-            robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
+            robot.speech.speak("Please put the {} in my gripper, like this, against my finger tips".format(item_name),
+                               block=False)
             show_image('challenge_set_the_table', item_img_dict[item_name])
 
             send_gripper_goal("open")
