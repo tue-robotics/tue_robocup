@@ -80,10 +80,11 @@ class PickItemFromCupboardDrawer(StateMachine):
             show_image('challenge_set_the_table', item_img_dict[item_name])
 
             send_gripper_goal("open")
-            rospy.sleep(10.0)
+            rospy.sleep(8.0)
             robot.speech.speak("Please hold it in this position until I improve my grip, steady now!", block=False)
-            send_gripper_goal("close", max_torque=0.08)
-            rospy.sleep(3.0)
+            if item_name in ["knife", "spoon", "fork"]:
+                send_gripper_goal("close", max_torque=0.08)
+                rospy.sleep(3.0)
 
             robot.speech.speak("Thanks for that!", block=False)
             send_gripper_goal("close")
