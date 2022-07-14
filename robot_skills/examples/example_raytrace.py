@@ -19,13 +19,13 @@ tf = tf2_ros.TransformListener(tf_buffer)
 while not rospy.is_shutdown():
     rgb, depth, depth_info = p.get_rgb_depth_caminfo()
     if rgb:
-        persons = p.detect_person_3d(*p.get_rgb_depth_caminfo())
+        persons = p.detect_person_3d(rgb, depth, depth_info)
         for person in persons:
             if "is_pointing" in person.tags:
                 try:
                     map_pose = tf_buffer.transform(PoseStamped(
                         header=Header(
-                            frame_id="head_rgbd_sensor_rgb_optical_frame",
+                            frame_id=depth_info.header.frame_id,
                             stamp=rospy.Time.now() - rospy.Duration.from_sec(0.5)
                         ),
                         pose=person.pointing_pose
