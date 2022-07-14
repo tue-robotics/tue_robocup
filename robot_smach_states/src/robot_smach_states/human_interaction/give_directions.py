@@ -78,7 +78,7 @@ class GiveDirections(smach.State):
 
         # Call the global planner for the shortest path to this entity
         path = None
-        for name, nav_con in nav_constraints.items():
+        for _, nav_con in nav_constraints.items():
             path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
             if path:
                 break
