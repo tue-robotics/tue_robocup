@@ -16,6 +16,7 @@
   <buildtool_depend>python3-setuptools</buildtool_depend>
 
   <depend>depth_image_proc</depend>
+  <depend>picovoice_msgs</depend>
   <depend>roscpp</depend>
   <depend>tf2_ros</depend>
 
