@@ -60,7 +60,7 @@ class TakeOrder(smach.State):
         ds.check_type(entity_designator, Entity)
         self._entity_designator = entity_designator
         self._orders = orders
-        self._max_tries = 3
+        self._max_tries = 2
         self._get_intent = GetIntent()
 
     def _confirm(self):
@@ -93,18 +93,16 @@ class TakeOrder(smach.State):
                 count += 1
 
                 try:
-                    # speech_result = self._get_intent.query()
-                    speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                          grammar=knowledge.order_grammar, target="O")
+                    speech_result = self._get_intent.query()
+                    #speech_result = self._robot.hmi.query(description="Can I please take your order",
+                    #                                    grammar=knowledge.order_grammar, target="O")
                     break
                 except TimeoutException:
-                    if count < 5:
-                        self._robot.speech.speak(random.choice(["I'm sorry, can you repeat",
-                                                                "Please repeat your order, I didn't hear you",
-                                                                "I didn't get your order, can you repeat it",
-                                                                "Please speak up, as I didn't hear your order"]))
+                    if count < 2:
+                        self._robot.speech.speak(["Please speak even louder and directly into my microphone and "
+                                                  "WAIT FOR THE PING PLEASE"])
                     else:
-                        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'corn_flakes', 'peach']
+                        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
                         random.shuffle(potential_orders)
                         drink = potential_orders[0]
                         self._robot.speech.speak(
@@ -129,7 +127,7 @@ class TakeOrder(smach.State):
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
 
-        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'corn_flakes', 'peach']
+        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
         random.shuffle(potential_orders)
         drink = potential_orders[0]
         self._robot.speech.speak("I understood that you would like to order a {drink}".format(drink=drink),
