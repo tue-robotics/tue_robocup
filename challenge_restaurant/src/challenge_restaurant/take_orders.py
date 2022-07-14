@@ -100,9 +100,9 @@ class TakeOrder(smach.State):
                 count += 1
 
                 try:
-                    #speech_result = self._get_intent.query()
-                    speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                        grammar=knowledge.order_grammar, target="O")
+                    speech_result = self._get_intent.query()
+                    #speech_result = self._robot.hmi.query(description="Can I please take your order",
+                    #                                    grammar=knowledge.order_grammar, target="O")
                     break
                 except TimeoutException:
                     if count < 3:
