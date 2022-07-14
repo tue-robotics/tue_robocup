@@ -102,11 +102,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
             def _is_operator(person):
                 if person.position.z > 2.5:
-                    robot.speech.speak("Please stand in my view with your full body")
+                    robot.speech.speak("Please stand CLOSER to me, so I can see your full body")
                     return False
 
                 if person.position.z < 1.5:
-                    robot.speech.speak("Please stand in my view with your full body")
+                    robot.speech.speak("Please stand FURTHER away from me, so I can see your full body")
                     return False
 
                 if "is_pointing" not in person.tags:
