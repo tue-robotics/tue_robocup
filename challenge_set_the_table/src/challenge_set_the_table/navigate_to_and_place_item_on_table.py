@@ -194,7 +194,13 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
 
             StateMachine.add('SAY_THANKS',
                              Say(robot, "Thank you darling"),
-                             transitions={'spoken': 'NAVIGATE_TO_TABLE_CLOSE'})
+                             transitions={'spoken': 'ROTATE'})
+
+            StateMachine.add(
+                "ROTATE",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "NAVIGATE_TO_TABLE_CLOSE"},
+            )
 
             StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id, PLACEMENT_HEIGHT),
                              transitions={'succeeded': 'succeeded',
