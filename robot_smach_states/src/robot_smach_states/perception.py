@@ -14,7 +14,7 @@ from .state import State
 from .util import designators as ds
 
 
-class LookAtEntity(smach.StateMachine):
+class LookAtEntity(smach.State):
     def __init__(self, robot, entity, waittime=0.0, height=None):
         """
         :param robot: The robot
@@ -22,7 +22,7 @@ class LookAtEntity(smach.StateMachine):
         :param waittime: Amount of time the robot look at the entity
         :param height: Look higher up in the entity
         """
-        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
         self._entity = entity
         self._waittime = waittime
