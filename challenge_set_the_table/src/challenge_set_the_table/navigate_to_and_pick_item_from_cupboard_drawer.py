@@ -87,7 +87,7 @@ class PickItemFromCupboardDrawer(StateMachine):
             # Set output data
             user_data['item_picked'] = item_name
 
-            arm.send_joint_goal("carrying_pose")
+            send_joint_goal([0.01, -0.1, -1.57, -0.8, 0.0])
 
             return 'succeeded'
 
@@ -121,7 +121,9 @@ class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
 
 if __name__ == '__main__':
     import sys
+
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA, [sys.argv[1]]).execute()
+    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA,
+                                            [sys.argv[1]]).execute()
