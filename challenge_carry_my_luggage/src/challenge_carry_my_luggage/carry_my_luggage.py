@@ -280,7 +280,7 @@ class CarryMyLuggage(StateMachine):
             def handover_on_unoccupied_arm(_):
                 self._arm.gripper.send_goal('open')
                 self._arm.wait_for_motion_done()
-                self.robot.speech.speak("Please remove the bag from my gripper!")
+                self.robot.speech.speak("Please remove the bag from my gripper so that I can drive back to the arena")
                 rospy.sleep(10)
                 return "done"
 
