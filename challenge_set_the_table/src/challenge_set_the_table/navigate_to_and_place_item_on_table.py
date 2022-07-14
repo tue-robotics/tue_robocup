@@ -28,8 +28,8 @@ from smach import StateMachine, cb_interface, CBState
 item_vector_dict = {
     "plate": PyKDL.Vector(0.1, 0.2, 0),
     "cup": PyKDL.Vector(0.2, -0.2, 0),
-    "knife": PyKDL.Vector(0, -0.2, 0),
-    "fork": PyKDL.Vector(0, 0.15, 0),
+    "knife": PyKDL.Vector(0.05, -0.2, 0),
+    "fork": PyKDL.Vector(0.05, 0.25, 0),
     "spoon": PyKDL.Vector(0, -0.25, 0),
     "bowl": PyKDL.Vector(0.1, 0, 0),  # Must go on top of the plate
     "napkin": PyKDL.Vector(0.1, 0.2, 0)  # besides the fork
@@ -46,8 +46,8 @@ color_dict = {
 }
 
 pboven = [0.69, -1.5, -1.4, -1.5, -0.3]
-pleg = [0.58, -1.75, -1.4, -1.5, 0.3]
-pweg = [0.69, -1.75, -1.0, -1.5, 0.3]
+pleg = [0.62, -1.75, -1.4, -1.5, 0.3]
+pweg = [0.70, -1.45, -0.2, -1.5, 0.3]
 
 
 def item_vector_to_item_frame(item_vector):
@@ -216,7 +216,6 @@ if __name__ == '__main__':
     item_poses = {k: item_frame_to_pose(v, 'kitchen_table') for k, v in item_frames.items()}
 
     robot_instance = get_robot("hero")
-    robot_instance.reset()
 
     state_machine = NavigateToAndPlaceItemOnTable(robot_instance, TABLE_ID, TABLE_NAVIGATION_AREA)
     state_machine.userdata['item_picked'] = sys.argv[1]
