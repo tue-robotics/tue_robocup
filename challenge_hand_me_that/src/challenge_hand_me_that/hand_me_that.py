@@ -12,7 +12,7 @@ import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.human_interaction import Say, FindPerson
-from robot_smach_states.perception import LookAtEntity
+from robot_smach_states.perception import RotateToEntity
 from robot_smach_states.utility import WaitTime
 from robocup_knowledge import load_knowledge
 
@@ -71,12 +71,12 @@ class HandMeThat(smach.StateMachine):
                                                 'failed': 'LOOK_AT_CENTER_OF_ROOM'})
 
             smach.StateMachine.add('LOOK_AT_PERSON',
-                                   LookAtEntity(robot=robot, entity=operator_designator, height=1.5),
+                                   RotateToEntity(robot=robot, entity=operator_designator),
                                    transitions={'succeeded': 'GET_FURNITURE_FROM_OPERATOR_POSE',
                                                 'failed': 'LOOK_AT_CENTER_OF_ROOM'})
 
             smach.StateMachine.add('LOOK_AT_CENTER_OF_ROOM',
-                                   LookAtEntity(robot=robot, entity=room_designator),
+                                   RotateToEntity(robot=robot, entity=room_designator),
                                    transitions={'succeeded': 'SAY_CANT_FIND_PERSON',
                                                 'failed': 'SAY_CANT_FIND_PERSON'})
 
