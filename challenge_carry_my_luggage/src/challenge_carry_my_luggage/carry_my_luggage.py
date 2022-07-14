@@ -22,6 +22,7 @@ challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 STARTING_POINT = challenge_knowledge.starting_point
 ACTUAL_STARTING_POINT = challenge_knowledge.actual_starting_point
 ENTRANCE_DOOR = challenge_knowledge.entrance_door
+BEFORE_ENTRANCE_DOOR = challenge_knowledge.before_entrance_door
 
 
 @cb_interface(outcomes=["done"])
@@ -60,6 +61,7 @@ class CarryMyLuggage(StateMachine):
         self.starting_point_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
         self.actual_starting_point_designator = ds.EntityByIdDesignator(robot, uuid=ACTUAL_STARTING_POINT)
         self.entrance_door = ds.EntityByIdDesignator(robot, uuid=ENTRANCE_DOOR)
+        self.before_entrance_door = ds.EntityByIdDesignator(robot, uuid=BEFORE_ENTRANCE_DOOR)
 
         # noinspection PyProtectedMember
         self._arm = robot.get_arm()._arm
@@ -283,7 +285,7 @@ class CarryMyLuggage(StateMachine):
                 return "done"
 
             self.add("HANDOVER_TO_HUMAN", CBState(handover_on_unoccupied_arm),
-                     transitions={"done": "NAVIGATE_TO_ARENA_ENTRANCE"})
+                     transitions={"done": "NAVIGATE_TO_BEFORE_ARENA_ENTRANCE"})
 
             # Commented out in favor of a callback state since this seems to crash
             # StateMachine.add(
@@ -294,6 +296,16 @@ class CarryMyLuggage(StateMachine):
             #         "failed": "NAVIGATE_TO_ARENA",  # todo change this?
             #     },
             # )
+
+            StateMachine.add(
+                "NAVIGATE_TO_BEFORE_ARENA_ENTRANCE",
+                NavigateToWaypoint(self.robot, self.before_entrance_door),
+                transitions={
+                    "arrived": "NAVIGATE_TO_ARENA_ENTRANCE",
+                    "unreachable": "NAVIGATE_TO_ARENA_ENTRANCE",  # todo change this?
+                    "goal_not_defined": "NAVIGATE_TO_ARENA_ENTRANCE",  # todo change this?
+                },
+            )
 
             StateMachine.add(
                 "NAVIGATE_TO_ARENA_ENTRANCE",
