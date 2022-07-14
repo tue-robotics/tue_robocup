@@ -422,6 +422,13 @@ class ED(RobotPart):
                                          fit_supporting_entity=fit_supporting_entity)
         if res.error_msg:
             rospy.logerr("Could not segment objects: %s" % res.error_msg)
+            os.system("rosnode kill /hero/head_rgbd_sensor/hero2_shm_server")
+            rospy.sleep(5)
+            res = self._ed_kinect_update_srv(area_description=area_description,
+                                             background_padding=background_padding,
+                                             fit_supporting_entity=fit_supporting_entity)
+            if res.error_msg:
+                rospy.logerr("update_kinect: shit keeps failing")
 
         return res
 
