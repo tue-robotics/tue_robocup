@@ -96,6 +96,7 @@ class FollowOperator(smach.State):
                              "I'll be watching you"]
         self._follow_song_counter = 0
         self._track_operator_counter = 0
+
     def _operator_standing_still_for_x_seconds(self, timeout):
         """
         Check whether the operator is standing still for X seconds
@@ -437,81 +438,82 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
 
     def _recover_operator(self):
-        rospy.loginfo("Trying to recover the operator")
-        self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
+        if self._learn_face:
+            rospy.loginfo("Trying to recover the operator")
+            self._robot.head.look_at_standing_person()
+            self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
-        # Wait for the operator and find his/her face
-        operator_recovery_timeout = self._lost_timeout
-        start_time = rospy.Time.now()
-        recovered_operator = None
+            # Wait for the operator and find his/her face
+            operator_recovery_timeout = self._lost_timeout
+            start_time = rospy.Time.now()
+            recovered_operator = None
 
-        look_distance = 2.0
-        look_angles = [0.0,
-                       math.pi/6,
-                       math.pi/4,
-                       math.pi/2.3,
-                       0.0,
-                       -math.pi/6,
-                       -math.pi/4,
-                       -math.pi/2.3]
-        head_goals = [VectorStamped.from_xyz(look_distance*math.cos(angle), look_distance*math.sin(angle), 1.7,
-                                             rospy.Time.now(), self._robot.base_link_frame)
-                      for angle in look_angles]
+            look_distance = 2.0
+            look_angles = [0.0,
+                           math.pi/6,
+                           math.pi/4,
+                           math.pi/2.3,
+                           0.0,
+                           -math.pi/6,
+                           -math.pi/4,
+                           -math.pi/2.3]
+            head_goals = [VectorStamped.from_xyz(look_distance*math.cos(angle), look_distance*math.sin(angle), 1.7,
+                                                 rospy.Time.now(), self._robot.base_link_frame)
+                          for angle in look_angles]
 
-        i = 0
-        while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
-            if self.preempt_requested():
-                return False
-
-            self._robot.head.look_at_point(head_goals[i])
-            i += 1
-            if i == len(head_goals):
-                i = 0
-
-            self._robot.head.wait_for_motion_done()
-
-            # raw_detections is a list of Recognitions
-            # a recognition contains a CategoricalDistribution
-            # a CategoricalDistribution is a list of CategoryProbabilities
-            # a CategoryProbability has a label and a float
-            raw_detections = self._robot.perception.detect_faces()
-            best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
-
-            rospy.loginfo("best_detection = {}".format(best_detection))
-            if best_detection:
-
-                # rospy.loginfo("Best detection: {}".format(best_detection))
-                roi = best_detection.roi
-
-                try:
-                    operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
-                except Exception as e:
-                    rospy.logerr("head.project_roi failed: %s", e)
+            i = 0
+            while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+                if self.preempt_requested():
                     return False
-                operator_pos_ros = tf2_ros.convert(operator_pos_kdl, PointStamped)
 
-                self._face_pos_pub.publish(operator_pos_ros)
+                self._robot.head.look_at_point(head_goals[i])
+                i += 1
+                if i == len(head_goals):
+                    i = 0
 
-                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=operator_pos_kdl)
+                self._robot.head.wait_for_motion_done()
 
-                if recovered_operator:
-                    rospy.loginfo("Found one!")
-                    self._operator_id = recovered_operator.uuid
-                    rospy.loginfo(f"Recovered operator id: {self._operator_id}")
-                    self._operator = recovered_operator
-                    self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
-                    self._robot.head.close()
-                    self._time_started = rospy.Time.now()
-                    return True
-                else:
-                    rospy.loginfo("Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl))
+                # raw_detections is a list of Recognitions
+                # a recognition contains a CategoricalDistribution
+                # a CategoricalDistribution is a list of CategoryProbabilities
+                # a CategoryProbability has a label and a float
+                raw_detections = self._robot.perception.detect_faces()
+                best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
 
-        self._robot.head.close()
-        self._turn_towards_operator()
-        self._update_navigation()
-        rospy.sleep(2.0)
+                rospy.loginfo("best_detection = {}".format(best_detection))
+                if best_detection:
+
+                    # rospy.loginfo("Best detection: {}".format(best_detection))
+                    roi = best_detection.roi
+
+                    try:
+                        operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
+                    except Exception as e:
+                        rospy.logerr("head.project_roi failed: %s", e)
+                        return False
+                    operator_pos_ros = tf2_ros.convert(operator_pos_kdl, PointStamped)
+
+                    self._face_pos_pub.publish(operator_pos_ros)
+
+                    recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
+                                                                                 center_point=operator_pos_kdl)
+
+                    if recovered_operator:
+                        rospy.loginfo("Found one!")
+                        self._operator_id = recovered_operator.uuid
+                        rospy.loginfo(f"Recovered operator id: {self._operator_id}")
+                        self._operator = recovered_operator
+                        self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
+                        self._robot.head.close()
+                        self._time_started = rospy.Time.now()
+                        return True
+                    else:
+                        rospy.loginfo("Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl))
+
+            self._robot.head.close()
+            self._turn_towards_operator()
+            self._update_navigation()
+            rospy.sleep(2.0)
         return False
 
     def _turn_towards_operator(self):
