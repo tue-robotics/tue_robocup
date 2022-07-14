@@ -33,7 +33,7 @@ ITEM_IMG_DICT = {
     "bowl": "images/bowl.jpg",
 }
 
-OPEN_DISHWASHER_VECTOR = PyKDL.Vector(-1.00, -0.16, 0)
+OPEN_DISHWASHER_VECTOR = PyKDL.Vector(-0.985, -0.16, 0)
 OPEN_DISHWASHER_VECTOR_OPEN = PyKDL.Vector(OPEN_DISHWASHER_VECTOR.x() - 0.45, OPEN_DISHWASHER_VECTOR.y(),
                                            OPEN_DISHWASHER_VECTOR.z())
 
