@@ -18,7 +18,7 @@ from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
 
 items_picked = []
-required_items = ["plate", "napkin", "knife", "fork", "bowl"]
+required_items = ["napkin", "plate", "knife", "fork", "bowl"]
 iteration = 0
 max_iterations = 10
 
