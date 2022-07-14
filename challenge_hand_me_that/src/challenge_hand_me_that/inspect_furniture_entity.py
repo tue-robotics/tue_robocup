@@ -18,6 +18,8 @@ from ed.entity import Entity
 import robot_smach_states.util.designators as ds
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.world_model import Inspect
+from robot_smach_states.utility import WriteDesignator
+
 from robot_skills import get_robot_from_argv
 from robot_skills.robot import Robot
 from robot_skills.classification_result import ClassificationResult
@@ -53,7 +55,11 @@ class InspectFurniture(smach.StateMachine):
                                    Say(robot, "Let's go to the {furniture_object}",
                                        furniture_object=ds.AttrDesignator(furniture_designator, "uuid",
                                                                           resolve_type=str)),
-                                   transitions={"spoken": "INSPECT_FURNITURE"})
+                                   transitions={"spoken": "CLEAR_FOUND_ENTITY_DESIGNATOR"})
+
+            smach.StateMachine.add('CLEAR_FOUND_ENTITY_DESIGNATOR',
+                                   WriteDesignator(object_ids_des.writeable, []),
+                                   transitions={'written': 'INSPECT_FURNITURE'})
 
             smach.StateMachine.add("INSPECT_FURNITURE",
                                    Inspect(robot=robot, entityDes=furniture_designator, objectIDsDes=object_ids_des,
