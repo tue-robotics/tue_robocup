@@ -87,7 +87,7 @@ class PickItemFromCupboardDrawer(StateMachine):
             # Set output data
             user_data['item_picked'] = item_name
 
-            send_joint_goal([0.01, -0.1, -1.57, -0.8, 0.0])
+            send_joint_goal([0.01, -0.1, -1.57, -0.6, 0.0])
 
             return 'succeeded'
 
