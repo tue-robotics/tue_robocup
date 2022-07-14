@@ -52,7 +52,7 @@ class PickItemFromCupboardDrawer(StateMachine):
             else:
                 try:
                     rospy.loginfo("Showing {}".format(path))
-                    robot.hmi.show_image(path, 15)
+                    robot.hmi.show_image(path, 20)
                 except Exception as e:
                     rospy.logerr("Could not show image {}: {}".format(path, e))
             return 'succeeded'
@@ -120,7 +120,8 @@ class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
 
 
 if __name__ == '__main__':
+    import sys
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA, ['plate']).execute()
+    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA, [sys.argv[1]]).execute()
