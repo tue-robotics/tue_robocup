@@ -103,6 +103,11 @@ class FindPerson(smach.State):
             found_people = [p for p in found_people if p]
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
+            if not found_people:
+                rospy.logwarn("Could not find any person")
+                rate.sleep()
+                continue
+
             found_names = {person.uuid: person for person in found_people}
 
             found_person = None
@@ -112,15 +117,18 @@ class FindPerson(smach.State):
             else:
                 # find which of those is closest
                 robot_pose = self._robot.base.get_location()
-                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
+                found_person = min(found_people, key=lambda person: (person.pose.frame.p - robot_pose.frame.p).Norm())
 
             if self._room:
                 room_entity = self._robot.ed.get_entity(uuid=self._room)
-                if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in'):
-                    # If the person is not in the room we are looking for, ignore the person
-                    rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
-                                  .format(found_person.uuid, room_entity.uuid))
-                    found_person = None
+                if room_entity is not None:
+                    if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in'):
+                        # If the person is not in the room we are looking for, ignore the person
+                        rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
+                                      .format(found_person.uuid, room_entity.uuid))
+                        found_person = None
+                else:
+                    rospy.loginfo(f"Room entity not found for {id=}, not applying room filter")
 
             if found_person:
                 rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.uuid, person_label,
