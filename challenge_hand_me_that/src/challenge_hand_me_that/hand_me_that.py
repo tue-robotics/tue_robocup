@@ -109,6 +109,7 @@ class HandMeThat(smach.StateMachine):
                                    transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
                                                 'failed': 'SAY_TRY_NEXT'})  # Just keep on going
 
-            smach.StateMachine.add('SAY_TRY_NEXT', Say(robot, ['I am sorry, let me try another one',
-                                                               'I will try another item']),
+            smach.StateMachine.add('SAY_TRY_NEXT', Say(robot, ['I am sorry, lets skip this one and'
+                                                               'let me try another one',
+                                                               'I will go for the next item']),
                                    transitions={'spoken': 'NAVIGATE_TO_START'})

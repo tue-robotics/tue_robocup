@@ -197,8 +197,11 @@ class IdentifyObject(smach.StateMachine):
 
             smach.StateMachine.add("LISTEN_ANSWER", AskYesNo(robot),
                                    transitions={'yes': 'done',
-                                                'no': 'ITERATE_ITEM',
+                                                'no': 'SAY_ANOTHER_GUESS',
                                                 'no_result': 'done'})
+
+            smach.StateMachine.add("SAY_ANOTHER_GUESS", Say(robot, ["Let me maybe try another guess"]),
+                                   transitions={'spoken': 'ITERATE_ITEM'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
