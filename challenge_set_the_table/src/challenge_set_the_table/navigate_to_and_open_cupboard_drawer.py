@@ -8,13 +8,15 @@ import math
 import os
 
 import rospy
-from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from geometry_msgs.msg import PoseStamped, Quaternion
+from tf_conversions import transformations
+
+from challenge_set_the_table.knowledge import CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA
 from robot_skills import get_robot
-from robot_smach_states.navigation import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
+from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
-from tf_conversions import transformations
 
 
 class OpenCupboard(StateMachine):
@@ -88,8 +90,14 @@ class NavigateToAndOpenCupboard(StateMachine):
             StateMachine.add("NAVIGATE_TO_CUPBOARD",
                              NavigateToSymbolic(robot, {cupboard: cupboard_navigation_area}, cupboard),
                              transitions={'arrived': 'failed',
-                                          'unreachable': 'failed',
+                                          'unreachable': 'NAVIGATE_TO_CUPBOARD_FAILED',
                                           'goal_not_defined': 'failed'})
+
+            StateMachine.add(
+                "NAVIGATE_TO_CUPBOARD_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "NAVIGATE_TO_CUPBOARD"},
+            )
 
             StateMachine.add("OPEN_CUPBOARD", OpenCupboard(robot, cupboard_id),
                              transitions={'succeeded': 'succeeded',
@@ -100,4 +108,4 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndOpenCupboard(robot_instance, 'cabinet', 'in_front_of').execute()
+    NavigateToAndOpenCupboard(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA).execute()
