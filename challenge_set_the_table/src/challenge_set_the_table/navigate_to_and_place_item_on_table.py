@@ -26,13 +26,13 @@ from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
 
 item_vector_dict = {
-    "plate": PyKDL.Vector(0.1, 0.2, 0),
+    "plate": PyKDL.Vector(0.05, 0.2, 0),
     "cup": PyKDL.Vector(0.2, -0.2, 0),
-    "knife": PyKDL.Vector(0.05, -0.2, 0),
-    "fork": PyKDL.Vector(0.05, 0.25, 0),
+    "knife": PyKDL.Vector(0.0, -0.2, 0),
+    "fork": PyKDL.Vector(0.0, 0.25, 0),
     "spoon": PyKDL.Vector(0, -0.25, 0),
-    "bowl": PyKDL.Vector(0.1, 0.05, 0),  # Must go on top of the plate
-    "napkin": PyKDL.Vector(0.1, 0.35, 0)  # besides the fork
+    "bowl": PyKDL.Vector(0.05, 0.05, 0),  # Must go on top of the plate
+    "napkin": PyKDL.Vector(0.05, 0.35, 0)  # besides the fork
 }
 
 color_dict = {
