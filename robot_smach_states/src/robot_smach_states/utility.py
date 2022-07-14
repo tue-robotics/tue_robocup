@@ -309,6 +309,20 @@ class UnlockDesignator(smach.State):
         return 'unlocked'
 
 
+class WriteDesignator(smach.State):
+    def __init__(self, write_designator, value):
+        smach.State.__init__(self, outcomes=['written'])
+        is_writeable(write_designator)
+        self.write_designator = write_designator
+        self.value = value
+
+    def execute(self, ud=None):
+        value = self.value.resolve() if hasattr(self.value, 'resolve') else self.value
+        rospy.loginfo(f"Writing '{value} to designator: {self.write_designator}")
+        self.write_designator.write(value)
+        return 'written'
+
+
 class CheckBool(smach.State):
     """
     Provide a different transition based on a boolean designator.
