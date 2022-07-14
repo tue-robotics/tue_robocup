@@ -16,7 +16,7 @@ from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import ColorRGBA
 from tf_conversions import toMsg
 
-from challenge_set_the_table.knowledge import TABLE_ID, TABLE_NAVIGATION_AREA
+from challenge_set_the_table.knowledge import TABLE_ID, TABLE_NAVIGATION_AREA, PLACEMENT_HEIGHT
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
@@ -167,7 +167,7 @@ class PlaceItemOnTable(StateMachine):
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id, table_navigation_area, placement_height=0.7):
+    def __init__(self, robot, table_id, table_navigation_area):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
 
         table = EdEntityDesignator(robot=robot, uuid=table_id)
@@ -196,7 +196,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
                              Say(robot, "Thank you darling"),
                              transitions={'spoken': 'NAVIGATE_TO_TABLE_CLOSE'})
 
-            StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id, placement_height),
+            StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id, PLACEMENT_HEIGHT),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 
@@ -209,13 +209,7 @@ if __name__ == '__main__':
 
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    try:
-        placement_height_ = float(sys.argv[2])
-    except IndexError:
-        rospy.logwarn("You can specify height as a optional parameter")
-        placement_height_ = 0.7
-    state_machine = NavigateToAndPlaceItemOnTable(
-        robot_instance, TABLE_ID, TABLE_NAVIGATION_AREA, placement_height_
-    )
+
+    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, TABLE_ID, TABLE_NAVIGATION_AREA)
     state_machine.userdata['item_picked'] = sys.argv[1]
     state_machine.execute()

@@ -123,4 +123,4 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA).execute()
+    NavigateToAndPickItemFromCupboardDrawer(robot_instance, CUPBOARD_ID, CUPBOARD_NAVIGATION_AREA, ['plate']).execute()
