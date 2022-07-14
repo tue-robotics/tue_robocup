@@ -90,6 +90,13 @@ class FollowOperator(smach.State):
         self._replan_attempts = 0
         self._max_replan_attempts = 3
         self._period = update_period
+        self._follow_song = ["Every breath you take",
+                             "And every move you make",
+                             "Every step you take",
+                             "I'll be watching you"]
+        self._lost_song = ["Since you've gone, I've been lost without a trace",
+                           "I dream at night, I can only see your face",
+                           "I look around, but it's you I can't replace"]
 
     def _operator_standing_still_for_x_seconds(self, timeout):
         """
