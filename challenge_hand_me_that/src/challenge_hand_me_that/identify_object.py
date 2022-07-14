@@ -95,14 +95,20 @@ class PointAt(smach.State):
 
         # Grasp
         rospy.loginfo('Start pointing')
+        one_pointing_succeeded = False
         for x_offset in [-0.15, 0.0]:  # Hack because Hero does not pre-grasp reliably
             _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), rospy.Time(),
                                     goal_bl.header.frame_id)
             if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.uuid]):
                 self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
-                rospy.logerr('Grasp failed')
+                rospy.logerr('Pointing failed')
                 arm.reset()
-                return 'failed'
+            else:
+                one_pointing_succeeded = True
+
+        if not one_pointing_succeeded:
+            rospy.logerr("Both Pointing at failed")
+            return 'failed'
 
         # Retract
         rospy.loginfo('Start retracting')
