@@ -3,6 +3,7 @@
 # All rights reserved.
 #
 # \author Rein Appeldoorn
+import math
 import os
 
 import rospkg
@@ -19,7 +20,7 @@ from challenge_clean_the_table.knowledge import (
     JOINTS_HANDOVER,
 )
 from robot_skills import get_robot
-from robot_smach_states.navigation import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 
@@ -111,7 +112,14 @@ class NavigateToAndPickItem(StateMachine):
             StateMachine.add(
                 "NAVIGATE_TO_PICK_SPOT",
                 NavigateToSymbolic(robot, {pick: PICK_AREA_ID}, pick),
-                transitions={"arrived": "PICK_ITEM", "unreachable": "failed", "goal_not_defined": "failed"},
+                transitions={"arrived": "PICK_ITEM", "unreachable": "NAVIGATE_TO_PICK_SPOT_FAILED",
+                             "goal_not_defined": "failed"},
+            )
+
+            StateMachine.add(
+                "NAVIGATE_TO_PICK_SPOT_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "NAVIGATE_TO_PICK_SPOT"},
             )
 
             StateMachine.add("PICK_ITEM", PickItem(robot), transitions={"succeeded": "succeeded", "failed": "failed"})
