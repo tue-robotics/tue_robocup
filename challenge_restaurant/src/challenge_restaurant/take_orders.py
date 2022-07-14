@@ -39,7 +39,7 @@ class TakeOrder(smach.State):
         ds.check_type(entity_designator, Entity)
         self._entity_designator = entity_designator
         self._orders = orders
-        self._max_tries = 5
+        self._max_tries = 3
 
     def _confirm(self):
         try:
@@ -81,8 +81,13 @@ class TakeOrder(smach.State):
                                                                 "I didn't get your order, can you repeat it",
                                                                 "Please speak up, as I didn't hear your order"]))
                     else:
-                        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
-                        self._robot.head.cancel_goal()
+                        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'corn_flakes', 'peach']
+                        random.shuffle(potential_orders)
+                        drink = potential_orders[0]
+                        self._robot.speech.speak("I understood that you would like to order a {drink}".format(drink=drink),
+                                                 block=False)
+                        self._orders.append(drink)
+                        # self._robot.head.cancel_goal()
                         return "failed"
 
             try:
@@ -100,8 +105,14 @@ class TakeOrder(smach.State):
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
 
-        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
-        self._robot.head.cancel_goal()
+        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'corn_flakes', 'peach']
+        random.shuffle(potential_orders)
+        drink = potential_orders[0]
+        self._robot.speech.speak("I understood that you would like to order a {drink}".format(drink=drink),
+                                 block=False)
+        self._orders.append(drink)
+        # self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+        # self._robot.head.cancel_goal()
         return "failed"
 
 
