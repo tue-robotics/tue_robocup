@@ -5,19 +5,40 @@ from __future__ import print_function
 # System
 import random
 
-# ROS
-from pykdl_ros import VectorStamped
+import actionlib
 import rospy
-import smach
+from picovoice_msgs.msg import GetIntentAction, GetIntentGoal
 
+import robot_smach_states.util.designators as ds
+import smach
 # TU/e Robotics
 from ed.entity import Entity
-from hmi import TimeoutException
+from hmi import TimeoutException, HMIResult
+# ROS
+from pykdl_ros import VectorStamped
 from robocup_knowledge import knowledge_loader
-import robot_smach_states.util.designators as ds
 
 # Knowledge
 knowledge = knowledge_loader.load_knowledge("challenge_restaurant")
+
+
+class GetIntent:
+    def __init__(self):
+        self._client = actionlib.SimpleActionClient("/get_intent", GetIntentAction)
+
+    def query(self):
+        if self._client.send_goal_and_wait(GetIntentGoal(
+            context_url='restaurant',
+            require_endpoint=True
+        ), preempt_timeout=rospy.Duration(10), execute_timeout=rospy.Duration(10)):
+            result = self._client.get_result()
+            if not result.is_understood:
+                rospy.logwarn("Not understood")
+                raise TimeoutException("Not understood")
+            return HMIResult(sentence="", semantics={slot.key: slot.value for slot in result.slots})
+        else:
+            rospy.logerr("Picovoice failed")
+            raise TimeoutException("Picovoice failed")
 
 
 class TakeOrder(smach.State):
@@ -40,6 +61,7 @@ class TakeOrder(smach.State):
         self._entity_designator = entity_designator
         self._orders = orders
         self._max_tries = 3
+        self._get_intent = GetIntent()
 
     def _confirm(self):
         try:
@@ -71,6 +93,7 @@ class TakeOrder(smach.State):
                 count += 1
 
                 try:
+                    # speech_result = self._get_intent.query()
                     speech_result = self._robot.hmi.query(description="Can I please take your order",
                                                           grammar=knowledge.order_grammar, target="O")
                     break
@@ -84,8 +107,9 @@ class TakeOrder(smach.State):
                         potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'corn_flakes', 'peach']
                         random.shuffle(potential_orders)
                         drink = potential_orders[0]
-                        self._robot.speech.speak("I understood that you would like to order a {drink}".format(drink=drink),
-                                                 block=False)
+                        self._robot.speech.speak(
+                            "I understood that you would like to order a {drink}".format(drink=drink),
+                            block=False)
                         self._orders.append(drink)
                         # self._robot.head.cancel_goal()
                         return "failed"
@@ -188,8 +212,9 @@ if __name__ == '__main__':
     pose.position.y = 1.0
     pose.position.z = 1.6
     customer_entity = Entity('random_id', 'person',
-                             'map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
-                             'dummy', # Only pose and frame_id are used
+                             'map',
+                             # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
+                             'dummy',  # Only pose and frame_id are used
                              'shape', 'volumes', 'super_types', 'last_update_time')
     customer_entity.pose = pose  # This takes care of the conversion to KDL for us
     orders = []
@@ -197,4 +222,3 @@ if __name__ == '__main__':
     sm.execute()
 
     rospy.loginfo("Orders {}".format(orders))
-
