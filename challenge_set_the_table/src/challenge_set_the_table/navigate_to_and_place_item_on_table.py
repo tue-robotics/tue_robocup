@@ -102,8 +102,7 @@ class PlaceItemOnTable(StateMachine):
             item_name = user_data["item_picked"]
             send_joint_goal([0.69, 0, 0, 0, 0])
 
-            if item_name in ['fork']:
-                robot.speech.speak("I want a fork on the table")
+            robot.speech.speak(f"I wanna {item_name} on the table")
 
             if item_name in ['plate', 'napkin']:
                 send_joint_goal(pboven)
