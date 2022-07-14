@@ -6,6 +6,6 @@ from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
 starting_point = "initial_pose"
-cupboard_id = "cupboard"
+cupboard_id = "pantry"
 dinner_table_id = "dinner_table"
 end_waypoint = "exit_2_rips"
