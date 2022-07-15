@@ -115,7 +115,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
             global OPERATOR
 
             def _is_operator(person):
-                if person.position.z > 2.5:
+                if person.position.z > 3.5:
                     robot.speech.speak("Please stand CLOSER to me, so I can see your full body")
                     return False
 
