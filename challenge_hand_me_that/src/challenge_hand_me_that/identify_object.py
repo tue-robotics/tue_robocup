@@ -91,8 +91,8 @@ class PointAt(smach.State):
         # Grasp point determination
         goal_bl = self._get_pointing_pose(point_entity)
 
-        # # Pointing with gripper closed is better
-        # arm.gripper.send_goal('close')
+        # Pointing with gripper closed is better
+        arm.gripper.send_goal('close')
 
         # Grasp
         rospy.loginfo('Start pointing')
