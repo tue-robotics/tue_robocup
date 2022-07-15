@@ -1,17 +1,16 @@
-import os
 import math
+import os
 
 import rospy
 from smach.state_machine import StateMachine
+
 import robot_smach_states.util.designators as ds
-
-
+from challenge_where_is_this.inform_machine import GuideToRoomOrObject
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront
 from robot_smach_states.navigation import ForceDrive
-from challenge_where_is_this.inform_machine import GuideToRoomOrObject
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 
 
 class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
@@ -26,20 +25,16 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
             StateMachine.add('NAVIGATE_DOOR', NavigateToWaypoint(robot, door_waypoint, waypoint_door['radius']),
                              transitions={'arrived': 'SAY_PLEASE_COME_IN',
                                           'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
-                                          'goal_not_defined': 'SAY_PLEASE_COME_IN'})
+                                          'goal_not_defined': 'preempted'})
 
-            StateMachine.add('SAY_NAVIGATE_TO_DOOR_FALLBACK', Say(robot, "Help, lets try it another way, hope this goes "
-                                                                         "faster because we are in a hurry",
-                                                                  block=False),
+            StateMachine.add('SAY_NAVIGATE_TO_DOOR_FALLBACK',
+                             Say(robot, "Help, lets try it another way, hope this goes "
+                                        "faster because we are in a hurry",
+                                 block=False),
                              transitions={'spoken': 'TURN_AROUND'})
 
             StateMachine.add('TURN_AROUND', ForceDrive(robot, 0, 0, 0.5, (2 * math.pi) / 0.5),
-                             transitions={'done': 'NAVIGATE_TO_DOOR_FALLBACK'})
-
-            StateMachine.add('NAVIGATE_TO_DOOR_FALLBACK', NavigateToWaypoint(robot, door_waypoint, 0.25),
-                             transitions={'arrived': 'SAY_PLEASE_COME_IN',
-                                          'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
-                                          'goal_not_defined': 'SAY_PLEASE_COME_IN'})
+                             transitions={'done': 'NAVIGATE_DOOR'})
 
             StateMachine.add('SAY_PLEASE_COME_IN',
                              Say(robot, ["Please come in soon, I'm waiting for you"],
