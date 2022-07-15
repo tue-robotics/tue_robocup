@@ -13,6 +13,7 @@ from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.human_interaction import AskYesNo, Say
 from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
 from robot_smach_states.navigation import NavigateToGrasp
+from robot_smach_states.utility import WaitTime
 from robot_skills.arm.arms import PublicArm
 from robot_smach_states.utility import ResolveArm, check_arm_requirements
 
@@ -183,6 +184,18 @@ class IdentifyObject(smach.StateMachine):
                                                 'stop_iteration': 'failed'})
 
             smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, arm, item),
+                                   transitions={'unreachable': 'WAIT_BEFORE_NAVIGATE_BACKUP',
+                                                'goal_not_defined': 'WAIT_BEFORE_NAVIGATE_BACKUP',
+                                                'arrived': 'PREPARE_POINT'})
+
+            smach.StateMachine.add("ASK_OPERATOR_MOVE", Say(robot, "Operator, please move, so I can drive"),
+                                   transitions={'spoken': "WAIT_BEFORE_NAVIGATE_BACKUP"})
+
+            smach.StateMachine.add('WAIT_BEFORE_NAVIGATE_BACKUP', WaitTime(robot, 5),
+                                   transitions={'waited': 'NAVIGATE_TO_POINT_BACKUP',
+                                                'preempted': 'failed'})
+
+            smach.StateMachine.add('NAVIGATE_TO_POINT_BACKUP', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_POINT'})
