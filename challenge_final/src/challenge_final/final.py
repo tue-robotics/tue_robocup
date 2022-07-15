@@ -34,10 +34,7 @@ class Final(StateMachine):
             StateMachine.add(
                 "CALL_NEIGHBOR",
                 CallNeighbor(robot),
-                transitions={
-                    "done": "NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
-                    "preempted": "preempted",
-                },
+                transitions={"done": "NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM", "preempted": "preempted"},
             )
 
             StateMachine.add(
