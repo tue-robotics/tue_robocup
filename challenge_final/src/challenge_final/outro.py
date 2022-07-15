@@ -6,6 +6,7 @@ from smach.state_machine import StateMachine
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.navigation.navigate_wiggle import NavigateWiggle
 from robot_smach_states.util.designators import EntityByIdDesignator
 
 
@@ -23,7 +24,10 @@ class Outro(StateMachine):
                              transitions={"arrived": "SAY_HAPPY",  "unreachable": "done", "goal_not_defined": "done"})
 
             StateMachine.add("SAY_HAPPY", Say(robot, "I am glad I could be of Help"),
-                             transitions={"spoken": "GO_TO_EXIT"})
+                             transitions={"spoken": "OUTRO_WIGGLE"})
+
+            StateMachine.add("OUTRO_WIGGLE", NavigateWiggle(robot,  2),
+                             transitions={"done": "GO_TO_EXIT"})
 
             StateMachine.add("GO_TO_EXIT", NavigateToWaypoint(robot, exit_waypoint),
                              transitions={"arrived": "done", "unreachable": "done", "goal_not_defined": "done"})
