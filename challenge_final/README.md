@@ -14,7 +14,7 @@ Robot starts in the arena
 Robot drives arbitrarily and detect humans, says hi --> detect waving person
 Goes to waving victim, interact with it
 Robot calls neighbor for help using telegram
-Robot gets called by a doorbell (external queue) --> Goes to the doorbell and guides neighbor to victim
+Robot navigates to the door and guides neighbor to victim
 Outro
 ```
 
@@ -38,6 +38,6 @@ rosrun challenge_final challenge_final hero
 python3 $(rospack find challenge_final)/src/challenge_final/navigate_arbitrarily.py
 python3 $(rospack find challenge_final)/src/challenge_final/navigate_to_and_interact_with_victim.py
 python3 $(rospack find challenge_final)/src/challenge_final/call_neighbor_via_telegram.py
-python3 $(rospack find challenge_final)/src/challenge_final/call_robot_via_doorbell_navigate_to_the_door_and_guide_neighbor_to_victim.py
+python3 $(rospack find challenge_final)/src/challenge_final/navigate_to_the_door_and_guide_neighbor_to_victim.py
 python3 $(rospack find challenge_final)/src/challenge_final/outro.py
 ```
