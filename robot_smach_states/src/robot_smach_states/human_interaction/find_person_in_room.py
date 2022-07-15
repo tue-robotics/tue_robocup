@@ -122,7 +122,7 @@ class FindPerson(smach.State):
             if self._room:
                 room_entity = self._robot.ed.get_entity(uuid=self._room)
                 if room_entity is not None:
-                    if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in'):
+                    if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in', padding=-0.1):
                         # If the person is not in the room we are looking for, ignore the person
                         rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
                                       .format(found_person.uuid, room_entity.uuid))
