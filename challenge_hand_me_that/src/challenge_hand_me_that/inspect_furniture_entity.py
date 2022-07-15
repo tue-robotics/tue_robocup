@@ -147,7 +147,7 @@ class InspectFurniture(smach.StateMachine):
 
             smach.StateMachine.add("SAY_INSPECTION_FAILED",
                                    Say(robot, "I am sorry but I was not able to reach the {furniture_object}",
-                                       furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                       furniture_object=ds.AttrDesignator(furniture_designator, "uuid",
                                                                           resolve_type=str)),
                                    transitions={"spoken": "failed"})
 
