@@ -6,8 +6,8 @@ from setuptools import setup
 d = generate_distutils_setup(
     # #  don't do this unless you want a globally visible script
     # scripts=['bin/myscript'],
-    packages=['challenge_final'],
-    package_dir={'': 'src'}
+    packages=["challenge_final"],
+    package_dir={"": "src"},
 )
 
 setup(**d)
