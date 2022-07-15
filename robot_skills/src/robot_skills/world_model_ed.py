@@ -415,7 +415,7 @@ class ED(RobotPart):
             rospy.logwarn("No area_description provided for 'update_kinect'. This is probably a bad idea.")
 
         # Save the image (logging)
-        self.save_image(path_suffix=area_description.replace(" ", "_"))
+        # self.save_image(path_suffix=area_description.replace(" ", "_"))
 
         res = self._ed_kinect_update_srv(area_description=area_description,
                                          background_padding=background_padding,
