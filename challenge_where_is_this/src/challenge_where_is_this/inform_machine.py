@@ -220,6 +220,15 @@ class InformMachine(smach.StateMachine):
                 return "reset"
 
             smach.StateMachine.add(
+                Say(
+                    robot,
+                    ["Please stand in front of me."],
+                    block=True,
+                ),
+                transitions={"spoken": "RESET_HMI_ATTEMPT"},
+            )
+
+            smach.StateMachine.add(
                 "RESET_HMI_ATTEMPT", smach.CBState(_reset_location_hmi_attempt), transitions={"reset": "SHOW_IMAGE_SPEAK"}
             )
 
@@ -341,7 +350,7 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add(
                 "INSTRUCT_FOLLOW",
-                Say(robot, ["Please follow me"], block=True),
+                Say(robot, ["Please follow me at one meter distance"], block=True),
                 transitions={"spoken": "GUIDE_OPERATOR"},
             )
 
