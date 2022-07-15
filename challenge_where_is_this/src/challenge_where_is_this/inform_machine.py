@@ -194,7 +194,7 @@ class GuideToRoomOrObject(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["done"])
             def head_reset_stay_there(userdata=None):
-                robot.head.reset_head()
+                robot.head.reset()
                 rospy.sleep(2.)
                 return "done"
 
