@@ -83,7 +83,7 @@ class EntityFromHmiResults(ds.Designator):
 
 
 class GuideToRoomOrObject(smach.StateMachine):
-    def __init__(self, robot, entity_des, operator_distance=1.5, operator_radius=0.5):
+    def __init__(self, robot, entity_des, operator_distance=1.5, operator_radius=1.5):
         """
         Constructor
 
@@ -354,7 +354,19 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add(
                 "GIVE_DIRECTIONS",
                 GiveDirections(robot, self.entity_des),
-                transitions={"succeeded": "INSTRUCT_FOLLOW", "failed": "failed"},
+                transitions={"succeeded": "STAND_BEHIND_ME", "failed": "failed"},
+            )
+
+            smach.StateMachine.add(
+                "STAND_BEHIND_ME",
+                Say(robot, ["Please stand behind me"], block=True),
+                transitions={"spoken": "STAND_BEHIND_ME_WAIT"},
+            )
+
+            smach.StateMachine.add(
+                "STAND_BEHIND_ME_WAIT",
+                WaitTime(robot, 8.0),
+                transitions={"waited": "INSTRUCT_FOLLOW", "preempted": "INSTRUCT_FOLLOW"},
             )
 
             smach.StateMachine.add(
