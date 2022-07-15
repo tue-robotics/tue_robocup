@@ -17,7 +17,7 @@ class NavigateToAndInteractWithVictim(StateMachine):
 
         with self:
             StateMachine.add("NAVIGATE_VICTIM1", NavigateToWaypoint(robot, entity_des, radius=0.3),
-                             transitions={"arrived": "SAY",
+                             transitions={"arrived": "SAY_OKAY",
                                           "unreachable": "WIGGLE",
                                           "goal_not_defined": "WIGGLE"})
             StateMachine.add("WIGGLE", NavigateWiggle(robot, 2, speak=True),
@@ -27,7 +27,7 @@ class NavigateToAndInteractWithVictim(StateMachine):
                                           "unreachable": "SAY_OKAY",
                                           "goal_not_defined": "SAY_OKAY"})
             StateMachine.add("SAY_OKAY", Say(robot, "Are you Okay? Do you need any help?"),
-                             transitions={"spoken": "done"})
+                             transitions={"spoken": "ASK_YES_NO"})
             StateMachine.add("ASK_YES_NO", AskYesNo(robot),
                              transitions={"yes": "done",
                                           "no": "done",
