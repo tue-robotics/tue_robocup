@@ -95,7 +95,8 @@ class HandMeThat(smach.StateMachine):
             smach.StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
                                    GetFurnitureFromOperatorPose(robot, furniture_designator.writeable,
                                                                 POSSIBLE_FURNITURE),
-                                   transitions={'done': 'INSPECT_FURNITURE'})
+                                   transitions={'done': 'INSPECT_FURNITURE',
+                                                'failed': 'NAVIGATE_TO_START'})
 
             # Go to the furniture object that was pointing to see what's there
             smach.StateMachine.add('INSPECT_FURNITURE',
