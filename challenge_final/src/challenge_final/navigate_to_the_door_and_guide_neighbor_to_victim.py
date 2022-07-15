@@ -97,7 +97,7 @@ class GuideToRoomOrObject(StateMachine):
                     describe_near_objects=False
                 ),
                 transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "arrived": "SAY_ARRIVED",
                     "unreachable": "WAIT_GUIDE_BACKUP",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "GUIDE_NAV_BACKUP",
@@ -122,7 +122,7 @@ class GuideToRoomOrObject(StateMachine):
                     describe_near_objects=False
                 ),
                 transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "arrived": "SAY_ARRIVED",
                     "unreachable": "GUIDE_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "GUIDE_NAV_BACKUP",
@@ -147,7 +147,7 @@ class GuideToRoomOrObject(StateMachine):
                     describe_near_objects=False
                 ),
                 transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "arrived": "SAY_ARRIVED",
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "unreachable",
@@ -156,32 +156,8 @@ class GuideToRoomOrObject(StateMachine):
             )
 
             StateMachine.add(
-                "SAY_OPERATOR_STAND_IN_FRONT",
-                Say(robot, "We have arrived at the location. Please stand in front of me now and stay there."),
-                transitions={"spoken": "HEAD_RESET_STAY_THERE"},
-            )
-
-            @smach.cb_interface(outcomes=["done"])
-            def head_reset_stay_there(userdata=None):
-                robot.head.reset()
-                rospy.sleep(2.)
-                return "done"
-
-            StateMachine.add(
-                "HEAD_RESET_STAY_THERE",
-                smach.CBState(head_reset_stay_there),
-                transitions={"done": "WAIT_OPERATOR_IN_FRONT"},
-            )
-
-            StateMachine.add(
-                "WAIT_OPERATOR_IN_FRONT",
-                WaitTime(robot, 5.0),
-                transitions={"waited": "SAY_ARRIVED", "preempted": "preempted"},
-            )
-
-            StateMachine.add(
                 "SAY_ARRIVED",
-                Say(robot, "Great. I'll go back to the meeting point"),
+                Say(robot, "We have arrived, here is Arpit"),
                 transitions={"spoken": "arrived"},
             )
 
