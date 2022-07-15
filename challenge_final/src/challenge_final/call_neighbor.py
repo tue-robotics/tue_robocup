@@ -7,7 +7,7 @@ from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 
 
-class CallNeighborViaTelegram(StateMachine):
+class CallNeighbor(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
 
@@ -18,4 +18,4 @@ class CallNeighborViaTelegram(StateMachine):
 if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
-    CallNeighborViaTelegram(robot_instance).execute()
+    CallNeighbor(robot_instance).execute()
