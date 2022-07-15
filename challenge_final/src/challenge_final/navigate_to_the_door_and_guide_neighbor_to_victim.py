@@ -169,6 +169,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
         waypoint_door = {'id': 'entry_door', 'radius': 0.2}
         door_waypoint = ds.EntityByIdDesignator(robot, uuid=waypoint_door['id'])
         victim_entity = ds.EntityByIdDesignator(robot, uuid='victim')
+        cupboard_entity = ds.EntityByIdDesignator(robot, uuid='cupboard')
 
         with self:
             StateMachine.add("SAY_WAITING_DOORBELL", Say(robot, "I am waiting for the doorbell. I will stay with you "
@@ -203,20 +204,102 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
                                           'failed': 'SAY_PLEASE_COME_IN'})
 
             StateMachine.add('SAY_FOLLOW_ME',
-                             Say(robot, ["Please follow me fast to Arpit"],
+                             Say(robot, ["Please follow me, we will first go to pick up the first aid kit."
+                                         "Afterwards we will hurry to go and help Arpit"],
                                  block=False, look_at_standing_person=True),
-                             transitions={'spoken': 'GUIDE_OPERATOR'})
+                             transitions={'spoken': 'ROTATE_TO_OPERATOR'})
 
             StateMachine.add(
-                "GUIDE_OPERATOR",
+                "ROTATE_TO_OPERATOR",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "GUIDE_OPERATOR_FAK"},
+            )
+
+            StateMachine.add(
+                "GUIDE_OPERATOR_FAK",
+                GuideToRoomOrObject(robot, cupboard_entity),
+                transitions={
+                    "arrived": "SAY_ARRIVED_AT_FAK",
+                    "unreachable": "SAY_CANNOT_REACH_CUPBOARD",
+                    "goal_not_defined": "SAY_CANNOT_REACH_CUPBOARD",
+                    "lost_operator": "SAY_LOST_OPERATOR_CUPBOARD",
+                    "preempted": "SAY_CANNOT_REACH_CUPBOARD",
+                },
+            )
+
+            smach.StateMachine.add(
+                "SAY_CANNOT_REACH_CUPBOARD",
+                Say(robot, ["I am sorry but I cannot reach the cupboard, let's go to Arpit instead, follow me there!"],
+                    block=True),
+                transitions={"spoken": "GUIDE_OPERATOR_ARPIT"},
+            )
+
+            smach.StateMachine.add(
+                "SAY_LOST_OPERATOR_CUPBOARD",
+                Say(robot, ["Oops I have lost you completely, I will hurry to arpit!"], block=True),
+                transitions={"spoken": "NAVIGATE_TO_ARPIT_DIRECTLY"},
+            )
+
+            smach.StateMachine.add(
+                "NAVIGATE_TO_ARPIT_DIRECTLY",
+                NavigateToWaypoint(robot, victim_entity),
+                transitions={"arrived": "ARRIVED_AT_ARPIT",
+                             "unreachable": "SAY_CANNOT_REACH",
+                             "goal_not_defined": "SAY_CANNOT_REACH"},
+            )
+
+            StateMachine.add(
+                "SAY_ARRIVED_AT_FAK",
+                Say(robot, "We have arrived, please take the first aid kit from the cupboard. I will wait here!"),
+                transitions={"spoken": "WAIT_AT_CUPBOARD"},
+            )
+
+            StateMachine.add(
+                "WAIT_AT_CUPBOARD",
+                WaitTime(10),
+                transitions={"waited": "LETS_SAFE_ARPIT",
+                             "preempted": "preempted"}
+            )
+
+            StateMachine.add(
+                "LETS_SAFE_ARPIT",
+                Say(robot, "Hurry we have to safe Arpit!"),
+                transitions={"spoken": "ROTATE_TO_OPERATOR_2"},
+            )
+
+            StateMachine.add(
+                "ROTATE_TO_OPERATOR_2",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "GUIDE_OPERATOR_ARPIT"},
+            )
+            StateMachine.add(
+                "GUIDE_OPERATOR_ARPIT",
                 GuideToRoomOrObject(robot, victim_entity),
                 transitions={
                     "arrived": "done",
-                    "unreachable": "preempted",
-                    "goal_not_defined": "preempted",
-                    "lost_operator": "preempted",
+                    "unreachable": "SAY_CANNOT_REACH",
+                    "goal_not_defined": "SAY_CANNOT_REACH",
+                    "lost_operator": "SAY_LOST_OPERATOR",
                     "preempted": "preempted",
                 },
+            )
+
+            smach.StateMachine.add(
+                "SAY_CANNOT_REACH",
+                Say(robot, ["I am sorry but I cannot get to Arpit, please safe my human!"], block=True),
+                transitions={"spoken": "done"},
+            )
+
+            smach.StateMachine.add(
+                "SAY_LOST_OPERATOR",
+                Say(robot, ["Oops I have lost you completely, please get to Arpit and safe my human."], block=True),
+                transitions={"spoken": "done"},
+            )
+
+            smach.StateMachine.add(
+                "ARRIVED_AT_ARPIT",
+                Say(robot, ["Arpit I brought some help, please get well soon!"], block=True),
+                transitions={"spoken": "done"},
             )
 
 
