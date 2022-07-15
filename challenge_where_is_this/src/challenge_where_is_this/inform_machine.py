@@ -188,7 +188,7 @@ class GuideToRoomOrObject(smach.StateMachine):
 
             smach.StateMachine.add(
                 "SAY_OPERATOR_STAND_IN_FRONT",
-                Say(robot, "We have arrived. Please stand in front of me now and stay there"),
+                Say(robot, "We have arrived at the location. Please stand in front of me now and stay there."),
                 transitions={"spoken": "WAIT_OPERATOR_IN_FRONT"},
             )
 
@@ -348,14 +348,14 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add(
                 "INSTRUCT_FOR_WAIT_STEP_BACK_WAIT",
                 WaitTime(robot, 3.0),
-                transitions={"waited": "GIVE_DIRECTIONS", "preempted": "GIVE_DIRECTIONS"},
+                transitions={"waited": "STAND_BEHIND_ME", "preempted": "STAND_BEHIND_ME"},
             )
 
-            smach.StateMachine.add(
-                "GIVE_DIRECTIONS",
-                GiveDirections(robot, self.entity_des),
-                transitions={"succeeded": "STAND_BEHIND_ME", "failed": "failed"},
-            )
+            # smach.StateMachine.add(
+            #     "GIVE_DIRECTIONS",
+            #     GiveDirections(robot, self.entity_des),
+            #     transitions={"succeeded": "STAND_BEHIND_ME", "failed": "failed"},
+            # )
 
             smach.StateMachine.add(
                 "STAND_BEHIND_ME",
