@@ -25,8 +25,8 @@ class NavigateArbitrarily(StateMachine):
                     properties={"tags": ["LWave", "RWave"]},
                     strict=False,
                     nearest=True,
-                    speak=True,
-                    look_range=(-np.pi / 4, np.pi / 4),
+                    speak=False,
+                    look_range=(-np.pi / 8, np.pi / 8),
                     look_steps=4,
                     search_timeout=600,
                 ),  # 10 minutes
