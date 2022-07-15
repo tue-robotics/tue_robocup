@@ -49,7 +49,9 @@ class GetCupboardRay(StateMachine):
                             result = robot.ed.ray_trace(map_pose)
                             if result is not None and result.entity_id == "cupboard":
                                 return "done"
+                            rospy.logwarn(f"Ray trace result: {result=}")
                         except:
+                            rospy.logwarn("Ray trace failed")
                             pass
                 rospy.sleep(0.2)
 
