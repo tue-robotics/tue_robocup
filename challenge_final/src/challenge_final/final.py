@@ -3,6 +3,7 @@ from smach.state_machine import StateMachine
 from challenge_final.call_neighbor import CallNeighbor
 from challenge_final.navigate_arbitrarily import NavigateArbitrarily
 from challenge_final.navigate_to_and_interact_with_victim import NavigateToAndInteractWithVictim
+from challenge_final.navigate_to_the_door_and_guide_neighbor_to_victim import NavigateToTheDoorAndGuideNeighborToVictim
 from challenge_final.outro import Outro
 from robot_smach_states.utility import Initialize
 
@@ -27,21 +28,21 @@ class Final(StateMachine):
             StateMachine.add(
                 "NAVIGATE_TO_AND_INTERACT_WITH_VICTIM",
                 NavigateToAndInteractWithVictim(robot),
-                transitions={"done": "CALL_NEIGHBOR_VIA_TELEGRAM", "preempted": "preempted"},
+                transitions={"done": "CALL_NEIGHBOR", "preempted": "preempted"},
             )
 
             StateMachine.add(
-                "CALL_NEIGHBOR_VIA_TELEGRAM",
+                "CALL_NEIGHBOR",
                 CallNeighbor(robot),
                 transitions={
-                    "done": "CALL_ROBOT_VIA_DOORBELL_NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
+                    "done": "NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
                     "preempted": "preempted",
                 },
             )
 
             StateMachine.add(
-                "CALL_ROBOT_VIA_DOORBELL_NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
-                CallRobotViaDoorbellNavigateToTheDoorAndGuideNeighborToVictim(robot),
+                "NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
+                NavigateToTheDoorAndGuideNeighborToVictim(robot),
                 transitions={"done": "OUTRO", "preempted": "preempted"},
             )
 
