@@ -76,6 +76,26 @@ category_locations = {
     "snack": {"desk": "on_top_of"}
 }
 
+inspect_areas = {
+    "kitchen_shelf": ["shelf2_r", "shelf3_r", "shelf4_r"],
+}
+
+inspect_positions = {
+    'kitchen_shelf': {
+        # 'shelf1_l': 'in_front_of_l',
+        # 'shelf2_l': 'in_front_of_l',
+        # 'shelf3_l': 'in_front_of_l',
+        # 'shelf4_l': 'in_front_of_l',
+        # 'shelf5_l': 'in_front_of_l',
+        'shelf1_r': 'in_front_of_r',
+        'shelf2_r': 'in_front_of_r',
+        'shelf3_r': 'in_front_of_r',
+        'shelf4_r': 'in_front_of_r',
+        'shelf5_r': 'in_front_of_r',
+        'on_top_of': 'in_front_of',
+    }
+}
+
 drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
 for drink in [obj["name"] for obj in objects if obj["category"] == "drink"]:
     drink_spec += "OPTIONS['{drink}'] -> {drink}\n".format(drink=drink)
@@ -99,18 +119,18 @@ def is_room(entity_id):
     return (entity_id in rooms)
 
 
-# def get_inspect_areas(location):
-#     if location in inspect_areas:
-#         return inspect_areas[location]
-#     else:
-#         return ["on_top_of"]
+def get_inspect_areas(location):
+    if location in inspect_areas:
+        return inspect_areas[location]
+    else:
+        return ["on_top_of"]
 
 
-# def get_inspect_position(location, area=""):
-#     if location in inspect_positions and area in inspect_positions[location]:
-#         return inspect_positions[location][area]
-#     else:
-#         return "in_front_of"
+def get_inspect_position(location, area=""):
+    if location in inspect_positions and area in inspect_positions[location]:
+        return inspect_positions[location][area]
+    else:
+        return "in_front_of"
 
 
 def is_pick_location(location):
