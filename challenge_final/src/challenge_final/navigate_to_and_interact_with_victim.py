@@ -17,11 +17,13 @@ class NavigateToAndInteractWithVictim(StateMachine):
         entity_des = EntityByIdDesignator(robot, uuid="victim", name="victim_des")
 
         with self:
-            StateMachine.add("NAVIGATE_VICTIM", NavigateToWaypoint(robot, entity_des, radius=0.3),
+            StateMachine.add("NAVIGATE_VICTIM",
+                             NavigateToWaypoint(robot, entity_des, radius=0.3, look_at_designator=entity_des),
                              transitions={"arrived": "SAY_OKAY",
                                           "unreachable": "NAVIGATE_VICTIM2",
                                           "goal_not_defined": "preempted"})
-            StateMachine.add("NAVIGATE_VICTIM2", NavigateToWaypoint(robot, entity_des, radius=0.5),
+            StateMachine.add("NAVIGATE_VICTIM2",
+                             NavigateToWaypoint(robot, entity_des, radius=0.5, look_at_designator=entity_des),
                              transitions={"arrived": "SAY_OKAY",
                                           "unreachable": "TURN_AROUND",
                                           "goal_not_defined": "preempted"})
