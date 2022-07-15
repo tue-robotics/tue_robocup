@@ -11,11 +11,8 @@ import PyKDL as kdl
 from pykdl_ros import VectorStamped
 
 # Robot skills
-from ..utility import WaitTime
 from ..util.designators import EdEntityDesignator
-
 from . import navigation
-from ..human_interaction.human_interaction import Say
 from .constraint_functions import symbolic_constraint, look_at_constraint, combine_constraints
 
 
