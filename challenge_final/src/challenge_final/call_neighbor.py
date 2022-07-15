@@ -28,8 +28,6 @@ class GetCupboardRay(StateMachine):
 
                 return True
 
-            robot.head.look_down()
-
             start = rospy.Time.now()
             while not rospy.is_shutdown() and (rospy.Time.now() - start).to_sec() < timeout:
                 persons = robot.perception.detect_person_3d(*_show_view())
@@ -66,6 +64,14 @@ class CallNeighbor(StateMachine):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
 
         with self:
+            @cb_interface(outcomes=['done'])
+            def _look_down_and_say(_):
+                robot.head.look_down()
+                robot.head.wait_for_motion_done()
+                robot.speech.speak('Tell me where the emergency kit is')
+                return "done"
+
+            self.add('LOOK_DOWN_AND_SAY', CBState(_look_down_and_say), transitions={'done': 'GET_CUPBOARD_RAY'})
             self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "done", "failed": "preempted"})
 
 
