@@ -5,14 +5,16 @@ from threading import Event
 
 import rospy
 from std_msgs.msg import String
+import smach
 from smach import StateMachine, State
 import robot_smach_states.util.designators as ds
-from challenge_where_is_this.inform_machine import GuideToRoomOrObject
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront
 from robot_smach_states.navigation import ForceDrive
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.navigation import guidance
+from robot_smach_states.utility import WaitTime
 
 
 class WaitForStringMsg(State):
@@ -44,6 +46,144 @@ class WaitForStringMsg(State):
 
         rospy.loginfo("Doorbell timed-out")
         return "timeout"
+
+
+class GuideToRoomOrObject(StateMachine):
+    def __init__(self, robot, entity_des, operator_distance=1.5, operator_radius=1.5):
+        """
+        Constructor
+
+        :param robot: robot object
+        :param entity_des: designator resolving to a room or a piece of furniture
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
+            this radius
+        """
+        StateMachine.__init__(
+            self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"]
+        )
+
+        self.operator_distance = operator_distance
+        self.operator_radius = operator_radius
+        self.area_designator = ds.VariableDesignator(resolve_type=str).writeable
+
+        with self:
+
+            @smach.cb_interface(outcomes=["guide"])
+            def determine_type(userdata=None):
+                entity = entity_des.resolve()
+                entity_type = entity.etype
+                if entity_type == "room":
+                    self.area_designator.write("in")
+                else:
+                    self.area_designator.write("in_front_of")
+
+                return "guide"
+
+            StateMachine.add(
+                "DETERMINE_TYPE",
+                smach.CBState(determine_type),
+                transitions={"guide": "GUIDE"},
+            )
+
+            StateMachine.add(
+                "GUIDE",
+                guidance.GuideToSymbolic(
+                    robot,
+                    {entity_des: self.area_designator},
+                    entity_des,
+                    operator_distance=self.operator_distance,
+                    operator_radius=self.operator_radius,
+                    describe_near_objects=False
+                ),
+                transitions={
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "unreachable": "WAIT_GUIDE_BACKUP",
+                    "goal_not_defined": "goal_not_defined",
+                    "lost_operator": "GUIDE_NAV_BACKUP",
+                    "preempted": "preempted",
+                },
+            )
+
+            StateMachine.add(
+                "WAIT_GUIDE_BACKUP",
+                WaitTime(robot, 3.0),
+                transitions={"waited": "GUIDE_BACKUP", "preempted": "preempted"},
+            )
+
+            StateMachine.add(
+                "GUIDE_BACKUP",
+                guidance.GuideToSymbolic(
+                    robot,
+                    {entity_des: self.area_designator},
+                    entity_des,
+                    operator_distance=self.operator_distance,
+                    operator_radius=self.operator_radius,
+                    describe_near_objects=False
+                ),
+                transitions={
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "unreachable": "GUIDE_BACKUP_FAILED",
+                    "goal_not_defined": "goal_not_defined",
+                    "lost_operator": "GUIDE_NAV_BACKUP",
+                    "preempted": "preempted",
+                },
+            )
+
+            StateMachine.add(
+                "GUIDE_BACKUP_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "GUIDE_NAV_BACKUP"},
+            )
+
+            StateMachine.add(
+                "GUIDE_NAV_BACKUP",
+                guidance.GuideToSymbolic(
+                    robot,
+                    {entity_des: self.area_designator},
+                    entity_des,
+                    operator_distance=-1,
+                    operator_radius=self.operator_radius,
+                    describe_near_objects=False
+                ),
+                transitions={
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "unreachable": "unreachable",
+                    "goal_not_defined": "goal_not_defined",
+                    "lost_operator": "unreachable",
+                    "preempted": "preempted",
+                },
+            )
+
+            StateMachine.add(
+                "SAY_OPERATOR_STAND_IN_FRONT",
+                Say(robot, "We have arrived at the location. Please stand in front of me now and stay there."),
+                transitions={"spoken": "HEAD_RESET_STAY_THERE"},
+            )
+
+            @smach.cb_interface(outcomes=["done"])
+            def head_reset_stay_there(userdata=None):
+                robot.head.reset()
+                rospy.sleep(2.)
+                return "done"
+
+            StateMachine.add(
+                "HEAD_RESET_STAY_THERE",
+                smach.CBState(head_reset_stay_there),
+                transitions={"done": "WAIT_OPERATOR_IN_FRONT"},
+            )
+
+            StateMachine.add(
+                "WAIT_OPERATOR_IN_FRONT",
+                WaitTime(robot, 5.0),
+                transitions={"waited": "SAY_ARRIVED", "preempted": "preempted"},
+            )
+
+            StateMachine.add(
+                "SAY_ARRIVED",
+                Say(robot, "Great. I'll go back to the meeting point"),
+                transitions={"spoken": "arrived"},
+            )
 
 
 class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
