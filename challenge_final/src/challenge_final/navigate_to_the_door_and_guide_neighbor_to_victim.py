@@ -171,7 +171,8 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
         victim_entity = ds.EntityByIdDesignator(robot, uuid='victim')
 
         with self:
-            StateMachine.add("SAY_WAITING_DOORBELL", Say(robot, "I am waiting for the doorbell", block=False),
+            StateMachine.add("SAY_WAITING_DOORBELL", Say(robot, "I am waiting for the doorbell. I will stay with you "
+                                                                "until your neighbour arrives", block=False),
                              transitions={'spoken': 'WAIT_FOR_BELL'})
             StateMachine.add("WAIT_FOR_BELL", WaitForStringMsg(robot, timeout=30),
                              transitions={'received': 'SAY_DOORBELL_RANG',
