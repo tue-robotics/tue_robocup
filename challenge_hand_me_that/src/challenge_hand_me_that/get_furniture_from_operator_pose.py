@@ -12,8 +12,9 @@ import tf2_ros
 from ed.entity import Entity
 from geometry_msgs.msg import PoseStamped
 from robot_skills import get_robot, robot
-from robot_smach_states.util.designators import is_writeable, VariableDesignator
-from smach import StateMachine, cb_interface, CBState
+from robot_smach_states.util.designators import is_writeable, VariableDesignator, check_type
+from robot_smach_states.utility import WriteDesignator
+from smach import StateMachine, cb_interface, CBState, State
 from std_msgs.msg import Header
 from ed_sensor_integration_msgs.srv import RayTraceResponse
 from people_recognition_msgs.msg import Person3D
@@ -48,6 +49,36 @@ OPERATOR = None  # type: Person3D
 # OPERATOR2.pointing_pose.orientation.y = -0.6532814824381882
 # OPERATOR2.pointing_pose.orientation.z = 0.6532814824381883
 # OPERATOR2.pointing_pose.orientation.w = -0.27059805007309845
+
+
+class CheckTimeOut(State):
+    def __init__(self, time_out_seconds, reset_des):
+        State.__init__(self, outcomes=["not_yet", "time_out"])
+        self.time_out_seconds = time_out_seconds
+        self.reset_des = reset_des
+
+        check_type(reset_des, bool)
+        is_writeable(reset_des)
+        self.start = None
+
+    def execute(self, userdata=None):
+        current_seconds = rospy.Time.now().to_sec()
+
+        if self.reset_des.resolve():
+            rospy.loginfo("Resetting timeout")
+            self.start = None
+            self.reset_des.write(False)
+
+        if self.start is None:
+            self.start = current_seconds
+
+        dt = current_seconds - self.start
+
+        if dt > self.time_out_seconds:
+            rospy.loginfo("Timer reached timeout")
+            return "time_out"
+
+        return "not_yet"
 
 
 class GetFurnitureFromOperatorPose(StateMachine):
