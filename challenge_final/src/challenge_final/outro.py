@@ -5,14 +5,24 @@ from smach.state_machine import StateMachine
 
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.util.designators import EntityByIdDesignator
 
 
 class Outro(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
+        intermediate_waypoint = EntityByIdDesignator(robot, "outro_point")
+        exit_waypoint = EntityByIdDesignator(robot, "outro_exit_point")
 
         with self:
-            StateMachine.add("SAY", Say(robot, "Outro"), transitions={"spoken": "done"})
+            StateMachine.add("SAY", Say(robot, "Outro"), transitions={"spoken": "GO_TO_INTERMEDIATE"})
+
+            StateMachine.add("GO_TO_INTERMEDIATE", NavigateToWaypoint(robot, intermediate_waypoint),
+                             transitions={"arrived": "GO_TO_EXIT",  "unreachable": "done", "goal_not_defined": "done"})
+
+            StateMachine.add("GO_TO_EXIT", NavigateToWaypoint(robot, exit_waypoint),
+                             transitions={"arrived": "done", "unreachable": "done", "goal_not_defined": "done"})
 
 
 if __name__ == "__main__":
