@@ -204,7 +204,7 @@ class ExecutePlanGuidance(smach.State):
         # Look backwards to have the operator in view
         self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
 
-        rospy.sleep(1)  # Allow robot to drive a bit before speaking
+        rospy.sleep(5)  # Allow robot to drive a bit before speaking
         self.robot.speech.speak("Keeping looking at me while you follow me", block=True)
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
