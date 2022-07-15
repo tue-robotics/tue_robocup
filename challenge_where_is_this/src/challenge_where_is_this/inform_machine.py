@@ -381,5 +381,15 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add(
                 "RETURN_TO_INFORMATION_POINT",
                 NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, INFORMATION_POINT_ID)),
-                transitions={"arrived": "succeeded", "unreachable": "failed", "goal_not_defined": "failed"},
+                transitions={
+                    "arrived": "succeeded",
+                    "unreachable": "RETURN_TO_INFORMATION_POINT_FAILED",
+                    "goal_not_defined": "failed"
+                },
+            )
+
+            smach.StateMachine.add(
+                "RETURN_TO_INFORMATION_POINT_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "RETURN_TO_INFORMATION_POINT"},
             )
