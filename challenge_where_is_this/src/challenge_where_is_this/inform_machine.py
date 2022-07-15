@@ -189,7 +189,19 @@ class GuideToRoomOrObject(smach.StateMachine):
             smach.StateMachine.add(
                 "SAY_OPERATOR_STAND_IN_FRONT",
                 Say(robot, "We have arrived at the location. Please stand in front of me now and stay there."),
-                transitions={"spoken": "WAIT_OPERATOR_IN_FRONT"},
+                transitions={"spoken": "HEAD_RESET_STAY_THERE"},
+            )
+
+            @smach.cb_interface(outcomes=["done"])
+            def head_reset_stay_there(userdata=None):
+                robot.head.reset_head()
+                rospy.sleep(2.)
+                return "done"
+
+            smach.StateMachine.add(
+                "HEAD_RESET_STAY_THERE",
+                smach.CBState(head_reset_stay_there),
+                transitions={"done": "WAIT_OPERATOR_IN_FRONT"},
             )
 
             smach.StateMachine.add(
