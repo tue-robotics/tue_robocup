@@ -17,6 +17,7 @@ class HearOptionsExtraPicovoice(smach.State):
 
         self.robot = robot
         self._client = SimpleActionClient("/get_intent", GetIntentAction)
+        self._client.wait_for_server(rospy.Duration(2))
 
         ds.check_resolve_type(speech_result_designator, HMIResult)
         ds.is_writeable(speech_result_designator)
