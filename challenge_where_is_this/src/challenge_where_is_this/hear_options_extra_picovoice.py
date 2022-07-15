@@ -12,11 +12,12 @@ from robot_smach_states.util.designators import VariableDesignator
 
 
 class HearOptionsExtraPicovoice(smach.State):
-    def __init__(self, robot, context, speech_result_designator, timeout=10, look_at_standing_person=True):
+    def __init__(self, robot, context, speech_result_designator, timeout=10.0, look_at_standing_person=True):
         smach.State.__init__(self, outcomes=["heard", "no_result"])
 
         self.robot = robot
         self._client = SimpleActionClient("/get_intent", GetIntentAction)
+        self._client.wait_for_server(rospy.Duration(2))
 
         ds.check_resolve_type(speech_result_designator, HMIResult)
         ds.is_writeable(speech_result_designator)
@@ -27,10 +28,12 @@ class HearOptionsExtraPicovoice(smach.State):
         self.look_at_standing_person = look_at_standing_person
 
     def _speech(self):
-        if self._client.send_goal_and_wait(GetIntentGoal(
-            context_url=self.context,
-            require_endpoint=True
-        ), preempt_timeout=rospy.Duration(self.timeout), execute_timeout=rospy.Duration(self.timeout)):
+        rospy.loginfo("HearOptionsExtraPicovoice: Waiting for speech result")
+        if self._client.send_goal_and_wait(
+            GetIntentGoal(context_url=self.context, require_endpoint=True),
+            preempt_timeout=rospy.Duration.from_sec(self.timeout),
+            execute_timeout=rospy.Duration.from_sec(self.timeout),
+        ):
             rospy.loginfo("Getting result from picovoice")
             result = self._client.get_result()
             if result is None:
@@ -64,4 +67,5 @@ if __name__ == "__main__":
     hero = get_robot("hero")
     designator = VariableDesignator(resolve_type=HMIResult)
     HearOptionsExtraPicovoice(hero, 'restaurant', designator.writeable).execute()
+    HearOptionsExtraPicovoice(hero, "restaurant", designator.writeable).execute()
     print(designator.resolve())

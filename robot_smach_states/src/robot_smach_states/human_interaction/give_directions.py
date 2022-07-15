@@ -78,7 +78,7 @@ class GiveDirections(smach.State):
 
         # Call the global planner for the shortest path to this entity
         path = None
-        for name, nav_con in nav_constraints.items():
+        for _, nav_con in nav_constraints.items():
             path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
             if path:
                 break
@@ -91,6 +91,9 @@ class GiveDirections(smach.State):
         # Convert the path to a list of kdl Vectors
         assert(all([p.header.frame_id.endswith("map") for p in path])), "Not all path poses are defined w.r.t. 'map'"
         kdl_path = [tf2_ros.convert(p, VectorStamped).vector for p in path]
+
+        if len(kdl_path) == 1:  # The robot is already in the destination room
+            return "succeeded"
 
         # Get all entities
         entities = self._robot.ed.get_entities()
