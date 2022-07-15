@@ -11,11 +11,11 @@ Robot starts in the arena
 2. Story
 
 ```
-Robot drives arbitrarily and detect humans, says hi --> detect waving person
-Goes to waving victim, interact with it
-Robot calls neighbor for help using telegram
-Robot navigates to the door and guides neighbor to victim
-Outro
+[Rein] Robot drives arbitrarily and detect humans, says hi --> detect waving person
+[Josja] Goes to waving victim, interact with it
+[Arpit] Robot calls neighbor for help
+[Lars, Lotte, Rodrigo] Robot navigates to the door and guides neighbor to victim
+[Lotte] Outro
 ```
 
 3. Outro
