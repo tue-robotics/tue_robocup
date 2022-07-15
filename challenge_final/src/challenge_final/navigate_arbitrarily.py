@@ -14,7 +14,7 @@ class NavigateArbitrarily(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
 
-        customer_designator = VariableDesignator(resolve_type=Entity, name="detected_victim")
+        customer_designator = VariableDesignator(resolve_type=Entity, name="victim")
 
         with self:
             StateMachine.add(
