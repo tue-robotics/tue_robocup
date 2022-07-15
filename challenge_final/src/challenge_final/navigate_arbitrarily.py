@@ -6,18 +6,21 @@ from pykdl_ros import VectorStamped
 from smach.state import CBState
 from smach.state_machine import StateMachine
 from smach.util import cb_interface
+import numpy as np
 
 from robot_skills import get_robot
 
 
 class NavigateArbitrarily(StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, look_range=(np.pi*0.28, -np.pi*0.28), look_steps=7):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
         self._robot = robot
+        self._look_distance = 3.0
+        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
 
         with self:
             @cb_interface(outcomes=["done"])
-            def _look_for_person(_):
+            def _look_for_victim(_):
                 start_time = rospy.Time.now()
                 head_goals = [VectorStamped.from_xyz(x=self._look_distance * math.cos(angle),
                                                      y=self._look_distance * math.sin(angle),
@@ -27,7 +30,7 @@ class NavigateArbitrarily(StateMachine):
                               for angle in self._look_angles]
 
                 i = 0
-                while not rospy.is_shutdown() and (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
+                while not rospy.is_shutdown():
                     if self.preempt_requested():
                         return 'failed'
 
@@ -60,14 +63,6 @@ class NavigateArbitrarily(StateMachine):
                     found_people = [p for p in found_people if
                                     (p.pose.frame.p - robot_pose.frame.p).Norm() <= self._look_distance]
 
-                    rospy.loginfo(
-                        "{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
-
-                    if self._properties:
-                        for k, v in self._properties.items():
-                            found_people = [x for x in found_people if self._check_person_property(x, k, v)]
-                            rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
-
                     result_people = found_people
 
                     if result_people:
@@ -78,11 +73,11 @@ class NavigateArbitrarily(StateMachine):
                         person = result_people[0]
                         self._robot.ed.update_entity(uuid="victim", frame_stamped=person.pose)
 
-                        return 'found'
+                        return 'done'
                     else:
                         rospy.logwarn("Could not find people meeting the requirements")
 
-            self.add("PICK", CBState(_look_for_person), transitions={"done": "done"})
+            self.add("LOOK_FOR_VICTIM", CBState(_look_for_victim), transitions={"done": "done"})
 
 
 if __name__ == "__main__":
