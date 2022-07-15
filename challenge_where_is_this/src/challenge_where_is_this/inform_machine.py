@@ -155,7 +155,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                 ),
                 transitions={
                     "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "unreachable",
+                    "unreachable": "GUIDE_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "GUIDE_NAV_BACKUP",
                     "preempted": "preempted",
@@ -163,19 +163,27 @@ class GuideToRoomOrObject(smach.StateMachine):
             )
 
             smach.StateMachine.add(
-                "GUIDE_NAV_BACKUP",
-                NavigateToSymbolic(robot, {entity_des: self.area_designator}, entity_des),
-                transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "GUIDE_NAV_BACKUP_FAILED",
-                    "goal_not_defined": "goal_not_defined",
-                },
+                "GUIDE_BACKUP_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "GUIDE_NAV_BACKUP"},
             )
 
             smach.StateMachine.add(
-                "GUIDE_NAV_BACKUP_FAILED",
-                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
-                transitions={"done": "GUIDE_NAV_BACKUP"},
+                "GUIDE_NAV_BACKUP",
+                guidance.GuideToSymbolic(
+                    robot,
+                    {entity_des: self.area_designator},
+                    entity_des,
+                    operator_distance=-1,
+                    operator_radius=self.operator_radius,
+                ),
+                transitions={
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
+                    "unreachable": "unreachable",
+                    "goal_not_defined": "goal_not_defined",
+                    "lost_operator": "unreachable",
+                    "preempted": "preempted",
+                },
             )
 
             smach.StateMachine.add(
