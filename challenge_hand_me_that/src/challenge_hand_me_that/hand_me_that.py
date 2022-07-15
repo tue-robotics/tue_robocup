@@ -72,8 +72,12 @@ class HandMeThat(smach.StateMachine):
 
             smach.StateMachine.add('LOOK_AT_PERSON',
                                    RotateToEntity(robot=robot, entity=operator_designator),
-                                   transitions={'succeeded': 'GET_FURNITURE_FROM_OPERATOR_POSE',
+                                   transitions={'succeeded': 'ASK_TO_POINT',
                                                 'failed': 'LOOK_AT_CENTER_OF_ROOM'})
+
+            # Ask what operator needs
+            smach.StateMachine.add('ASK_TO_POINT', Say(robot, "What do you need?", block=True),
+                                   transitions={'spoken': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
 
             smach.StateMachine.add('LOOK_AT_CENTER_OF_ROOM',
                                    RotateToEntity(robot=robot, entity=room_designator),
