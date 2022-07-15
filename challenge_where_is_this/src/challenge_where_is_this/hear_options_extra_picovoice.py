@@ -42,8 +42,13 @@ class HearOptionsExtraPicovoice(smach.State):
                 rospy.logwarn("Not understood")
                 return False
 
+            semantics = {slot.key: slot.value.replace(" ", "_") for slot in result.slots}
+            if "location" not in semantics:
+                rospy.logerr("Incorrect grammar loaded in picovoice")
+                return False
+
             self.speech_result_designator.write(
-                HMIResult(sentence="", semantics={slot.key: slot.value for slot in result.slots})
+                HMIResult(sentence="", semantics=semantics["location"])
             )
 
             return True
