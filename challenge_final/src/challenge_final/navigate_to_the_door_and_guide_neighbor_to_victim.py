@@ -26,7 +26,9 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
                                           'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
                                           'goal_not_defined': 'SAY_PLEASE_COME_IN'})
 
-            StateMachine.add('SAY_NAVIGATE_TO_DOOR_FALLBACK', Say(robot, "Help, lets try it another way"),
+            StateMachine.add('SAY_NAVIGATE_TO_DOOR_FALLBACK', Say(robot, "Help, lets try it another way, hope this goes "
+                                                                         "faster because we are in a hurry", 
+                                                                  block=False),
                              transitions={'spoken': 'TURN_AROUND'})
 
             StateMachine.add('TURN_AROUND', ForceDrive(robot, 0, 0, 0.5, (2 * math.pi) / 0.5),
@@ -38,7 +40,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
                                           'goal_not_defined': 'SAY_PLEASE_COME_IN'})
 
             StateMachine.add('SAY_PLEASE_COME_IN',
-                             Say(robot, ["Please come in, I'm waiting for you to step in front of me"],
+                             Say(robot, ["Please come in soon, I'm waiting for you"],
                                  block=True, look_at_standing_person=True),
                              transitions={'spoken': 'WAIT_FOR_GUEST'})
 
