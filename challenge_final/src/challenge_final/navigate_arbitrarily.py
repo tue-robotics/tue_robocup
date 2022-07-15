@@ -65,7 +65,8 @@ class NavigateArbitrarily(StateMachine):
                     found_people = [p for p in found_people if
                                     (p.pose.frame.p - robot_pose.frame.p).Norm() <= self._look_distance]
 
-                    result_people = [p for p in found_people if "RWave" in p.person_properties.tags or "LWave" in p.person_properties.tags]
+                    result_people = [p for p in found_people if
+                                     "RWave" in p.person_properties.tags or "LWave" in p.person_properties.tags]
 
                     if result_people:
                         result_people.sort(key=lambda e: (e.pose.frame.p - robot_pose.frame.p).Norm())
