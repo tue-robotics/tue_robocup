@@ -29,7 +29,7 @@ class NavigateArbitrarily(StateMachine):
                 start_time = rospy.Time.now()
                 head_goals = [VectorStamped.from_xyz(x=self._look_distance * math.cos(angle),
                                                      y=self._look_distance * math.sin(angle),
-                                                     z=1.5,
+                                                     z=1.0,
                                                      stamp=start_time,
                                                      frame_id=self._robot.base_link_frame)
                               for angle in self._look_angles]
