@@ -82,10 +82,10 @@ class NavigateArbitrarily(StateMachine):
                                         frame_id="map",
                                         stamp=rospy.Time.now(),
                                     ),
-                                    id="victim",
+                                    ns="victim",
                                     type=Marker.SPHERE,
-                                    pose=toMsg(person.pose),
-                                    scale=Vector3(1, 1, 1),
+                                    pose=toMsg(person.pose.frame),
+                                    scale=Vector3(1.5, 1.5, 1.5),
                                     color=ColorRGBA(a=0.5, r=1, g=0, b=0),
                                 )
                             ]
