@@ -66,20 +66,6 @@ class GetFurnitureFromOperatorPose(StateMachine):
             return rgb, depth, depth_info
 
         @cb_interface(outcomes=['done'])
-        def _raise_torso(_):
-            robot.torso._send_goal([0.23])
-            robot.torso.wait_for_motion_done(timeout=3.0)
-
-            return 'done'
-
-        @cb_interface(outcomes=['done'])
-        def _reset_torso(_):
-            robot.torso._reset()
-            robot.torso.wait_for_motion_done(timeout=1.0)
-
-            return 'done'
-
-        @cb_interface(outcomes=['done'])
         def _prepare_operator(_):
             global OPERATOR
             OPERATOR = None
@@ -217,12 +203,9 @@ class GetFurnitureFromOperatorPose(StateMachine):
             return 'done'
 
         with self:
-            self.add('RAISE_TORSO', CBState(_raise_torso), transitions={'done': 'PREPARE_OPERATOR'})
             self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'GET_OPERATOR'})
             self.add('GET_OPERATOR', CBState(_get_operator), transitions={'done': 'GET_FURNITURE'})
-            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'RESET_TORSO',
-                                                                            'failed': 'RAISE_TORSO'})
-            self.add('RESET_TORSO', CBState(_raise_torso), transitions={'done': 'done'})
+            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'done', 'failed': 'GET_OPERATOR'})
 
 
 if __name__ == '__main__':
