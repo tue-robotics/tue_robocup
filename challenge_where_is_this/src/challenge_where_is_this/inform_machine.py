@@ -188,7 +188,7 @@ class GuideToRoomOrObject(smach.StateMachine):
 
             smach.StateMachine.add(
                 "SAY_OPERATOR_STAND_IN_FRONT",
-                Say(robot, "We have arrived. Please stand in front of me"),
+                Say(robot, "We have arrived. Please stand in front of me now and stay there"),
                 transitions={"spoken": "WAIT_OPERATOR_IN_FRONT"},
             )
 
@@ -365,7 +365,7 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add(
                 "STAND_BEHIND_ME_WAIT",
-                WaitTime(robot, 8.0),
+                WaitTime(robot, 5.0),
                 transitions={"waited": "INSTRUCT_FOLLOW", "preempted": "INSTRUCT_FOLLOW"},
             )
 
