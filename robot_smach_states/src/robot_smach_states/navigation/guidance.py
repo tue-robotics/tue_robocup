@@ -93,7 +93,7 @@ class TourGuide(object):
         if room.uuid not in self._passed_room_ids:
             self._passed_room_ids.append(room.uuid)
             rospy.logdebug("describe entering room: {}.\t passed rooms is now {}".format(room.uuid, self._passed_room_ids))
-            return "We now enter the {}".format(room.uuid)
+            return "We are now in the {}".format(room.uuid)
 
         # not entering a new room, checking furniture
         furniture_objects = self._furniture_entities_room[room]  # Furniture objects in our current room
@@ -204,8 +204,8 @@ class ExecutePlanGuidance(smach.State):
         # Look backwards to have the operator in view
         self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
 
-        rospy.sleep(5)  # Allow robot to drive a bit before speaking
-        self.robot.speech.speak("Keeping looking at me while you follow me", block=True)
+        rospy.sleep(1)  # Allow robot to drive a bit before speaking
+        self.robot.speech.speak("Keep looking at me while you follow me", block=True)
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
@@ -230,7 +230,7 @@ class ExecutePlanGuidance(smach.State):
             if distance > self._distance_threshold:
                 rospy.logdebug(
                     "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
-                if self._distance_threshold < 0 or self._check_operator():
+                if self._operator_distance < 0 or self._check_operator():
                     distance = 0.0
                     rospy.loginfo("Found operator, continuing following plan")
                 else:
@@ -338,6 +338,9 @@ class Guide(smach.StateMachine):
                 Resets the entities that have been mentioned so that the robot will mention all entities to all
                  operators
                  """
+                self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
+                                                                     frame_id=self.robot.base_link_frame))
+                rospy.sleep(3.0)
                 self.execute_plan.reset_tourguide()
                 return "done"
 
