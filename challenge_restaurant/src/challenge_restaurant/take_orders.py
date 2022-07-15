@@ -105,6 +105,7 @@ class TakeOrder(smach.State):
             rospy.loginfo('nr_tries: %d', nr_tries)
 
             self._robot.speech.speak("What would you like to order?")
+            self._robot.speech.speak("Please speak fast without breaks.")
             count = 0
             while not rospy.is_shutdown():
                 count += 1
@@ -193,6 +194,10 @@ class ReciteOrders(smach.State):
         #                                                           self._orders["food2"])
 
         self._robot.speech.speak(sentence)
+        
+        if "water" in self._orders:
+            water_sentence = "I am too weak to carry the water, please bring that yourself. And please make me stronger."
+            self._robot.speech.speak(water_sentence)
 
         self._robot.head.cancel_goal()
 
