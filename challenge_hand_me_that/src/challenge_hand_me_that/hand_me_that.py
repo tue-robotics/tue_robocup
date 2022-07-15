@@ -88,9 +88,9 @@ class HandMeThat(smach.StateMachine):
                                    Say(robot, 'I did not find you, please stand in my view'),
                                    transitions={'spoken': 'WAIT_FOR_OPERATOR'})
 
-            smach.StateMachine.add('WAIT_FOR_OPERATOR', WaitTime(robot, 5),
-                                   transitions={'waited': 'GET_FURNITURE_FROM_OPERATOR_POSE',
-                                                'preempted': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
+            smach.StateMachine.add('WAIT_FOR_OPERATOR', WaitTime(robot, 3),
+                                   transitions={'waited': 'ASK_TO_POINT',
+                                                'preempted': 'ASK_TO_POINT'})
 
             smach.StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
                                    GetFurnitureFromOperatorPose(robot, furniture_designator.writeable,
