@@ -1,54 +1,51 @@
-# ROS
-import smach
+from smach.state_machine import StateMachine
 
-# TU/e Robotics
+from challenge_final.call_neighbor_via_telegram import CallNeighborViaTelegram
+from challenge_final.call_robot_via_doorbell_navigate_to_the_door_and_guide_neighbor_to_victim import (
+    CallRobotViaDoorbellNavigateToTheDoorAndGuideNeighborToVictim,
+)
+from challenge_final.navigate_arbitrarily import NavigateArbitrarily
+from challenge_final.navigate_to_and_interact_with_victim import NavigateToAndInteractWithVictim
+from challenge_final.outro import Outro
 from robot_smach_states.utility import Initialize
 
-# Challenge final
-from .find_people import FindPeople
-from .get_drinks import GetDrinks
-from .get_orders import GetOrders
-from .lightsaber import DriveAndSwordFight, LightSaber
 
-
-class Final(smach.StateMachine):
+class Final(StateMachine):
     def __init__(self, robot):
-        """
-        Final challenge of RWC 2019 Sydney
-
-        :param robot: (Robot) api object
-        """
-        smach.StateMachine.__init__(self, outcomes=["done"])
+        StateMachine.__init__(self, outcomes=["done", "preempted"])
 
         with self:
+            StateMachine.add(
+                "INITIALIZE",
+                Initialize(robot),
+                transitions={"initialized": "NAVIGATE_ARBITRARILY", "abort": "preempted"},
+            )
 
-            # smach.StateMachine.add("START_ROBUST",
-            #                        states.StartChallengeRobust(robot, "initial_pose"),
-            #                        transitions={"Done": "LASER_POINTING",
-            #                                     "Aborted": "LASER_POINTING",
-            #                                     "Failed": "LASER_POINTING"})
+            StateMachine.add(
+                "NAVIGATE_ARBITRARILY",
+                NavigateArbitrarily(robot),
+                transitions={"done": "NAVIGATE_TO_AND_INTERACT_WITH_VICTIM", "preempted": "preempted"},
+            )
 
-            smach.StateMachine.add("INIT", Initialize(robot),
-                                   transitions={"initialized": "LASER_POINTING",
-                                                "abort": "LASER_POINTING"})
+            StateMachine.add(
+                "NAVIGATE_TO_AND_INTERACT_WITH_VICTIM",
+                NavigateToAndInteractWithVictim(robot),
+                transitions={"done": "CALL_NEIGHBOR_VIA_TELEGRAM", "preempted": "preempted"},
+            )
 
-            smach.StateMachine.add("LASER_POINTING",
-                                   DriveAndSwordFight(robot),
-                                   transitions={"done": "FIND_PEOPLE"})
+            StateMachine.add(
+                "CALL_NEIGHBOR_VIA_TELEGRAM",
+                CallNeighborViaTelegram(robot),
+                transitions={
+                    "done": "CALL_ROBOT_VIA_DOORBELL_NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
+                    "preempted": "preempted",
+                },
+            )
 
-            smach.StateMachine.add("FIND_PEOPLE",
-                                   FindPeople(robot),
-                                   transitions={"done": "GET_ORDERS"})
+            StateMachine.add(
+                "CALL_ROBOT_VIA_DOORBELL_NAVIGATE_TO_THE_DOOR_AND_GUIDE_NEIGHBOR_TO_VICTIM",
+                CallRobotViaDoorbellNavigateToTheDoorAndGuideNeighborToVictim(robot),
+                transitions={"done": "OUTRO", "preempted": "preempted"},
+            )
 
-            smach.StateMachine.add("GET_ORDERS",
-                                   GetOrders(robot),
-                                   transitions={"done": "GET_DRINKS"})
-
-            smach.StateMachine.add("GET_DRINKS",
-                                   GetDrinks(robot=robot),
-                                   transitions={"done": "done",
-                                                "failed": "done"})
-
-            smach.StateMachine.add("SHOW_PEOPLE_DETECTION",
-                                   LightSaber(robot),
-                                   transitions={"done": "done"})
+            StateMachine.add("OUTRO", Outro(robot), transitions={"done": "done", "preempted": "preempted"})
