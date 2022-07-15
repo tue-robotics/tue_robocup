@@ -59,14 +59,10 @@ class Perception(RobotPart):
                                                                   LocateDoorHandleAction)
 
         # camera topics
-        self._depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns),
-                                                          CameraInfo)
-        self._depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
-        self._rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
-
-        self._ts = message_filters.ApproximateTimeSynchronizer([self._rgb_sub, self._depth_sub, self._depth_info_sub],
-                                                               queue_size=1, slop=10)
-        self._ts.registerCallback(self._sync_callback)
+        self._depth_info_sub = None
+        self._depth_sub = None
+        self._rgb_sub = None
+        self._ts = None
 
     def _sync_callback(self, rgb, depth, depth_info):
         self._image_data = (rgb, depth, depth_info)
@@ -312,6 +308,18 @@ class Perception(RobotPart):
         :param timeout: How long to wait until the images are all collected.
         :return: tuple(rgb, depth, depth_info) or a None if no images could be gathered.
         """
+        if self._depth_sub is None:
+            self._depth_info_sub = message_filters.Subscriber(
+                '{}/depth_registered/camera_info'.format(self._camera_base_ns),
+                CameraInfo)
+            self._depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
+            self._rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
+
+            self._ts = message_filters.ApproximateTimeSynchronizer([self._rgb_sub, self._depth_sub, self._depth_info_sub],
+                                                                   queue_size=1, slop=10)
+            self._ts.registerCallback(self._sync_callback)
+            rospy.sleep(2.0)
+
         if any(self._image_data):
             return self._image_data
         else:
