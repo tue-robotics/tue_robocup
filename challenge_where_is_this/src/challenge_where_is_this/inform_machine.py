@@ -2,7 +2,9 @@
 import enum
 # ROS
 import math
+import os
 
+import rospkg
 import rospy
 
 import robot_smach_states.util.designators as ds
@@ -17,7 +19,7 @@ from robot_smach_states.human_interaction import (
     HearOptions,
     HearOptionsExtra,
     Say,
-    WaitForPersonInFront,
+    WaitForPersonInFront, human_interaction, ShowImageState,
 )
 from robot_smach_states.navigation import guidance, NavigateToSymbolic, NavigateToWaypoint, ForceDrive
 from robot_smach_states.utility import WaitTime
@@ -290,7 +292,17 @@ class InformMachine(smach.StateMachine):
                 return "reset"
 
             smach.StateMachine.add(
-                "RESET_HMI_ATTEMPT", smach.CBState(_reset_location_hmi_attempt), transitions={"reset": "INSTRUCT"}
+                "RESET_HMI_ATTEMPT", smach.CBState(_reset_location_hmi_attempt), transitions={"reset": "SHOW_IMAGE_SPEAK"}
+            )
+
+            smach.StateMachine.add(
+                'SHOW_IMAGE_SPEAK',
+                ShowImageState(
+                    robot,
+                    os.path.join(rospkg.RosPack().get_path('challenge_restaurant'), "images", "speak.jpg"),
+                    seconds=10
+                ),
+                transitions={'succeeded': 'INSTRUCT', 'failed': 'INSTRUCT'}
             )
 
             smach.StateMachine.add(
