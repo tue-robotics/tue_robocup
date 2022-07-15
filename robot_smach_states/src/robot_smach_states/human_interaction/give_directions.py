@@ -137,7 +137,7 @@ class GiveDirections(smach.State):
         angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
         rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
         if abs(angle) < 0.25 * math.pi:
-            sentence += "The {} will be in front of you.\n".format(goal_entity.uuid)
+            sentence += "When you follow me, the {} will be in front of you.\n".format(goal_entity.uuid)
         else:
             side = "left" if angle > 0.0 else "right"
             sentence += "The {} is on your {}.\n".format(goal_entity.uuid, side)
