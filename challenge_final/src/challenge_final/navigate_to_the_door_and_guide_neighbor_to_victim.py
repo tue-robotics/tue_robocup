@@ -17,7 +17,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
 
-        waypoint_door = {'id': 'entry_door', 'radius': 0.5}
+        waypoint_door = {'id': 'entry_door', 'radius': 0.2}
         door_waypoint = ds.EntityByIdDesignator(robot, uuid=waypoint_door['id'])
 
         with self:
@@ -32,7 +32,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
             StateMachine.add('TURN_AROUND', ForceDrive(robot, 0, 0, 0.5, (2 * math.pi) / 0.5),
                              transitions={'done': 'NAVIGATE_TO_DOOR_FALLBACK'})
 
-            StateMachine.add('NAVIGATE_TO_DOOR_FALLBACK', NavigateToWaypoint(robot, door_waypoint, 0.55),
+            StateMachine.add('NAVIGATE_TO_DOOR_FALLBACK', NavigateToWaypoint(robot, door_waypoint, 0.25),
                              transitions={'arrived': 'SAY_PLEASE_COME_IN',
                                           'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
                                           'goal_not_defined': 'SAY_PLEASE_COME_IN'})
