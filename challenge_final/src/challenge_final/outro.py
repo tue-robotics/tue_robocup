@@ -16,10 +16,14 @@ class Outro(StateMachine):
         exit_waypoint = EntityByIdDesignator(robot, "outro_exit_point")
 
         with self:
-            StateMachine.add("SAY", Say(robot, "Outro"), transitions={"spoken": "GO_TO_INTERMEDIATE"})
+            StateMachine.add("SAY_LEAVING", Say(robot, "Please take good care of Arpit. He is very sensitive"),
+                             transitions={"spoken": "GO_TO_INTERMEDIATE"})
 
             StateMachine.add("GO_TO_INTERMEDIATE", NavigateToWaypoint(robot, intermediate_waypoint),
-                             transitions={"arrived": "GO_TO_EXIT",  "unreachable": "done", "goal_not_defined": "done"})
+                             transitions={"arrived": "SAY_HAPPY",  "unreachable": "done", "goal_not_defined": "done"})
+
+            StateMachine.add("SAY_HAPPY", Say(robot, "I am glad I could be of Help"),
+                             transitions={"spoken": "GO_TO_EXIT"})
 
             StateMachine.add("GO_TO_EXIT", NavigateToWaypoint(robot, exit_waypoint),
                              transitions={"arrived": "done", "unreachable": "done", "goal_not_defined": "done"})
