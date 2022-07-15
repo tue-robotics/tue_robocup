@@ -228,6 +228,7 @@ class InformMachine(smach.StateMachine):
                 return "reset"
 
             smach.StateMachine.add(
+                "START_SAY",
                 Say(
                     robot,
                     ["Please stand in front of me."],
