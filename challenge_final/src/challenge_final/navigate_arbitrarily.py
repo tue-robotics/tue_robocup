@@ -32,9 +32,9 @@ class NavigateArbitrarily(StateMachine):
         self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
 
         # navigation
-        self.room_designator = VariableDesignator(ROOMS[0])
         room_designators = [EntityByIdDesignator(robot, room) for room in ROOMS]
         self.room_collection_designator = VariableDesignator(room_designators)
+        self.room_designator = VariableDesignator(room_designators[0])
 
         with self:
             self.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot, self.room_designator),
