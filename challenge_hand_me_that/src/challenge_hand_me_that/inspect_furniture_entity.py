@@ -235,14 +235,14 @@ if __name__ == "__main__":
     _robot = get_robot_from_argv(index=1)
 
     # Test data
-    furniture = ds.EdEntityDesignator(robot=_robot, uuid="desk")
+    furniture = ds.EdEntityDesignator(robot=_robot, uuid="kitchen_shelf")
     entity_designator = ds.VariableDesignator(resolve_type=Entity)
 
     ps = geometry_msgs.msg.PointStamped()
     ps.header.frame_id = "map"
-    ps.point.x = 2.0
-    ps.point.y = -1.0
-    ps.point.z = 1.0
+    ps.point.x = 4.8
+    ps.point.y = 1.15
+    ps.point.z = 0.7
     user_data = smach.UserData()
     user_data["laser_dot"] = ps
 
