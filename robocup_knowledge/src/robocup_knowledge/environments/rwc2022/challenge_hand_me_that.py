@@ -1,17 +1,11 @@
 starting_point = "initial_pose"
-home_location = "hand_me_that_office"
-room = "office"
+home_location = "hand_me_that_kitchen"
+room = "kitchen"
 
 all_possible_furniture = [
-    "couch_table",
-    "side_table",
+    "kitchen_shelf",
     "pantry",
     "dinner_table",
     "sink",
-    "small_shelf",
     "washing_machine",
-    "sink",
-    "small_shelf",
-    "desk",
-    "show_rack",
 ]
