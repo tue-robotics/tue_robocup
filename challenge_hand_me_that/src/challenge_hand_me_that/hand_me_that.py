@@ -66,7 +66,8 @@ class HandMeThat(smach.StateMachine):
                                    FindPerson(robot=robot,
                                               found_entity_designator=operator_designator,
                                               discard_other_labels=False,
-                                              room=ROOM),
+                                              room=ROOM,
+                                              search_timeout=30),
                                    transitions={'found': 'LOOK_AT_PERSON',
                                                 'failed': 'LOOK_AT_CENTER_OF_ROOM'})
 
