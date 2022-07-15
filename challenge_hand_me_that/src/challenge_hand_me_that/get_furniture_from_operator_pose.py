@@ -31,7 +31,7 @@ OPERATOR = None  # type: Person3D
 # OPERATORS = [Person3D(), Person3D()]
 # OPERATOR1 = OPERATORS[0]
 # OPERATOR1.header.frame_id = "map"
-# OPERATOR1.position.z = 5
+# OPERATOR1.position.z = 3
 # OPERATOR1.pointing_pose.position.x = 3.5245514495275265
 # OPERATOR1.pointing_pose.position.y = 7.01266033925749
 # OPERATOR1.pointing_pose.position.z = 1.1662874869084487
@@ -41,7 +41,7 @@ OPERATOR = None  # type: Person3D
 # OPERATOR1.pointing_pose.orientation.w = 0.7924312108168484
 # OPERATOR2 = OPERATORS[1]
 # OPERATOR2.header.frame_id = "map"
-# OPERATOR2.position.z = 5
+# OPERATOR2.position.z = 3
 # OPERATOR2.pointing_pose.position.x = 2.0
 # OPERATOR2.pointing_pose.position.y = 8.8
 # OPERATOR2.pointing_pose.position.z = 1.2
@@ -108,11 +108,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
             robot.ed.reset()
             robot.head.reset()
             robot.speech.speak("Let's point, please stand in front of me!", block=False)
-            for _ in range(10):
+            for _ in range(6):
                 _show_view(timeout=2)
                 rospy.sleep(0.4)
 
-            _show_view(timeout=2)
+            _show_view(timeout=1)
             robot.speech.speak("Please point at the object you want me to hand you", block=False)  # hmm, weird sentence
             rospy.sleep(0.4)
             for _ in range(2):
