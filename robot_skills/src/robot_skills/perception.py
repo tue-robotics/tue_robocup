@@ -46,7 +46,7 @@ class Perception(RobotPart):
         self._clear_srv = rospy.ServiceProxy(
             '/' + robot_name + '/people_recognition/face_recognition/clear', Empty)
 
-        self._image_data = (None, None, None)
+        self._depth_info = None
 
         self._face_properties_srv = self.create_service_client(
             '/' + robot_name + '/people_recognition/face_recognition/get_face_properties', GetFaceProperties)
@@ -299,30 +299,20 @@ class Perception(RobotPart):
         :param timeout: How long to wait until the images are all collected.
         :return: tuple(rgb, depth, depth_info) or a None if no images could be gathered.
         """
-        event = Event()
 
-        def callback(rgb, depth, depth_info):
-            rospy.loginfo('Received rgb, depth, cam_info')
-            self._image_data = (rgb, depth, depth_info)
-            event.set()
-
-        # camera topics
-        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns),
-                                                    CameraInfo)
-        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
-        rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
-
-        ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
-                                                         queue_size=1,
-                                                         slop=10)
-        ts.registerCallback(callback)
-        event.wait(timeout)
-        ts.callbacks.clear()
-        del ts, depth_info_sub, depth_sub, rgb_sub, callback
-
-        if any(self._image_data):
-            return self._image_data
-        else:
+        try:
+            if self._depth_info is None:
+                rospy.loginfo('Waiting for camera info...')
+                self._depth_info = rospy.wait_for_message('{}/depth_registered/camera_info'.format(self._camera_base_ns), CameraInfo,
+                                                          timeout=rospy.Duration.from_sec(timeout))
+                rospy.loginfo('Received for camera info')
+            rgb = rospy.wait_for_message('{}/rgb/image_raw'.format(self._camera_base_ns), Image,
+                                         timeout=rospy.Duration.from_sec(timeout))
+            depth = rospy.wait_for_message('{}/depth_registered/image'.format(self._camera_base_ns), Image,
+                                           timeout=rospy.Duration.from_sec(timeout))
+            return rgb, depth, self._depth_info
+        except rospy.ROSException as e:
+            rospy.logerr(f"Failed to obtain rgb depth cam_info: {e}")
             return None
 
     def detect_person_3d(self, rgb, depth, depth_info):
