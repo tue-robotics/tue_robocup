@@ -1,6 +1,7 @@
 import actionlib
 import rospy
 from picovoice_msgs.msg import GetIntentAction, GetIntentGoal
+from robot_skills.simulation import is_sim_mode
 
 import smach
 from hmi import TimeoutException, HMIResult
@@ -38,12 +39,22 @@ class AskTakeTheOrder(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
+        cgrammar = """
+        C['yes'] -> {robot} take the order
+        C['wait'] -> {robot} wait
+        """.format(robot=self.robot.robot_name)
         for i in range(3):
             try:
-                speech_result = self._get_intent.query()
-                if "take the order" in str(speech_result.semantics):
-                    return 'yes'
-                return 'wait'
+                if is_sim_mode():
+                    rospy.loginfo("In Sim Mode we don't use picovoice")
+                    speech_result = self.robot.hmi.query(description="Should I get the order?",
+                                                         grammar=cgrammar, target="C")
+                    return speech_result.semantics
+                else:
+                    speech_result = self._get_intent.query()
+                    if "take the order" in str(speech_result.semantics):
+                        return 'yes'
+                    return 'wait'
             except TimeoutException:
                 pass
         return 'timeout'

@@ -183,7 +183,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('TAKE_ORDER',
                                    TakeOrder(robot=robot, entity_designator=customer_designator, orders=orders),
                                    transitions={'succeeded': 'NAVIGATE_TO_KITCHEN',
-                                                'failed': 'NAVIGATE_TO_KITCHEN'})
+                                                'failed': 'RETURN_TO_START'})
 
             smach.StateMachine.add('NAVIGATE_TO_KITCHEN',
                                    states.navigation.NavigateToWaypoint(
