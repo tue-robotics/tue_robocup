@@ -1,18 +1,18 @@
 import math
 import os
 
+import numpy as np
 import rospy
 from pykdl_ros import VectorStamped
 from smach.state import CBState
 from smach.state_machine import StateMachine
 from smach.util import cb_interface
-import numpy as np
 
 from robot_skills import get_robot
 
 
 class NavigateArbitrarily(StateMachine):
-    def __init__(self, robot, look_range=(np.pi*0.28, -np.pi*0.28), look_steps=7):
+    def __init__(self, robot, look_range=(np.pi * 0.28, -np.pi * 0.28), look_steps=7):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
         self._robot = robot
         self._look_distance = 3.0
@@ -31,9 +31,6 @@ class NavigateArbitrarily(StateMachine):
 
                 i = 0
                 while not rospy.is_shutdown():
-                    if self.preempt_requested():
-                        return 'failed'
-
                     self._robot.head.look_at_point(head_goals[i])
                     i += 1
 
