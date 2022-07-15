@@ -1,0 +1,43 @@
+# Final challenge RWC2022
+
+## Scenario (RWC2022)
+
+1. Start:
+
+```
+Robot starts in the arena
+```
+
+2. Story
+
+```
+Robot drives arbitrarily and detect humans, says hi --> detect waving person
+Goes to waving victim, interact with it
+Robot calls neighbor for help using telegram
+Robot gets called by a doorbell (external queue) --> Goes to the doorbell and guides neighbor to victim
+Outro
+```
+
+3. Outro
+
+```
+Robot leaves the arena.
+```
+
+## Testing / Running
+
+```
+hero-start
+hero-free-mode
+rosrun challenge_final challenge_final hero
+```
+
+### Everything can be tested separately
+
+```
+python3 $(rospack find challenge_final)/src/challenge_final/navigate_arbitrarily.py
+python3 $(rospack find challenge_final)/src/challenge_final/navigate_to_and_interact_with_victim.py
+python3 $(rospack find challenge_final)/src/challenge_final/call_neighbor_via_telegram.py
+python3 $(rospack find challenge_final)/src/challenge_final/call_robot_via_doorbell_navigate_to_the_door_and_guide_neighbor_to_victim.py
+python3 $(rospack find challenge_final)/src/challenge_final/outro.py
+```
