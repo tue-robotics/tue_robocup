@@ -123,7 +123,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                     operator_radius=self.operator_radius,
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "WAIT_ROOM_BACKUP",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "ROOM_NAV_BACKUP",
@@ -147,7 +147,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                     operator_radius=self.operator_radius,
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "ROOM_NAV_BACKUP",
@@ -165,7 +165,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                     operator_radius=self.operator_radius,
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "WAIT_FURNITURE_BACKUP",  # Something is blocking
                     "goal_not_defined": "GUIDE_NEAR_FURNITURE",  # in_front_of not defined
                     "lost_operator": "FURNITURE_NAV_BACKUP",
@@ -183,7 +183,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                     operator_radius=self.operator_radius,
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "WAIT_FURNITURE_BACKUP",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "FURNITURE_NAV_BACKUP",
@@ -207,7 +207,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                     operator_radius=self.operator_radius,
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "FURNITURE_NAV_BACKUP",
@@ -219,7 +219,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                 "ROOM_NAV_BACKUP",
                 NavigateToSymbolic(robot, {entity_des: "in"}, entity_des),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "ROOM_NAV_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                 },
@@ -235,7 +235,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                 "FURNITURE_NAV_BACKUP",
                 NavigateToSymbolic(robot, {entity_des: "in_front_of"}, entity_des),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "FURNITURE_NAV_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                 },
@@ -246,10 +246,21 @@ class GuideToRoomOrObject(smach.StateMachine):
                 ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
                 transitions={"done": "FURNITURE_NAV_BACKUP"},
             )
+            smach.StateMachine.add(
+                "SAY_OPERATOR_STAND_IN_FRONT",
+                Say(robot, "We have arrived. Please stand in front of me"),
+                transitions={"spoken": "WAIT_OPERATOR_IN_FRONT"},
+            )
+
+            smach.StateMachine.add(
+                "WAIT_OPERATOR_IN_FRONT",
+                WaitTime(robot, 5.0),
+                transitions={"waited": "SAY_ARRIVED", "preempted": "SAY_ARRIVED"},
+            )
 
             smach.StateMachine.add(
                 "SAY_ARRIVED",
-                Say(robot, "We have arrived. I'll go back to the meeting point"),
+                Say(robot, "Great. I'll go back to the meeting point"),
                 transitions={"spoken": "arrived"},
             )
 
