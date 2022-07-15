@@ -84,12 +84,13 @@ class CheckTimeOut(State):
 class GetFurnitureFromOperatorPose(StateMachine):
     def __init__(self, robot, furniture_designator, possible_furniture):
         # type: (robot.Robot, VariableDesignator) -> None
-        StateMachine.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
+        StateMachine.__init__(self, outcomes=['done', 'failed'], output_keys=["laser_dot"])
 
         # For Testing
         # self.transform_pub = TransformBroadcaster()
 
         is_writeable(furniture_designator)
+        reset_des = VariableDesignator(resolve_type=bool).writeable
 
         def _show_view(timeout=5):
             rgb, depth, depth_info = robot.perception.get_rgb_depth_caminfo()
@@ -127,7 +128,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
             return 'done'
 
-        @cb_interface(outcomes=['done'])
+        @cb_interface(outcomes=['done', 'failed'])
         def _get_operator(_):
             global OPERATOR
 
@@ -161,13 +162,19 @@ class GetFurnitureFromOperatorPose(StateMachine):
             # transform.transform.translation.z = OPERATOR.pointing_pose.position.z
             # self.transform_pub.sendTransform(transform)
 
-            while not rospy.is_shutdown() and OPERATOR is None:
+            start = rospy.Time.now()
+            while not rospy.is_shutdown() and OPERATOR is None and (rospy.Time.now() - start).to_sec() < 10:
                 persons = robot.perception.detect_person_3d(*_show_view())
                 if persons:
                     persons = sorted(persons, key=lambda x: x.position.z)
                     person = persons[0]
                     if _is_operator(person):
                         OPERATOR = person
+                        break
+            else:
+                rospy.logerr("Could not find an correct operator. Let him point again")
+                OPERATOR = None
+                return "failed"
 
             # robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
             rospy.loginfo("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
@@ -231,12 +238,18 @@ class GetFurnitureFromOperatorPose(StateMachine):
             # Fill the designator and user data the furniture inspection
             furniture_designator.write(robot.ed.get_entity(final_result.entity_id))
             user_data['laser_dot'] = result.intersection_point
+            rospy.loginfo(f"{result=}")
             return 'done'
 
         with self:
-            self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'GET_OPERATOR'})
-            self.add('GET_OPERATOR', CBState(_get_operator), transitions={'done': 'GET_FURNITURE'})
-            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'done', 'failed': 'GET_OPERATOR'})
+            self.add("WRITE_RESET_DES_TRUE", WriteDesignator(reset_des, True),
+                     transitions={'written': 'PREPARE_OPERATOR'})
+            self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'CHECK_TIMEOUT'})
+            self.add("CHECK_TIMEOUT", CheckTimeOut(5, reset_des), transitions={'not_yet': 'GET_OPERATOR',
+                                                                               'time_out': 'failed'})
+            self.add('GET_OPERATOR', CBState(_get_operator), transitions={'done': 'GET_FURNITURE',
+                                                                          'failed': 'CHECK_TIMEOUT'})
+            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'done', 'failed': 'CHECK_TIMEOUT'})
 
 
 if __name__ == '__main__':
@@ -246,5 +259,6 @@ if __name__ == '__main__':
     robot_instance = get_robot("hero")
     robot_instance.reset()
     knowledge = load_knowledge("challenge_hand_me_that")
+    sm = GetFurnitureFromOperatorPose(robot_instance, furniture_designator_.writeable, knowledge.all_possible_furniture)
     while not rospy.is_shutdown():
-        GetFurnitureFromOperatorPose(robot_instance, furniture_designator_.writeable, knowledge.all_possible_furniture).execute()
+        sm.execute()
