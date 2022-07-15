@@ -14,7 +14,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
         with self:
             StateMachine.add(
                 "SAY",
-                Say(robot, "CallRobotViaDoorbellNavigateToTheDoorAndGuideNeighborToVictim"),
+                Say(robot, "NavigateToTheDoorAndGuideNeighborToVictim"),
                 transitions={"spoken": "done"},
             )
 
