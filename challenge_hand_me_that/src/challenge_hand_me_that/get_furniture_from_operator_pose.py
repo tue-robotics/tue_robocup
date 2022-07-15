@@ -189,7 +189,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     final_result = result
                 else:
                     rospy.loginfo("{} is not furniture".format(result.entity_id))
-                    robot.speech.speak("That's not furniture, you dummy.")
+                    robot.speech.speak("You pointed at: {}. That's not furniture".format(result.entity_id))
                     rospy.sleep(1)
                     OPERATOR = None
                     robot.get_arm(required_goals=["reset"]).send_joint_goal("reset")
