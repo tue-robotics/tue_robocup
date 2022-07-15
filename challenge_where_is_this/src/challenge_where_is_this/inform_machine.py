@@ -21,6 +21,8 @@ from robot_smach_states.human_interaction import (
 )
 from robot_smach_states.navigation import guidance, NavigateToSymbolic, NavigateToWaypoint, ForceDrive
 from robot_smach_states.utility import WaitTime
+from challenge_where_is_this.hear_options_extra_picovoice import HearOptionsExtraPicovoice
+
 # Challenge where is this
 from .simulation import mock_detect_operator
 
@@ -345,11 +347,19 @@ class InformMachine(smach.StateMachine):
                 transitions={"spoken": "LISTEN_FOR_LOCATION"},
             )
 
+            # PICO voice implementation, can not be simulated
             smach.StateMachine.add(
                 "LISTEN_FOR_LOCATION",
-                HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable, 6),
+                HearOptionsExtraPicovoice(robot, 'where_is_this', self.answer_des.writeable, 6),
                 transitions={"heard": "ASK_CONFIRMATION", "no_result": "HANDLE_FAILED_HMI"},
             )
+
+            # Put this state back in for simulation purposes
+            # smach.StateMachine.add(
+            #     "LISTEN_FOR_LOCATION",
+            #     HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable, 6),
+            #     transitions={"heard": "ASK_CONFIRMATION", "no_result": "HANDLE_FAILED_HMI"},
+            # )
 
             smach.StateMachine.add(
                 "ASK_CONFIRMATION",
