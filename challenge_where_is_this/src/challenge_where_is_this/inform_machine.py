@@ -99,53 +99,56 @@ class GuideToRoomOrObject(smach.StateMachine):
 
         self.operator_distance = operator_distance
         self.operator_radius = operator_radius
+        self.area_designator = ds.VariableDesignator(resolve_type=str).writeable
 
         with self:
 
-            @smach.cb_interface(outcomes=["room", "object"])
+            @smach.cb_interface(outcomes=["guide"])
             def determine_type(userdata=None):
                 entity = entity_des.resolve()
                 entity_type = entity.etype
                 if entity_type == "room":
-                    return "room"
+                    self.area_designator.write("in")
                 else:
-                    return "object"
+                    self.area_designator.write("in_front_of")
+
+                return "guide"
 
             smach.StateMachine.add(
                 "DETERMINE_TYPE",
                 smach.CBState(determine_type),
-                transitions={"room": "GUIDE_TO_ROOM", "object": "GUIDE_TO_FURNITURE"},
+                transitions={"guide": "GUIDE"},
             )
 
             smach.StateMachine.add(
-                "GUIDE_TO_ROOM",
+                "GUIDE",
                 guidance.GuideToSymbolic(
                     robot,
-                    {entity_des: "in"},
+                    {entity_des: self.area_designator},
                     entity_des,
                     operator_distance=self.operator_distance,
                     operator_radius=self.operator_radius,
                 ),
                 transitions={
                     "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "WAIT_ROOM_BACKUP",
+                    "unreachable": "WAIT_GUIDE_BACKUP",
                     "goal_not_defined": "goal_not_defined",
-                    "lost_operator": "ROOM_NAV_BACKUP",
+                    "lost_operator": "GUIDE_NAV_BACKUP",
                     "preempted": "preempted",
                 },
             )
 
             smach.StateMachine.add(
-                "WAIT_ROOM_BACKUP",
+                "WAIT_GUIDE_BACKUP",
                 WaitTime(robot, 3.0),
-                transitions={"waited": "GUIDE_TO_ROOM_BACKUP", "preempted": "preempted"},
+                transitions={"waited": "GUIDE_BACKUP", "preempted": "preempted"},
             )
 
             smach.StateMachine.add(
-                "GUIDE_TO_ROOM_BACKUP",
+                "GUIDE_BACKUP",
                 guidance.GuideToSymbolic(
                     robot,
-                    {entity_des: "in"},
+                    {entity_des: self.area_designator},
                     entity_des,
                     operator_distance=self.operator_distance,
                     operator_radius=self.operator_radius,
@@ -154,102 +157,27 @@ class GuideToRoomOrObject(smach.StateMachine):
                     "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
-                    "lost_operator": "ROOM_NAV_BACKUP",
+                    "lost_operator": "GUIDE_NAV_BACKUP",
                     "preempted": "preempted",
                 },
             )
 
             smach.StateMachine.add(
-                "GUIDE_TO_FURNITURE",
-                guidance.GuideToSymbolic(
-                    robot,
-                    {entity_des: "in_front_of"},
-                    entity_des,
-                    operator_distance=self.operator_distance,
-                    operator_radius=self.operator_radius,
-                ),
+                "GUIDE_NAV_BACKUP",
+                NavigateToSymbolic(robot, {entity_des: self.area_designator}, entity_des),
                 transitions={
                     "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "WAIT_FURNITURE_BACKUP",  # Something is blocking
-                    "goal_not_defined": "GUIDE_NEAR_FURNITURE",  # in_front_of not defined
-                    "lost_operator": "FURNITURE_NAV_BACKUP",
-                    "preempted": "preempted",
-                },
-            )
-
-            smach.StateMachine.add(
-                "GUIDE_NEAR_FURNITURE",
-                guidance.GuideToSymbolic(
-                    robot,
-                    {entity_des: "in_front_of"},
-                    entity_des,
-                    operator_distance=self.operator_distance,
-                    operator_radius=self.operator_radius,
-                ),
-                transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "WAIT_FURNITURE_BACKUP",
-                    "goal_not_defined": "goal_not_defined",
-                    "lost_operator": "FURNITURE_NAV_BACKUP",
-                    "preempted": "preempted",
-                },
-            )
-
-            smach.StateMachine.add(
-                "WAIT_FURNITURE_BACKUP",
-                WaitTime(robot, 3.0),
-                transitions={"waited": "GUIDE_NEAR_FURNITURE_BACKUP", "preempted": "preempted"},
-            )
-
-            smach.StateMachine.add(
-                "GUIDE_NEAR_FURNITURE_BACKUP",
-                guidance.GuideToSymbolic(
-                    robot,
-                    {entity_des: "in_front_of"},
-                    entity_des,
-                    operator_distance=self.operator_distance,
-                    operator_radius=self.operator_radius,
-                ),
-                transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "unreachable",
-                    "goal_not_defined": "goal_not_defined",
-                    "lost_operator": "FURNITURE_NAV_BACKUP",
-                    "preempted": "preempted",
-                },
-            )
-
-            smach.StateMachine.add(
-                "ROOM_NAV_BACKUP",
-                NavigateToSymbolic(robot, {entity_des: "in"}, entity_des),
-                transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "ROOM_NAV_BACKUP_FAILED",
+                    "unreachable": "GUIDE_NAV_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                 },
             )
 
             smach.StateMachine.add(
-                "ROOM_NAV_BACKUP_FAILED",
+                "GUIDE_NAV_BACKUP_FAILED",
                 ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
-                transitions={"done": "ROOM_NAV_BACKUP"},
+                transitions={"done": "GUIDE_NAV_BACKUP"},
             )
 
-            smach.StateMachine.add(
-                "FURNITURE_NAV_BACKUP",
-                NavigateToSymbolic(robot, {entity_des: "in_front_of"}, entity_des),
-                transitions={
-                    "arrived": "SAY_OPERATOR_STAND_IN_FRONT",
-                    "unreachable": "FURNITURE_NAV_BACKUP_FAILED",
-                    "goal_not_defined": "goal_not_defined",
-                },
-            )
-
-            smach.StateMachine.add(
-                "FURNITURE_NAV_BACKUP_FAILED",
-                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
-                transitions={"done": "FURNITURE_NAV_BACKUP"},
-            )
             smach.StateMachine.add(
                 "SAY_OPERATOR_STAND_IN_FRONT",
                 Say(robot, "We have arrived. Please stand in front of me"),
@@ -259,7 +187,7 @@ class GuideToRoomOrObject(smach.StateMachine):
             smach.StateMachine.add(
                 "WAIT_OPERATOR_IN_FRONT",
                 WaitTime(robot, 5.0),
-                transitions={"waited": "SAY_ARRIVED", "preempted": "SAY_ARRIVED"},
+                transitions={"waited": "SAY_ARRIVED", "preempted": "preempted"},
             )
 
             smach.StateMachine.add(
