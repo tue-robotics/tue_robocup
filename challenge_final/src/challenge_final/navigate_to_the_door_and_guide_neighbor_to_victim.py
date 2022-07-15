@@ -55,6 +55,11 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
         victim_entity = ds.EntityByIdDesignator(robot, uuid='victim')
 
         with self:
+            StateMachine.add("SAY_WAITING_DOORBELL", Say(robot, "I am waiting for the doorbell", block=False),
+                             transitions={'spoken': 'WAIT_FOR_BELL'})
+            StateMachine.add("WAIT_FOR_BELL", WaitForStringMsg(robot, timeout=30),
+                             transitions={'received': 'NAVIGATE_DOOR',
+                                          'timeout': 'NAVIGATE_DOOR'})
             StateMachine.add('NAVIGATE_DOOR', NavigateToWaypoint(robot, door_waypoint, waypoint_door['radius']),
                              transitions={'arrived': 'SAY_PLEASE_COME_IN',
                                           'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
