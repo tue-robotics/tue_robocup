@@ -58,8 +58,10 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
             StateMachine.add("SAY_WAITING_DOORBELL", Say(robot, "I am waiting for the doorbell", block=False),
                              transitions={'spoken': 'WAIT_FOR_BELL'})
             StateMachine.add("WAIT_FOR_BELL", WaitForStringMsg(robot, timeout=30),
-                             transitions={'received': 'NAVIGATE_DOOR',
-                                          'timeout': 'NAVIGATE_DOOR'})
+                             transitions={'received': 'SAY_DOORBELL_RANG',
+                                          'timeout': 'SAY_DOORBELL_RANG'})
+            StateMachine.add("SAY_DOORBELL_RANG", Say(robot, "The doorbell rang, I am on my way", block=False),
+                             transitions={'spoken': 'NAVIGATE_DOOR'})
             StateMachine.add('NAVIGATE_DOOR', NavigateToWaypoint(robot, door_waypoint, waypoint_door['radius']),
                              transitions={'arrived': 'SAY_PLEASE_COME_IN',
                                           'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
