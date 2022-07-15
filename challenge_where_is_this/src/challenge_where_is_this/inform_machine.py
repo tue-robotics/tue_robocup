@@ -304,7 +304,7 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add(
                 "CONFIRM_LOCATION",
                 HearOptions(robot=robot, options=["yes", "no"]),
-                transitions={"yes": "INSTRUCT_FOR_WAIT", "no": "INSTRUCT", "no_result": "HANDLE_FAILED_HMI"},
+                transitions={"yes": "INSTRUCT_FOR_WAIT", "no": "INSTRUCT", "no_result": "INSTRUCT"},
             )
 
             @smach.cb_interface(outcomes=["retry", "fallback", "failed"])
