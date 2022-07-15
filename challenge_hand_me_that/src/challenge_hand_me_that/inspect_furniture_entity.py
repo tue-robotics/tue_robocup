@@ -72,10 +72,10 @@ class InspectFurniture(smach.StateMachine):
 
             entity_to_inspect = furniture_des.resolve()
             if entity_to_inspect is None:
-                area_des.write("on_top_of")
+                inspect_area_des.write("on_top_of")
                 return "failed"
 
-            laser_dot = tf2_ros.convert(user_data["laser_dot"], VectorStamped)
+            laser_dot = tf2_ros.convert(userdata["laser_dot"], VectorStamped)
             laser_dot.header.stamp = rospy.Time()
             laser_dot_entity_frame = robot.tf_buffer.transform(laser_dot, entity_to_inspect.uuid)
 
