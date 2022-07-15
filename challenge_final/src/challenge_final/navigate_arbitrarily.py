@@ -3,10 +3,14 @@ import os
 
 import numpy as np
 import rospy
+from geometry_msgs.msg import Vector3
 from pykdl_ros import VectorStamped
 from smach.state import CBState
 from smach.state_machine import StateMachine
 from smach.util import cb_interface
+from std_msgs.msg import Header, ColorRGBA
+from tf_conversions import toMsg
+from visualization_msgs.msg import MarkerArray, Marker
 
 from robot_skills import get_robot
 
@@ -17,6 +21,7 @@ class NavigateArbitrarily(StateMachine):
         self._robot = robot
         self._look_distance = 3.0
         self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+        self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
 
         with self:
             @cb_interface(outcomes=["done"])
@@ -69,6 +74,22 @@ class NavigateArbitrarily(StateMachine):
 
                         person = result_people[0]
                         self._robot.ed.update_entity(uuid="victim", frame_stamped=person.pose)
+
+                        self._visualization_marker_pub.publish(MarkerArray(
+                            markers=[
+                                Marker(
+                                    header=Header(
+                                        frame_id="map",
+                                        stamp=rospy.Time.now(),
+                                    ),
+                                    id="victim",
+                                    type=Marker.SPHERE,
+                                    pose=toMsg(person.pose),
+                                    scale=Vector3(1, 1, 1),
+                                    color=ColorRGBA(a=0.5, r=1, g=0, b=0),
+                                )
+                            ]
+                        ))
 
                         return 'done'
                     else:
