@@ -245,7 +245,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
             self.add("WRITE_RESET_DES_TRUE", WriteDesignator(reset_des, True),
                      transitions={'written': 'PREPARE_OPERATOR'})
             self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'CHECK_TIMEOUT'})
-            self.add("CHECK_TIMEOUT", CheckTimeOut(5, reset_des), transitions={'not_yet': 'GET_OPERATOR',
+            self.add("CHECK_TIMEOUT", CheckTimeOut(30, reset_des), transitions={'not_yet': 'GET_OPERATOR',
                                                                                'time_out': 'failed'})
             self.add('GET_OPERATOR', CBState(_get_operator), transitions={'done': 'GET_FURNITURE',
                                                                           'failed': 'CHECK_TIMEOUT'})
