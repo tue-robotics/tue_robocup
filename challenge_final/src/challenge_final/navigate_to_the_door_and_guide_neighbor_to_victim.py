@@ -1,9 +1,11 @@
-import math
+from functools import partial
 import os
+import math
+from threading import Event
 
 import rospy
-from smach.state_machine import StateMachine
-
+from std_msgs.msg import String
+from smach import StateMachine, State
 import robot_smach_states.util.designators as ds
 from challenge_where_is_this.inform_machine import GuideToRoomOrObject
 from robot_skills import get_robot
@@ -11,6 +13,37 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront
 from robot_smach_states.navigation import ForceDrive
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+
+
+class WaitForStringMsg(State):
+    def __init__(self, robot, timeout=30, topic="message_from_ros", data="There is someone at your door"):
+        State.__init__(self, outcomes=["received", "timeout"])
+
+        self.robot = robot
+        self.timeout = timeout
+        self.topic = f"{robot.robot_name}/{topic}"
+        self.data = data.lower()
+
+    def cb(self, event: Event, msg: String):
+        if msg.data.lower() == self.data:
+            event.set()
+
+    def execute(self, userdata=None):
+        event = Event()
+        rospy.loginfo("Registering bell listener")
+        lazy_sub = rospy.Subscriber(self.topic, String, partial(self.cb, event))
+
+        bell_before_timeout = event.wait(self.timeout)
+
+        rospy.loginfo("Unregistering bell listener")
+        lazy_sub.unregister()
+
+        if bell_before_timeout:
+            rospy.loginfo("Bell has been ringed")
+            return "received"
+
+        rospy.loginfo("Doorbell timed-out")
+        return "timeout"
 
 
 class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
@@ -67,3 +100,5 @@ if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     NavigateToTheDoorAndGuideNeighborToVictim(robot_instance).execute()
+    # sm = WaitForStringMsg(robot_instance, timeout=30)
+    # sm.execute()
