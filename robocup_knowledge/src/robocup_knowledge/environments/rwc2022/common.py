@@ -87,12 +87,12 @@ inspect_positions = {
         # 'shelf3_l': 'in_front_of_l',
         # 'shelf4_l': 'in_front_of_l',
         # 'shelf5_l': 'in_front_of_l',
-        'shelf1_r': 'in_front_of_r',
-        'shelf2_r': 'in_front_of_r',
+        # 'shelf1_r': 'in_front_of_r',
+        # 'shelf2_r': 'in_front_of_r',
         'shelf3_r': 'in_front_of_r',
         'shelf4_r': 'in_front_of_r',
-        'shelf5_r': 'in_front_of_r',
-        'on_top_of': 'in_front_of',
+        # 'shelf5_r': 'in_front_of_r',
+        # 'on_top_of': 'in_front_of',
     }
 }
 
