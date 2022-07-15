@@ -290,57 +290,15 @@ class InformMachine(smach.StateMachine):
                 return "reset"
 
             smach.StateMachine.add(
-                "RESET_HMI_ATTEMPT", smach.CBState(_reset_location_hmi_attempt), transitions={"reset": "ANNOUNCE_ITEM"}
+                "RESET_HMI_ATTEMPT", smach.CBState(_reset_location_hmi_attempt), transitions={"reset": "INSTRUCT"}
             )
-
-            if WAIT_MODE == WaitMode.SPEECH:
-                smach.StateMachine.add(
-                    "ANNOUNCE_ITEM",
-                    Say(
-                        robot,
-                        "Hello, my name is {}. Please call me by my name. "
-                        "Talk loudly into my microphone and wait for the ping".format(robot.robot_name),
-                        block=True,
-                    ),
-                    transitions={"spoken": "WAIT_TO_BE_CALLED"},
-                )
-
-                smach.StateMachine.add(
-                    "WAIT_TO_BE_CALLED",
-                    HearOptions(robot, ["{}".format(robot.robot_name)], timeout=10),
-                    transitions={"{}".format(robot.robot_name): "INSTRUCT", "no_result": "ANNOUNCE_ITEM"},
-                )
-
-            elif WAIT_MODE == WaitMode.VISUAL:
-                smach.StateMachine.add(
-                    "ANNOUNCE_ITEM",
-                    Say(
-                        robot, "Hello, my name is {}. Please step in front of me.".format(robot.robot_name), block=True
-                    ),
-                    transitions={"spoken": "WAIT_TO_BE_CALLED"},
-                )
-
-                smach.StateMachine.add(
-                    "WAIT_TO_BE_CALLED",
-                    WaitForPersonInFront(robot, attempts=10, sleep_interval=1.0),
-                    transitions={"success": "INSTRUCT", "failed": "SAY_NOT_DETECTED"},
-                )
-
-                smach.StateMachine.add(
-                    "SAY_NOT_DETECTED",
-                    Say(
-                        robot, "I did not see you but will try to continue anyway.".format(robot.robot_name), block=True
-                    ),
-                    transitions={"spoken": "INSTRUCT"},
-                )
 
             smach.StateMachine.add(
                 "INSTRUCT",
                 Say(
                     robot,
                     [
-                        "Please tell me where you would like to go. "
-                        "Talk loudly into my microphone and wait for the ping"
+                        "Please tell me where you would like to go. Talk loudly into my microphone."
                     ],
                     block=True,
                 ),
