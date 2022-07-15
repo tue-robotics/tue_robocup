@@ -12,7 +12,7 @@ class CallNeighbor(StateMachine):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
 
         with self:
-            StateMachine.add("SAY", Say(robot, "CallNeighborViaTelegram"), transitions={"spoken": "done"})
+            StateMachine.add("SAY", Say(robot, "CallNeighbor"), transitions={"spoken": "done"})
 
 
 if __name__ == "__main__":
