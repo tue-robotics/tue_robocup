@@ -118,14 +118,18 @@ class NavigateArbitrarily(StateMachine):
 
             self.add("LOOK_FOR_VICTIM", CBState(_look_for_victim), transitions={"done": "done"})
 
-            self.add("ITERATE_NEXT_ROOM", IterateDesignator(self.room_collection_designator,
-                                                            self.room_designator.writeable(),
-                                                            transitions={"next":"NAVIGATE_TO_ROOM", "stop_iteration": })
-                     )
+            self.add("ITERATE_NEXT_ROOM",
+                     IterateDesignator(self.room_collection_designator,
+                                       self.room_designator.writeable()),
+                     transitions={"next": "NAVIGATE_TO_ROOM",
+                                  "stop_iteration": "RESET_ITERATOR"})
 
             @cb_interface(outcomes=["done"])
             def _reset_iterator(_):
-                self.room_collection_designator = VariableDesignator([EntityByIdDesignator(robot, room) for room in ROOMS])
+                self.room_collection_designator = VariableDesignator(
+                    [EntityByIdDesignator(robot, room) for room in ROOMS])
+
+            self.add("RESET_ITERATOR", CBState(_reset_iterator), transitions={"done": "NAVIGATE_TO_ROOM"})
 
 
 if __name__ == "__main__":
