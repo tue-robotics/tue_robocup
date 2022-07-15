@@ -1,13 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
-# System
 import rospy
 
 from challenge_final.final import Final
-# TU/e Robotics
 from robot_smach_states.util.startup import startup
 
 if __name__ == '__main__':
-    rospy.init_node('state_machine_rwc2019')
+    rospy.init_node('state_machine_rwc2022')
 
     startup(Final)
