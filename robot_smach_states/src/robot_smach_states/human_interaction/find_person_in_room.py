@@ -25,7 +25,7 @@ class FindPerson(smach.State):
 
     def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True,
-                 look_range=(np.pi*0.35, -np.pi*0.35), look_steps=7):
+                 look_range=(np.pi*0.28, -np.pi*0.28), look_steps=7):
         """
         Initialization method
 
