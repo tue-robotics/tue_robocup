@@ -12,7 +12,7 @@ Robot starts in the arena
 
 ```
 [Rein] Robot drives arbitrarily and detect humans, says hi --> detect waving person
-[Josja] Goes to waving victim, interact with it
+[Matthijs] Goes to waving victim, interact with it
 [Arpit] Robot calls neighbor for help
 [Lars, Lotte, Rodrigo] Robot navigates to the door and guides neighbor to victim
 [Lotte] Outro
