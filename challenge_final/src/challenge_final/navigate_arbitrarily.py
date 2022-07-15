@@ -14,6 +14,14 @@ from visualization_msgs.msg import MarkerArray, Marker
 
 from robot_skills import get_robot
 
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.navigation.navigation import ForceDrive
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
+from robot_smach_states.util.designators import EntityByIdDesignator, VariableDesignator
+
+
+ROOMS = ['kitchen', 'bedroom', 'office', 'living_room']
+
 
 class NavigateArbitrarily(StateMachine):
     def __init__(self, robot, look_range=(np.pi * 0.28, -np.pi * 0.28), look_steps=7):
@@ -23,7 +31,16 @@ class NavigateArbitrarily(StateMachine):
         self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
         self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
 
+        # navigation
+        self.room_designator = VariableDesignator(ROOMS[0])
+        room_designators = [EntityByIdDesignator(robot, room) for room in ROOMS]
+        self.room_collection_designator = VariableDesignator(room_designators)
+
         with self:
+            self.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot, self.room_designator),
+                     transitions={"arrived": "LOOK_FOR_VICTIM", "unreachable": "RECOVER", "goal_not_defined": "RECOVER"}
+                     )
+
             @cb_interface(outcomes=["done"])
             def _look_for_victim(_):
                 start_time = rospy.Time.now()
@@ -96,7 +113,19 @@ class NavigateArbitrarily(StateMachine):
                     else:
                         rospy.logwarn("Could not find people meeting the requirements")
 
+            # spin in a circle when navigation is stuck
+            self.add("RECOVER", ForceDrive(robot, 0, 0, 1.0, math.pi*4), transitions={"done": "NAVIGATE_TO_ROOM"})
+
             self.add("LOOK_FOR_VICTIM", CBState(_look_for_victim), transitions={"done": "done"})
+
+            self.add("ITERATE_NEXT_ROOM", IterateDesignator(self.room_collection_designator,
+                                                            self.room_designator.writeable(),
+                                                            transitions={"next":"NAVIGATE_TO_ROOM", "stop_iteration": })
+                     )
+
+            @cb_interface(outcomes=["done"])
+            def _reset_iterator(_):
+                self.room_collection_designator = VariableDesignator([EntityByIdDesignator(robot, room) for room in ROOMS])
 
 
 if __name__ == "__main__":
