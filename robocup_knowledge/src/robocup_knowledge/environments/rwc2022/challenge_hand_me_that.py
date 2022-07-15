@@ -7,5 +7,5 @@ all_possible_furniture = [
     "pantry",
     "dinner_table",
     "sink",
-    "washing_machine",
+    "dishwasher",
 ]
