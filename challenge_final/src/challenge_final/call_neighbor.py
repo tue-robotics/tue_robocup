@@ -2,13 +2,14 @@ import os
 
 import rospy
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Header, String
 from sensor_msgs.msg import Image
-from smach.state_machine import StateMachine
 from smach.state import State, CBState
+from smach.state_machine import StateMachine
 from smach.util import cb_interface
+from std_msgs.msg import Header, String
 
 from robot_skills import get_robot
+from robot_smach_states.human_interaction import Say
 
 
 class GetCupboardRay(StateMachine):
@@ -122,16 +123,17 @@ class CallNeighbor(StateMachine):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
 
         with self:
-
             @cb_interface(outcomes=["done"])
             def _look_down_and_say(_):
                 robot.head.look_down()
                 robot.head.wait_for_motion_done()
-                robot.speech.speak("Tell me where the emergency kit is")
+                robot.speech.speak("Tell me where the first aid kit is")
                 return "done"
 
             self.add("LOOK_DOWN_AND_SAY", CBState(_look_down_and_say), transitions={"done": "GET_CUPBOARD_RAY"})
-            self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "done", "failed": "preempted"})
+            self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "SAY", "failed": "preempted"})
+            self.add("SAY", Say(robot, "I understand that the first aid kit is at the cupboard",
+                                transitions={"spoken": "done"}))
 
 
 if __name__ == "__main__":
