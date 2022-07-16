@@ -30,6 +30,8 @@ class NavigateArbitrarily(StateMachine):
         self._bedroom_des = EntityByIdDesignator(robot, uuid="bedroom")
         self._kitchen_des = EntityByIdDesignator(robot, uuid="kitchen")
         self._dinner_table_des = EntityByIdDesignator(robot, uuid="dinner_table")
+        self._office_waypoint_des = EntityByIdDesignator(robot, uuid="hand_me_that_office")
+        self._living_room_waypoint_des = EntityByIdDesignator(robot, uuid="hand_me_that_living_room")
 
         with self:
 
@@ -54,6 +56,17 @@ class NavigateArbitrarily(StateMachine):
                     self._robot.head.wait_for_motion_done()
 
                 return "done"
+
+            self.add("NAVIGATE_LIVING_ROOM", NavigateToWaypoint(robot, self._living_room_waypoint_des, radius=0.25),
+                     transitions={"arrived": "LOOK_AROUND_LIVING_ROOM",
+                                  "unreachable": "LOOK_AROUND_LIVING_ROOM",
+                                  "goal_not_defined": "preempted"})
+
+            self.add("LOOK_AROUND_LIVING_ROOM", CBState(_look_around), transitions={"done": "NAVIGATE_OFFICE"})
+            self.add("NAVIGATE_OFFICE", NavigateToWaypoint(robot, self._office_waypoint_des, radius=0.25),
+                     transitions={"arrived": "LOOK_AROUND_OFFICE",
+                                  "unreachable": "LOOK_AROUND_OFFICE",
+                                  "goal_not_defined": "preempted"})
 
             self.add("LOOK_AROUND_OFFICE", CBState(_look_around), transitions={"done": "NAVIGATE_BEDROOM"})
             self.add("NAVIGATE_BEDROOM", NavigateToSymbolic(robot,
