@@ -36,6 +36,7 @@ rosrun challenge_final challenge_final hero
 
 ```
 python3 $(rospack find challenge_final)/src/challenge_final/navigate_arbitrarily.py
+python3 $(rospack find challenge_final)/src/challenge_final/navigate_to_waypoint_and_detect_victim.py
 python3 $(rospack find challenge_final)/src/challenge_final/navigate_to_and_interact_with_victim.py
 python3 $(rospack find challenge_final)/src/challenge_final/call_neighbor.py
 python3 $(rospack find challenge_final)/src/challenge_final/navigate_to_the_door_and_guide_neighbor_to_victim.py
