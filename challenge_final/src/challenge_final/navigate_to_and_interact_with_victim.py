@@ -38,14 +38,24 @@ class NavigateToAndInteractWithVictim(StateMachine):
                 robot.head.wait_for_motion_done()
                 return "done"
 
-            self.add("LOOK_DOWN", CBState(_look_down), transitions={"done": "SAY_OKAY"})
+            self.add("LOOK_DOWN", CBState(_look_down), transitions={"done": "SAY_WAVE"})
 
-            StateMachine.add("SAY_OKAY", Say(robot, "Are you Okay? Do you need any help?"),
-                             transitions={"spoken": "ASK_YES_NO"})
-            StateMachine.add("ASK_YES_NO", AskYesNo(robot),
-                             transitions={"yes": "done",
-                                          "no": "done",
-                                          "no_result": "done"})
+            StateMachine.add("SAY_WAVE", Say(robot, "You waved, indicating that you are hurt, can I help you?"),
+                             transitions={"spoken": "ASK_YES_NO_1"})
+            StateMachine.add("ASK_YES_NO_1", AskYesNo(robot),
+                             transitions={"yes": "SAY_HELP_REQUEST",
+                                          "no": "SAY_HELP_REQUEST",
+                                          "no_result": "SAY_HELP_REQUEST"})
+
+            StateMachine.add("SAY_HELP_REQUEST", Say(robot, "That is not good, should I send your neighbour for help?"),
+                             transitions={"spoken": "ASK_YES_NO_2"})
+            StateMachine.add("ASK_YES_NO_2", AskYesNo(robot),
+                             transitions={"yes": "SAY_HELP_REQUEST2",
+                                          "no": "SAY_HELP_REQUEST2",
+                                          "no_result": "SAY_HELP_REQUEST2"})
+
+            StateMachine.add("SAY_HELP_REQUEST2", Say(robot, "Okay I will sent your neighbour a message"),
+                             transitions={"spoken": "done"})
 
 
 if __name__ == "__main__":
