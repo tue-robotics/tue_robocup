@@ -130,6 +130,9 @@ class CallNeighbor(StateMachine):
                 robot.speech.speak("Tell me where the first aid kit is")
                 return "done"
 
+            self.add("SAY_CALLING", Say(robot, "I'm calling our neighbor"), transitions={"spoken": "SEND_TELEGRAM"})
+            self.add("SEND_TELEGRAM", SendTelegram(robot), transitions={"done": "RECEIVE_TELEGRAM"})
+            self.add("RECEIVE_TELEGRAM", ReceiveTelegram(robot), transitions={"done": "LOOK_DOWN_AND_SAY", "timeout": "LOOK_DOWN_AND_SAY"})
             self.add("LOOK_DOWN_AND_SAY", CBState(_look_down_and_say), transitions={"done": "GET_CUPBOARD_RAY"})
             self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "SAY", "failed": "preempted"})
             self.add("SAY", Say(robot, "I understand that the first aid kit is at the cupboard"),
