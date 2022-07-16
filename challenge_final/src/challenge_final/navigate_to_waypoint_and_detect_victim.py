@@ -76,28 +76,33 @@ class NavigateToWaypointAndDetectVictim(StateMachine):
                     if result_people:
                         result_people.sort(key=lambda e: (e.pose.frame.p - robot_pose.frame.p).Norm())
 
-                        self._robot.head.close()
-
                         person = result_people[0]
-                        self._robot.ed.update_entity(uuid="victim", frame_stamped=person.pose)
 
-                        self._visualization_marker_pub.publish(MarkerArray(
-                            markers=[
-                                Marker(
-                                    header=Header(
-                                        frame_id="map",
-                                        stamp=rospy.Time.now(),
-                                    ),
-                                    ns="victim",
-                                    type=Marker.SPHERE,
-                                    pose=toMsg(person.pose.frame),
-                                    scale=Vector3(1.5, 1.5, 1.5),
-                                    color=ColorRGBA(a=0.5, r=1, g=0, b=0),
-                                )
-                            ]
-                        ))
+                        room = self._robot.ed.get_entity(uuid="kitchen")
+                        if room.in_volume(VectorStamped.from_framestamped(person.pose), 'in', padding=-0.1):
+                            self._robot.head.close()
 
-                        return 'done'
+                            self._robot.ed.update_entity(uuid="victim", frame_stamped=person.pose)
+
+                            self._visualization_marker_pub.publish(MarkerArray(
+                                markers=[
+                                    Marker(
+                                        header=Header(
+                                            frame_id="map",
+                                            stamp=rospy.Time.now(),
+                                        ),
+                                        ns="victim",
+                                        type=Marker.SPHERE,
+                                        pose=toMsg(person.pose.frame),
+                                        scale=Vector3(1.5, 1.5, 1.5),
+                                        color=ColorRGBA(a=0.5, r=1, g=0, b=0),
+                                    )
+                                ]
+                            ))
+
+                            return 'done'
+                        else:
+                            rospy.logwarn("Person not in kitchen")
                     else:
                         rospy.logwarn("Could not find people meeting the requirements")
 
