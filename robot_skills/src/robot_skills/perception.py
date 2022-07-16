@@ -323,7 +323,7 @@ class Perception(RobotPart):
         if any(self._image_data):
             return self._image_data
         else:
-            return None
+            return (None, None, None)
 
     def detect_person_3d(self, rgb, depth, depth_info):
         return self._person_recognition_3d_srv(image_rgb=rgb, image_depth=depth, camera_info_depth=depth_info).people
