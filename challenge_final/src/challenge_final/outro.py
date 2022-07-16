@@ -17,7 +17,7 @@ class Outro(StateMachine):
         exit_waypoint = EntityByIdDesignator(robot, "outro_exit_point")
 
         with self:
-            StateMachine.add("SAY_LEAVING", Say(robot, "Please take good care of Arpit. He is very sensitive"),
+            StateMachine.add("SAY_LEAVING", Say(robot, "Please take good care of Arpit. He is very sensitive. You are our HERO today."),
                              transitions={"spoken": "GO_TO_INTERMEDIATE"})
 
             StateMachine.add("GO_TO_INTERMEDIATE", NavigateToWaypoint(robot, intermediate_waypoint),
