@@ -21,7 +21,7 @@ class NavigateToWaypointAndDetectVictim(StateMachine):
     def __init__(self, robot, look_range=(np.pi * 0.28, -np.pi * 0.28), look_steps=7):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
         self._robot = robot
-        self._look_distance = 3.0
+        self._look_distance = 6.0
         self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
         self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
 
