@@ -13,20 +13,20 @@ from robot_smach_states.util.designators import EntityByIdDesignator
 class Outro(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
-        intermediate_waypoint = EntityByIdDesignator(robot, "outro_point")
-        exit_waypoint = EntityByIdDesignator(robot, "hand_me_that_kitchen")
+        intermediate_waypoint = EntityByIdDesignator(robot, "hand_me_that_kitchen")
+        exit_waypoint = EntityByIdDesignator(robot, "outro_exit_point")
 
         with self:
             StateMachine.add("SAY_LEAVING", Say(robot, "Please take good care of Arpit. He is very sensitive"),
                              transitions={"spoken": "GO_TO_INTERMEDIATE"})
 
             StateMachine.add("GO_TO_INTERMEDIATE", NavigateToWaypoint(robot, intermediate_waypoint),
-                             transitions={"arrived": "SAY_HAPPY",  "unreachable": "done", "goal_not_defined": "done"})
+                             transitions={"arrived": "SAY_HAPPY", "unreachable": "done", "goal_not_defined": "done"})
 
             StateMachine.add("SAY_HAPPY", Say(robot, "I am glad I could be of Help"),
                              transitions={"spoken": "OUTRO_WIGGLE"})
 
-            StateMachine.add("OUTRO_WIGGLE", NavigateWiggle(robot,  2),
+            StateMachine.add("OUTRO_WIGGLE", NavigateWiggle(robot, 2),
                              transitions={"done": "GO_TO_EXIT"})
 
             StateMachine.add("GO_TO_EXIT", NavigateToWaypoint(robot, exit_waypoint),
