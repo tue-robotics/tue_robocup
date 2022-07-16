@@ -18,7 +18,7 @@ from robot_smach_states.navigation import ForceDrive
 from robot_smach_states.navigation import guidance
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.utility import WaitTime
-from .get_map_and_show import GetMapAndShow
+from challenge_final.get_map_and_show import GetMapAndShow
 
 
 class WaitForStringMsg(State):
@@ -216,7 +216,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
                 transitions={"done": "GET_MAP_SHOW"},
             )
 
-            StateMachine.add("GET_MAP_SHOW", GetMapAndShow(robot, ['final'], ['cupboard', 'victim'], timeout=30),
+            StateMachine.add("GET_MAP_SHOW", GetMapAndShow(robot, ['final'], ['cupboard'], timeout=30),
                              transitions={"done": "GUIDE_OPERATOR_FAK",
                                           "failed": "GUIDE_OPERATOR_FAK"})
 
@@ -275,8 +275,13 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
             StateMachine.add(
                 "ROTATE_TO_OPERATOR_2",
                 ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
-                transitions={"done": "GUIDE_OPERATOR_ARPIT"},
+                transitions={"done": "GET_MAP_SHOW2"},
             )
+
+            StateMachine.add("GET_MAP_SHOW2", GetMapAndShow(robot, ['final'], ['cupboard', 'victim'], timeout=30),
+                             transitions={"done": "GUIDE_OPERATOR_ARPIT",
+                                          "failed": "GUIDE_OPERATOR_ARPIT"})
+
             StateMachine.add(
                 "GUIDE_OPERATOR_ARPIT",
                 GuideToRoomOrObject(robot, victim_entity),
