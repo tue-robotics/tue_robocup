@@ -1,7 +1,6 @@
 from smach.state_machine import StateMachine
 
 from challenge_final.call_neighbor import CallNeighbor
-from challenge_final.navigate_arbitrarily import NavigateArbitrarily
 from challenge_final.navigate_to_and_interact_with_victim import NavigateToAndInteractWithVictim
 from challenge_final.navigate_to_the_door_and_guide_neighbor_to_victim import NavigateToTheDoorAndGuideNeighborToVictim
 from challenge_final.navigate_to_waypoint_and_detect_victim import NavigateToWaypointAndDetectVictim
@@ -17,14 +16,14 @@ class Final(StateMachine):
             StateMachine.add(
                 "INITIALIZE",
                 Initialize(robot),
-                transitions={"initialized": "NAVIGATE_ARBITRARILY", "abort": "preempted"},
+                transitions={"initialized": "NAVIGATE_TO_WAYPOINT_AND_DETECT_VICTIM", "abort": "preempted"},
             )
 
-            StateMachine.add(
-                "NAVIGATE_ARBITRARILY",
-                NavigateArbitrarily(robot),
-                transitions={"done": "NAVIGATE_TO_WAYPOINT_AND_DETECT_VICTIM", "preempted": "preempted"},
-            )
+            # StateMachine.add(
+            #     "NAVIGATE_ARBITRARILY",
+            #     NavigateArbitrarily(robot),
+            #     transitions={"done": "NAVIGATE_TO_WAYPOINT_AND_DETECT_VICTIM", "preempted": "preempted"},
+            # )
 
             StateMachine.add(
                 "NAVIGATE_TO_WAYPOINT_AND_DETECT_VICTIM",
