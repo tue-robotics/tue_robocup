@@ -25,7 +25,7 @@ class NavigateArbitrarily(StateMachine):
         self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
         self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
 
-        waypoint = ds.EntityByIdDesignator(robot, uuid="victim_detect_waypoint")
+        waypoint = ds.EntityByIdDesignator(robot, uuid="hand_me_that_kitchen")
         victim = ds.EntityByIdDesignator(robot, uuid="victim")
 
         with self:
