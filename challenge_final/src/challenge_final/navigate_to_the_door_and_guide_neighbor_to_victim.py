@@ -1,19 +1,22 @@
-from functools import partial
-import os
 import math
+import os
+from functools import partial
 from threading import Event
 
 import rospy
-from std_msgs.msg import String
 import smach
 from smach import StateMachine, State
+from smach.state import CBState
+from smach.util import cb_interface
+from std_msgs.msg import String
+
 import robot_smach_states.util.designators as ds
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront
 from robot_smach_states.navigation import ForceDrive
-from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation import guidance
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.utility import WaitTime
 
 
@@ -273,13 +276,21 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
                 "GUIDE_OPERATOR_ARPIT",
                 GuideToRoomOrObject(robot, victim_entity),
                 transitions={
-                    "arrived": "done",
+                    "arrived": "LOOK_DOWN",
                     "unreachable": "SAY_CANNOT_REACH",
                     "goal_not_defined": "SAY_CANNOT_REACH",
                     "lost_operator": "SAY_LOST_OPERATOR",
                     "preempted": "preempted",
                 },
             )
+
+            @cb_interface(outcomes=["done"])
+            def _look_down(_):
+                robot.head.look_down()
+                robot.head.wait_for_motion_done()
+                return "done"
+
+            self.add("LOOK_DOWN", CBState(_look_down), transitions={"done": "ARRIVED_AT_ARPIT"})
 
             smach.StateMachine.add(
                 "SAY_CANNOT_REACH",
