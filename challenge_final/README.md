@@ -28,8 +28,7 @@ Robot leaves the arena.
 
 ```
 hero-start
-hero-free-mode
-rosrun challenge_final challenge_final hero
+hero-challenge-final
 ```
 
 ### Everything can be tested separately
