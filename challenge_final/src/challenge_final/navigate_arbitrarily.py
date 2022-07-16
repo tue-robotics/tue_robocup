@@ -64,7 +64,7 @@ class NavigateArbitrarily(StateMachine):
                                   "goal_not_defined": "preempted"})
             self.add("LOOK_AROUND_BEDROOM", CBState(_look_around), transitions={"done": "NAVIGATE_WAYPOINT1"})
 
-            self.add('NAVIGATE_WAYPOINT1', NavigateToWaypoint(robot, self.waypoint, 0.3, self.victim),
+            self.add('NAVIGATE_WAYPOINT1', NavigateToWaypoint(robot, self.waypoint, 0.3, self._kitchen_des),
                      transitions={'arrived': 'INSPECT_DINNER_TABLE',
                                   'unreachable': 'NAVIGATE_WAYPOINT_FAILED1',
                                   'goal_not_defined': 'preempted'})
@@ -76,7 +76,7 @@ class NavigateArbitrarily(StateMachine):
                      transitions={"done": "NAVIGATE_WAYPOINT2",
                                   "failed": "NAVIGATE_WAYPOINT2"})
 
-            self.add('NAVIGATE_WAYPOINT2', NavigateToWaypoint(robot, self.waypoint, 0.3, self.victim),
+            self.add('NAVIGATE_WAYPOINT2', NavigateToWaypoint(robot, self.waypoint, 0.3, self._kitchen_des),
                      transitions={'arrived': 'done',
                                   'unreachable': 'NAVIGATE_WAYPOINT_FAILED2',
                                   'goal_not_defined': 'preempted'})

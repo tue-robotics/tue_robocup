@@ -11,9 +11,13 @@ from robot_smach_states.util.designators import check_type, is_writeable
 
 
 class GetMap(smach.State):
-    def __init__(self, robot, entity_ids, mark_ids, plan_points, filename_des):
+    def __init__(self, robot, filename_des, entity_ids=None, mark_ids=None, plan_points=None):
         smach.State.__init__(self, outcomes=["created", "failed"])
         self.robot = robot
+
+        check_type(filename_des, str)
+        is_writeable(filename_des)
+        self.filename_des = filename_des
 
         check_type(entity_ids, [str])
         self.entity_ids = entity_ids
@@ -21,10 +25,6 @@ class GetMap(smach.State):
         self.mark_ids = mark_ids
         check_type(plan_points, Vector)
         self.plan_points = plan_points
-
-        check_type(filename_des, str)
-        is_writeable(filename_des)
-        self.filename_des = filename_des
 
     def execute(self, ud=None):
         entity_ids = self.entity_ids.resolve() if hasattr(self.entity_ids, "resolve") else self.entity_ids
@@ -92,6 +92,10 @@ class ShowImage(smach.State):
 
         self.robot.hmi.show_image(filename, self.timeout)
         return "shown"
+
+
+class GetMapAndShow(smach.StateMachine):
+    smach.StateMachine.__init__(robot, )
 
 
 if __name__ == "__main__":
