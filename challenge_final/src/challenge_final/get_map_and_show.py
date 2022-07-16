@@ -31,7 +31,7 @@ class GetMap(smach.State):
         if entity_ids is None:
             entity_ids = []
         for _ in range(3):
-            floorplan = robot.ed.get_map(entity_ids)
+            floorplan = self.robot.ed.get_map(entity_ids)
             if floorplan is not None:
                 break
         else:
