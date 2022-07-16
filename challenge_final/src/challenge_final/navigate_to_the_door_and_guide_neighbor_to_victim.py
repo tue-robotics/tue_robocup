@@ -216,7 +216,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
                 transitions={"done": "GET_MAP_SHOW"},
             )
 
-            StateMachine.add("GET_MAP_SHOW", GetMapAndShow(robot, ['final'], ['cupboard'], timeout=30),
+            StateMachine.add("GET_MAP_SHOW", GetMapAndShow(robot, ['final'], ['cupboard', 'victim'], timeout=30),
                              transitions={"done": "GUIDE_OPERATOR_FAK",
                                           "failed": "GUIDE_OPERATOR_FAK"})
 
