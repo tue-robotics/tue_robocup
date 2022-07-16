@@ -132,8 +132,8 @@ class CallNeighbor(StateMachine):
 
             self.add("LOOK_DOWN_AND_SAY", CBState(_look_down_and_say), transitions={"done": "GET_CUPBOARD_RAY"})
             self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "SAY", "failed": "preempted"})
-            self.add("SAY", Say(robot, "I understand that the first aid kit is at the cupboard",
-                                transitions={"spoken": "done"}))
+            self.add("SAY", Say(robot, "I understand that the first aid kit is at the cupboard"),
+                     transitions={"spoken": "done"})
 
 
 if __name__ == "__main__":
