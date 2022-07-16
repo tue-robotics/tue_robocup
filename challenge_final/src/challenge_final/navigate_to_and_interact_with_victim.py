@@ -38,7 +38,7 @@ class NavigateToAndInteractWithVictim(StateMachine):
                 robot.head.wait_for_motion_done()
                 return "done"
 
-            self.add("LOOK_DOWN", CBState(_look_down), transitions={"done": "SAY_OK"})
+            self.add("LOOK_DOWN", CBState(_look_down), transitions={"done": "SAY_OKAY"})
 
             StateMachine.add("SAY_OKAY", Say(robot, "Are you Okay? Do you need any help?"),
                              transitions={"spoken": "ASK_YES_NO"})
