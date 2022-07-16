@@ -99,7 +99,7 @@ class SendTelegram(State):
 
 
 class ReceiveTelegram(State):
-    def __init__(self, robot, neighbor="Lotte", timeout=20):
+    def __init__(self, robot, neighbor="Lotte", timeout=60):
         super().__init__(outcomes=["done", "timeout"])
 
         self.robot = robot
