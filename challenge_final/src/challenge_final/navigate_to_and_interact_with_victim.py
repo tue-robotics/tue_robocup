@@ -20,7 +20,7 @@ class NavigateToAndInteractWithVictim(StateMachine):
 
         with self:
             StateMachine.add("NAVIGATE_VICTIM",
-                             NavigateToWaypoint(robot, entity_des, radius=0.3, look_at_designator=entity_des),
+                             NavigateToWaypoint(robot, entity_des, radius=0.4, look_at_designator=entity_des),
                              transitions={"arrived": "LOOK_DOWN",
                                           "unreachable": "NAVIGATE_VICTIM2",
                                           "goal_not_defined": "preempted"})
