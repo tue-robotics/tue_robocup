@@ -13,6 +13,7 @@ from tf_conversions import toMsg
 from visualization_msgs.msg import MarkerArray, Marker
 
 from robot_skills import get_robot
+from robot_smach_states.navigation import NavigateToWaypoint
 
 
 class NavigateToWaypointAndDetectVictim(StateMachine):
@@ -96,10 +97,14 @@ class NavigateToWaypointAndDetectVictim(StateMachine):
                     else:
                         rospy.logwarn("Could not find people meeting the requirements")
 
+            self.add('NAVIGATE_WAYPOINT', NavigateToWaypoint(robot, door_waypoint, waypoint_door['radius']),
+                     transitions={'arrived': 'SAY_PLEASE_COME_IN',
+                                  'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
+                                  'goal_not_defined': 'preempted'})
             self.add("LOOK_FOR_VICTIM", CBState(_look_for_victim), transitions={"done": "done"})
 
 
 if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
-    NavigateArbitrarily(robot_instance).execute()
+    NavigateToWaypointAndDetectVictim(robot_instance).execute()
