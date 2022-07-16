@@ -11,6 +11,7 @@ from smach.util import cb_interface
 from std_msgs.msg import String
 
 import robot_smach_states.util.designators as ds
+from challenge_final.get_map_and_show import GetMapAndShow
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront
@@ -18,7 +19,6 @@ from robot_smach_states.navigation import ForceDrive
 from robot_smach_states.navigation import guidance
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.utility import WaitTime
-from challenge_final.get_map_and_show import GetMapAndShow
 
 
 class WaitForStringMsg(State):
@@ -176,7 +176,7 @@ class NavigateToTheDoorAndGuideNeighborToVictim(StateMachine):
             StateMachine.add("SAY_WAITING_DOORBELL", Say(robot, "I am waiting for the doorbell. I will stay with you "
                                                                 "until your neighbour arrives", block=False),
                              transitions={'spoken': 'WAIT_FOR_BELL'})
-            StateMachine.add("WAIT_FOR_BELL", WaitForStringMsg(robot, timeout=30),
+            StateMachine.add("WAIT_FOR_BELL", WaitForStringMsg(robot, timeout=60),
                              transitions={'received': 'SAY_DOORBELL_RANG',
                                           'timeout': 'SAY_DOORBELL_RANG'})
             StateMachine.add("SAY_DOORBELL_RANG", Say(robot, "The doorbell rang, I am on my way", block=False),
