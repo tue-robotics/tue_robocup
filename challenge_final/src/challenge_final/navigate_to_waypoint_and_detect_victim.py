@@ -12,8 +12,9 @@ from std_msgs.msg import Header, ColorRGBA
 from tf_conversions import toMsg
 from visualization_msgs.msg import MarkerArray, Marker
 
+import robot_smach_states.util.designators as ds
 from robot_skills import get_robot
-from robot_smach_states.navigation import NavigateToWaypoint
+from robot_smach_states.navigation import NavigateToWaypoint, ForceDrive
 
 
 class NavigateToWaypointAndDetectVictim(StateMachine):
@@ -23,6 +24,9 @@ class NavigateToWaypointAndDetectVictim(StateMachine):
         self._look_distance = 3.0
         self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
         self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
+
+        waypoint = ds.EntityByIdDesignator(robot, uuid="hand_me_that_kitchen")
+        victim = ds.EntityByIdDesignator(robot, uuid="victim")
 
         with self:
             @cb_interface(outcomes=["done"])
@@ -97,10 +101,14 @@ class NavigateToWaypointAndDetectVictim(StateMachine):
                     else:
                         rospy.logwarn("Could not find people meeting the requirements")
 
-            self.add('NAVIGATE_WAYPOINT', NavigateToWaypoint(robot, door_waypoint, waypoint_door['radius']),
-                     transitions={'arrived': 'SAY_PLEASE_COME_IN',
-                                  'unreachable': 'SAY_NAVIGATE_TO_DOOR_FALLBACK',
-                                  'goal_not_defined': 'preempted'})
+            StateMachine.add('NAVIGATE_WAYPOINT', NavigateToWaypoint(robot, waypoint, 0.3, victim),
+                             transitions={'arrived': 'LOOK_FOR_VICTIM',
+                                          'unreachable': 'NAVIGATE_WAYPOINT_FAILED',
+                                          'goal_not_defined': 'preempted'})
+
+            StateMachine.add('NAVIGATE_WAYPOINT_FAILED', ForceDrive(robot, 0, 0, 0.5, (2 * math.pi) / 0.5),
+                             transitions={'done': 'NAVIGATE_WAYPOINT'})
+
             self.add("LOOK_FOR_VICTIM", CBState(_look_for_victim), transitions={"done": "done"})
 
 
