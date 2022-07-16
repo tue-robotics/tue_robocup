@@ -100,7 +100,7 @@ class GuideToRoomOrObject(StateMachine):
                     describe_near_objects=False
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "arrived",
                     "unreachable": "WAIT_GUIDE_BACKUP",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "GUIDE_NAV_BACKUP",
@@ -125,7 +125,7 @@ class GuideToRoomOrObject(StateMachine):
                     describe_near_objects=False
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "arrived",
                     "unreachable": "GUIDE_BACKUP_FAILED",
                     "goal_not_defined": "goal_not_defined",
                     "lost_operator": "GUIDE_NAV_BACKUP",
@@ -150,18 +150,12 @@ class GuideToRoomOrObject(StateMachine):
                     describe_near_objects=False
                 ),
                 transitions={
-                    "arrived": "SAY_ARRIVED",
+                    "arrived": "arrived",
                     "unreachable": "unreachable",
                     "goal_not_defined": "goal_not_defined",
-                    "lost_operator": "unreachable",
+                    "lost_operator": "lost_operator",
                     "preempted": "preempted",
                 },
-            )
-
-            StateMachine.add(
-                "SAY_ARRIVED",
-                Say(robot, "We have arrived, here is Arpit"),
-                transitions={"spoken": "arrived"},
             )
 
 
