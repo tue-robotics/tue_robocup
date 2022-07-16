@@ -7,7 +7,7 @@ import smach
 import rospy
 
 from PyKDL import Vector
-from robot_smach_states.util.designators import check_type, is_writeable
+from robot_smach_states.util.designators import check_type, is_writeable, VariableDesignator
 
 
 class GetMap(smach.State):
@@ -19,11 +19,11 @@ class GetMap(smach.State):
         is_writeable(filename_des)
         self.filename_des = filename_des
 
-        check_type(entity_ids, [str])
+        check_type(entity_ids, [str], type(None))
         self.entity_ids = entity_ids
-        check_type(mark_ids, [str])
+        check_type(mark_ids, [str], type(None))
         self.mark_ids = mark_ids
-        check_type(plan_points, Vector)
+        check_type(plan_points, Vector, type(None))
         self.plan_points = plan_points
 
     def execute(self, ud=None):
@@ -69,7 +69,7 @@ class GetMap(smach.State):
         filename = os.path.expanduser(
             '~/final/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
         cv2.imwrite(filename, floorplan.map)
-        filename_des.write(filename)
+        self.filename_des.write(filename)
         rospy.loginfo(f"Wrote image to {filename}")
 
         return "created"
@@ -95,20 +95,28 @@ class ShowImage(smach.State):
 
 
 class GetMapAndShow(smach.StateMachine):
-    smach.StateMachine.__init__(robot, )
+    def __init__(self, robot, entity_ids=None, mark_ids=None, plan_points=None, timeout=30):
+        smach.StateMachine.__init__(self, outcomes=["done", "failed"])
+
+        filename_des = VariableDesignator(resolve_type=str).writeable
+
+        with self:
+            smach.StateMachine.add("GET_MAP", GetMap(robot, filename_des, entity_ids, mark_ids, plan_points),
+                                   transitions={"created": "SHOW_MAP",
+                                                "failed": "failed"})
+
+            smach.StateMachine.add("SHOW_MAP", ShowImage(robot, filename_des, timeout),
+                                   transitions={"shown": "done",
+                                                "failed": "failed"})
 
 
 if __name__ == "__main__":
     import os.path
     from robot_skills import get_robot
-    from robot_smach_states.util.designators import VariableDesignator
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot = get_robot("hero")
     entities_des = VariableDesignator(['final'], resolve_type=[str])
     mark_ids_des = VariableDesignator(['victim', 'cupboard'], resolve_type=[str])
     plan_points_des = VariableDesignator(resolve_type=Vector)
-    filename_des = VariableDesignator(resolve_type=str).writeable
-    sm = GetMap(robot, entities_des, mark_ids_des, plan_points_des, filename_des)
-    sm2 = ShowImage(robot, filename_des)
+    sm = GetMapAndShow(robot, entities_des, mark_ids_des)
     sm.execute()
-    sm2.execute()
