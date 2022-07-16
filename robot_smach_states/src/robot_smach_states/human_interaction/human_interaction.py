@@ -1,21 +1,20 @@
 from __future__ import absolute_import
 
-# System
-from contextlib import redirect_stdout
 import math
 import random
 import time
+# System
+from contextlib import redirect_stdout
 from string import Formatter
 
 # ROS
 import rospy
 import smach
-
+from hmi import HMIResult
 # TU/e Robotics
 from hmi import TimeoutException
-import robot_smach_states.util.designators as ds
-from hmi import HMIResult
 
+import robot_smach_states.util.designators as ds
 # Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
@@ -104,13 +103,13 @@ class Say(smach.State):
         smach.State.__init__(self, outcomes=["spoken"])
 
         ds.check_type(sentence, [str], str)
-        assert(isinstance(language, str) or isinstance(language, type(None)))
-        assert(isinstance(personality, str) or isinstance(personality, type(None)))
-        assert(isinstance(voice, str) or isinstance(voice, type(None)))
-        assert(isinstance(mood, str) or isinstance(mood, type(None)))
-        assert(isinstance(block, bool))
+        assert (isinstance(language, str) or isinstance(language, type(None)))
+        assert (isinstance(personality, str) or isinstance(personality, type(None)))
+        assert (isinstance(voice, str) or isinstance(voice, type(None)))
+        assert (isinstance(mood, str) or isinstance(mood, type(None)))
+        assert (isinstance(block, bool))
 
-        assert(all(isinstance(v, ds.Designator) for v in place_holders.values()))
+        assert (all(isinstance(v, ds.Designator) for v in place_holders.values()))
 
         self.ph_designators = place_holders
 
@@ -166,6 +165,7 @@ class HearOptions(smach.State):
     """
     Hear one of the options
     """
+
     def __init__(self, robot, options, timeout=10, look_at_standing_person=True):
         # type:(Robot, list, (float, int), bool) -> None
         """
@@ -180,7 +180,7 @@ class HearOptions(smach.State):
         smach.State.__init__(self, outcomes=outcomes)
         self._options = options
         self._robot = robot
-        assert(isinstance(timeout, (float, int)))
+        assert (isinstance(timeout, (float, int)))
         self._timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
@@ -306,7 +306,7 @@ class AskContinue(smach.StateMachine):
 
 class AskYesNo(HearOptions):
     def __init__(self, robot, timeout=10):
-        HearOptions.__init__(self, robot, ['yes', 'no'], timeout)
+        HearOptions.__init__(self, robot, ['yes', 'no'], timeout, False)
 
 
 class WaitForPersonInFront(smach.State):
@@ -423,10 +423,10 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
             if count == math.ceil(n_samples / 2):
                 robot.speech.speak("Almost done, keep looking.", block=False)
         else:
-            rospy.loginfo ("[LearnPersonProcedure] " + "No person found.")
+            rospy.loginfo("[LearnPersonProcedure] " + "No person found.")
             elapsed_time = time.time() - start_time
             if elapsed_time > timeout:
-                rospy.loginfo ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                rospy.loginfo("[LearnPersonProcedure] " + "Learn procedure timed out!")
                 return count
 
         rospy.loginfo("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
