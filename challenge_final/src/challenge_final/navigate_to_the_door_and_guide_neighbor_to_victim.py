@@ -78,7 +78,7 @@ class GuideToRoomOrObject(StateMachine):
                 entity = entity_des.resolve()
                 if not entity:
                     rospy.logwarn("No entity in the designator")
-                    return unreachable
+                    return "unreachable"
                 entity_type = entity.etype
                 if entity_type == "room":
                     self.area_designator.write("in")
