@@ -127,7 +127,7 @@ class CallNeighbor(StateMachine):
             def _look_down_and_say(_):
                 robot.head.look_down()
                 robot.head.wait_for_motion_done()
-                robot.speech.speak("Tell me where the first aid kit is")
+                robot.speech.speak("I called the neighbor. Could you tell me where the first aid kit is?")
                 return "done"
 
             @cb_interface(outcomes=["done"])
