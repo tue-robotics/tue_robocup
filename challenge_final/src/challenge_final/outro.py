@@ -14,7 +14,7 @@ class Outro(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
         intermediate_waypoint = EntityByIdDesignator(robot, "outro_point")
-        exit_waypoint = EntityByIdDesignator(robot, "outro_exit_point")
+        exit_waypoint = EntityByIdDesignator(robot, "hand_me_that_kitchen")
 
         with self:
             StateMachine.add("SAY_LEAVING", Say(robot, "Please take good care of Arpit. He is very sensitive"),
