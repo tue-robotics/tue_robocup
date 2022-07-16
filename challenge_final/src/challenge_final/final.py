@@ -4,6 +4,7 @@ from challenge_final.call_neighbor import CallNeighbor
 from challenge_final.navigate_arbitrarily import NavigateArbitrarily
 from challenge_final.navigate_to_and_interact_with_victim import NavigateToAndInteractWithVictim
 from challenge_final.navigate_to_the_door_and_guide_neighbor_to_victim import NavigateToTheDoorAndGuideNeighborToVictim
+from challenge_final.navigate_to_waypoint_and_detect_victim import NavigateToWaypointAndDetectVictim
 from challenge_final.outro import Outro
 from robot_smach_states.utility import Initialize
 
@@ -22,6 +23,12 @@ class Final(StateMachine):
             StateMachine.add(
                 "NAVIGATE_ARBITRARILY",
                 NavigateArbitrarily(robot),
+                transitions={"done": "NAVIGATE_TO_WAYPOINT_AND_DETECT_VICTIM", "preempted": "preempted"},
+            )
+
+            StateMachine.add(
+                "NAVIGATE_TO_WAYPOINT_AND_DETECT_VICTIM",
+                NavigateToWaypointAndDetectVictim(robot),
                 transitions={"done": "NAVIGATE_TO_AND_INTERACT_WITH_VICTIM", "preempted": "preempted"},
             )
 
