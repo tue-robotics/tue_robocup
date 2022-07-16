@@ -143,7 +143,7 @@ class CallNeighbor(StateMachine):
             self.add("RECEIVE_TELEGRAM", ReceiveTelegram(robot),
                      transitions={"done": "LOOK_DOWN_AND_SAY", "timeout": "LOOK_DOWN_AND_SAY"})
             self.add("LOOK_DOWN_AND_SAY", CBState(_look_down_and_say), transitions={"done": "GET_CUPBOARD_RAY"})
-            self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "SAY", "failed": "preempted"})
+            self.add("GET_CUPBOARD_RAY", GetCupboardRay(robot), transitions={"done": "SAY", "failed": "SAY"})
             self.add("SAY", Say(robot, "I understand that the first aid kit is at the cupboard"),
                      transitions={"spoken": "done"})
 
