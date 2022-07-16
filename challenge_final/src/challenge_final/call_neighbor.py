@@ -127,7 +127,7 @@ class CallNeighbor(StateMachine):
             def _look_down_and_say(_):
                 robot.head.look_down()
                 robot.head.wait_for_motion_done()
-                robot.speech.speak("I called the neighbor. Could you tell me where the first aid kit is?")
+                robot.speech.speak("I called the girl next door. Could you tell me where the first aid kit is?")
                 return "done"
 
             @cb_interface(outcomes=["done"])
@@ -137,7 +137,8 @@ class CallNeighbor(StateMachine):
                 return "done"
 
             self.add("LOOK_DOWN", CBState(_look_down), transitions={"done": "SAY_CALLING"})
-            self.add("SAY_CALLING", Say(robot, "I'm calling our neighbor"), transitions={"spoken": "SEND_TELEGRAM"})
+            self.add("SAY_CALLING", Say(robot, "I'm calling the girl next door"),
+                     transitions={"spoken": "SEND_TELEGRAM"})
             self.add("SEND_TELEGRAM", SendTelegram(robot), transitions={"done": "RECEIVE_TELEGRAM"})
             self.add("RECEIVE_TELEGRAM", ReceiveTelegram(robot),
                      transitions={"done": "LOOK_DOWN_AND_SAY", "timeout": "LOOK_DOWN_AND_SAY"})
