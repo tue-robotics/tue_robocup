@@ -13,7 +13,7 @@ from robot_smach_states.util.designators import EntityByIdDesignator
 class Outro(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["done", "preempted"])
-        intermediate_waypoint = EntityByIdDesignator(robot, "hand_me_that_kitchen")
+        intermediate_waypoint = EntityByIdDesignator(robot, "waypoint_final_kitchen")
         exit_waypoint = EntityByIdDesignator(robot, "outro_exit_point")
 
         with self:

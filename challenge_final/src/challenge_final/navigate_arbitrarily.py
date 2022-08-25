@@ -24,14 +24,14 @@ class NavigateArbitrarily(StateMachine):
         self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
         self._visualization_marker_pub = rospy.Publisher('/markers', MarkerArray, queue_size=1)
 
-        self.waypoint = EntityByIdDesignator(robot, uuid="hand_me_that_kitchen")
+        self.waypoint = EntityByIdDesignator(robot, uuid="waypoint_final_kitchen")
         self.victim = EntityByIdDesignator(robot, uuid="victim")
         self._cupboard_des = EntityByIdDesignator(robot, uuid="cupboard")
         self._bedroom_des = EntityByIdDesignator(robot, uuid="bedroom")
         self._kitchen_des = EntityByIdDesignator(robot, uuid="kitchen")
         self._dinner_table_des = EntityByIdDesignator(robot, uuid="dinner_table")
-        self._office_waypoint_des = EntityByIdDesignator(robot, uuid="hand_me_that_office")
-        self._living_room_waypoint_des = EntityByIdDesignator(robot, uuid="hand_me_that_living_room")
+        self._office_waypoint_des = EntityByIdDesignator(robot, uuid="waypoint_office_final")
+        self._living_room_waypoint_des = EntityByIdDesignator(robot, uuid="waypoint_final_living_room")
 
         with self:
 
