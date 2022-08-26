@@ -416,6 +416,7 @@ class ED(RobotPart):
         res = self._ed_get_image_srv(filename=filename)
         if res.error_msg:
             rospy.logerr("Could not save image: %s" % res.error_msg)
+            return False
 
         with open(fname + ".rgbd", "wb") as f:
             f.write(bytearray(res.rgbd_data))
@@ -425,6 +426,8 @@ class ED(RobotPart):
 
         # rgbd to png
         os.system('rosrun rgbd rgbd_to_png %s' % (fname + ".rgbd"))  # ToDo: very very very ugly
+
+        return True
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
