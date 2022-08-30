@@ -58,7 +58,7 @@ def main():
     while True:
         #TODO hardcoded starting point
         #TODO get rid of string format
-        task_specification = "{actions: [{'action': 'hand-over', 'source-location': {'id': 'dinner_table'}, 'target-location': {'id': 'operator', 'designator': EntityByIdDesignator(uuid=starting_point, name=None)}, 'object': {'type': 'coke'}}]}"
+        task_specification = "{actions: [{'action': 'hand-over', 'source-location': {'id': 'dinner_table'}, 'target-location': {'id': 'starting_point', 'type':'waypoint', 'designator': EntityByIdDesignator(uuid=starting_point, name=None)}, 'object': {'type': 'fanta'}}]}"
         # Dump the output json object to a string
         #task_specification = json.dumps(semantics)
         #task_specification = task_specification.strip() # remove leading and trailing quotes
