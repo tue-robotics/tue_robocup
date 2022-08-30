@@ -106,7 +106,7 @@ class ParrallelGripper(Gripper):
         if goal.command.direction == GripperState.OPEN:
             if self.occupied_by is not None:
                 rospy.logerr("ParrallelGripper.send_goal open is called but there is still an entity with id '%s' \
-                occupying the gripper, removing this entity. Please update your worldmodel" % self.occupied_by.uuid)
+                occupying the gripper, removing this entity from the robot interface." % self.occupied_by.uuid)
             self.occupied_by = None
 
         goal_status = GoalStatus.SUCCEEDED
