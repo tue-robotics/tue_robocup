@@ -61,7 +61,7 @@ class TestSegmentObjects(unittest.TestCase):
         """
         Check happy flow: return object and check if it has been written
         """
-        def _update_kinect(self, *args, **kwargs):
+        def _update_kinect(*args, **kwargs):
             return UpdateResponse(new_ids=["foobar"])
         self.robot.ed.update_kinect = _update_kinect
 
