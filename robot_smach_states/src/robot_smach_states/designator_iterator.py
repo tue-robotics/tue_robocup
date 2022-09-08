@@ -9,9 +9,11 @@ from robot_smach_states.util.designators import is_writeable
 
 class IterateDesignator(smach.State):
     def __init__(self, collection_des, element_des):
-        """Iterate over a designator that resolves to a collection.
+        """
+        Iterate over a designator that resolves to a collection.
 
-        The collection is resolved on the fist time the state is called AND after is was exhausted.
+        The collection is resolved on each iteration. When the resolved collection is different from the collection in use,
+        it will start from the beginning of the new collection. It keeps iterating the new collection in futher calls.
 
         Once the collection is exhausted, the outcome will be 'stop_iteration'.
         The next time the state is executed, the collection will be resolved again
