@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 
 # System
 from contextlib import redirect_stdout
