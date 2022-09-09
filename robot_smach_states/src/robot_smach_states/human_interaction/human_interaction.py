@@ -287,7 +287,7 @@ class HearOptionsExtra(smach.State):
 
 
 class AskContinue(smach.StateMachine):
-    def __init__(self, robot, timeout=10):
+    def __init__(self, robot, timeout=10, look_at_standing_person=True):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
 
         with self:
@@ -299,14 +299,14 @@ class AskContinue(smach.StateMachine):
                                    transitions={'spoken': 'HEAR'})
 
             smach.StateMachine.add('HEAR',
-                                   HearOptions(robot, ['continue'], timeout),
+                                   HearOptions(robot, ['continue'], timeout, look_at_standing_person),
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
 
 
 class AskYesNo(HearOptions):
-    def __init__(self, robot, timeout=10):
-        HearOptions.__init__(self, robot, ['yes', 'no'], timeout, False)
+    def __init__(self, robot, timeout=10, look_at_standing_person=True):
+        HearOptions.__init__(self, robot, ['yes', 'no'], timeout, look_at_standing_person)
 
 
 class WaitForPersonInFront(smach.State):
