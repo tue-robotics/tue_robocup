@@ -1,6 +1,7 @@
 import smach
 import rospy
 
+
 class NavigateWiggle(smach.State):
     def __init__(self, robot, duration, speak=True):
         smach.State.__init__(self, outcomes=["done"])
