@@ -64,7 +64,6 @@ def _create_lower_force_sensing_goal(self, distance_move_down, timeout):
     else:
         current_joint_state['arm_lift_joint'] = max(0, current_joint_state['arm_lift_joint'] - distance_move_down)
 
-    # Creates goal for force_sensor
     return create_force_sensing_goal(self.joint_names, current_joint_state, timeout)
 
 
@@ -74,7 +73,6 @@ def _create_retract_force_sensing_goal(self, retract_distance, timeout):
     # Changes state to retract arm after force sensor edge up
     current_joint_state['arm_lift_joint'] += retract_distance  # TODO make this function not HERO-specific
 
-    # Creates joint states goal
     return create_force_sensing_goal(self.joint_names, current_joint_state, timeout)
 
 
