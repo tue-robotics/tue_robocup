@@ -4,8 +4,9 @@ from typing import List
 # ROS
 import rospy
 import tf2_ros
-from topological_action_planner_msgs.msg import Edge, Node
+
 # TU/e Robotics
+from topological_action_planner_msgs.msg import Edge, Node
 from topological_action_planner_msgs.srv import Plan, PlanRequest, PlanResponse
 
 # Robot skills
