@@ -11,6 +11,10 @@ import smach
 import rospy
 import sys
 import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
 from visualization_msgs.msg import Marker
 
 # TU/e Robotics
