@@ -16,7 +16,7 @@ from .util import designators as ds
 
 
 class LookAtEntity(smach.State):
-    def __init__(self, robot, entity, waittime=0.0, height=None):
+    def __init__(self, robot, entity, waittime=0.0, height=0.0):
         """
         :param robot: The robot
         :param entity: The entity to look at
@@ -27,7 +27,7 @@ class LookAtEntity(smach.State):
         self._robot = robot
         self._entity = entity
         self._waittime = waittime
-        self._height = height if height is not None else 0
+        self._height = height
 
         ds.check_type(entity, Entity)
 
@@ -105,7 +105,6 @@ class RotateToEntity(smach.State):
         """
         :param robot: The robot
         :param entity: The entity to rotate to
-        :param height: Look higher up in the entity
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
