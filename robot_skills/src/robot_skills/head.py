@@ -31,13 +31,13 @@ class Head(RobotPart):
 
     # -- Helpers --
 
-    def selfreset(self, timeout=0):
+    def selfreset(self):
         """
         Reset head position
         """
         reset_goal = VectorStamped.from_xyz(10, 0, 0, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
 
-        return self.look_at_point(reset_goal, timeout=timeout)
+        return self.look_at_point(reset_goal, timeout=0)
 
     def look_at_ground_in_front_of_robot(self, distance=2, timeout=0):
         goal = VectorStamped.from_xyz(distance, 0, 0, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
