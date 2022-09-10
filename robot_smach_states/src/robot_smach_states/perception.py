@@ -26,7 +26,7 @@ class LookAtEntity(smach.State):
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
         self._entity = entity
-        self._waittime = waittime
+        self._waittime = rospy.Duration(waittime)
         self._height = height
 
         ds.check_type(entity, Entity)
@@ -53,7 +53,7 @@ class LookAtEntity(smach.State):
         vs = VectorStamped.from_xyz(0, 0, height, entity.last_update_time, frame_id=entity.uuid)
         rospy.loginfo(f'Look at {vs}')
         self._robot.head.look_at_point(vs)
-        rospy.sleep(rospy.Duration(self._waittime))
+        rospy.sleep(self._waittime)
         return "succeeded"
 
 
