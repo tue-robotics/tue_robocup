@@ -341,14 +341,24 @@ class Guide(smach.StateMachine):
 
         with self:
             @smach.cb_interface(outcomes=["done"])
+            def _look_behind(userdata=None):
+                """
+                Look behind the robot so that the operator can be detected
+                 """
+                self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
+                                                                     frame_id=self.robot.base_link_frame))
+                rospy.sleep(3.0)
+                return "done"
+
+            smach.StateMachine.add("LOOK_BEHIND", smach.CBState(_look_behind),
+                                   transitions={"done": "RESET_MENTIONED_ENTITIES"})
+
+            @smach.cb_interface(outcomes=["done"])
             def _reset_mentioned_entities(userdata=None):
                 """
                 Resets the entities that have been mentioned so that the robot will mention all entities to all
                  operators
                  """
-                self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
-                                                                     frame_id=self.robot.base_link_frame))
-                rospy.sleep(3.0)
                 self.execute_plan.reset_tourguide()
                 return "done"
 
