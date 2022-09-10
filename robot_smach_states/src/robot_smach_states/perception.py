@@ -37,6 +37,13 @@ class LookAtEntity(smach.State):
         height = self._height.resolve() if hasattr(self._height, 'resolve') else self._height
 
         if not entity:
+            rospy.logerr(
+                f"[LookAtEntity] Entity {self._entity} could not be resolved. Resolved to {entity}")
+            return 'failed'
+
+        if height is None:
+            rospy.logerr(
+                f"[LookAtEntity] Height {self._height} could not be resolved. Resolved to {height}")
             return 'failed'
 
         # Entities define their own frame, so there is no need to transform the pose to map.
