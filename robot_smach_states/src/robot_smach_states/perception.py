@@ -30,6 +30,7 @@ class LookAtEntity(smach.State):
         self._height = height
 
         ds.check_type(entity, Entity)
+        ds.check_type(height, float)
 
     def execute(self, userdata=None):
 
