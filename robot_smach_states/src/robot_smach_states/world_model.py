@@ -413,7 +413,7 @@ class CheckVolumeEmpty(smach.StateMachine):
         :param fit_supporting_entity: Fit or not fit the supporting entity
 
         """
-        # TODO implement logic for percent vs volumen check in state machine rather than in the states themselves
+        # TODO implement logic for percent vs volume check in state machine rather than in the states themselves
         smach.StateMachine.__init__(self, outcomes=['empty', 'occupied', 'partially_occupied', 'failed'])
 
         seen_entities_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
