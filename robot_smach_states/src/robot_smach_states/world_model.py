@@ -415,8 +415,6 @@ class CheckVolumeEmpty(smach.StateMachine):
                                    transitions={"done": "CHECK_EMPTY",
                                                 "failed": "failed"})
 
-            # UpdateEntity(uuid:"couch", pose:orig_pose)
-
             smach.StateMachine.add('CHECK_EMPTY',
                                    CheckEmpty(robot, seen_entities_des),
                                    transitions={'empty': 'empty',
