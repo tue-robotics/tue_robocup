@@ -271,7 +271,7 @@ class CheckFreeSpaceVolume(smach.State):
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.check_resolve_type(entity_designator, Entity)
-        ds.check_resolve_type(volume, str)
+        ds.check_type(volume, str)
         ds.check_type(threshold_val, float, None)  # Remove None, when moving the logic to StateMachine
 
     def execute(self, userdata=None):
@@ -326,7 +326,7 @@ class CheckFreeSpacePercentage(smach.State):
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.check_resolve_type(entity_designator, Entity)
-        ds.check_resolve_type(volume, str)
+        ds.check_type(volume, str)
         ds.check_type(threshold_perc, float, None)  # Remove None, when moving the logic to StateMachine
 
     def execute(self, userdata=None):
