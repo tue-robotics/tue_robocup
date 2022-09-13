@@ -407,7 +407,7 @@ class CheckVolumeEmpty(smach.StateMachine):
             smach.StateMachine.add('INSPECT',
                                    Inspect(robot, entity_des, searchArea=volume, objectIDsDes=seen_entities_des,
                                            fit_supporting_entity=fit_supporting_entity),
-                                   transitions={"done": "CHECK",
+                                   transitions={"done": "CHECK_EMPTY",
                                                 "failed": "failed"})
 
             # UpdateEntity(uuid:"couch", pose:orig_pose)
