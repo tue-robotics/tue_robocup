@@ -187,7 +187,7 @@ class SegmentObjects(smach.State):
             time.sleep(0.5)
 
         # Inspect 'on top of' the entity
-        res = self.robot.ed.update_kinect(area_description="{} {}".format(segmentation_area, entity_to_inspect.uuid),
+        res = self.robot.ed.update_kinect(area_description=f"{segmentation_area} {entity_to_inspect.uuid}",
                                           fit_supporting_entity=self.fit_supporting_entity)
 
         segmented_object_ids = res.new_ids + res.updated_ids
