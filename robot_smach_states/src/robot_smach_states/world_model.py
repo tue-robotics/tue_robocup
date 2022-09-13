@@ -270,6 +270,8 @@ class CheckFreeSpaceVolume(smach.State):
         self.threshold_val = threshold_val
 
     def execute(self, userdata=None):
+        if self.threshold_val is None:
+            return 'occupied'
         volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
 
         entity = self.entity_des.resolve()  # type: Entity
@@ -311,6 +313,8 @@ class CheckFreeSpacePercentage(smach.State):
         self.threshold_perc = threshold_perc
 
     def execute(self, userdata=None):
+        if self.threshold_perc is None:
+            return 'occupied'
         volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
 
         entity = self.entity_des.resolve()  # type: Entity
@@ -399,7 +403,8 @@ class CheckVolumeEmpty(smach.StateMachine):
         :param fit_supporting_entity: Fit or not fit the supporting entity
 
         """
-        smach.StateMachine.__init__(self, outcomes=['empty', 'occupied',  'partially_occupied', 'failed'])
+        # TODO implement logic for percent vs volumen check in state machine rather than in the states themselves
+        smach.StateMachine.__init__(self, outcomes=['empty', 'occupied', 'partially_occupied', 'failed'])
 
         seen_entities_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
