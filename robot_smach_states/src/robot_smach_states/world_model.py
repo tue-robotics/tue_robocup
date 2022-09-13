@@ -262,7 +262,7 @@ class CheckFreeSpaceVolume(smach.State):
         :param threshold_val: float indicating the free volume above which the area is considered
         occupied
         """
-        smach.State.__init__(self, outcomes=["empty", "occupied"])
+        smach.State.__init__(self, outcomes=["empty", "occupied", "failed"])
         self.robot = robot
         self.seen_entities_des = segmented_entity_ids_designator
         self.entity_des = entity_designator
@@ -280,8 +280,15 @@ class CheckFreeSpaceVolume(smach.State):
         volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
 
         entity = self.entity_des.resolve()  # type: Entity
+        if entity is None:
+            rospy.logerr("Entity is None")
+            return 'failed'
+
         seen_entities = self.seen_entities_des.resolve()
 
+        if volume not in entity.volumes:
+            rospy.logerr(f"Entity {entity.uuid} has no volume {volume}")
+            return 'failed'
         vol = entity.volumes[volume]  # type: Volume
         entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
         occupied_space = sum(entity.shape.size for entity in entities if entity is not None)
@@ -310,7 +317,7 @@ class CheckFreeSpacePercentage(smach.State):
         :param volume: string defining which volume of the entity is checked
         :param threshold_perc: float indicating the free volume percentage above which the area is considered occupied
         """
-        smach.State.__init__(self, outcomes=["empty", "occupied"])
+        smach.State.__init__(self, outcomes=["empty", "occupied", "failed"])
         self.robot = robot
         self.seen_entities_des = segmented_entity_ids_designator
         self.entity_des = entity_designator
@@ -328,8 +335,15 @@ class CheckFreeSpacePercentage(smach.State):
         volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
 
         entity = self.entity_des.resolve()  # type: Entity
+        if entity is None:
+            rospy.logerr("Entity is None")
+            return 'failed'
+
         seen_entities = self.seen_entities_des.resolve()
 
+        if volume not in entity.volumes:
+            rospy.logerr(f"Entity {entity.uuid} has no volume {volume}")
+            return 'failed'
         vol = entity.volumes[volume]  # type: Volume
         entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
         occupied_space = sum(entity.shape.size for entity in entities if entity is not None)
@@ -428,19 +442,22 @@ class CheckVolumeEmpty(smach.StateMachine):
             smach.StateMachine.add('CHECK_EMPTY',
                                    CheckEmpty(robot, seen_entities_des),
                                    transitions={'empty': 'empty',
-                                                'occupied': 'CHECK_VOLUME'})
+                                                'occupied': 'CHECK_VOLUME',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add('CHECK_VOLUME',
                                    CheckFreeSpaceVolume(robot, seen_entities_des, entity_des, volume,
                                                         threshold_val=volume_threshold_val),
                                    transitions={'empty': 'partially_occupied',
-                                                'occupied': 'CHECK_VOLUME_PERCENTAGE'})
+                                                'occupied': 'CHECK_VOLUME_PERCENTAGE',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add('CHECK_VOLUME_PERCENTAGE',
                                    CheckFreeSpacePercentage(robot, seen_entities_des, entity_des, volume,
                                                             threshold_perc=volume_threshold_per),
                                    transitions={'empty': 'partially_occupied',
-                                                'occupied': 'occupied'})
+                                                'occupied': 'occupied',
+                                                'failed': 'failed'})
 
 
 if __name__ == "__main__":
