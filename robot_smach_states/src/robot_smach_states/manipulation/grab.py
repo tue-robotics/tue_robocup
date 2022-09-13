@@ -359,7 +359,7 @@ class Grab(smach.StateMachine):
                                    transitions={'true': 'done',
                                                 'false': 'RETRY_GRAB',
                                                 'failed': 'done',
-                                                'cannot determine': 'RETRY_GRAB'})
+                                                'cannot_determine': 'RETRY_GRAB'})
 
             smach.StateMachine.add('RETRY_GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'RETRY_GRASP_DETECTOR',
@@ -369,7 +369,7 @@ class Grab(smach.StateMachine):
                                    transitions={'true': 'done',
                                                 'false': 'SAY_FAILED',
                                                 'failed': 'done',
-                                                'cannot determine': 'SAY_FAILED'})
+                                                'cannot_determine': 'SAY_FAILED'})
 
             smach.StateMachine.add('SAY_FAILED', Say(robot, "I failed grabbing the object"),
                                    transitions={'spoken': 'failed'})
