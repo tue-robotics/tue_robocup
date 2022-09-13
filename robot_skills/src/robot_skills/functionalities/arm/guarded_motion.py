@@ -5,6 +5,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from robot_skills.arm.arms import Arm
 from robot_skills.arm.force_sensor import ForceSensor
 from robot_skills.functionalities import RobotFunc
+from robot_skills.util.exceptions import TimeOutException
 
 
 class GuardedMotionFunc(RobotFunc):
@@ -48,7 +49,10 @@ def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, re
     goal = self._create_lower_force_sensing_goal(distance_move_down, timeout)
     self._ac_joint_traj.send_goal(goal)
 
-    force_sensor.wait_for_edge_up(timeout)
+    try:
+        force_sensor.wait_for_edge_up(timeout)
+    except TimeOutException:
+        pass
     self.cancel_goals()
 
     goal = self._create_retract_force_sensing_goal(retract_distance, timeout)
