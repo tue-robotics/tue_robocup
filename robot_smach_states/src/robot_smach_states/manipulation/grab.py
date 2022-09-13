@@ -17,6 +17,8 @@ from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
+from ..manipulation.active_grasp_detector import ActiveGraspDetector
+from robot_smach_states.human_interaction import Say
 
 
 class PrepareEdGrasp(smach.State):
@@ -349,8 +351,27 @@ class Grab(smach.StateMachine):
                                                 'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
-                                   transitions={'succeeded': 'done',
+                                   transitions={'succeeded': 'GRASP_DETECTOR',
                                                 'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add('GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
+                                   transitions={'true': 'done',
+                                                'false': 'RETRY_GRAB',
+                                                'failed': 'done',
+                                                'cannot determine': 'done'})
+
+            smach.StateMachine.add('RETRY_GRAB', PickUp(robot, arm, item),
+                                   transitions={'succeeded': 'RETRY_GRASP_DETECTOR',
+                                                'failed': 'RETRY_GRASP_DETECTOR'})
+
+            smach.StateMachine.add('RETRY_GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
+                                   transitions={'true': 'done',
+                                                'false': 'SAY_FAILED',
+                                                'failed': 'done',
+                                                'cannot determine': 'done'})
+
+            smach.StateMachine.add('SAY_FAILED', Say(robot, "I failed grabbing the object"),
+                                   transitions={'spoken': 'failed'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
