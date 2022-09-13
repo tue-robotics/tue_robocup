@@ -269,6 +269,11 @@ class CheckFreeSpaceVolume(smach.State):
         self.volume = volume
         self.threshold_val = threshold_val
 
+        ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
+        ds.check_resolve_type(entity_designator, Entity)
+        ds.check_resolve_type(volume, str)
+        ds.check_type(threshold_val, float, None)  # Remove None, when moving the logic to StateMachine
+
     def execute(self, userdata=None):
         if self.threshold_val is None:
             return 'occupied'
@@ -311,6 +316,11 @@ class CheckFreeSpacePercentage(smach.State):
         self.entity_des = entity_designator
         self.volume = volume
         self.threshold_perc = threshold_perc
+
+        ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
+        ds.check_resolve_type(entity_designator, Entity)
+        ds.check_resolve_type(volume, str)
+        ds.check_type(threshold_perc, float, None)  # Remove None, when moving the logic to StateMachine
 
     def execute(self, userdata=None):
         if self.threshold_perc is None:
