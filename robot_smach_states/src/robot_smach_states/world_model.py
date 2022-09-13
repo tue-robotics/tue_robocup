@@ -1,4 +1,4 @@
-from __future__ import absolute_import, print_function
+from typing import Optional
 
 # System
 import time
@@ -252,14 +252,14 @@ class CheckFreeSpaceVolume(smach.State):
     Compare the free space in a volume to a threshold. Volume is detemined as teh sum of all entities within a designator
     """
 
-    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold_val):
+    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold_val: float):
         """
         Constructor
 
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
-        :param volume: string defining which volume of the entity is checked
-        :param threshold_val: float indicating the free volume above which the area is considered
+        :param volume: string or designator to a string, defining which volume of the entity is checked
+        :param threshold_val: Indicating the free volume above which the area is considered
         occupied
         """
         smach.State.__init__(self, outcomes=["empty", "occupied", "failed"])
@@ -308,14 +308,14 @@ class CheckFreeSpacePercentage(smach.State):
     Compare the free space in a volume to a threshold. Volume is detemined as teh sum of all entities within a designator
     """
 
-    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold_perc):
+    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold_perc: float):
         """
         Constructor
 
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
-        :param volume: string defining which volume of the entity is checked
-        :param threshold_perc: float indicating the free volume percentage above which the area is considered occupied
+        :param volume: string or designator to a string, defining which volume of the entity is checked
+        :param threshold_perc: Indicating the free volume percentage above which the area is considered occupied
         """
         smach.State.__init__(self, outcomes=["empty", "occupied", "failed"])
         self.robot = robot
@@ -413,14 +413,22 @@ class Inspect(smach.StateMachine):
 
 
 class CheckVolumeEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, volume="on_top_of", volume_threshold_per=0.0, volume_threshold_val=0.0,
-                 fit_supporting_entity=True):
-        """ Constructor
+    def __init__(
+        self,
+        robot,
+        entity_des,
+        volume="on_top_of",
+        volume_threshold_per: Optional[float] = None,
+        volume_threshold_val: Optional[float] = None,
+        fit_supporting_entity: bool = True,
+    ):
+        """
+        Constructor
 
         :param robot: robot object
         :param entity_des: EdEntityDesignator indicating the (furniture) object to check
-        :param volume: string defining volume of the entity to be checked, default = on_top_of
-        :param volume_threshold_per: float indicating the free volume percentage above which the area is considered
+        :param volume: string or designator to a string, defining volume of the entity to be checked, default = on_top_of
+        :param volume_threshold_per: Indicating the free volume percentage above which the area is considered
         partially_occupied (If both thresholds are None any entities filling the volume will result in 'occupied')
         :param volume_threshold_val: float [m^3] indicating the free volume above which the area is considered
         partially_occupied. (If both thresholds are None any entities filling the volume will result in 'occupied')
