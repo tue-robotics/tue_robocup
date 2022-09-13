@@ -52,6 +52,7 @@ def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, re
     try:
         force_sensor.wait_for_edge_up(timeout)
     except TimeOutException:
+        rospy.loginfo("No edge up detected within timeout")
         pass
     self.cancel_goals()
 
