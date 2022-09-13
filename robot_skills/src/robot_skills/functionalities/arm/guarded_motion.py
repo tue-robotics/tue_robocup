@@ -29,7 +29,7 @@ class GuardedMotionFunc(RobotFunc):
 
 
 def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, retract_distance=0.01,
-                                         distance_move_down=0.0):
+                                         distance_move_down=10.0):
     """
     Move down the arm (hero specific, only joint arm_lift_joint) until one of 2 things:
         - Force sensor detects an edge up
