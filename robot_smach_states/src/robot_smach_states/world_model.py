@@ -239,6 +239,8 @@ class CheckEmpty(smach.State):
         self.robot = robot
         self.seen_entities_des = segmented_entity_ids_designator
 
+        ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
+
     def execute(self, userdata=None):
         seen_entities = self.seen_entities_des.resolve()
         if seen_entities:
