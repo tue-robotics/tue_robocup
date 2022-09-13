@@ -28,7 +28,7 @@ class GuardedMotionFunc(RobotFunc):
 
 
 def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, retract_distance=0.01,
-                                         distance_move_down=None):
+                                         distance_move_down=0.0):
     """
     Move down the arm (hero specific, only joint arm_lift_joint) until one of 2 things:
         - Force sensor detects an edge up
@@ -58,11 +58,8 @@ def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, re
 def _create_lower_force_sensing_goal(self, distance_move_down, timeout):
     current_joint_state = self.get_joint_states()
 
-    # Sets the joint state to move down a certain distance (or to 0 if distance is not set)
-    if distance_move_down is None:
-        current_joint_state['arm_lift_joint'] = 0  # TODO make this function not HERO-specific
-    else:
-        current_joint_state['arm_lift_joint'] = max(0, current_joint_state['arm_lift_joint'] - distance_move_down)
+    # Sets the joint state to move down a certain distance
+    current_joint_state['arm_lift_joint'] -= distance_move_down  # TODO make this function not HERO-specific
 
     return create_force_sensing_goal(self.joint_names, current_joint_state, timeout)
 
@@ -77,6 +74,8 @@ def _create_retract_force_sensing_goal(self, retract_distance, timeout):
 
 
 def create_force_sensing_goal(joint_names, current_joint_state, timeout):
+    # TODO make this function not HERO-specific
+    current_joint_state['arm_lift_joint'] = max(0.0, min(0.69, current_joint_state['arm_lift_joint']))
     positions = [current_joint_state[name] for name in joint_names]
 
     points = [JointTrajectoryPoint(
