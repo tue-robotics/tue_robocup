@@ -30,7 +30,7 @@ class ActiveGraspDetector(smach.State):
         :param max_torque: Max torque of the gripper to perform the test with
         """
 
-        smach.State.__init__(self, outcomes=['true', 'false', 'failed', 'cannot determine'])
+        smach.State.__init__(self, outcomes=['true', 'false', 'failed', 'cannot_determine'])
         self.robot = robot
 
         self.arm_designator = arm_designator
@@ -53,7 +53,7 @@ class ActiveGraspDetector(smach.State):
             return 'failed'
         elif first_position < self.minimum_position:
             rospy.logdebug("First position is {}".format(first_position))
-            return 'cannot determine'
+            return 'cannot_determine'
 
         else:
             if not arm.gripper.send_goal('close', max_torque=self.max_torque):  # Attempts to close the gripper
