@@ -277,6 +277,7 @@ class CheckFreeSpaceVolume(smach.State):
     def execute(self, userdata=None):
         if self.threshold_val is None:
             return 'occupied'
+
         volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
 
         entity = self.entity_des.resolve()  # type: Entity
@@ -332,6 +333,7 @@ class CheckFreeSpacePercentage(smach.State):
     def execute(self, userdata=None):
         if self.threshold_perc is None:
             return 'occupied'
+
         volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
 
         entity = self.entity_des.resolve()  # type: Entity
