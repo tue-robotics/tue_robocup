@@ -18,7 +18,7 @@ from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
 from ..manipulation.active_grasp_detector import ActiveGraspDetector
-from robot_smach_states.human_interaction import Say
+from ..human_interaction import Say
 
 
 class PrepareEdGrasp(smach.State):
