@@ -109,14 +109,18 @@ class LookAtArea(State):
 
 
 class RotateToEntity(smach.State):
-    def __init__(self, robot, entity):
+    def __init__(self, robot, entity, max_vel=np.pi / 10.0):
         """
+        Rotate the robot so it is orientated towards entity of :param: entity
+
         :param robot: The robot
         :param entity: The entity to rotate to
+        :param max_vel: Max rotational velocity
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
         self._entity = entity
+        self._max_vel = max_vel
 
         ds.check_type(entity, Entity)
 
@@ -142,13 +146,12 @@ class RotateToEntity(smach.State):
         # For 1 second, rotate the base with vth == rotate_base.
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
 
-        maxvel = np.pi / 10.0  # Max rotation speed in rad/s
-        duration = abs(rotate_base / maxvel)  # duration of rotation, in s
-        vel = maxvel * np.sign(rotate_base)
+        duration = abs(rotate_base / self._max_vel)  # duration of rotation, in s
+        vel = self._maxvel * np.sign(rotate_base)
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
                                                                                        np.degrees(vel),
                                                                                        duration))
-        self._robot.base.force_drive(0, 0, vel, duration)
+        self._robot.base.force_drive(vx=0, vy=0, vth=vel, timeout=duration)
         return "succeeded"
 
 
