@@ -1,14 +1,21 @@
 from __future__ import print_function
 
+from typing import List, Optional
+
 # System
+from dataclasses import dataclass
 import os
 import traceback
+
+import numpy as np
 import yaml
 
+from cv_bridge import CvBridge
 import rospy
 from geometry_msgs.msg import PointStamped
-from pykdl_ros import VectorStamped
+from pykdl_ros import VectorStamped, FrameStamped
 import rospkg
+import tf2_ros
 # noinspection PyUnresolvedReferences
 import tf2_geometry_msgs
 # noinspection PyUnresolvedReferences
@@ -16,7 +23,7 @@ import tf2_pykdl_ros
 import visualization_msgs.msg
 
 from cb_base_navigation_msgs.msg import PositionConstraint
-from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
+from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse, Map, MapRequest, MapResponse
 from ed_msgs.srv import Configure, Reset, SimpleQuery, SimpleQueryRequest, UpdateSrv
 from ed_navigation_msgs.srv import GetGoalConstraint
 from ed_people_recognition_msgs.srv import EdRecognizePeople
@@ -30,6 +37,14 @@ from robot_skills.classification_result import ClassificationResult
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import transformations
 from robot_skills.util.decorators import deprecated
+
+
+@dataclass(frozen=True)
+class FloorPlan:
+    map: np.ndarray
+    map_pose: FrameStamped
+    pixels_per_meter_width: float
+    pixels_per_meter_height: float
 
 
 class Navigation(RobotPart):
@@ -74,12 +89,13 @@ class ED(RobotPart):
         self._ed_detect_people_srv = self.create_service_client('/%s/ed/people_recognition/detect_people' % robot_name,
                                                                 EdRecognizePeople)
 
+        self._ed_map_srv = self.create_service_client(f"/{robot_name}/ed/gui/map", Map)
+
         self.navigation = Navigation(robot_name, tf_buffer)
 
         self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query", visualization_msgs.msg.Marker,
                                                  queue_size=10)
-
-        self.robot_name = robot_name
+        self.__cv_bridge = None
 
     def wait_for_connections(self, timeout, log_failing_connections=True):
         """
@@ -93,6 +109,13 @@ class ED(RobotPart):
         return (super(ED, self).wait_for_connections(timeout, log_failing_connections) and
                 self.navigation.wait_for_connections(timeout, log_failing_connections)
                 )
+
+    @property
+    def _cv_bridge(self):
+        if self.__cv_bridge is None:
+            self.__cv_bridge = CvBridge()
+
+        return self.__cv_bridge
 
     # ----------------------------------------------------------------------------------------------------
     #                                             QUERYING
@@ -203,6 +226,40 @@ class ED(RobotPart):
         except rospy.ServiceException as e:
             rospy.logerr("Cant get entity info of id='{}': {}".format(id, e))
             return GetEntityInfoResponse()
+
+    def get_map(
+        self, uuids: List[str], background: str = "white", print_labels: bool = True, width: int = 0, height: int = 0
+    ) -> Optional[FloorPlan]:
+        """
+        :param uuids: Entities that should be in view in the generated map
+        :param background: Background color of the map
+        :param print_labels: Should entity labels be printed
+        :param width: image width (default: 0, defaults to 1024)
+        :param height: image height (default: 0, defaults to 600)
+        :returns: The generated map, the position of the top-left corner of the image and the pixels/meter in both axis
+        """
+        req = MapRequest()
+        req.entities_in_view = uuids
+        req.background = req.WHITE  # default
+        if hasattr(req, background.upper()):
+            req.background = getattr(req, background.upper())
+        else:
+            rospy.logwarn(f"[ed.get_map] Requested background color doesn't exist: '{req.background}'."
+                          f"Using default: 'WHITE'")
+        req.print_labels = print_labels
+        req.image_width = width
+        req.image_height = height
+
+        try:
+            res = self._ed_map_srv.call(req)  # type: MapResponse
+        except Exception as e:
+            rospy.logerr(f"Could not get ED map for entities: {uuids}\nreason: {e}")
+            return None
+
+        floormap = self._cv_bridge.imgmsg_to_cv2(res.map, 'bgr8')
+        fs = tf2_ros.convert(res.pose, FrameStamped)
+
+        return FloorPlan(floormap, fs, res.pixels_per_meter_width, res.pixels_per_meter_height)
 
     # ----------------------------------------------------------------------------------------------------
     #                                             UPDATING
@@ -343,13 +400,14 @@ class ED(RobotPart):
     #                                  KINECT INTEGRATION AND PERCEPTION
     # ----------------------------------------------------------------------------------------------------
 
-    def update_kinect(self, area_description="", background_padding=0):
+    def update_kinect(self, area_description="", background_padding=0, fit_supporting_entity=True):
         """
         Update ED based on kinect (depth) images
 
         :param area_description: An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
         :param background_padding: The maximum distance to which kinect data points are associated to existing objects (in meters).
                Or, in other words: the padding that is added to existing objects before they are removed from the point cloud
+        :param fit_supporting_entity: Fit or not fit the supporting entity
         :return: Update result
         """
         # Check the area description
@@ -359,7 +417,9 @@ class ED(RobotPart):
         # Save the image (logging)
         self.save_image(path_suffix=area_description.replace(" ", "_"))
 
-        res = self._ed_kinect_update_srv(area_description=area_description, background_padding=background_padding)
+        res = self._ed_kinect_update_srv(area_description=area_description,
+                                         background_padding=background_padding,
+                                         fit_supporting_entity=fit_supporting_entity)
         if res.error_msg:
             rospy.logerr("Could not segment objects: %s" % res.error_msg)
 

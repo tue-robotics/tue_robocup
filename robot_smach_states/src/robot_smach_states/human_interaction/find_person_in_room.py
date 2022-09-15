@@ -25,7 +25,7 @@ class FindPerson(smach.State):
 
     def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True,
-                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
+                 look_range=(np.pi/2, -np.pi/2), look_steps=8):
         """
         Initialization method
 
@@ -103,6 +103,11 @@ class FindPerson(smach.State):
             found_people = [p for p in found_people if p]
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
+            if not found_people:
+                rospy.logwarn("Could not find any person")
+                rate.sleep()
+                continue
+
             found_names = {person.uuid: person for person in found_people}
 
             found_person = None
@@ -112,19 +117,22 @@ class FindPerson(smach.State):
             else:
                 # find which of those is closest
                 robot_pose = self._robot.base.get_location()
-                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
+                found_person = min(found_people, key=lambda person: (person.pose.frame.p - robot_pose.frame.p).Norm())
 
             if self._room:
                 room_entity = self._robot.ed.get_entity(uuid=self._room)
-                if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in'):
-                    # If the person is not in the room we are looking for, ignore the person
-                    rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
-                                  .format(found_person.uuid, room_entity.uuid))
-                    found_person = None
+                if room_entity is not None:
+                    if not room_entity.in_volume(VectorStamped.from_framestamped(found_person.pose), 'in', padding=-0.1):
+                        # If the person is not in the room we are looking for, ignore the person
+                        rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
+                                      .format(found_person.uuid, room_entity.uuid))
+                        found_person = None
+                else:
+                    rospy.loginfo(f"Room entity not found for {id=}, not applying room filter")
 
             if found_person:
                 rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.uuid, person_label,
-                                                                           VectorStamped(found_person.pose),
+                                                                           VectorStamped.from_framestamped(found_person.pose),
                                                                            block=False))
                 if self.speak_when_found:
                     self._robot.speech.speak("I think I found {}.".format(person_label, block=False))

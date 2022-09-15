@@ -11,6 +11,7 @@ from .navigate_to_pose import *
 from .navigate_robust import NavigateRobust
 from .navigate_to_waypoint import *
 from .navigate_to_symbolic import *
+from .navigate_wiggle import *
 from .door_opening import *
 from .find import Find
 from .follow_operator import *
