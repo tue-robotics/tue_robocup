@@ -224,6 +224,7 @@ class SegmentObjects(smach.State):
         return 'done'
 
 
+# ToDo: This just checks if list has elements. So make more generic
 class CheckEmpty(smach.State):
     """
     Check whether any entities are present in the entity designation
