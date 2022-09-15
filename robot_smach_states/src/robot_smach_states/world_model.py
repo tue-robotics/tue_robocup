@@ -280,8 +280,6 @@ class CheckFreeSpaceVolume(smach.State):
         if self.threshold_val is None:
             return 'occupied'
 
-        volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
-
         entity = self.entity_des.resolve()  # type: Entity
         if entity is None:
             rospy.logerr("Entity is None")
@@ -289,10 +287,12 @@ class CheckFreeSpaceVolume(smach.State):
 
         seen_entities = self.seen_entities_des.resolve()
 
+        volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
         if volume not in entity.volumes:
             rospy.logerr(f"Entity {entity.uuid} has no volume {volume}")
             return 'failed'
         vol = entity.volumes[volume]  # type: Volume
+
         entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
         occupied_space = sum(entity.shape.size for entity in entities if entity is not None)
         remaining_space = vol.size - occupied_space
@@ -336,8 +336,6 @@ class CheckFreeSpacePercentage(smach.State):
         if self.threshold_perc is None:
             return 'occupied'
 
-        volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
-
         entity = self.entity_des.resolve()  # type: Entity
         if entity is None:
             rospy.logerr("Entity is None")
@@ -345,10 +343,12 @@ class CheckFreeSpacePercentage(smach.State):
 
         seen_entities = self.seen_entities_des.resolve()
 
+        volume = self.volume.resolve() if hasattr(self.volume, "resolve") else self.volume
         if volume not in entity.volumes:
             rospy.logerr(f"Entity {entity.uuid} has no volume {volume}")
             return 'failed'
         vol = entity.volumes[volume]  # type: Volume
+
         entities = [self.robot.ed.get_entity(uuid=seen_entity.uuid) for seen_entity in seen_entities]
         occupied_space = sum(entity.shape.size for entity in entities if entity is not None)
         remaining_space = vol.size - occupied_space
