@@ -4,14 +4,16 @@ import smach
 import rospy
 
 import robot_smach_states.util.designators.core as ds
-from .util.designators import is_writeable
+from robot_smach_states.util.designators import is_writeable
 
 
 class IterateDesignator(smach.State):
     def __init__(self, collection_des, element_des):
-        """Iterate over a designator that resolves to a collection.
+        """
+        Iterate over a designator that resolves to a collection.
 
-        The collection is resolved on the fist time the state is called AND after is was exhausted.
+        The collection is resolved on each iteration. When the resolved collection is different from the collection in use,
+        it will start from the beginning of the new collection. It keeps iterating the new collection in futher calls.
 
         Once the collection is exhausted, the outcome will be 'stop_iteration'.
         The next time the state is executed, the collection will be resolved again
@@ -19,7 +21,7 @@ class IterateDesignator(smach.State):
         :param collection_des: Designator with a iterable resolve_type
         :param element_des: Writeable designator with a resolve_type that should match the element type of the collection
 
-        >>> collection_des = ds.Designator(['a', 'b', 'c'])
+        >>> collection_des = ds.VariableDesignator(['a', 'b', 'c']).writeable
         >>> element_des = ds.VariableDesignator(resolve_type=str)
         >>>
         >>> iterator = IterateDesignator(collection_des, element_des.writeable)
@@ -46,6 +48,27 @@ class IterateDesignator(smach.State):
         >>> assert element_des.resolve() == 'c'
         >>>
         >>> assert iterator.execute() == 'stop_iteration'
+        >>>
+        >>> collection_des.write(['a', 'b', 'c'])
+        >>>
+        >>> assert iterator.execute() == 'next'
+        >>> assert element_des.resolve() == 'a'
+        >>>
+        >>> collection_des.write(['d', 'e', 'f', 'g'])
+        >>>
+        >>> assert iterator.execute() == 'next'
+        >>> assert element_des.resolve() == 'd'
+        >>>
+        >>> assert iterator.execute() == 'next'
+        >>> assert element_des.resolve() == 'e'
+        >>>
+        >>> assert iterator.execute() == 'next'
+        >>> assert element_des.resolve() == 'f'
+        >>>
+        >>> assert iterator.execute() == 'next'
+        >>> assert element_des.resolve() == 'g'
+        >>>
+        >>> assert iterator.execute() == 'stop_iteration'
         """
         smach.State.__init__(self, outcomes=['next', 'stop_iteration'])
 
@@ -61,16 +84,21 @@ class IterateDesignator(smach.State):
         self.collection_des = collection_des
         self.element_des = element_des
 
+        self._current_collection = None
         self._current_elements = None
 
     def execute(self, userdata=None):
+        collection = self.collection_des.resolve()
+        if collection != self._current_collection:
+            rospy.loginfo(f"Collection has changed, current elements: {collection}")
+            self._current_collection = collection
+            self._current_elements = None
+
         if self._current_elements is None:
-            collection = self.collection_des.resolve()
-            if collection is None:
+            if self._current_collection is None:
                 rospy.logwarn("Collection is None")
                 return 'stop_iteration'
 
-            rospy.loginfo("Current elements: {}".format(collection))
             self._current_elements = iter(collection)
 
         try:

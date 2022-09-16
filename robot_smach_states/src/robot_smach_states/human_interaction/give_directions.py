@@ -78,7 +78,7 @@ class GiveDirections(smach.State):
 
         # Call the global planner for the shortest path to this entity
         path = None
-        for name, nav_con in nav_constraints.items():
+        for _, nav_con in nav_constraints.items():
             path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
             if path:
                 break
@@ -91,6 +91,9 @@ class GiveDirections(smach.State):
         # Convert the path to a list of kdl Vectors
         assert(all([p.header.frame_id.endswith("map") for p in path])), "Not all path poses are defined w.r.t. 'map'"
         kdl_path = [tf2_ros.convert(p, VectorStamped).vector for p in path]
+
+        if len(kdl_path) == 1:  # The robot is already in the destination room
+            return "succeeded"
 
         # Get all entities
         entities = self._robot.ed.get_entities()
@@ -134,7 +137,7 @@ class GiveDirections(smach.State):
         angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
         rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
         if abs(angle) < 0.25 * math.pi:
-            sentence += "The {} will be in front of you.\n".format(goal_entity.uuid)
+            sentence += "When you follow me, the {} will be in front of you.\n".format(goal_entity.uuid)
         else:
             side = "left" if angle > 0.0 else "right"
             sentence += "The {} is on your {}.\n".format(goal_entity.uuid, side)
