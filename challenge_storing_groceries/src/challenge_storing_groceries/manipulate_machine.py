@@ -119,6 +119,7 @@ class GrabSingleItem(smach.StateMachine):
                                                 'failed': 'UNLOCK_ITEM_FAIL',
                                                 'object_not_grasped': 'UNLOCK_ITEM_FAIL'})
 
+
             @smach.cb_interface(outcomes=["unlocked"])
             def lock(userdata=None):
                 """ 'Locks' a locking designator """
