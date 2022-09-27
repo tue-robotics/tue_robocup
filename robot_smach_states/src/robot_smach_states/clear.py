@@ -111,7 +111,8 @@ class Clear(smach.StateMachine):
             smach.StateMachine.add('GRAB',
                                    Grab(robot, selected_entity_designator, arm_des),
                                    transitions={'done': 'INSPECT_TARGET',
-                                                'failed': 'failed'}
+                                                'failed': 'failed',
+                                                'object_not_grasped': 'failed'}
                                    )
 
             smach.StateMachine.add('INSPECT_TARGET',

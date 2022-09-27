@@ -516,7 +516,8 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "GRAB_ITEM",
                                     Grab(robot, self.current_item, self.empty_arm_designator),
                                     transitions={   'done'              :'STORE_ITEM',
-                                                    'failed'            :'SAY_GRAB_FAILED'})
+                                                    'failed'            :'SAY_GRAB_FAILED',
+                                                    'object_not_grasped': 'SAY_GRAB_FAILED'})
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad"),

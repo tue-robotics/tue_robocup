@@ -331,7 +331,7 @@ class Grab(smach.StateMachine):
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
         """
-        smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
+        smach.StateMachine.__init__(self, outcomes=['done', 'failed', 'object_not_grasped'])
 
         # Check types or designator resolve types
         check_type(item, Entity)
@@ -357,7 +357,7 @@ class Grab(smach.StateMachine):
 
             smach.StateMachine.add('GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
                                    transitions={'true': 'done',
-                                                'false': 'RETRY_GRAB',
+                                                'false': 'object_not_grasped',
                                                 'failed': 'done',
                                                 'cannot_determine': 'RETRY_GRAB'})
 
@@ -367,7 +367,7 @@ class Grab(smach.StateMachine):
 
             smach.StateMachine.add('RETRY_GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
                                    transitions={'true': 'done',
-                                                'false': 'SAY_FAILED',
+                                                'false': 'object_not_grasped',
                                                 'failed': 'done',
                                                 'cannot_determine': 'SAY_FAILED'})
 

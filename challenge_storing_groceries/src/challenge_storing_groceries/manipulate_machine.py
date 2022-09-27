@@ -116,7 +116,8 @@ class GrabSingleItem(smach.StateMachine):
             smach.StateMachine.add("GRAB_ITEM",
                                    states.Grab(robot, self.grab_designator, self.empty_arm_designator),
                                    transitions={'done': 'UNLOCK_ITEM_SUCCEED',
-                                                'failed': 'UNLOCK_ITEM_FAIL'})
+                                                'failed': 'UNLOCK_ITEM_FAIL',
+                                                'object_not_grasped': 'UNLOCK_ITEM_FAIL'})
 
             @smach.cb_interface(outcomes=["unlocked"])
             def lock(userdata=None):
