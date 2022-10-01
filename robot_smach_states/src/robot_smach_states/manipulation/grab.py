@@ -363,7 +363,7 @@ class Grab(smach.StateMachine):
 
             smach.StateMachine.add('RETRY_GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'RETRY_GRASP_DETECTOR',
-                                                'failed': 'RETRY_GRASP_DETECTOR'})
+                                                'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('RETRY_GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
                                    transitions={'true': 'done',
