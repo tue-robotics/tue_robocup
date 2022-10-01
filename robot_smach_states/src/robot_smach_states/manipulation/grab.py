@@ -25,8 +25,7 @@ class PrepareEdGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_trajectories": ["prepare_grasp"], }
 
-    def __init__(self, robot, arm, grab_entity):
-        # type: (Robot, ArmDesignator, Designator) -> None
+    def __init__(self, robot: Robot, arm: ArmDesignator, grab_entity: Designator) -> None:
         """
         Set the arm in the appropriate position before actually grabbing
 
@@ -82,7 +81,8 @@ class PickUp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_goals": ["carrying_pose"], }
 
-    def __init__(self, robot, arm, grab_entity, check_occupancy=False):
+    def __init__(self, robot: Robot, arm: ArmDesignator, grab_entity: Designator,
+                 check_occupancy: bool = False) -> None:
         """
         Pick up an item given an arm and an entity to be picked up
 
@@ -100,7 +100,7 @@ class PickUp(smach.State):
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
 
-        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
+        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None, \
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
@@ -292,7 +292,7 @@ class ResetOnFailure(smach.State):
 
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot, arm):
+    def __init__(self, robot: Robot, arm: ArmDesignator):
         """
         Constructor
 
@@ -322,7 +322,7 @@ class ResetOnFailure(smach.State):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot, item, arm):
+    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator):
         """
         Let the given robot move to an entity and grab that entity using some arm. Performs grasp detection and retries
         if it's not holding anything
