@@ -369,7 +369,16 @@ class Grab(smach.StateMachine):
                                    transitions={'spoken': grasp_failed_next_state})
 
             smach.StateMachine.add('SAY_RETRY', Say(robot, "I will retry to grab it"),
-                                   transitions={'spoken': 'RETRY_GRAB'})
+                                   transitions={'spoken': 'RETRY_NAVIGATE_TO_GRAB'})
+
+            smach.StateMachine.add('RETRY_NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
+                                   transitions={'unreachable': 'RESET_FAILURE',
+                                                'goal_not_defined': 'RESET_FAILURE',
+                                                'arrived': 'RETRY_PREPARE_GRASP'})
+
+            smach.StateMachine.add('RETRY_PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={'succeeded': 'RETRY_GRAB',
+                                                'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('RETRY_GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'RETRY_GRASP_DETECTOR',
