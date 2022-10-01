@@ -257,7 +257,7 @@ class PickUp(smach.State):
 
         return result
 
-    def associate(self, original_entity):
+    def associate(self, original_entity: Entity) -> Entity:
         """
         Tries to associate the original entity with one of the entities in the world model. This is useful if
         after an update, the original entity is no longer present in the world model. If no good map can be found,
