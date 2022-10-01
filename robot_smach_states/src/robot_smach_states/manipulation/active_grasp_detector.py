@@ -14,7 +14,7 @@ class ActiveGraspDetector(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
     def __init__(self, robot: Robot, arm_designator: ArmDesignator, threshold_difference: float = 0.075,
-                 minimum_position: float = -0.80, max_torque: float = 0.15) -> None:
+                 minimum_position: float = -0.75, max_torque: float = 0.15) -> None:
         """
         State for detecting whether the robot is holding something using the gripper position.
 
