@@ -390,10 +390,13 @@ class Grab(smach.StateMachine):
                                                 'failed': 'done',
                                                 'cannot_determine': 'SAY_RETRY_NOT_SUCCEEDED'})
 
-            smach.StateMachine.add('SAY_RETRY_NOT_SUCCEEDED', Say(robot, "I failed grasping the object"),
-                                   transitions={'spoken': 'RESET_FAILURE'})
+            smach.StateMachine.add('SAY_RETRY_NOT_SUCCEEDED', Say(robot, "I failed grasping the object again"),
+                                   transitions={'spoken': 'RESET_NOT_GRASPED'})
 
             smach.StateMachine.add('RESET_FAILURE', ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
+
+            smach.StateMachine.add('RESET_NOT_GRASPED', ResetOnFailure(robot, arm),
+                                   transitions={'done': 'object_not_grasped'})
 
         check_arm_requirements(self, robot)
