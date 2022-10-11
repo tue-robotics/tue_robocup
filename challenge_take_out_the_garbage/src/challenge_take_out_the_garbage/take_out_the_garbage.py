@@ -3,7 +3,6 @@ import smach
 import rospy
 
 # Robot smach states
-from challenge_take_out_the_garbage.startup_inside_arena import StartChallengeRobustInsideArena
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robocup_knowledge import load_knowledge
@@ -55,7 +54,7 @@ class TakeOutGarbage(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                                   StartChallengeRobustInsideArena(robot, CHALLENGE_KNOWLEDGE.starting_point),
+                                   states.startup.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point, door=False),
                                    transitions={"Done": "SAY_START_CHALLENGE",
                                                 "Aborted": "SAY_START_CHALLENGE",
                                                 "Failed": "SAY_START_CHALLENGE"})
