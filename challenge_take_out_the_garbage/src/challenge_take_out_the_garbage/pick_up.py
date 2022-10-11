@@ -1,12 +1,11 @@
-# ROS
-from pykdl_ros import FrameStamped
-import rospy
 import os
+
+# ROS
+import rospy
 import rospkg
 import numpy
 import smach
 from geometry_msgs.msg import WrenchStamped
-import math
 
 # TU/e
 from smach import cb_interface, CBState
@@ -16,10 +15,7 @@ from robot_smach_states.world_model import look_at_segmentation_area
 import robot_smach_states.util.designators as ds
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arm.arms import PublicArm
-from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBin
-
-from ed_msgs.msg import EntityInfo
 
 from robot_skills.arm.force_sensor import TimeOutException
 
@@ -286,21 +282,6 @@ class PickUpTrash(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         with self:
-            # @cb_interface(outcomes=['done'])
-            # def _joint_goal(_):
-            #     arm = arm_designator.resolve()
-            #     if not arm:
-            #         rospy.logerr("Could not resolve arm")
-            #         return "failed"
-            #     # Send to grab trash pose
-            #     arm.send_joint_goal('grab_trash_bag')
-            #     arm.wait_for_motion_done()
-            #     return 'done'
-            #
-            # smach.StateMachine.add("JOINT_GOAL",
-            #                        CBState(_joint_goal),
-            #                        transitions={'done': 'GO_BIN'})
-
             smach.StateMachine.add("GO_BIN",
                                    states.navigation.NavigateToSymbolic(robot=robot, entity_designator_area_name_map={
                                        trashbin_designator: "in_front_of"},
@@ -381,8 +362,6 @@ class PickUpTrash(smach.StateMachine):
 
 
 if __name__ == '__main__':
-    import os
-    import robot_smach_states.util.designators as ds
     from robot_skills import get_robot
     from robot_skills.arm import arms
 
