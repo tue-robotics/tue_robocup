@@ -30,6 +30,8 @@ class DropTrash(smach.State):
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
+            
+        self._arm_designator.lock()
 
         # Torso up (non-blocking)
         #self._robot.torso.reset()
@@ -57,9 +59,7 @@ class DropTrash(smach.State):
 
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
-        # arm.gripper.send_goal('close')
-        # arm.wait_for_motion_done()
-        self._arm_designator.lock()
+
         return "succeeded"
 
 
