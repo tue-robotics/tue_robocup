@@ -284,10 +284,6 @@ class PickUpTrash(smach.StateMachine):
         :param arm_designator: arm designator resolving to the arm with which to grab
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
-        place_pose_designator = EmptySpotDesignator(robot, trashbin_designator, arm_designator)
-
-        if not place_pose_designator:
-            rospy.loginfo("Cannot resolve place_pose_designator")
 
         with self:
             # @cb_interface(outcomes=['done'])
