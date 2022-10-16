@@ -14,7 +14,7 @@ class ActiveGraspDetector(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
     def __init__(self, robot: Robot, arm_designator: ArmDesignator, threshold_difference: float = 0.075,
-                 minimum_position: float = -0.75, max_torque: float = 0.15) -> None:
+                 max_torque: float = 0.15) -> None:
         """
         State for detecting whether the robot is holding something using the gripper position.
 
@@ -26,7 +26,6 @@ class ActiveGraspDetector(smach.State):
         :param robot: Robot to execute the state with
         :param arm_designator: designator that resolves to arm to check
         :param threshold_difference: Difference between base and final position
-        :param minimum_position: Minimum position to assume that the gripper is holding something
         :param max_torque: Max torque of the gripper to perform the test with
         """
 
@@ -36,7 +35,6 @@ class ActiveGraspDetector(smach.State):
         self.arm_designator = arm_designator
 
         self.threshold_difference = threshold_difference
-        self.minimum_position = minimum_position
         self.max_torque = max_torque
 
     def execute(self, userdata=None) -> str:
@@ -51,7 +49,7 @@ class ActiveGraspDetector(smach.State):
         if first_position is None:
             rospy.logerr("Cannot retrieve first position")
             return 'failed'
-        elif first_position < self.minimum_position:
+        elif first_position < arm.gripper_position_detector.minimum_position:
             rospy.logdebug("First position is {}".format(first_position))
             return 'cannot_determine'
 
