@@ -180,6 +180,7 @@ class HandoverDetector(MockedRobotPart):
 class GripperPositionDetector(MockedRobotPart):
     def __init__(self, robot_name, tf_buffer, *args, **kwargs):
         super(GripperPositionDetector, self).__init__(robot_name, tf_buffer)
+        self.minimum_position = -0.75
         self.detect = AlteredMagicMock(return_value=0.0)
 
 
