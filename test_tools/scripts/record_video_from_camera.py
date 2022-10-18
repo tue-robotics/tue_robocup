@@ -6,7 +6,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 
 
-class image_converter(object):
+class ImageConverter:
     def __init__(self, topic_name, file_name, fps=20):
         self.fps = fps
         self.file_name = file_name
