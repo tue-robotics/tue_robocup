@@ -250,8 +250,7 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                        robot=robot,
                                        filename=os.path.join(
                                            rospkg.RosPack().get_path("challenge_take_out_the_garbage"),
-                                           "src",
-                                           "challenge_take_out_the_garbage",
+                                           "images",
                                            "beun_picture.png"
                                        ),
                                        duration=5),
