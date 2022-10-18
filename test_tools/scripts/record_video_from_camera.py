@@ -39,7 +39,7 @@ class ImageConverter:
 
 def main():
     rospy.init_node("save_video", anonymous=True)
-    ic = image_converter("/hero/head_rgbd_sensor/rgb/image_raw", "video.avi")
+    ic = ImageConverter("image_raw", "video.avi")
     rospy.on_shutdown(ic.clean_shutdown)
     rospy.spin()
 
