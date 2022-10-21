@@ -144,7 +144,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
         else:
             rospy.logerr("No entities found at all :-(")
     except AssertionError as assertion_err:
-        say_fail = Say(robot, sentence=assertion_err.message + ", sorry")
+        say_fail = Say(robot, sentence=(str(assertion_err) + ", sorry"))
         say_fail.execute()
     finally:
         results_writer.writerow(record)
