@@ -20,6 +20,7 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>python3-docopt</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
   <exec_depend>python3-rospkg</exec_depend>
   <exec_depend>tf_conversions</exec_depend>
 
