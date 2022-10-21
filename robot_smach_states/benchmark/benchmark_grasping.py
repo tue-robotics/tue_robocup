@@ -111,10 +111,10 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
                 entity = grasp_entity.resolve()  # type: Entity
                 if entity:
-                    vector_stamped = entity.pose  # type: VectorStamped
-                    record['x'] = '{:.3f}'.format(vector_stamped.vector.x())
-                    record['y'] = '{:.3f}'.format(vector_stamped.vector.y())
-                    record['z'] = '{:.3f}'.format(vector_stamped.vector.z())
+                    frame_stamped = entity.pose  # type: VectorStamped
+                    record['x'] = '{:.3f}'.format(frame_stamped.frame.p.x())
+                    record['y'] = '{:.3f}'.format(frame_stamped.frame.p.y())
+                    record['z'] = '{:.3f}'.format(frame_stamped.frame.p.z())
 
                 grab_state = Grab(robot, grasp_entity, arm)
 
