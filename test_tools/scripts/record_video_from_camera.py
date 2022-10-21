@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import argparse
 import sys
 import rospy
 import cv2
@@ -41,12 +42,17 @@ class ImageConverter:
 
 
 def main():
-    image_topic = "/hero/head_rgbd_sensor/rgb/image_raw"
-    video_name = "video.avi"
-    if len(sys.argv) > 1:
-        image_topic = sys.argv[1]
-        if len(sys.argv) > 2:
-            video_name = sys.argv[2]
+    parser = argparse.ArgumentParser(
+        description='Record video from a camera image topic',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--topic", default="/hero/head_rgbd_sensor/rgb/image_raw",
+                        help="image topic of type sensor_msgs/Image encoded in bgr8")
+    parser.add_argument("--file", default="video.avi",
+                        help="name of the video file to save to")
+    args = parser.parse_args()
+
+    image_topic = args.topic
+    video_name = args.file
 
     rospy.init_node("save_video", anonymous=True)
     rospy.loginfo(f"Starting video recorder for topic {image_topic} saving to video file {video_name}")
