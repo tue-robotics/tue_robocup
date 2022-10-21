@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import sys
 import rospy
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -19,9 +20,9 @@ class ImageConverter:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             rospy.logerr(e)
-            raise
         else:
             if self.video_writer is None:
+                rospy.loginfo(f"Got image on topic, creating video writer with {self.fps} fps")
                 rows, cols, _ = cv_image.shape
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.video_writer = cv2.VideoWriter(self.file_name, fourcc, self.fps, (cols, rows))
@@ -31,15 +32,25 @@ class ImageConverter:
     def clean_shutdown(self):
         if self.video_writer is not None:
             self.video_writer.release()
-        rospy.loginfo(f"Saving video file {self.file_name}")
+            rospy.loginfo(f"Saving video file {self.file_name}")
+        else:
+            rospy.loginfo(f"No video saved, no image received on topic")
 
     def __del__(self):
         self.clean_shutdown()
 
 
 def main():
+    image_topic = "/hero/head_rgbd_sensor/rgb/image_raw"
+    video_name = "video.avi"
+    if len(sys.argv) > 1:
+        image_topic = sys.argv[1]
+        if len(sys.argv) > 2:
+            video_name = sys.argv[2]
+
     rospy.init_node("save_video", anonymous=True)
-    ic = ImageConverter("image_raw", "video.avi")
+    rospy.loginfo(f"Starting video recorder for topic {image_topic} saving to video file {video_name}")
+    ic = ImageConverter(image_topic, video_name)
     rospy.on_shutdown(ic.clean_shutdown)
     rospy.spin()
 
