@@ -17,14 +17,15 @@ from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
+from ..manipulation.active_grasp_detector import ActiveGraspDetector
+from ..human_interaction import Say
 
 
 class PrepareEdGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_trajectories": ["prepare_grasp"], }
 
-    def __init__(self, robot, arm, grab_entity):
-        # type: (Robot, ArmDesignator, Designator) -> None
+    def __init__(self, robot: Robot, arm: ArmDesignator, grab_entity: Designator) -> None:
         """
         Set the arm in the appropriate position before actually grabbing
 
@@ -80,7 +81,8 @@ class PickUp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_goals": ["carrying_pose"], }
 
-    def __init__(self, robot, arm, grab_entity, check_occupancy=False):
+    def __init__(self, robot: Robot, arm: ArmDesignator, grab_entity: Designator,
+                 check_occupancy: bool = False) -> None:
         """
         Pick up an item given an arm and an entity to be picked up
 
@@ -98,7 +100,7 @@ class PickUp(smach.State):
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
 
-        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
+        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None, \
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
@@ -255,7 +257,7 @@ class PickUp(smach.State):
 
         return result
 
-    def associate(self, original_entity):
+    def associate(self, original_entity: Entity) -> Entity:
         """
         Tries to associate the original entity with one of the entities in the world model. This is useful if
         after an update, the original entity is no longer present in the world model. If no good map can be found,
@@ -290,7 +292,7 @@ class ResetOnFailure(smach.State):
 
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot, arm):
+    def __init__(self, robot: Robot, arm: ArmDesignator):
         """
         Constructor
 
@@ -320,19 +322,24 @@ class ResetOnFailure(smach.State):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot, item, arm):
+    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, retry: bool = False) -> None:
         """
-        Let the given robot move to an entity and grab that entity using some arm
+        Let the given robot move to an entity and grab that entity using some arm. Performs grasp detection and retries
+        if it's not holding anything
 
         :param robot: Robot to use
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
+        :param retry: On True the robot will retry the grab if it fails to grasp the object
         """
-        smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
+        smach.StateMachine.__init__(self, outcomes=['done', 'failed', 'object_not_grasped'])
 
         # Check types or designator resolve types
         check_type(item, Entity)
         check_type(arm, PublicArm)
+
+        # Check retry
+        grasp_failed_next_state = 'SAY_RETRY' if retry else 'object_not_grasped'
 
         with self:
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
@@ -349,10 +356,47 @@ class Grab(smach.StateMachine):
                                                 'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
-                                   transitions={'succeeded': 'done',
+                                   transitions={'succeeded': 'GRASP_DETECTOR',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
+            smach.StateMachine.add('GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
+                                   transitions={'true': 'done',
+                                                'false': 'SAY_GRASP_NOT_SUCCEEDED',
+                                                'failed': 'done',
+                                                'cannot_determine': 'SAY_GRASP_NOT_SUCCEEDED'})
+
+            smach.StateMachine.add('SAY_GRASP_NOT_SUCCEEDED', Say(robot, "I failed grasping the object"),
+                                   transitions={'spoken': grasp_failed_next_state})
+
+            smach.StateMachine.add('SAY_RETRY', Say(robot, "I will retry to grab it"),
+                                   transitions={'spoken': 'RETRY_NAVIGATE_TO_GRAB'})
+
+            smach.StateMachine.add('RETRY_NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
+                                   transitions={'unreachable': 'RESET_FAILURE',
+                                                'goal_not_defined': 'RESET_FAILURE',
+                                                'arrived': 'RETRY_PREPARE_GRASP'})
+
+            smach.StateMachine.add('RETRY_PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={'succeeded': 'RETRY_GRAB',
+                                                'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add('RETRY_GRAB', PickUp(robot, arm, item),
+                                   transitions={'succeeded': 'RETRY_GRASP_DETECTOR',
+                                                'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add('RETRY_GRASP_DETECTOR', ActiveGraspDetector(robot, arm),
+                                   transitions={'true': 'done',
+                                                'false': 'SAY_RETRY_NOT_SUCCEEDED',
+                                                'failed': 'done',
+                                                'cannot_determine': 'SAY_RETRY_NOT_SUCCEEDED'})
+
+            smach.StateMachine.add('SAY_RETRY_NOT_SUCCEEDED', Say(robot, "I failed grasping the object again"),
+                                   transitions={'spoken': 'RESET_NOT_GRASPED'})
+
+            smach.StateMachine.add('RESET_FAILURE', ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
+
+            smach.StateMachine.add('RESET_NOT_GRASPED', ResetOnFailure(robot, arm),
+                                   transitions={'done': 'object_not_grasped'})
 
         check_arm_requirements(self, robot)

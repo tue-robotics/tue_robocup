@@ -7,7 +7,7 @@ from robot_skills.robot_part import RobotPart
 
 
 class GripperPositionDetector(RobotPart):
-    def __init__(self, robot_name: str, tf_buffer: str, joint_topic: str) -> None:
+    def __init__(self, robot_name: str, tf_buffer: str, joint_topic: str, minimum_position: float) -> None:
         """
         Class for getting the position of the hand motor joint (how much the gripper is open or closed)
         Values go from 1 (open) to -1 (closed)
@@ -15,6 +15,7 @@ class GripperPositionDetector(RobotPart):
         :param robot_name: Name of the robot
         :param tf_buffer: tf2_ros.Buffer for use in RobotPart
         :param joint_topic: Topic to use for measurement
+        :param minimum_position: Minimum position to assume that the gripper is holding something
         """
 
         super(GripperPositionDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
@@ -24,6 +25,7 @@ class GripperPositionDetector(RobotPart):
         self.current_position = None
         self.store_position = False  # Flag to store the position
         self.start_time = None
+        self.minimum_position = minimum_position
 
     def _joint_callback(self, msg: JointState) -> None:
         """

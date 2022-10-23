@@ -153,6 +153,7 @@ class Arm(MockedRobotPart):
         # add parts
         self.gripper = Gripper(robot_name, tf_buffer)
         self.handover_detector = HandoverDetector(robot_name, tf_buffer)
+        self.gripper_position_detector = GripperPositionDetector(robot_name, tf_buffer)
 
     def collect_gripper_types(self, gripper_type):
         return gripper_type
@@ -174,6 +175,13 @@ class HandoverDetector(MockedRobotPart):
         super(HandoverDetector, self).__init__(robot_name, tf_buffer)
         self.handover_to_human = AlteredMagicMock()
         self.handover_to_robot = AlteredMagicMock()
+
+
+class GripperPositionDetector(MockedRobotPart):
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(GripperPositionDetector, self).__init__(robot_name, tf_buffer)
+        self.minimum_position = -0.75
+        self.detect = AlteredMagicMock(return_value=0.0)
 
 
 class Base(MockedRobotPart):

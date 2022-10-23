@@ -275,7 +275,9 @@ class SelfCleanup(smach.StateMachine):
 
             smach.StateMachine.add("GRAB",
                                    Grab(robot, selected_entity_designator, arm_designator),
-                                   transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
+                                   transitions={"done": "SAY_GRAB_SUCCESS",
+                                                "failed": "ARM_RESET",
+                                                "object_not_grasped": "ARM_RESET"})
 
             smach.StateMachine.add("ARM_RESET", ArmToJointConfig(robot, arm_designator, "reset"),
                                    transitions={"succeeded": "SAY_GRAB_FAILED", "failed": "SAY_GRAB_FAILED"})

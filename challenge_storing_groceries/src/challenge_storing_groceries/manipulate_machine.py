@@ -21,6 +21,7 @@ class DefaultGrabDesignator(ds.Designator):
     """ Designator to pick the closest item on top of the table to grab. This is used for testing
 
     """
+
     def __init__(self, robot, surface_designator, area_description):
         """ Constructor
 
@@ -116,7 +117,8 @@ class GrabSingleItem(smach.StateMachine):
             smach.StateMachine.add("GRAB_ITEM",
                                    states.Grab(robot, self.grab_designator, self.empty_arm_designator),
                                    transitions={'done': 'UNLOCK_ITEM_SUCCEED',
-                                                'failed': 'UNLOCK_ITEM_FAIL'})
+                                                'failed': 'UNLOCK_ITEM_FAIL',
+                                                'object_not_grasped': 'UNLOCK_ITEM_FAIL'})
 
             @smach.cb_interface(outcomes=["unlocked"])
             def lock(userdata=None):
@@ -138,6 +140,7 @@ class GrabSingleItem(smach.StateMachine):
 class PlaceSingleItem(smach.State):
     """ Tries to place an object. A 'place' statemachine is constructed dynamically since this makes it easier to
      build a statemachine (have we succeeded in grasping the objects?)"""
+
     def __init__(self, robot, place_designator):
         """ Constructor
 
