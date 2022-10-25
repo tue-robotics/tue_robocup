@@ -118,11 +118,11 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_goals
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.3):
         self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_goals=['{}'])".format(configuration))
         return self._arm.send_joint_goal(configuration, timeout=timeout,
-                                         max_joint_vel=max_joint_vel)
+                                         max_joint_vel=max_joint_vel, joint_acc=joint_acc)
 
     # Joint trajectories
     def has_joint_trajectory(self, configuration):
@@ -131,11 +131,11 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7):
+    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7, joint_acc=0.3):
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
-                                               max_joint_vel=max_joint_vel)
+                                               max_joint_vel=max_joint_vel, joint_acc=joint_acc)
 
     def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
                   allowed_touch_objects=None):
@@ -487,7 +487,7 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.3):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration:(str) name of configuration, configuration should be loaded as parameter
@@ -498,12 +498,12 @@ class Arm(RobotPart):
         if configuration in self.default_configurations:
             return self._send_joint_trajectory([self.default_configurations[configuration]],
                                                timeout=rospy.Duration.from_sec(timeout),
-                                               max_joint_vel=max_joint_vel)
+                                               max_joint_vel=max_joint_vel, joint_acc=joint_acc)
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7):
+    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.3):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to the arm
 
@@ -515,7 +515,7 @@ class Arm(RobotPart):
         if configuration in self.default_trajectories:
             return self._send_joint_trajectory(self.default_trajectories[configuration],
                                                timeout=rospy.Duration.from_sec(timeout),
-                                               max_joint_vel=max_joint_vel)
+                                               max_joint_vel=max_joint_vel, joint_acc=joint_acc)
         else:
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
@@ -528,7 +528,7 @@ class Arm(RobotPart):
         """
         return self.send_joint_goal('reset', timeout=0.0)
 
-    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_acc=0.3):
         """
         Low level method that sends a array of joint references to the arm.
 
@@ -556,6 +556,9 @@ class Arm(RobotPart):
         if isinstance(max_joint_vel, (float, int)):
             max_joint_vel = [max_joint_vel]*len(joint_names)
 
+        if isinstance(max_joint_vel, (float, int)):
+            joint_acc = [joint_acc]*len(joint_names)
+
         if isinstance(max_joint_vel, list):
             if isinstance(max_joint_vel[0], (int, float)):
                 if len(max_joint_vel) is not len(joint_names):
@@ -572,9 +575,10 @@ class Arm(RobotPart):
             if len(joints_reference) != len(joint_names):
                 rospy.logwarn('Please use the correct {} number of joint references (current = {})'
                               .format(len(joint_names), len(joints_references)))
-            time_from_start += max(x/y for x, y in zip(max_diff, max_joint_vel))
+            time_from_start += max(x/y + 2 for x, y in zip(max_diff, max_joint_vel))
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
+                accelerations=joint_acc,
                 time_from_start=rospy.Duration.from_sec(time_from_start)))
 
         joint_trajectory = JointTrajectory(joint_names=joint_names,
