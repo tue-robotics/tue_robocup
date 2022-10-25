@@ -556,7 +556,7 @@ class Arm(RobotPart):
         if isinstance(max_joint_vel, (float, int)):
             max_joint_vel = [max_joint_vel]*len(joint_names)
 
-        if isinstance(max_joint_vel, (float, int)):
+        if isinstance(joint_acc, (float, int)):
             joint_acc = [joint_acc]*len(joint_names)
 
         if isinstance(max_joint_vel, list):
