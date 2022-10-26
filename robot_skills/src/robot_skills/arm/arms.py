@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import math
 import time
 
 import PyKDL as kdl
@@ -118,7 +119,7 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_goals
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.3):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.5):
         self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_goals=['{}'])".format(configuration))
         return self._arm.send_joint_goal(configuration, timeout=timeout,
@@ -131,7 +132,7 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7, joint_acc=0.3):
+    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7, joint_acc=0.5):
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
@@ -487,12 +488,13 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.3):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.5):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration:(str) name of configuration, configuration should be loaded as parameter
         :param timeout:(secs) timeout in seconds
         :param max_joint_vel:(int,float,[int]) speed the robot can have when getting to the desired configuration
+        :param joint_acc:(int,float,[int]) acceleration the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_configurations:
@@ -503,13 +505,14 @@ class Arm(RobotPart):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.3):
+    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.5):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to the arm
 
         :param configuration:(str) name of configuration, configuration should be loaded as parameter
         :param timeout:(secs) timeout in seconds
         :param max_joint_vel:(int,float,[int]) speed the robot can have when getting to the desired configuration
+        :param joint_acc:(int,float,[int]) acceleration the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_trajectories:
@@ -528,7 +531,7 @@ class Arm(RobotPart):
         """
         return self.send_joint_goal('reset', timeout=0.0)
 
-    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_acc=0.3):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_acc=0.5):
         """
         Low level method that sends a array of joint references to the arm.
 
@@ -539,6 +542,9 @@ class Arm(RobotPart):
         :param joints_references:[str] list of joint configurations,
             which should be a list of the length equal to the number of joints to be moved
         :param max_joint_vel:(int,float,[int], [float]) speed the robot can have when getting to the desired
+            configuration. A single value can be given, which will be used for all joints, or a list of values can be given
+            in which the order has to agree with the joints according to the joints_references.
+        :param joint_acc:(int,float,[int], [float]) acceleration the robot can have when getting to the desired
             configuration. A single value can be given, which will be used for all joints, or a list of values can be given
             in which the order has to agree with the joints according to the joints_references.
         :param timeout:(secs) timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not
@@ -566,6 +572,13 @@ class Arm(RobotPart):
                                  "Please give the velocities for the following joints (in the correct order!): {}"
                                  .format(len(max_joint_vel), len(joint_names), joint_names))
 
+        if isinstance(joint_acc, list):
+            if isinstance(joint_acc[0], (int, float)):
+                if len(joint_acc) is not len(joint_names):
+                    rospy.logerr("The length of 'joint_acc' is {} and the length of 'joint_names' is {}. \n"
+                                 "Please give the accelerations for the following joints (in the correct order!): {}"
+                                 .format(len(joint_acc), len(joint_names), joint_names))
+
         ps = []
         time_from_start = 0.0
         start_joint_state = self.get_joint_states()
@@ -575,7 +588,7 @@ class Arm(RobotPart):
             if len(joints_reference) != len(joint_names):
                 rospy.logwarn('Please use the correct {} number of joint references (current = {})'
                               .format(len(joint_names), len(joints_references)))
-            time_from_start += max(x/y + 2 for x, y in zip(max_diff, max_joint_vel))
+            time_from_start += max(max(x/y, math.sqrt(2*x/y)) for x, y in zip(max_diff, joint_acc))
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
                 accelerations=joint_acc,
