@@ -20,6 +20,12 @@ from robot_skills.robot_part import RobotPart
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
 
+class JointConstants(object):
+    # Commonly used values when sending goals to a joint
+    MAX_JOINT_VEL = 0.7
+    JOINT_ACC = 0.7
+    TIMEOUT = 5.0
+
 
 # Specific types of gripper.
 class GripperTypes(object):
@@ -119,7 +125,8 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_goals
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.5):
+    def send_joint_goal(self, configuration, timeout=JointConstants.TIMEOUT, max_joint_vel=JointConstants.MAX_JOINT_VEL,
+                        joint_acc=JointConstants.JOINT_ACC):
         self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_goals=['{}'])".format(configuration))
         return self._arm.send_joint_goal(configuration, timeout=timeout,
@@ -132,7 +139,8 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7, joint_acc=0.5):
+    def send_joint_trajectory(self, configuration, timeout=JointConstants.TIMEOUT,
+                              max_joint_vel=JointConstants.MAX_JOINT_VEL, joint_acc=JointConstants.JOINT_ACC):
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
@@ -488,7 +496,8 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.5):
+    def send_joint_goal(self, configuration, timeout=JointConstants.TIMEOUT, max_joint_vel=JointConstants.MAX_JOINT_VEL,
+                        joint_acc=JointConstants.JOINT_ACC):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration:(str) name of configuration, configuration should be loaded as parameter
@@ -505,7 +514,8 @@ class Arm(RobotPart):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7, joint_acc=0.5):
+    def send_joint_trajectory(self, configuration, timeout=JointConstants.TIMEOUT,
+                              max_joint_vel=JointConstants.MAX_JOINT_VEL, joint_acc=JointConstants.JOINT_ACC):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to the arm
 
@@ -531,7 +541,8 @@ class Arm(RobotPart):
         """
         return self.send_joint_goal('reset', timeout=0.0)
 
-    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_acc=0.5):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=JointConstants.MAX_JOINT_VEL,
+                               timeout=rospy.Duration(JointConstants.TIMEOUT), joint_acc=JointConstants.JOINT_ACC):
         """
         Low level method that sends a array of joint references to the arm.
 
@@ -588,7 +599,7 @@ class Arm(RobotPart):
             if len(joints_reference) != len(joint_names):
                 rospy.logwarn('Please use the correct {} number of joint references (current = {})'
                               .format(len(joint_names), len(joints_references)))
-            time_from_start += max(max(x/y, math.sqrt(2*x/y)) for x, y in zip(max_diff, joint_acc))
+            time_from_start += max(x/y + y/2 for x, y in zip(max_diff, joint_acc))
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
                 accelerations=joint_acc,
