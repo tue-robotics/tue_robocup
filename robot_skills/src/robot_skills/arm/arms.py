@@ -1,7 +1,7 @@
 from __future__ import print_function, annotations
 
 import time
-from typing import Optional, Union, List, Set, Callable
+from typing import Callable, List, Optional, Set, Union
 
 import PyKDL as kdl
 
