@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Callable, List, Optional, Set, Union
 
 import time
@@ -76,7 +77,7 @@ class PublicArm(object):
     :vartype _available_joint_trajectories: set of str
 
     """
-    def __init__(self, arm: "Arm", available_gripper_types: Set[str], default_gripper_type: Optional[str],
+    def __init__(self, arm: Arm, available_gripper_types: Set[str], default_gripper_type: Optional[str],
                  has_occupied_by: bool, allow_force_sensor: bool, available_joint_goals: Set[str],
                  available_joint_trajectories: Set[str]) -> None:
         self._arm = arm
