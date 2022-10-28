@@ -149,11 +149,11 @@ class PublicArm(object):
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
                                                max_joint_vel=max_joint_vel)
 
-    def send_goal(self, framestamped: FrameStamped, timeout: float = 30.0, pre_grasp: bool = False,
+    def send_goal(self, frame_stamped: FrameStamped, timeout: float = 30.0, pre_grasp: bool = False,
                   first_joint_pos_only: bool = False, allowed_touch_objects: Optional[List[str]] = None) -> bool:
         if allowed_touch_objects is None:
             allowed_touch_objects = list()
-        return self._arm.send_goal(framestamped, timeout, pre_grasp, first_joint_pos_only, allowed_touch_objects)
+        return self._arm.send_goal(frame_stamped, timeout, pre_grasp, first_joint_pos_only, allowed_touch_objects)
 
     # Gripper
     @property
