@@ -11,6 +11,7 @@ from robot_skills.get_robot import get_robot
 from robot_skills.robot import Robot
 
 # Robot Smach States
+from robot_smach_states.util.designators.core import VariableDesignator
 from robot_smach_states.human_interaction import LearnPerson, Say
 
 
@@ -31,17 +32,19 @@ def get_operator_name(recognition: Recognition) -> str:
 
 
 class RecognizePerson(smach.State):
-    def __init__(self, robot: Robot):
+    def __init__(self, robot: Robot, name_designator: VariableDesignator):
         """
         State to recognize a person. Detects faces, stores name with highest probability in a designator
 
         :param robot: robot API object
+        :param name_designator: VariableDesignator to write the name to
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         # ToDo: add threshold
         # ToDo: provide designator to store the person name
         # ToDo: move this state to the src folder
         self._robot = robot
+        self._name_designator = name_designator
 
     def execute(self, userdata=None):
         self._robot.head.look_at_standing_person(timeout=3.0)
@@ -53,7 +56,7 @@ class RecognizePerson(smach.State):
             rospy.loginfo("Did not recognize the operator")
             return "failed"
 
-        # ToDo: write this in the designator
+        self._name_designator.write(operator_name)
         return "succeeded"
 
 
@@ -65,6 +68,8 @@ class ExamplePeopleRecognition(smach.StateMachine):
         :param robot: robot API object
         """
         smach.StateMachine.__init__(self, outcomes=["Done"])
+
+        name_designator = VariableDesignator(resolve_type=str)
 
         with self:
             smach.StateMachine.add(
@@ -78,7 +83,7 @@ class ExamplePeopleRecognition(smach.StateMachine):
 
             smach.StateMachine.add(
                 "RECOGNIZE_PERSON",
-                RecognizePerson(robot=robot),
+                RecognizePerson(robot=robot, name_designator=name_designator.writeable),
                 transitions={
                     "succeeded": "SAY_RECOGNIZED",
                     "failed": "SAY_RECOGNITION_FAILED",
@@ -91,10 +96,9 @@ class ExamplePeopleRecognition(smach.StateMachine):
                 transitions={"spoken": "Done"},
             )
 
-            # ToDo: add the designator here as well to pronounce the operator name
             smach.StateMachine.add(
                 "SAY_RECOGNIZED",
-                Say(robot=robot, sentence="Hey, I have seen you before"),
+                Say(robot=robot, sentence="Hey {name}", name=name_designator),
                 transitions={"spoken": "Done"},
             )
 
