@@ -254,7 +254,7 @@ class Perception(RobotPart):
             rospy.logwarn(err_msg)
             raise RuntimeError(err_msg)
         else:
-            return projected_recognitions[0]
+            return projected_recognitions[0][0]
 
     @staticmethod
     def get_best_face_recognition(recognitions, desired_label, probability_threshold=4.0):
