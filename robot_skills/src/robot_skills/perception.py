@@ -1,11 +1,15 @@
 # System
+import functools
+import math
+import typing
 from threading import Condition, Event
 
 # ROS
-import actionlib
 import message_filters
+import PyKDL as kdl
 import rospy
 from image_recognition_msgs.msg import Annotation
+
 # TU/e Robotics
 from image_recognition_msgs.msg import Recognition
 from image_recognition_msgs.srv import Annotate, GetFaceProperties, Recognize, RecognizeResponse
@@ -191,15 +195,66 @@ class Perception(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
-    def detect_face(self, image: Image = None) -> Recognition:
+    def detect_operator_face(self, image: Image = None) -> Recognition:
         """
         Snap an image with the camera and return the detected face with the largest ROI
 
         :param image: image to use for recognition
         :return: image_recognition_msgs/Recognition
+        :raises: RuntimeError
         """
-        # ToDo Arpit
-        raise NotImplementedError("Arpit would implement this (new) method")
+        recognitions = self.detect_faces()
+        if not recognitions:
+            raise RuntimeError("No faces detected")
+        operator_recognition = self._filter_operator_recognition(recognitions)
+        return operator_recognition
+
+    def _filter_operator_recognition(
+        self,
+        recognitions: typing.List[Recognition],
+        expected_operator_pos: typing.Optional[kdl.Vector] = None,
+        threshold: float = 0.5,
+    ) -> Recognition:
+        """
+        For all provided recognitions, project the ROI and determine the one closest to the expected operator position,
+        computed on the floor plane.
+
+        N.B.: it might make sense to move this method to 'Perception.py' as 'detect_operator_face'
+
+        :param recognitions: recognitions
+        :param expected_operator_pos: expected position of the operator w.r.t. the robot
+        :param threshold: if the distance between the recognition and the expected pos exceed the threshold, an error
+        is raised
+        :return: Recognition closed to the expected position
+        :raises: RuntimeError
+        """
+        frame_id = self._robot.base_link_frame
+        projected_recognitions = [(rcg, self.project_roi(rcg.roi, frame_id)) for rcg in recognitions]
+        expected_operator_pos = kdl.Vector(0.8, 0.0, 0.0) if expected_operator_pos is None else expected_operator_pos
+
+        def _distance_from_expected(
+            expected_pos: kdl.Vector,
+            projected_tup: typing.Tuple[Recognition, VectorStamped]
+        ) -> float:
+            """
+            Helper method to compute the distance between the projected tuple and the expected position
+
+            :param expected_pos:
+            :param projected_tup:
+            :return:
+            """
+            dx = projected_tup[1].vector.x() - expected_pos.x()
+            dy = projected_tup[1].vector.y() - expected_pos.y()
+            return math.hypot(dx, dy)
+
+        projected_recognitions.sort(functools.partial(_distance_from_expected, expected_operator_pos))
+        best_distance = _distance_from_expected(expected_operator_pos, projected_recognitions[0])
+        if best_distance > threshold:
+            err_msg = f"Distance between face detection and expected pos {best_distance} exceeds threshold {threshold}"
+            rospy.logwarn(err_msg)
+            raise RuntimeError(err_msg)
+        else:
+            return projected_recognitions[0]
 
     @staticmethod
     def get_best_face_recognition(recognitions, desired_label, probability_threshold=4.0):
