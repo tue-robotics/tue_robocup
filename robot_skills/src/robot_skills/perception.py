@@ -117,7 +117,7 @@ class Perception(RobotPart):
         # If necessary, transform the point
         if frame_id is not None:
             rospy.loginfo("Transforming roi to {}".format(frame_id))
-            result = self.tf_buffer.transform(result, frame_id)
+            result = self.tf_buffer.transform(result, frame_id, timeout=rospy.Duration(0.5))
 
         return result
 
@@ -228,9 +228,9 @@ class Perception(RobotPart):
         :return: Recognition closed to the expected position
         :raises: RuntimeError
         """
-        frame_id = self._robot.base_link_frame
+        frame_id = f"{self.robot_name}/base_link"
         projected_recognitions = [(rcg, self.project_roi(rcg.roi, frame_id)) for rcg in recognitions]
-        expected_operator_pos = kdl.Vector(0.8, 0.0, 0.0) if expected_operator_pos is None else expected_operator_pos
+        expected_operator_pos = kdl.Vector(1.0, 0.0, 0.0) if expected_operator_pos is None else expected_operator_pos
 
         def _distance_from_expected(
             expected_pos: kdl.Vector,
@@ -247,7 +247,7 @@ class Perception(RobotPart):
             dy = projected_tup[1].vector.y() - expected_pos.y()
             return math.hypot(dx, dy)
 
-        projected_recognitions.sort(functools.partial(_distance_from_expected, expected_operator_pos))
+        projected_recognitions.sort(key=functools.partial(_distance_from_expected, expected_operator_pos))
         best_distance = _distance_from_expected(expected_operator_pos, projected_recognitions[0])
         if best_distance > threshold:
             err_msg = f"Distance between face detection and expected pos {best_distance} exceeds threshold {threshold}"
