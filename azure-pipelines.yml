@@ -3,7 +3,7 @@ trigger:
 
 schedules:
   - cron: '0 1 * * *'
-    displayName: 'Nightly'
+    displayName: Nightly
     branches:
       include:
         - master
@@ -14,25 +14,25 @@ variables:
 jobs:
   - job: package_selection
     ${{ if eq(variables['Build.Reason'], 'PullRequest')}}:
-      displayName: 'Package selection (PR)'
+      displayName: Package selection (PR)
     ${{ else }}:
-      displayName: 'Package selection'
+      displayName: Package selection
     pool:
-      vmImage: 'ubuntu latest'
+      vmImage: ubuntu-latest
     condition: and(succeeded(), not(canceled()))
     steps:
       - task: Bash@3
-        displayName: 'Get CI scripts'
+        displayName: Get CI scripts
         inputs:
-          targetType: 'inline'
+          targetType: inline
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/azure_commit_range.py
       - task: Bash@3
-        displayName: 'Determine packages to be build'
+        displayName: Determine packages to be build
         name: matrix
         inputs:
-          targetType: 'inline'
+          targetType: inline
           script: |
             export COMMIT_RANGE=$(python3 ./azure_commit_range.py)
             ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
@@ -45,7 +45,7 @@ jobs:
     ${{ else }}:
       displayName: 'Install, build & test:'
     pool:
-      vmImage: 'ubuntu latest'
+      vmImage: ubuntu-latest
     dependsOn: package_selection
     condition: and(succeeded(), not(canceled()), ne(dependencies.package_selection.outputs['matrix.json_string'], '{}'))
     strategy:
@@ -61,9 +61,9 @@ jobs:
           "$(Agent.OS)" | ccache
         path: $(HOME)/.ccache
     - task: Bash@3
-      displayName: 'Get CI scripts'
+      displayName: Get CI scripts
       inputs:
-        targetType: 'inline'
+        targetType: inline
         script: |
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
@@ -71,31 +71,31 @@ jobs:
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/set-branch.sh
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
-      displayName: 'Set Branch'
+      displayName: Set Branch
       inputs:
-        targetType: 'inline'
+        targetType: inline
         script: |
           source ./set-branch.sh --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}
           echo "##vso[task.setvariable variable=BRANCH]$BRANCH"
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
-      displayName: 'Install'
+      displayName: Install
       inputs:
-        targetType: 'inline'
+        targetType: inline
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=$BRANCH --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
+          bash install-package.sh --package=$PACKAGE --branch=$BRANCH --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env-ros-noetic"
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
-      displayName: 'Build'
+      displayName: Build
       inputs:
-        targetType: 'inline'
+        targetType: inline
         script: |
           bash build-package.sh --package=$PACKAGE
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
-      displayName: 'Test'
+      displayName: Test
       inputs:
-        targetType: 'inline'
+        targetType: inline
         script: |
           bash test-package.sh --package=$PACKAGE
       condition: and(succeeded(), not(canceled()))

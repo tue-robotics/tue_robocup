@@ -11,11 +11,8 @@ import PyKDL as kdl
 from pykdl_ros import VectorStamped
 
 # Robot skills
-from ..utility import WaitTime
 from ..util.designators import EdEntityDesignator
-
 from . import navigation
-from ..human_interaction.human_interaction import Say
 from .constraint_functions import symbolic_constraint, look_at_constraint, combine_constraints
 
 
@@ -96,7 +93,7 @@ class TourGuide(object):
         if room.uuid not in self._passed_room_ids:
             self._passed_room_ids.append(room.uuid)
             rospy.logdebug("describe entering room: {}.\t passed rooms is now {}".format(room.uuid, self._passed_room_ids))
-            return "We now enter the {}".format(room.uuid)
+            return "We are now in the {}".format(room.uuid)
 
         # not entering a new room, checking furniture
         furniture_objects = self._furniture_entities_room[room]  # Furniture objects in our current room
@@ -186,26 +183,31 @@ class ExecutePlanGuidance(smach.State):
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for
     operator" is returned.
     """
-    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
-        # type: (Robot, float, float) -> None
+    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5, describe_near_objects=True):
+        # type: (Robot, float, float, bool) -> None
         """
         :param robot: (Robot) robot api object
         :param operator_distance: (float) check for the operator to be within this range of the robot
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
             this radius
+        :param describe_near_objects: (bool) If true robot will describe near objects while guiding
         """
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
         self._distance_threshold = 1.0  # Only check if the operator is there once we've driven for this distance
         self._operator_distance = operator_distance  # Operator is expected to follow the robot around this distance
         self._operator_radius = operator_radius  # Operator is expected to be within this radius around the position
+        self.describe_near_objects = describe_near_objects
         # defined by the follow distance
         self._tourguide = TourGuide(robot)
 
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
-        self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, 0.0, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
+        self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(), frame_id=self.robot.base_link_frame))
+
+        rospy.sleep(1)  # Allow robot to drive a bit before speaking
+        self.robot.speech.speak("Keep looking at me while you follow me", block=True)
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
@@ -230,7 +232,7 @@ class ExecutePlanGuidance(smach.State):
             if distance > self._distance_threshold:
                 rospy.logdebug(
                     "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
-                if self._check_operator():
+                if self._operator_distance < 0 or self._check_operator():
                     distance = 0.0
                     rospy.loginfo("Found operator, continuing following plan")
                 else:
@@ -238,9 +240,11 @@ class ExecutePlanGuidance(smach.State):
                     self.robot.base.local_planner.cancelCurrentPlan()
                     return "lost_operator"
 
-            sentence = self._tourguide.describe_near_objects()
-            if sentence != "":
-                self.robot.speech.speak(sentence)
+            # Only describe objects if desired
+            if self.describe_near_objects:
+                sentence = self._tourguide.describe_near_objects()
+                if sentence != "":
+                    self.robot.speech.speak(sentence)
 
             rate.sleep()
 
@@ -313,25 +317,42 @@ class WaitForOperator(smach.State):
 
 
 class Guide(smach.StateMachine):
-    def __init__(self, robot, constraint_function, operator_distance=1.0, operator_radius=0.5):
-        # type: (Robot, function, float, float) -> None
+    def __init__(self, robot, constraint_function, operator_distance=1.0, operator_radius=0.5,
+                 describe_near_objects=True):
+        # type: (Robot, function, float, float, bool) -> None
         """
         Base Smach state to guide an operator to a designated position
 
         :param robot: (Robot) robot api object
         :param operator_distance: (float) check for the operator to be within this range of the robot
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
+        :param describe_near_objects: (bool) If true robot will describe near objects while guiding
         """
         smach.StateMachine.__init__(
             self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
         self.robot = robot
         self.operator_distance = operator_distance
         self.operator_radius = operator_radius
+        self.describe_near_objects = describe_near_objects
         self.execute_plan = ExecutePlanGuidance(robot=self.robot,
                                                 operator_distance=self.operator_distance,
-                                                operator_radius=self.operator_radius)
+                                                operator_radius=self.operator_radius,
+                                                describe_near_objects=self.describe_near_objects)
 
         with self:
+            @smach.cb_interface(outcomes=["done"])
+            def _look_behind(userdata=None):
+                """
+                Look behind the robot so that the operator can be detected
+                 """
+                self.robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
+                                                                     frame_id=self.robot.base_link_frame))
+                rospy.sleep(3.0)
+                return "done"
+
+            smach.StateMachine.add("LOOK_BEHIND", smach.CBState(_look_behind),
+                                   transitions={"done": "RESET_MENTIONED_ENTITIES"})
+
             @smach.cb_interface(outcomes=["done"])
             def _reset_mentioned_entities(userdata=None):
                 """
@@ -343,23 +364,14 @@ class Guide(smach.StateMachine):
 
             smach.StateMachine.add("RESET_MENTIONED_ENTITIES",
                                    smach.CBState(_reset_mentioned_entities),
-                                   transitions={"done": "SAY_BEHIND"})
+                                   transitions={"done": "GET_AND_SET_PLAN"})
 
-            smach.StateMachine.add("SAY_BEHIND",
-                                   Say(robot, "Please stand behind me and look at me", block=True),
-                                   transitions={"spoken": "WAIT"})
-
-            smach.StateMachine.add("WAIT",
-                                   WaitTime(robot, waittime=3.0),
-                                   transitions={"waited": "GET_PLAN",
-                                                "preempted": "preempted"})
-
-            smach.StateMachine.add("GET_PLAN", navigation.getPlan(self.robot, constraint_function),
+            smach.StateMachine.add("GET_AND_SET_PLAN", navigation.getPlan(self.robot, constraint_function),
                                    transitions={"unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
-                                                "goal_ok": "EXECUTE_PLAN"})
+                                                "goal_ok": "MONITOR_PLAN"})
 
-            smach.StateMachine.add("EXECUTE_PLAN", self.execute_plan,
+            smach.StateMachine.add("MONITOR_PLAN", self.execute_plan,
                                    transitions={"arrived": "arrived",
                                                 "blocked": "PLAN_BLOCKED",
                                                 "preempted": "preempted",
@@ -369,12 +381,12 @@ class Guide(smach.StateMachine):
                                    WaitForOperator(robot=self.robot,
                                                    distance=self.operator_distance,
                                                    radius=self.operator_radius),
-                                   transitions={"is_following": "GET_PLAN",
+                                   transitions={"is_following": "GET_AND_SET_PLAN",
                                                 "is_lost": "lost_operator"})
 
             smach.StateMachine.add("PLAN_BLOCKED", navigation.planBlocked(self.robot),
-                                   transitions={"blocked": "GET_PLAN",
-                                                "free": "EXECUTE_PLAN"})
+                                   transitions={"blocked": "GET_AND_SET_PLAN",
+                                                "free": "MONITOR_PLAN"})
 
 
 class GuideToSymbolic(Guide):
@@ -382,8 +394,8 @@ class GuideToSymbolic(Guide):
     Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
-                 operator_radius=0.5):
-        # type: (Robot, dict, EdEntityDesignator, float, float) -> None
+                 operator_radius=0.5, describe_near_objects=True):
+        # type: (Robot, dict, EdEntityDesignator, float, float, bool) -> None
         """
         Constructor
 
@@ -395,6 +407,7 @@ class GuideToSymbolic(Guide):
         :param operator_distance: (float) check for the operator to be within this range of the robot [m]
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
             this radius [m]
+        :param describe_near_objects: (bool) If true robot will describe near objects while guiding
         """
         constr_fun = lambda: combine_constraints(
             [lambda: symbolic_constraint(robot, entity_designator_area_name_map),
@@ -403,4 +416,5 @@ class GuideToSymbolic(Guide):
         super(GuideToSymbolic, self).__init__(robot=robot,
                                               constraint_function=constr_fun,
                                               operator_distance=operator_distance,
-                                              operator_radius=operator_radius)
+                                              operator_radius=operator_radius,
+                                              describe_near_objects=describe_near_objects)

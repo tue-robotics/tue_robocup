@@ -2,24 +2,23 @@
 from threading import Condition, Event
 
 # ROS
+import actionlib
 import message_filters
 import rospy
-from sensor_msgs.msg import CameraInfo, Image
-from std_srvs.srv import Empty
 from image_recognition_msgs.msg import Annotation
-
 # TU/e Robotics
 from image_recognition_msgs.msg import Recognition
 from image_recognition_msgs.srv import Annotate, GetFaceProperties, Recognize, RecognizeResponse
 from people_recognition_msgs.srv import RecognizePeople3D
 from rgbd_msgs.srv import Project2DTo3D
+from sensor_msgs.msg import CameraInfo, Image
+from std_srvs.srv import Empty
 from tue_msgs.msg import LocateDoorHandleAction
 
+from pykdl_ros import VectorStamped
 # Robot skills
 from robot_skills.robot_part import RobotPart
 from robot_skills.util.image_operations import img_cutout, img_recognitions_to_rois
-
-from pykdl_ros import VectorStamped
 
 
 class Perception(RobotPart):
@@ -233,30 +232,33 @@ class Perception(RobotPart):
         # Because we take the [0]'th index of the distribution, that name is B
         #
         # Solution: because the probability distributions are sorted, just take the probability distribution where the desired label has the highest probability.
-        #for recog in recognitions:
+        # for recog in recognitions:
         #    for cp in recog.categorical_distribution.probabilities:
         #        if cp.label == desired_label:
         #            detections.append((recog, cp.probability))
 
         # Sort based on probability
-        #if detections:
+        # if detections:
         #    sorted_detections = sorted(detections, key=lambda det: det[1])
         #    best_detection = sorted_detections[0][0]  # A CategoricalDistribution in a Recognition is already ordered, max prob is at [0]
-        #else:
+        # else:
         #    best_detection = None
 
         rospy.loginfo("Probability threshold %.2f", probability_threshold)
         for index, recog in enumerate(recognitions):
             rospy.loginfo("{index}: {dist}".format(index=index,
-                                                   dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
+                                                   dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in
+                                                         recog.categorical_distribution.probabilities]))
 
         matching_recognitions = [recog for recog in recognitions if \
-                recog.categorical_distribution.probabilities and \
-                recog.categorical_distribution.probabilities[0].label == desired_label]
+                                 recog.categorical_distribution.probabilities and \
+                                 recog.categorical_distribution.probabilities[0].label == desired_label]
 
         if matching_recognitions:
-            best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
-            return best_recognition if best_recognition.categorical_distribution.probabilities[0].probability > probability_threshold else None
+            best_recognition = max(matching_recognitions,
+                                   key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
+            return best_recognition if best_recognition.categorical_distribution.probabilities[
+                                           0].probability > probability_threshold else None
         else:
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
 
@@ -302,7 +304,7 @@ class Perception(RobotPart):
 
     def get_rgb_depth_caminfo(self, timeout=5):
         """
-        Get an rgb image and and depth image, along with camera info for the depth camera.
+        Get an rgb image and depth image, along with camera info for the depth camera.
         The returned tuple can serve as input for world_model_ed.ED.detect_people.
 
         :param timeout: How long to wait until the images are all collected.
@@ -332,7 +334,7 @@ class Perception(RobotPart):
         if any(self._image_data):
             return self._image_data
         else:
-            return None
+            return None, None, None
 
     def detect_person_3d(self, rgb, depth, depth_info):
         return self._person_recognition_3d_srv(image_rgb=rgb, image_depth=depth, camera_info_depth=depth_info).people

@@ -9,7 +9,7 @@ class HandoverDetector(RobotPart):
     """
     Sensor functionality to detect when a handover is taking place
     """
-    def __init__(self, robot_name, tf_buffer, name):
+    def __init__(self, robot_name: str, tf_buffer: str, name: str) -> None:
         """
         constructor
 
@@ -20,17 +20,14 @@ class HandoverDetector(RobotPart):
         super(HandoverDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.name = name
 
-    def _generic_handover(self, direction, timeout=10):
+    def _generic_handover(self, direction: str, timeout: float = 10.0) -> bool:
         """
         Detect a handover an item to/from the gripper from/to a human.
         Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
 
         :param direction: direction of handover
-        :type direction: str
         :param timeout: timeout in seconds
-        :type timeout: float
         :return: Success
-        :rtype: bool
         """
         pub = rospy.Publisher('/{}/handover_detector_{}/toggle_{}'.format(self.robot_name, self.name, direction),
                               std_msgs.msg.Bool, queue_size=1, latch=True)
@@ -44,27 +41,23 @@ class HandoverDetector(RobotPart):
             rospy.logerr(e)
             return False
 
-    def handover_to_human(self, timeout=10):
+    def handover_to_human(self, timeout: float = 10.0) -> bool:
         """
         Handover an item from the gripper to a human.
         Feels if user slightly pushes/pulls an item in the gripper. On timeout, it will return False.
 
         :param timeout: timeout in seconds
-        :type timeout: float
         :return: Success
-        :rtype: bool
         """
         return self._generic_handover('robot2human', timeout)
 
-    def handover_to_robot(self, timeout=10):
+    def handover_to_robot(self, timeout: float = 10.0) -> bool:
         """
         Handover an item from a human to the robot.
         Feels if user slightly pushes/pulls an item in the gripper. On timeout, it will return False.
 
         :param timeout: timeout in seconds
-        :type timeout: float
         :return: Success
-        :rtype: bool
         """
         return self._generic_handover('human2robot', timeout)
 
