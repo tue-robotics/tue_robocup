@@ -52,8 +52,8 @@ class RecognizePerson(smach.State):
             operator_recognition = self._robot.perception.detect_operator_face()
             operator_name = get_operator_name(recognition=operator_recognition)
             rospy.loginfo(f"Operator name: {operator_name}")
-        except:  # ToDo: narrow down exceptions
-            rospy.loginfo("Did not recognize the operator")
+        except Exception as e:  # ToDo: narrow down exceptions
+            rospy.loginfo(f"Did not recognize the operator: {e}")
             return "failed"
 
         self._name_designator.write(operator_name)
@@ -115,9 +115,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rospy.init_node('test_people_recognition')
-    # r = get_robot(args.robot)
-    from robot_skills.mockbot import Mockbot
-    r = Mockbot()
+    r = get_robot(args.robot)
+    # from robot_skills.mockbot import Mockbot
+    # r = Mockbot()
 
     state = ExamplePeopleRecognition(robot=r)
     state.execute()
