@@ -18,7 +18,7 @@ jobs:
     ${{ else }}:
       displayName: 'Package selection'
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: ubuntu-latest
     condition: and(succeeded(), not(canceled()))
     steps:
       - task: Bash@3
