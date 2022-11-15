@@ -41,9 +41,9 @@ jobs:
 
   - job: install_build_test
     ${{ if eq(variables['Build.Reason'], 'PullRequest')}}:
-      displayName: Install, build & test (PR):
+      displayName: 'Install, build & test (PR):'
     ${{ else }}:
-      displayName: Install, build & test:
+      displayName: 'Install, build & test:'
     pool:
       vmImage: ubuntu-latest
     dependsOn: package_selection
