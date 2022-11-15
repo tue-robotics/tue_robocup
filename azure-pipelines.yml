@@ -18,7 +18,7 @@ jobs:
     ${{ else }}:
       displayName: 'Package selection'
     pool:
-      vmImage: 'ubuntu latest'
+      vmImage: 'ubuntu-latest'
     condition: and(succeeded(), not(canceled()))
     steps:
       - task: Bash@3
@@ -45,7 +45,7 @@ jobs:
     ${{ else }}:
       displayName: 'Install, build & test:'
     pool:
-      vmImage: 'ubuntu latest'
+      vmImage: 'ubuntu-latest'
     dependsOn: package_selection
     condition: and(succeeded(), not(canceled()), ne(dependencies.package_selection.outputs['matrix.json_string'], '{}'))
     strategy:
