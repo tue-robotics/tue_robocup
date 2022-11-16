@@ -34,9 +34,11 @@ jobs:
         inputs:
           targetType: inline
           script: |
-            export COMMIT_RANGE=$(python3 ./azure_commit_range.py)
-            ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
-            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL tue_robocup challenge_following_and_guiding challenge_manipulation challenge_navigation challenge_person_recognition challenge_spr challenge_speech_recognition
+            COMMIT_RANGE=$(python3 ./azure_commit_range.py)
+            BRANCH=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}
+            DEFAULT_BRANCH=$(git remote show origin 2>/dev/null | grep HEAD | awk '{print $3}')
+            ALL=$(([ $BUILD_REASON == "Schedule" ] || (([ $BUILD_REASON == "BatchedCI" ] || [ $BUILD_REASON == "IndividualCI" ] || [ $BUILD_REASON == "Manual" ]) && [ "$BRANCH"== "$DEFAULT_BRANCH"])) && echo "true")
+            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL # add all folders which need to be excluded as an argument
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
 
   - job: install_build_test
