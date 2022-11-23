@@ -505,7 +505,7 @@ class Arm(RobotPart):
         """
         if configuration in self.default_configurations:
             return self._send_joint_trajectory([self.default_configurations[configuration]],
-                                               timeout=rospy.Duration.from_sec(timeout),
+                                               timeout=timeout,
                                                max_joint_vel=max_joint_vel)
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
@@ -523,7 +523,7 @@ class Arm(RobotPart):
         """
         if configuration in self.default_trajectories:
             return self._send_joint_trajectory(self.default_trajectories[configuration],
-                                               timeout=rospy.Duration.from_sec(timeout),
+                                               timeout=timeout,
                                                max_joint_vel=max_joint_vel)
         else:
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
