@@ -552,8 +552,7 @@ class Arm(RobotPart):
         :param max_joint_vel: Speed the robot can have when getting to the desired
             configuration. A single value can be given, which will be used for all joints, or a list of values can be
             given in which the order has to agree with the joints according to the joints_references.
-        :param timeout: Timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not
-            allowed
+        :param timeout: Timeout for each joint configuration in rospy.Duration(seconds);
         :return: True or False
         """
         timeout = rospy.Duration(timeout)
