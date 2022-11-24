@@ -70,8 +70,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
               'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
     try:
-        say_announce = Say(robot, sentence="Please put a {cls} {search_area} the {support}"
-                           .format(cls=cls,support=support,search_area=search_area))
+        say_announce = Say(robot, sentence=f"Please put a {cls} {search_area} the {support}")
         say_announce.execute()
 
         nav_to_start = NavigateToWaypoint(robot,
@@ -86,7 +85,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
         record['inspect_start'] = time.time()
         assert inspect.execute() == 'done', "I could not inspect the support entity"
         record['inspect_end'] = time.time()
-        record['inspect_duration'] = '{:3.3f}'.format(record['inspect_end'] - record['inspect_start'])
+        record["inspect_duration"] = f"{record['inspect_end'] - record['inspect_start']:3.3f}"
 
         inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
         if inspection_result:
@@ -95,7 +94,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
                 matching_results = inspection_result
             else:
                 matching_results = [result for result in inspection_result if result.etype == grasp_cls.resolve()]
-                rospy.loginfo("Found {} items of class {}".format(len(matching_results), grasp_cls.resolve()))
+                rospy.loginfo(f"Found {len(matching_results)} items of class {grasp_cls.resolve()}")
 
             if matching_results:
                 if len(matching_results) > 1:
@@ -105,27 +104,27 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
                     record['observed_class'] = matching_results[-1].etype
                 selected_entity_id = matching_results[-1].uuid
 
-                rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
+                rospy.loginfo(f"Selected entity {selected_entity_id} for grasping")
                 grasp_entity = ds.EdEntityDesignator(robot, uuid=selected_entity_id)
                 record['id'] = selected_entity_id[:6]
 
                 entity = grasp_entity.resolve()  # type: Entity
                 if entity:
                     frame_stamped = entity.pose  # type: FrameStamped
-                    record['x'] = '{:.3f}'.format(frame_stamped.frame.p.x())
-                    record['y'] = '{:.3f}'.format(frame_stamped.frame.p.y())
-                    record['z'] = '{:.3f}'.format(frame_stamped.frame.p.z())
+                    record["x"] = f"{frame_stamped.frame.p.x():.3f}"
+                    record["y"] = f"{frame_stamped.frame.p.y():.3f}"
+                    record["z"] = f"{frame_stamped.frame.p.z():.3f}"
 
                 grab_state = Grab(robot, grasp_entity, arm)
 
                 record['grab_start'] = time.time()
                 assert grab_state.execute() == 'done', "I couldn't grasp"
                 record['grab_end'] = time.time()
-                record['grab_duration'] = '{:3.3f}'.format(record['grab_end'] - record['grab_start'])
+                record['grab_duration'] = f"{record['grab_end'] - record['grab_start']:3.3f}"
 
                 assert nav_to_start.execute() == 'arrived', "I could not navigate back to the start"
 
-                rospy.logwarn("Robot will turn around to drop the {}".format(grasp_cls.resolve()))
+                rospy.logwarn(f"Robot will turn around to drop the {grasp_cls.resolve()}")
 
                 force_drive = ForceDrive(robot, 0, 0, 1, 3.14)  # rotate 180 degs in pi seconds
                 force_drive.execute()
@@ -140,11 +139,11 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
                 force_drive_back.execute()
                 nav_to_start.execute()
             else:
-                raise AssertionError("No {} found".format(grasp_cls.resolve()))
+                raise AssertionError(f"No {grasp_cls.resolve()} found")
         else:
             rospy.logerr("No entities found at all :-(")
     except AssertionError as assertion_err:
-        say_fail = Say(robot, sentence=(str(assertion_err) + ", sorry"))
+        say_fail = Say(robot, sentence=f"{assertion_err}, sorry")
         say_fail.execute()
     finally:
         results_writer.writerow(record)
@@ -175,7 +174,7 @@ if __name__ == "__main__":
                                                  "turn around and drop the item, "
                                                  "then turn around once more to be in the start configuration again")
     single.add_argument("cls", type=str,
-                        help="class of entity to grasp, eg. 'coke' or one of {} if you don't care".format(ANY_OPTIONS))
+                        help=f"class of entity to grasp, eg. 'coke' or one of {ANY_OPTIONS} if you don't care")
     single.add_argument("support", type=str,
                         help="ID of entity to grasp FROM ('grasp' entity is on-top-of this 'support' entity), eg. 'cabinet'")
     single.add_argument("waypoint", type=str,
@@ -185,7 +184,7 @@ if __name__ == "__main__":
 
     batch = subparsers.add_parser(name='batch', description="Perform the single case repeatedly, "
                                                             "taking configurations from a .csv file, "
-                                                            "with columns {}".format(','.join(BATCH_CONFIG_FIELDS)))
+                                                            f"with columns {','.join(BATCH_CONFIG_FIELDS)}")
     batch.add_argument("--configuration", type=str, default='grasp_benchmark_config.csv')
 
     args = parser.parse_args()
@@ -208,16 +207,13 @@ if __name__ == "__main__":
         elif args.subcommand == 'batch':
             with open(args.configuration) as config_file:
                 config_reader = csv.DictReader(config_file)
-                assert config_reader.fieldnames == BATCH_CONFIG_FIELDS, "CSV file need fields {}".format(','.join(BATCH_CONFIG_FIELDS))
+                assert config_reader.fieldnames == BATCH_CONFIG_FIELDS, f"CSV file need fields {','.join(BATCH_CONFIG_FIELDS)}"
 
                 configs = []
 
                 for config_row in config_reader:
                     configs += [config_row]
-                    item_config_description = "Put a {cls} {search_area} the {support}"\
-                        .format(cls=config_row['cls'],
-                                support=config_row['support'],
-                                search_area=config_row['search_area'])
+                    item_config_description = f"Put a {config_row['cls']} {config_row['search_area']} the {config_row['support']}"
                     rospy.logwarn(item_config_description)
 
                 records = []
