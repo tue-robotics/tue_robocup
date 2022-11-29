@@ -92,7 +92,7 @@ public:
   }
 
 private:
-  bool srvCallback(challenge_restaurant::GetNormalScoreRequest& req, challenge_restaurant::GetNormalScoreResponse& res)
+  bool srvCallback(challenge_restaurant::GetNormalScoreRequest& /*req*/, challenge_restaurant::GetNormalScoreResponse& res)
   {
     const sensor_msgs::PointCloud2ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(
           "points", nh_, ros::Duration(timeout_));
