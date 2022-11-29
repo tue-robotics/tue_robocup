@@ -124,3 +124,7 @@ class TestTourGuide(unittest.TestCase):
         self.assertEqual("We are now in the bedroom", self.tour_guide.describe_near_objects())
         self.assertEqual("On our right you can see the bookcase", self.tour_guide.describe_near_objects())
         self.assertEqual("", self.tour_guide.describe_near_objects())
+
+
+if __name__ == "__main__":
+    unittest.main()

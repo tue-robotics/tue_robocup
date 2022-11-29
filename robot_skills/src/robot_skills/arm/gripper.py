@@ -5,6 +5,7 @@ from tue_manipulation_msgs.msg import GripperCommandAction, GripperCommandGoal
 from tue_msgs.msg import GripperCommand
 
 from robot_skills.robot_part import RobotPart
+from ed.entity import Entity
 
 
 class GripperState(object):
@@ -19,7 +20,7 @@ class Gripper(RobotPart):
     """
     A gripper used for manipulating objects in the environment.
     """
-    def __init__(self, robot_name, tf_buffer):
+    def __init__(self, robot_name: str, tf_buffer: str) -> None:
         """
         constructor
 
@@ -31,12 +32,12 @@ class Gripper(RobotPart):
         # TODO: remove occupied by, an interface should be stateless. Store this information elsewhere.
         self._occupied_by = None
 
-    def send_goal(self, state):
+    def send_goal(self, state: str):
         rospy.logdebug("send_goal() not implemented for {} gripper: {}".format(self.robot_name, self))
         return True
 
     @property
-    def occupied_by(self):
+    def occupied_by(self) -> Entity:
         """
         The 'occupied_by' property will return the current entity that is in the gripper of this arm.
 
@@ -46,7 +47,7 @@ class Gripper(RobotPart):
         return self._occupied_by
 
     @occupied_by.setter
-    def occupied_by(self, value):
+    def occupied_by(self, value: Entity) -> None:
         """
         Set the entity which occupies the arm.
 
@@ -60,7 +61,7 @@ class ParrallelGripper(Gripper):
     """
     A gripper with two fingers which closes by pressing the fingers together
     """
-    def __init__(self, robot_name, tf_buffer, gripper_name):
+    def __init__(self, robot_name: str, tf_buffer: str, gripper_name: str) -> None:
         """
         constructor
 
@@ -78,17 +79,15 @@ class ParrallelGripper(Gripper):
         ac_name = self.load_param('skills/' + self.gripper_name + '/ac_gripper')
         self._ac_gripper = self.create_simple_action_client(ac_name, GripperCommandAction)
 
-    def send_goal(self, state, timeout=5.0, max_torque=0.1): #Todo: should send goal be universal for all grippers?
+    def send_goal(self, state: str, timeout: float = 5.0, max_torque: float = 0.1) -> bool: #Todo: should send goal be universal for all grippers?
         """
         Send a GripperCommand to the gripper of this arm and wait for finishing
 
-        :param state: open or close
+        :param state: open or close (GripperState)
         :type state: str (GripperState)
         :param timeout: timeout in seconds; timeout of 0.0 is not allowed
-        :type timeout: float
         :param max_torque: How much torque [Nm] to apply, only applied when closing the gripper
         :return: True of False
-        :rtype: bool
         """
         goal = GripperCommandGoal()
 

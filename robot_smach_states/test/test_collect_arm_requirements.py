@@ -142,5 +142,4 @@ class TestCollectArmRequirements(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    rospy.init_node("test_collect_requirements")
     unittest.main()

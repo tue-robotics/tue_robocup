@@ -76,3 +76,7 @@ class TestTopologicalNavigation(unittest.TestCase):
         msg = Edge()
         msg.action_type = "foo"
         self.assertRaises(TopologicalPlannerException, convert_msgs_to_actions, self.robot, [msg])
+
+
+if __name__ == '__main__':
+    unittest.main()
