@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(challenge_restaurant)
 
+add_compile_options(-Wall -Werror=all)
+add_compile_options(-Wextra -Werror=extra)
+
 find_package(catkin REQUIRED COMPONENTS
   depth_image_proc
   image_geometry
@@ -27,6 +30,7 @@ generate_messages()
 catkin_package()
 
 include_directories(
+  SYSTEM
   ${catkin_INCLUDE_DIRS}
 )
 
