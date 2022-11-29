@@ -466,7 +466,7 @@ class AskPersonName(smach.State):
             answer = ds.VariableDesignator(resolve_type=HMIResult)
             state = HearOptionsExtra(self.robot, spec, answer.writeable)
             try:
-                outcome = state.execute()
+                outcome = state.execute()  # ToDo: convert to StateMachine
 
                 if not outcome == "heard":
                     limit_reached += 1
