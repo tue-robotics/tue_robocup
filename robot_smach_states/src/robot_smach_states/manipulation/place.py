@@ -89,6 +89,7 @@ class Put(smach.State):
         if not placement_fs:
             rospy.logerr("Could not resolve placement_pose")
             return "failed"
+        placement_fs.header.stamp = rospy.Time(0)  # always query the latest pose info
 
         arm = self._arm_designator.resolve()
         if not arm:
@@ -138,7 +139,7 @@ class Put(smach.State):
         if not place_entity:
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
-            self._robot.ed.update_entity(place_entity.id, frame_stamped=placement_fs)
+            self._robot.ed.update_entity(place_entity.uuid, frame_stamped=placement_fs)
             arm.gripper.occupied_by = None
 
         # Open gripper
