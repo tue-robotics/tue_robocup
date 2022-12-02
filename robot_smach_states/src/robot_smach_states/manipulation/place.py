@@ -43,21 +43,9 @@ class PreparePlace(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        # Torso up (non-blocking)
-        self._robot.torso.reset()
-
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_place', timeout=0)
         arm.wait_for_motion_done()
-
-        # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
-        # Hence, we want the torso to go to the place height - 0.6
-        # Note: this is awefully hardcoded for AMIGO
-        # Sending it to 'high' seems to work much better...
-        # torso_goal = placement_fs.frame.p.z() - 0.6
-        # torso_goal = max(0.09, min(0.4, torso_goal))
-        # rospy.logwarn("Torso goal before placing: {0}".format(torso_goal))
-        # self._robot.torso._send_goal(torso_pos=[torso_goal])
 
         return 'succeeded'
 
@@ -112,8 +100,7 @@ class Put(smach.State):
         # placement_pose is a PyKDL.Frame
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
 
-        # Wait for torso and arm to finish their motions
-        self._robot.torso.wait_for_motion_done()
+        # Wait for arm to finish their motions
         arm.wait_for_motion_done()
 
         try:
@@ -182,8 +169,6 @@ class Put(smach.State):
 
         arm.reset()
         arm.wait_for_motion_done()
-        self._robot.torso.reset()
-        self._robot.torso.wait_for_motion_done()
 
         return 'succeeded'
 
