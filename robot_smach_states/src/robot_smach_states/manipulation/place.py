@@ -110,7 +110,7 @@ class Put(smach.State):
 
         # Pre place
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height+0.15, 0, 0, 0, rospy.Time.now(),
+                                                       height+0.15, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10,
                              pre_grasp=True):
@@ -119,7 +119,7 @@ class Put(smach.State):
 
             rospy.loginfo("Retrying preplace")
             if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                           height+0.15, 0, 0, 0, rospy.Time.now(),
+                                                           height+0.15, 0, 0, 0, rospy.Time(0),
                                                            frame_id=self._robot.base_link_frame),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
@@ -129,7 +129,7 @@ class Put(smach.State):
         # Place
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height+0.1, 0, 0, 0, rospy.Time.now(),
+                                                       height+0.1, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
@@ -153,7 +153,7 @@ class Put(smach.State):
                                                 place_pose_bl.frame.p.y(),
                                                 place_pose_bl.frame.p.z() + 0.15,
                                                 0, 0, 0,
-                                                rospy.Time.now(),
+                                                rospy.Time(0),
                                                 frame_id=self._robot.base_link_frame),
                       timeout=0.0)
 
