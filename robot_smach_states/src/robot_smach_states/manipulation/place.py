@@ -158,15 +158,11 @@ class Put(smach.State):
                                                 frame_id=self._robot.base_link_frame),
                       timeout=0.0)
 
-        arm.wait_for_motion_done()
         self._robot.base.force_drive(-0.125, 0, 0, 1.5)
 
         if not arm.wait_for_motion_done(timeout=5.0):
             rospy.logwarn('Retraction failed')
             arm.cancel_goals()
-
-        # Close gripper
-        arm.gripper.send_goal('close', timeout=0.0)
 
         arm.reset()
         arm.wait_for_motion_done()
