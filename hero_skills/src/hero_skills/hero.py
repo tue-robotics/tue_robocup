@@ -73,9 +73,9 @@ class Hero(robot.Robot):
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_buffer))
 
         # Action planning
-        self.add_body_part(
-            'topological_planner', topological_planner.TopologicalPlanner(self.robot_name, self.tf_buffer)
-        )
+        # self.add_body_part(
+        #    'topological_planner', topological_planner.TopologicalPlanner(self.robot_name, self.tf_buffer)
+        # )
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for part in self.parts.values():

@@ -254,7 +254,7 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add("ASK_CONFIRMATION",
                                    Say(
                                        robot, ["I hear that you would like to go to the {place}, is this correct?"],
-                                       place=ds.AttrDesignator(self.entity_des, "id", resolve_type=str)),
+                                       place=ds.AttrDesignator(self.entity_des, "uuid", resolve_type=str)),
                                    transitions={"spoken": "CONFIRM_LOCATION"})
 
             smach.StateMachine.add("CONFIRM_LOCATION",
@@ -296,7 +296,7 @@ class InformMachine(smach.StateMachine):
                                        robot,
                                        ["Let me think how to get to the {entity_id}",
                                         "I will now determine the best route to the {entity_id}"],
-                                       entity_id=ds.AttrDesignator(self.entity_des, "id", resolve_type=str)),
+                                       entity_id=ds.AttrDesignator(self.entity_des, "uuid", resolve_type=str)),
                                    transitions={"spoken": "GIVE_DIRECTIONS"})
 
             smach.StateMachine.add("GIVE_DIRECTIONS",

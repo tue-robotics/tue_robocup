@@ -137,7 +137,7 @@ class WhereIsThis(smach.StateMachine):
                 location_id = INFORMATION_POINT_ID
                 robot.ed.update_entity(uuid=location_id,
                                        frame_stamped=base_loc,
-                                       type="waypoint")
+                                       etype="waypoint")
 
                 return "succeeded"
 

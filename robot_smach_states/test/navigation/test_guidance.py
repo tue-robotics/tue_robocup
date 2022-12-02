@@ -106,13 +106,13 @@ class TestTourGuide(unittest.TestCase):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(1, 1, 0)),
                                                             rospy.Time(),
                                                             "map")
-        self.assertEqual("We now enter the kitchen", self.tour_guide.describe_near_objects())
+        self.assertEqual("We are now in the kitchen", self.tour_guide.describe_near_objects())
 
     def test_describe_near_objects2(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(6, 4, 0)),
                                                             rospy.Time(),
                                                             "map")
-        self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
+        self.assertEqual("We are now in the bedroom", self.tour_guide.describe_near_objects())
 
     def test_describe_near_objects3(self):
         self.assertEqual("", self.tour_guide.describe_near_objects())
@@ -121,6 +121,10 @@ class TestTourGuide(unittest.TestCase):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(7.5, 2, 0)),
                                                             rospy.Time(),
                                                             "map")
-        self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
+        self.assertEqual("We are now in the bedroom", self.tour_guide.describe_near_objects())
         self.assertEqual("On our right you can see the bookcase", self.tour_guide.describe_near_objects())
         self.assertEqual("", self.tour_guide.describe_near_objects())
+
+
+if __name__ == "__main__":
+    unittest.main()

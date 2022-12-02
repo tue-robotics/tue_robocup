@@ -309,6 +309,27 @@ class UnlockDesignator(smach.State):
         return 'unlocked'
 
 
+class WriteDesignator(smach.State):
+    def __init__(self, write_designator, value):
+        """
+        Writes a value to a designator each time this state is executed. The value to be written can both
+        be the value or a designtor. In the latter, the resolved value is written to the designator.
+
+        :param wirte_designator: Writeable designator
+        :param value: Value or designator, which resolves to the value, to be written to the designator
+        """
+        smach.State.__init__(self, outcomes=['written'])
+        is_writeable(write_designator)
+        self.write_designator = write_designator
+        self.value = value
+
+    def execute(self, ud=None):
+        value = self.value.resolve() if hasattr(self.value, 'resolve') else self.value
+        rospy.loginfo(f"Writing '{value}' to designator: {self.write_designator}")
+        self.write_designator.write(value)
+        return 'written'
+
+
 class CheckBool(smach.State):
     """
     Provide a different transition based on a boolean designator.

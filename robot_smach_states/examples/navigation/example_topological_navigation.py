@@ -23,6 +23,8 @@ if __name__ == "__main__":
     rospy.init_node("test_topological_navigation")
 
     robot = get_robot(args.robot)
+    
+    rospy.logerror("This example is broken as the topological navigation interface is removed from the robot object")
 
     entity = robot.ed.get_entity(args.entity)
     if entity.is_a("furniture") and not args.area:

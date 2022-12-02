@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from typing import Union
+
 # System
 from functools import partial
 import math
@@ -13,6 +15,7 @@ from sensor_msgs.msg import LaserScan
 import smach
 
 # TU/e Robotics
+from robot_skills.robot import Robot
 from . import check_ebutton
 from . import human_interaction
 from .navigation import ForceDrive
@@ -24,15 +27,15 @@ class StartChallengeRobust(smach.StateMachine):
     Initialize, wait for the door to be opened and drive inside
     """
 
-    def __init__(self, robot, initial_pose, use_entry_points=False, door=True):
+    def __init__(self, robot: Robot, initial_pose: str, use_entry_points: bool = False, door: bool = True):
         """
         Initialization method
 
-        :param robot: (Robot)
-        :param initial_pose: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
+        :param robot: robot object
+        :param initial_pose: Identifies the (waypoint) entity to be used as initial pose. For testing purposes,
             a tuple(float, float, float) representing x, y and yaw in map frame can be used.
-        :param use_entry_points: (bool) (not yet implemented)
-        :param door: (bool) indicates whether to wait for a door to open and whether to 'force-drive' inside
+        :param use_entry_points: (not yet implemented)
+        :param door: Indicates whether to wait for a door to open and whether to 'force-drive' inside
         """
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
@@ -97,7 +100,7 @@ class StartChallengeRobust(smach.StateMachine):
 
 # Enter the arena with force drive as back-up
 class EnterArena(smach.StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot: Robot):
         """
         Enter the arena by force driving through the door
 
@@ -119,7 +122,7 @@ class EnterArena(smach.StateMachine):
 
 
 class WaitForDoorOpen(smach.State):
-    def __init__(self, robot, timeout):
+    def __init__(self, robot: Robot, timeout: Union[float, int]):
         """
         Wait till the average distance in front of the robot is bigger than 1 meter. Only point in front of the middle
         are taken into account
@@ -145,11 +148,11 @@ class WaitForDoorOpen(smach.State):
         lst = [point for point in lst if not math.isnan(point)]
         return sum(lst) / max(len(lst), 1)
 
-    def process_scan(self, laser_upside_down, laser_yaw, door_open, scan_msg):
+    def process_scan(self, laser_upside_down: int, laser_yaw: float, door_open: Event, scan_msg: LaserScan):
         """
         callback function checking the distance of the laser points in front of the robot.
 
-        :param laser_upside_down: (int) 1 as normal, -1 as upside down
+        :param laser_upside_down: 1 as normal, -1 as upside down
         :param laser_yaw: yaw angle of the laser
         :param door_open: Event to be set when ready
         :param scan_msg: sensor_msgs.msg.LaserScan
@@ -162,7 +165,16 @@ class WaitForDoorOpen(smach.State):
         if front_index < 2 or front_index > number_beams - 2:
             raise IndexError("Base laser can't see in front of the robot")
 
-        ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
+        # It is possible for the selected ranges to be all NaN, when the door is open. In that case we expand the number of laser points we check. Starting with 5, center -/+ 2, beams. If these are all NaN, increase number of beams up to max 21
+        for range_width in range(2, 10):
+            if front_index < range_width or front_index > number_beams - range_width:
+                break
+
+            ranges_at_center = scan_msg.ranges[front_index - range_width:front_index + range_width]  # Get some points around the middle
+            rospy.logdebug(f"{ranges_at_center=}")
+            if not all(map(math.isnan, ranges_at_center)):  # Minimal one non-NaN number
+                break
+
         distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
         rospy.logdebug("AVG distance: {}".format(distance_to_door))
         self.distances += [distance_to_door]  # store all distances
@@ -207,29 +219,24 @@ class WaitForLocalPlanner(smach.State):
     Wait till a valid footprint message from the local planner is received. A footprint is valid if it contains at least
     3 points. If no valid message is received within the timeout, "timeout" is returned.
     """
-    def __init__(self, robot, timeout):
+    def __init__(self, robot: Robot, timeout: Union[float, int]):
         """
         Constructor
 
         :param robot: robot object
-        :type robot: robot
         :param timeout: timeout
-        :type timeout: (float, int)
         """
         smach.State.__init__(self, outcomes=["ready", "timeout"])
         self._robot = robot
         self._timeout = timeout
 
     @staticmethod
-    def msg_cb(ready_event, msg):
-        # type: (Event, PolygonStamped) -> None
+    def msg_cb(ready_event: Event, msg: PolygonStamped) -> None:
         """
         Footprint message callback
 
         :param ready_event: Event to set when ready
-        :type ready_event: Event
         :param msg: footprint message
-        :type msg: PolygonStamped
         """
         if len(msg.polygon.points) >= 3:
             rospy.loginfo("Valid footprint received")
@@ -237,8 +244,7 @@ class WaitForLocalPlanner(smach.State):
 
     def execute(self, userdate=None):
         rospy.loginfo("Waiting for local planner footprint")
-        footprint_topic = "/{}/local_planner/local_costmap/robot_footprint/footprint_stamped".\
-            format(self._robot.robot_name)
+        footprint_topic = f"/{self._robot.robot_name}/local_planner/local_costmap/footprint"
 
         ready_event = Event()
 

@@ -2,11 +2,12 @@
 from typing import List
 
 # ROS
+import rospy
 import tf2_ros
 
 # TU/e Robotics
-from topological_action_planner_msgs.srv import Plan, PlanRequest, PlanResponse
 from topological_action_planner_msgs.msg import Edge, Node
+from topological_action_planner_msgs.srv import Plan, PlanRequest, PlanResponse
 
 # Robot skills
 from .robot_part import RobotPart

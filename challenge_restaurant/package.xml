@@ -13,8 +13,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_depend condition="$ROS_PYTHON_VERSION == 2">python-setuptools</buildtool_depend>
-  <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
+  <buildtool_depend>python3-setuptools</buildtool_depend>
 
   <depend>depth_image_proc</depend>
   <depend>roscpp</depend>
@@ -25,10 +24,9 @@
   <exec_depend>ed_python</exec_depend>
   <exec_depend>pcl_ros</exec_depend>
   <exec_depend>pykdl_ros</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-markdown</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-markdown</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-numpy</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-numpy</exec_depend>
+  <exec_depend>python3-markdown</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-rospkg</exec_depend>
   <exec_depend>python-xhtml2pdf-pip</exec_depend>
   <exec_depend>robot_skills</exec_depend>
   <exec_depend>robot_smach_states</exec_depend>
