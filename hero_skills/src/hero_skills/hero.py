@@ -23,6 +23,9 @@ class Hero(robot.Robot):
         """
         super(Hero, self).__init__(robot_name="hero", connection_timeout=connection_timeout)
 
+        # override base_link attribute (no namespace)
+        self.base_link_frame = "base_link"
+
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_buffer))
