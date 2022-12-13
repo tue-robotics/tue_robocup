@@ -202,7 +202,9 @@ class Perception(RobotPart):
         operator_distance_threshold: typing.Optional[float] = 0.5,
     ) -> Recognition:
         """
-        Snap an image with the camera and return the detected face with the largest ROI
+        Snap an image with the camera and return the detected face closest to the expected position.
+
+        N.B.: this seems more reliable than using the size of the ROI, which might be affected by, e.g., a big hairdo.
 
         :param image: image to use for recognition
         :param expected_operator_position: expected operator position w.r.t. robot base
