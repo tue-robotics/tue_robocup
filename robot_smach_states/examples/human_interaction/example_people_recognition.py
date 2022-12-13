@@ -30,9 +30,15 @@ class ExamplePeopleRecognition(smach.StateMachine):
                 "LEARN_PERSON",
                 LearnPerson(robot=robot, person_name="Yoda"),
                 transitions={
-                    "succeeded": "RECOGNIZE_PERSON",
+                    "succeeded": "SAY_WILL_RECOGNIZE",
                     "failed": "SAY_LEARNING_FAILED",
                 },
+            )
+
+            smach.StateMachine.add(
+                "SAY_WILL_RECOGNIZE",
+                Say(robot=robot, sentence="Let's see if I recognize you"),
+                transitions={"spoken": "RECOGNIZE_PERSON"},
             )
 
             smach.StateMachine.add(
