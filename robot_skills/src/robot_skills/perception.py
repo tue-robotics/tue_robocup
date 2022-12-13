@@ -203,7 +203,7 @@ class Perception(RobotPart):
         :return: image_recognition_msgs/Recognition
         :raises: RuntimeError
         """
-        recognitions = self.detect_faces()
+        recognitions = self.detect_faces(image)
         if not recognitions:
             raise RuntimeError("No faces detected")
         operator_recognition = self._filter_operator_recognition(recognitions)
