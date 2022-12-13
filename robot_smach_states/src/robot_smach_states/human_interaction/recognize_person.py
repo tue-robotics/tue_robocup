@@ -23,8 +23,9 @@ def get_operator_name(recognition: Recognition, threshold: typing.Optional[float
     :return: operator name
     :raises: RuntimeError
     """
-    # ToDo: add tests
     distribution = recognition.categorical_distribution  # type: CategoricalDistribution
+    if not distribution.probabilities:
+        raise RuntimeError("Recognition does not contain probabilities")
     best_match = max(distribution.probabilities, key=lambda cp: cp.probability)  # type: CategoryProbability
     if best_match.probability < threshold:
         raise RuntimeError(
