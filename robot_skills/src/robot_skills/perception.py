@@ -230,8 +230,6 @@ class Perception(RobotPart):
         For all provided recognitions, project the ROI and determine the one closest to the expected operator position,
         computed on the floor plane.
 
-        N.B.: it might make sense to move this method to 'Perception.py' as 'detect_operator_face'
-
         :param recognitions: recognitions
         :param expected_operator_pos: expected position of the operator w.r.t. the robot
         :param threshold: if the distance between the recognition and the expected pos exceed the threshold, an error
@@ -250,9 +248,10 @@ class Perception(RobotPart):
             """
             Helper method to compute the distance between the projected tuple and the expected position
 
-            :param expected_pos:
-            :param projected_tup:
-            :return:
+            :param expected_pos: expected operator position w.r.t. the robot
+            :param projected_tup: tuple contains the original recognition as well as a VectorStamped of the projected
+            ROI
+            :return: distance between the expected position and the projected ROI
             """
             dx = projected_tup[1].vector.x() - expected_pos.x()
             dy = projected_tup[1].vector.y() - expected_pos.y()
