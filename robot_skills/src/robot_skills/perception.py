@@ -195,18 +195,27 @@ class Perception(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
-    def detect_operator_face(self, image: Image = None) -> Recognition:
+    def detect_operator_face(
+        self,
+        image: typing.Optional[Image] = None,
+        expected_operator_position: typing.Optional[kdl.Vector] = None,
+        operator_distance_threshold: typing.Optional[float] = 0.5,
+    ) -> Recognition:
         """
         Snap an image with the camera and return the detected face with the largest ROI
 
         :param image: image to use for recognition
+        :param expected_operator_position: expected operator position w.r.t. robot base
+        :param operator_distance_threshold: people outside this radius from the expected position are discarded
         :return: image_recognition_msgs/Recognition
         :raises: RuntimeError
         """
         recognitions = self.detect_faces(image)
         if not recognitions:
             raise RuntimeError("No faces detected")
-        operator_recognition = self._filter_operator_recognition(recognitions)
+        operator_recognition = self._filter_operator_recognition(
+            recognitions, expected_operator_position, operator_distance_threshold
+        )
         return operator_recognition
 
     def _filter_operator_recognition(
