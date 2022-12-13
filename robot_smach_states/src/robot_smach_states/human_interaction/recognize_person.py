@@ -14,18 +14,22 @@ from robot_skills.robot import Robot
 from robot_smach_states.util.designators.core import VariableDesignator
 
 
-def get_operator_name(recognition: Recognition) -> str:
+def get_operator_name(recognition: Recognition, threshold: typing.Optional[float] = 3.0) -> str:
     """
     Gets the operator name from a recognition
 
-    :param recognition:
+    :param recognition: recognition of the face
+    :param threshold: if the best match is below this threshold, it is designated as unknown and an exception is raised
     :return: operator name
-    :raises: ...
+    :raises: RuntimeError
     """
-    # ToDo: what can it raise? --> add to docstring
     # ToDo: add tests
     distribution = recognition.categorical_distribution  # type: CategoricalDistribution
     best_match = max(distribution.probabilities, key=lambda cp: cp.probability)  # type: CategoryProbability
+    if best_match.probability < threshold:
+        raise RuntimeError(
+            f"Best match has a probability of {best_match.probability} which is lower than the threshold {threshold}"
+        )
     return best_match.label
 
 
@@ -36,7 +40,7 @@ class RecognizePerson(smach.State):
         name_designator: VariableDesignator,
         expected_operator_position: typing.Optional[kdl.Vector] = None,
         operator_distance_threshold: typing.Optional[float] = 0.5,
-        recognition_threshold: typing.Optional[float] = 4.0,
+        recognition_threshold: typing.Optional[float] = 3.0,
     ):
         """
         State to recognize a person. Detects faces, stores name with highest probability in a designator
@@ -49,7 +53,6 @@ class RecognizePerson(smach.State):
         as 'not recognized'. N.B.: this is not really a probability.
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
-        # ToDo: add threshold
         self._robot = robot
         self._name_designator = name_designator
         self._expected_operator_position = kdl.Vector(1.0, 0.0, 0.0) if expected_operator_position is None \
@@ -67,7 +70,7 @@ class RecognizePerson(smach.State):
             )
             operator_name = get_operator_name(recognition=operator_recognition)
             rospy.loginfo(f"Operator name: {operator_name}")
-        except Exception as e:  # ToDo: narrow down exceptions
+        except RuntimeError as e:
             rospy.loginfo(f"Did not recognize the operator: {e}")
             return "failed"
 
