@@ -42,6 +42,7 @@ class Designator(object):
 
         self._name = name
         self.__initial_value = initial_value
+        rospy.loginfo(type(self.__initial_value))
         if resolve_type:
             if isinstance(resolve_type, list):
                 # Value is a list of items with each item of type resolve_type[0] .
@@ -88,6 +89,7 @@ class Designator(object):
                 self.fail_with_type_error(result_type, resolve_type)
 
             if len(result) == 0: # Empty list, cannot check element type.
+                rospy.logdebug("len = 0")
                 return result
 
             if not isinstance(result[0], resolve_type[0]): # Element type check.

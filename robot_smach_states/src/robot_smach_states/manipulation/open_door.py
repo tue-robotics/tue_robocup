@@ -21,7 +21,7 @@ from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstrain
 from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.human_interaction.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
-from robot_smach_states.util.designators import check_type, Designator, EdEntityDesignator, UnoccupiedArmDesignator
+from robot_smach_states.util.designators import check_type, Designator, EdEntityDesignator, UnoccupiedArmDesignator, VariableDesignator
 from tue_msgs.msg import LocateDoorHandleGoal
 
 
@@ -148,10 +148,6 @@ class OpenDoor(smach.StateMachine):
                                 #    transitions={'succeeded': 'NAVIGATE_THROUGH_DOOR',
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'})
-
-            # smach.StateMachine.add('PASS_DOOR', PassDoor(robot, door_designator, in_front_area_designator, behind_area_designator),
-            #                        transitions={'succeeded': 'succeeded',
-            #                                     'failed': 'failed'})
 
 
 class NavigateToHandle(NavigateTo):
@@ -442,13 +438,10 @@ class PullDoorOpen(smach.State):
 
         return "succeeded"
 
-
+"""
 # class NavigateThroughDoor(smach.State):
 #     def __init__(self, robot, door_des):
-#         """
 
-#         :param robot: robot object
-#         """
 #         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
 #         self._robot = robot
@@ -483,7 +476,7 @@ class PullDoorOpen(smach.State):
 #         arm.reset()
 #         self._robot.head.reset()
 #         return "succeeded"
-
+"""
 
 class PassDoor(smach.StateMachine):
     def __init__(
@@ -543,5 +536,6 @@ if __name__ == "__main__":
     hero = get_robot('hero')
     door = hero.ed.get_entity(uuid="door")
     door_des = Designator(Door(door))
+    #bla = VariableDesignator(5).writeable
     test = OpenDoor(hero, door_des)
     test.execute()
