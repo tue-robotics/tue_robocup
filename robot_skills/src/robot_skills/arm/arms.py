@@ -545,16 +545,16 @@ class Arm(RobotPart):
 
         If timeout is defined, it will wait for timeout*len(joints_reference) seconds for the
         completion of the actionlib goal. It will return True as soon as possible when the goal
-        succeeded. On timeout, it will return False.
+        succeeded. On timeout, it will return False. If timeout is set to 0.0 it will return False immediately.
+        The motion will not be cancelled on timeout.
 
         :param joints_references: List of joint configurations,
             which should be a list of the length equal to the number of joints to be moved
         :param max_joint_vel: Speed the robot can have when getting to the desired
             configuration. A single value can be given, which will be used for all joints, or a list of values can be
             given in which the order has to agree with the joints according to the joints_references.
-        :param timeout: Timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not
-            allowed
-        :return: True or False
+        :param timeout: Timeout for each joint configuration in rospy.Duration(seconds). If 0.0 function will return without waiting for motion done.
+        :return: Whether or not the motion was completed within the timeout.
         """
         timeout = rospy.Duration(timeout)
 
