@@ -7,7 +7,7 @@ import rospy
 from robot_skills.get_robot import get_robot
 
 # Robot Smach States
-from robot_smach_states.human_interaction import ShowImageState
+from robot_smach_states.human_interaction import ShowImage
 
 
 if __name__ == "__main__":
@@ -26,5 +26,5 @@ if __name__ == "__main__":
     robot = get_robot(args.robot)
     file_path = args.file_path
 
-    show_image_state = ShowImageState(robot, file_path)
+    show_image_state = ShowImage(robot, file_path)
     show_image_state.execute()
