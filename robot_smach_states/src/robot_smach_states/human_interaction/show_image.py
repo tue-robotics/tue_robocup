@@ -1,3 +1,5 @@
+import os.path
+
 import rospy
 import smach
 
@@ -26,7 +28,10 @@ class ShowImage(smach.State):
     def execute(self, ud=None):
         filename = self._filename.resolve() if hasattr(self._filename, "resolve") else self._filename
         if filename is None:
-            rospy.logerr(f"Could not resolve a filename from {self._filename}")
+            rospy.logerr(f"Failed to display image: Could not resolve a filename from {self._filename}")
+            return "failed"
+        if not os.path.exists(filename):
+            rospy.logerr(f"Failed to display image: file '{filename}' does not exist")
             return "failed"
 
         self._robot.hmi.show_image(filename, self._duration)
