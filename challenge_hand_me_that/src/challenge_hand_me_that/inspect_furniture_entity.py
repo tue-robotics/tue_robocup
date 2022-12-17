@@ -17,7 +17,7 @@ from ed.entity import Entity
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 from robot_skills import get_robot_from_argv
 from robot_skills.robot import Robot
 from robot_skills.classification_result import ClassificationResult

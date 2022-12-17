@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import rospy
 import smach
-from .world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 import robot_smach_states.util.designators as ds
 from robot_skills.classification_result import ClassificationResult
 
