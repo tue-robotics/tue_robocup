@@ -13,7 +13,7 @@ from ..navigation.navigate_to_place import NavigateToPlace
 from ..utility import LockDesignator, ResolveArm, check_arm_requirements
 from ..util.designators import check_type
 from ..util.designators.utility import LockingDesignator
-from ..world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 
 
 class PreparePlace(smach.State):

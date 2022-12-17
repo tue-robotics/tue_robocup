@@ -13,7 +13,7 @@ from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util import startup
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, Designator
-from robot_smach_states.world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 from smach import StateMachine, State
 
 STARTING_POINT = "initial_pose"
