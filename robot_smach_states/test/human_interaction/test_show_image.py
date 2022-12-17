@@ -2,7 +2,7 @@ import os
 import unittest
 
 from robot_skills.mockbot import Mockbot
-from robot_smach_states.human_interaction import ShowImageState
+from robot_smach_states.human_interaction import ShowImage
 
 
 class TestShowImage(unittest.TestCase):
@@ -12,12 +12,12 @@ class TestShowImage(unittest.TestCase):
         # Test if state returns succeeded if file exists
         with open("/tmp/foo", "w") as f:
             f.write("bar")
-        state = ShowImageState(robot, "/tmp/foo")
+        state = ShowImage(robot, "/tmp/foo")
         self.assertEqual(state.execute(), "succeeded")
         os.remove("/tmp/foo")
 
         # Test if state returns failed if file does not exist
-        state = ShowImageState(robot, "/tmp/bar")
+        state = ShowImage(robot, "/tmp/bar")
         self.assertEqual(state.execute(), "failed")
 
 
