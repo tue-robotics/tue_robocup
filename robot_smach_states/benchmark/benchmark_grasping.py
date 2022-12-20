@@ -22,7 +22,7 @@ from robot_skills.classification_result import ClassificationResult
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.manipulation import Grab, SetGripper
 from robot_smach_states.navigation import ForceDrive, NavigateToWaypoint
-from robot_smach_states.world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 
 
 RESULT_FIELDS = [ 'timestamp', 'robot',
@@ -227,4 +227,3 @@ if __name__ == "__main__":
                                          non_strict_class=args.non_strict_class,
                                          search_area=config_row['search_area'])
                     records += [record]
-
