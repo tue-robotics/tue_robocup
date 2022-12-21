@@ -10,7 +10,7 @@ from robot_smach_states.human_interaction import AskYesNo, HearOptionsExtra, Say
 from robot_smach_states.manipulation import ArmToJointConfig, Grab, Place
 from robot_smach_states.navigation import NavigateToPlace, NavigateToRoom
 from robot_smach_states.utility import WaitTime
-from robot_smach_states.world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import ResolveArm
 

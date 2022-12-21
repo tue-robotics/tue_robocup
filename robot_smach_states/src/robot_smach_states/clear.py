@@ -10,7 +10,7 @@ from robot_skills.classification_result import ClassificationResult
 
 from .manipulation.grab import Grab
 from .manipulation.place import EmptySpotDesignator, Place
-from .world_model import Inspect
+from robot_smach_states.world_model.world_model import Inspect
 from .util.designators import EdEntityDesignator, EntityByIdDesignator,\
     UnoccupiedArmDesignator, VariableDesignator
 

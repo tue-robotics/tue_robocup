@@ -246,15 +246,16 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                    transitions={'spoken': 'SHOW_IMAGE'})
 
             smach.StateMachine.add("SHOW_IMAGE",
-                                   states.human_interaction.ShowImageState(
+                                   states.human_interaction.ShowImage(
                                        robot=robot,
                                        image_filename=os.path.join(
                                            rospkg.RosPack().get_path("challenge_take_out_the_garbage"),
                                            "images",
                                            "beun_picture.png"
                                        ),
-                                       seconds=5),
-                                   transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
+                                       duration=5),
+                                   transitions={"failed": "CLOSE_AFTER_INSERT",
+                                                "succeeded": "CLOSE_AFTER_INSERT"})
 
             smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(
                 robot,

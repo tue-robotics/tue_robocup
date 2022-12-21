@@ -6,8 +6,7 @@ import rospy
 
 # TU/e Robotics
 from robot_skills.classification_result import ClassificationResult
-from ..world_model import Inspect
-from ..utility import WaitTime
+from robot_smach_states.world_model.world_model import Inspect
 from ..util.designators import VariableDesignator
 
 
@@ -130,4 +129,3 @@ class Find(smach.StateMachine):
                                        candidate_entities_designator=segmented_entities_designator),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'not_found'})
-

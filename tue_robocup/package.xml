@@ -31,6 +31,7 @@
   <exec_depend>challenge_storing_groceries</exec_depend>
   <exec_depend>challenge_take_out_the_garbage</exec_depend>
   <exec_depend>challenge_where_is_this</exec_depend>
+  <exec_depend>robocup_knowledge</exec_depend>
   <exec_depend>test_tools</exec_depend>
 
   <export>

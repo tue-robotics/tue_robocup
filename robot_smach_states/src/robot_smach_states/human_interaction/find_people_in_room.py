@@ -16,7 +16,7 @@ import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
 from robot_smach_states.designator_iterator import IterateDesignator
-from robot_smach_states.world_model import UpdateDestEntityPoseWithSrcEntity
+from robot_smach_states.world_model.world_model import UpdateDestEntityPoseWithSrcEntity
 
 
 class FindPeople(smach.State):

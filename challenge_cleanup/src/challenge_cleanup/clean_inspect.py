@@ -5,7 +5,7 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.rise import RiseForInspect
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, ValueByKeyDesignator
-from robot_smach_states.world_model import SegmentObjects
+from robot_smach_states.world_model.world_model import SegmentObjects
 from robot_skills.classification_result import ClassificationResult
 
 from .handle_detected_entities import HandleDetectedEntities
