@@ -248,7 +248,7 @@ class HandoverFromHumanFigure(smach.StateMachine):
             smach.StateMachine.add("SHOW_IMAGE",
                                    states.human_interaction.ShowImage(
                                        robot=robot,
-                                       image_filename=os.path.join(
+                                       filename=os.path.join(
                                            rospkg.RosPack().get_path("challenge_take_out_the_garbage"),
                                            "images",
                                            "beun_picture.png"
