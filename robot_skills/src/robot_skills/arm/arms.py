@@ -277,6 +277,9 @@ class PublicArm(object):
     def __repr__(self) -> str:
         return "PublicArm(arm={arm})".format(arm=self._arm)
 
+    def get_joint_states(self):
+        return self._arm.get_joint_states()
+
 
 class Arm(RobotPart):
     """
