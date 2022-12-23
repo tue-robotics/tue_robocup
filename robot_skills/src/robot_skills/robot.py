@@ -1,12 +1,7 @@
 #! /usr/bin/env python
 
 from collections import OrderedDict
-try:
-    # Python 3
-    from collections.abc import Sequence, Set
-except ImportError:
-    # Python 2
-    from collections import Sequence, Set
+from collections.abc import Sequence, Set
 
 # ROS
 import geometry_msgs
