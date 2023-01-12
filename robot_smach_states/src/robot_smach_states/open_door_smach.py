@@ -6,7 +6,7 @@ import typing
 #ros import
 import rospy 
 import rosapi
-from rosapi import srv
+#from rosapi import srv
 from std_msgs.msg import String
 import actionlib
 from tue_msgs.msg import LocateDoorHandleGoal
@@ -26,16 +26,16 @@ from robot_smach_states.util.designators import Designator
 import numpy
 import PyKDL as kdl
 
-class moveIFOdoor(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['outcome1','outcome2'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
-        self.rate = rospy.Rate(0.5)
+# class moveIFOdoor(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=['outcome1','outcome2'])
+#         self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+#         self.rate = rospy.Rate(0.5)
 
-    def execute(self, userata):
-        self.Setparameter.call("goIFOdoor","1")   
-        self.rate.sleep()  
-        return 'outcome1'
+#     def execute(self, userata):
+#         self.Setparameter.call("goIFOdoor","1")   
+#         self.rate.sleep()  
+#         return 'outcome1'
 
 class moveArm(smach.State):
     def __init__(self,arm):
@@ -68,27 +68,27 @@ class openGripper(smach.State):
             self.rate.sleep()
             return 'outcome2'
 
-class moveTreshold(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['outcome1','outcome2'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
-        self.rate = rospy.Rate(0.5)
+# class moveTreshold(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=['outcome1','outcome2'])
+#         self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+#         self.rate = rospy.Rate(0.5)
 
-    def execute(self, userata):
-        self.Setparameter.call("go_treshold","1")   
-        self.rate.sleep()  
-        return 'outcome1'
+#     def execute(self, userata):
+#         self.Setparameter.call("go_treshold","1")   
+#         self.rate.sleep()  
+#         return 'outcome1'
 
-class pushDoor(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['outcome1','outcome2'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
-        self.rate = rospy.Rate(0.5)
+# class pushDoor(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=['outcome1','outcome2'])
+#         self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+#         self.rate = rospy.Rate(0.5)
 
-    def execute(self, userata):
-        self.Setparameter.call("push_door","1")   
-        self.rate.sleep()  
-        return 'outcome1'
+#     def execute(self, userata):
+#         self.Setparameter.call("push_door","1")   
+#         self.rate.sleep()  
+#         return 'outcome1'
 
 class Door(Entity):
     HANDLE_ID = "handle_volume"
