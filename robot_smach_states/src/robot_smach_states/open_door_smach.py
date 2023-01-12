@@ -6,7 +6,7 @@ import typing
 #ros import
 import rospy 
 import rosapi
-#from rosapi import srv
+from rosapi import srv
 from std_msgs.msg import String
 import actionlib
 from tue_msgs.msg import LocateDoorHandleGoal
@@ -166,6 +166,9 @@ class updateHandleLocation(smach.State):
         goal_estimate.point.z = handle_estimate.vector.z()
         goal.handle_location_estimate = goal_estimate
 
+        rospy.loginfo("goal_estimate info")
+        rospy.loginfo(goal_estimate)
+        
         #to use the 3 following fct, hero has to be IFO the door (TT RVIZ or TT service)
         self.robot.perception.locate_handle_client.send_goal(goal) #ask hero to watch
         self.robot.perception.locate_handle_client.wait_for_result(rospy.Duration.from_sec(5.0)) #wait for result (not mandatory)
@@ -205,7 +208,7 @@ class PrepareGraspingHandle(smach.State):
         kdl_vector = handle_vector.vector
         
         #change some value of the kdl vector befor c
-        kdl_vector[0] = kdl_vector[0] -0.03 #in order to not touch the handle
+        kdl_vector[0] = kdl_vector[0] -0.035 #in order to not touch the handle
         kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
         handle_frame = FrameStamped(kdl_frame,rospy.Time.now(), frame_id = "map") #map is hard coded but it must change #get the frame of the handle from the vector
         
