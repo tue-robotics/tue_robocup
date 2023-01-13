@@ -155,7 +155,7 @@ class GraspeHandle(smach.State):
         smach.State.__init__(self, outcomes=['success', 'fail'])
         
     def execute(self, userdata):
-        self.Setparameter.call("is_door_open","0")
+        #self.Setparameter.call("is_door_open","0")
         self.arm.gripper.send_goal("open") #open gripper
         handle_vector = self.door.getPose() #get the pose (vector) of the handle
         
@@ -294,7 +294,7 @@ def main():
     #smach state machine to grasp the handle
     sm_grasp_handle = smach.StateMachine(outcomes=['handleIsGrasped', 'fail'])
     with sm_grasp_handle:
-        smach.StateMachine.add('goMinimumPosition', moveTreshold(), transitions={'goodPosition' : 'GraspeHandle', 'fail' : 'fail'})
+        #smach.StateMachine.add('goMinimumPosition', moveTreshold(), transitions={'goodPosition' : 'GraspeHandle', 'fail' : 'fail'})
         smach.StateMachine.add('GraspeHandle', GraspeHandle(robot, arm, my_door), transitions={'success' : 'closeGripper', 'fail' : 'fail'})
         smach.StateMachine.add('closeGripper', closeGripper(arm), transitions={'gripperClose' : 'handleIsGrasped', 'fail' : 'fail'})
 
