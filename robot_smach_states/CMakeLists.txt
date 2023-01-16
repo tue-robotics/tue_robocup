@@ -2,8 +2,15 @@ cmake_minimum_required(VERSION 3.0.2)
 project(robot_smach_states)
 
 find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
+  roscpp
+  sensor_msgs
+  tf2
+  tf2_ros
+  visualization_msgs
   robot_skills
   rospy
+  roslint
 )
 
 # add robot-console
@@ -11,7 +18,33 @@ catkin_add_env_hooks(60.robot_smach_states SHELLS sh DIRECTORY ${CMAKE_CURRENT_S
 
 catkin_python_setup()
 
-catkin_package()
+catkin_package(
+  INCLUDE_DIRS
+  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros
+)
+
+include_directories(
+  SYSTEM
+  ${catkin_INCLUDE_DIRS}
+)
+
+add_executable(open_the_door_service
+  open_the_door_service.cpp
+)
+
+target_link_libraries(open_the_door_service
+  ${catkin_LIBRARIES}
+)
+
+install(TARGETS open_the_door_service
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  DIRECTORY
+    launch
+    param
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
