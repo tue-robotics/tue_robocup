@@ -41,7 +41,7 @@ class doorOpener {
         //ros::Publisher chatter_joint_body;
         //ros::Publisher chatter_joint_gripper;
         ros::Subscriber sub;
-        
+
 
         boost::shared_ptr<sensor_msgs::LaserScan const> sharedLaserMessage;
         sensor_msgs::LaserScan laserMessage;
@@ -50,7 +50,7 @@ class doorOpener {
         bool find_end;
 
 
-        //constructor 
+        //constructor
         doorOpener(ros::NodeHandle* nh_ptr): nh(nh_ptr) {
             //initialise service and publisher
             this -> service  = nh -> advertiseService("SetParam", &doorOpener::setParam_callback, this);
@@ -58,7 +58,7 @@ class doorOpener {
             chatter_twist = nh -> advertise<geometry_msgs::Twist>("/hero/base/references",1);
             //chatter_joint_body = nh -> advertise<control_msgs::FollowJointTrajectoryActionGoal>("/hero/body/joint_trajectory_action/goal",1);
             //chatter_joint_gripper = nh -> advertise<control_msgs::FollowJointTrajectoryActionGoal>("/hero/gripper_controller/follow_joint_trajectory/goal",1);
-            
+
             }
 
         void go_treshold(float limite){
@@ -81,7 +81,7 @@ class doorOpener {
                         chatter_twist.publish(pub);
                     }
 
-                } 
+                }
             ROS_INFO("we can grab the handle");
         }
 
@@ -130,15 +130,15 @@ class doorOpener {
 
             else if (msg_rqst.name == "go_treshold") {
                 ROS_INFO("going forward until threshold");
-                //start the subscription to laser 
+                //start the subscription to laser
                 this -> find_end = false;
-                this -> go_treshold(0.60);
+                this -> go_treshold(0.40);
                 return true;
             }
 
             else if (msg_rqst.name == "go_treshold_behind") {
                 ROS_INFO("going forward until threshold");
-                //start the subscription to laser 
+                //start the subscription to laser
                 this -> find_end = false;
                 this -> go_treshold(0.42);
                 return true;
@@ -175,9 +175,9 @@ class doorOpener {
                 return false;
             }
 
-            
+
         }
-    
+
 };
 
 
