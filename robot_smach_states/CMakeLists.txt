@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   robot_skills
   rospy
-  roslint
+  rosapi
 )
 
 # add robot-console
