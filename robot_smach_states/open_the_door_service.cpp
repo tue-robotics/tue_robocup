@@ -61,7 +61,7 @@ class doorOpener {
             
             }
 
-        void go_treshold(){
+        void go_treshold(float limite){
             while (ros::ok() && !(this -> find_end)) {
 
                     //wait for scan message
@@ -72,7 +72,7 @@ class doorOpener {
                     int position_angle_zero = int(-(sharedLaserMessage->angle_min)/sharedLaserMessage->angle_increment);
                     float distance = sharedLaserMessage->ranges[position_angle_zero];
 
-                    if (distance <= 0.58) {
+                    if (distance <= limite) {
                         this -> find_end = true;
                     }
 
@@ -114,9 +114,16 @@ class doorOpener {
                 return true;
             }
 
-            if(msg_rqst.name == "goIFOdoor2") {
+            else if(msg_rqst.name == "goIFOdoor2") {
                 ROS_INFO("go to the door2");
-                geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(6, 0.381, 0, 0, 0, 0.003, 0.99);
+                geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(6.5, 0.381, 0, 0, 0, 0.003, 0.99);
+                chatter_pose.publish(pub3);
+                return true;
+            }
+
+            else if(msg_rqst.name == "goBehindDoor") {
+                ROS_INFO("go behinf the door");
+                geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(8.1, 0.37, 0, 0, 0, -0.99, 0.022);
                 chatter_pose.publish(pub3);
                 return true;
             }
@@ -125,7 +132,15 @@ class doorOpener {
                 ROS_INFO("going forward until threshold");
                 //start the subscription to laser 
                 this -> find_end = false;
-                this -> go_treshold();
+                this -> go_treshold(0.60);
+                return true;
+            }
+
+            else if (msg_rqst.name == "go_treshold_behind") {
+                ROS_INFO("going forward until threshold");
+                //start the subscription to laser 
+                this -> find_end = false;
+                this -> go_treshold(0.42);
                 return true;
             }
 
