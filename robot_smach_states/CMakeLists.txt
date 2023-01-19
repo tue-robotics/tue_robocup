@@ -40,6 +40,9 @@ add_executable(open_the_door_service
   my_service_server.cpp
 )
 
+add_dependencies(open_the_door_service ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+
 target_link_libraries(open_the_door_service
   ${catkin_LIBRARIES}
 )
