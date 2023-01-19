@@ -12,6 +12,7 @@ import actionlib
 from tue_msgs.msg import LocateDoorHandleGoal
 from geometry_msgs.msg import PointStamped, Point
 from pykdl_ros import FrameStamped, VectorStamped
+from opening_door.srv import door_info
 
 # robot import
 from ed.entity import Entity
@@ -25,17 +26,6 @@ from robot_smach_states.util.designators import Designator
 #other import
 import numpy
 import PyKDL as kdl
-
-"""class pushDoor(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['outcome1','outcome2'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
-        self.rate = rospy.Rate(0.5)
-
-    def execute(self, userata):
-        self.Setparameter.call("push_door","1")
-        self.rate.sleep()
-        return 'outcome1'"""
 
 class Door(Entity):
     HANDLE_ID = "handle_volume"
@@ -107,16 +97,46 @@ class Door(Entity):
     def getPose(self):
         return self.HANDLE_POSE
 
-class moveIFOdoor(smach.State):
+class updateDoorState(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['outcome1','outcome2'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+        smach.State.__init__(self, outcomes=['close','intermediate','open'])
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
+        self.rate = rospy.Rate(0.5)
+        
+    def execute(self, userdata):
+        response = self.door_info.call("door_state")
+        return 'close'
+        
+        if response == 1:
+            return 'open'
+        
+        elif response == 2:
+            return "intermediate"
+        
+        else:
+            return 'close'
+
+class goIFOhandle(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['IFO_handle','fail'])
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(0.5)
 
     def execute(self, userata):
-        self.Setparameter.call("goIFOdoor2","1")
+        self.door_info.call("goIFOhandle")
         self.rate.sleep()
-        return 'outcome1'
+        return 'IFO_handle'
+
+class goIFOdoor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['IFO_door','fail'])
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
+        self.rate = rospy.Rate(0.5)
+        
+    def execute(self, userata):
+        #self.door_info.call("goIFOdoor")
+        self.rate.sleep()
+        return 'IFO_door'
 
 class updateHandleLocation(smach.State):
     def __init__(self, robot, door):
@@ -209,12 +229,12 @@ class graspeHandle(smach.State):
         self.robot = robot
         self.door = door
         self.arm = arm
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(1)
         smach.State.__init__(self, outcomes=['good_position_of_arm', 'fail'], output_keys=['side_of_door'])
 
     def execute(self, userdata):
-        self.Setparameter.call("is_door_open","0")
+        self.door_info.call("is_door_open")
         self.arm.gripper.send_goal("open") #open gripper
         handle_vector = self.door.getPose() #get the pose (vector) of the handle
 
@@ -223,9 +243,14 @@ class graspeHandle(smach.State):
         kdl_rotation = kdl.Rotation()
         kdl_vector = handle_vector.vector
 
-        #change some value of the kdl vector befor c
-        kdl_vector[0] = kdl_vector[0] -0.056#in order to not touch the handle
-        kdl_vector[1]=kdl_vector[1]+0.05
+        #change some value of the kdl vector befor
+        #in reality
+        # kdl_vector[0] = kdl_vector[0] -0.056#in order to not touch the handle
+        # kdl_vector[1]=kdl_vector[1]+0.05
+        #in simulation
+        kdl_vector[0] = kdl_vector[0] -0.045#in order to not touch the handle
+        kdl_vector[1]=kdl_vector[1]+0.02
+        
         kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
         handle_frame = FrameStamped(kdl_frame,rospy.Time.now(), frame_id = "map") #map is hard coded but it must change #get the frame of the handle from the vector
 
@@ -251,12 +276,12 @@ class graspeBehindHandle(smach.State):
         self.robot = robot
         self.door = door
         self.arm = arm
-        #self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(1)
         smach.State.__init__(self, outcomes=['good_position_of_arm', 'fail'])
 
     def execute(self, userdata):
-        #self.Setparameter.call("is_door_open","0")
+        #self.door_info.call("is_door_open")
         self.arm.gripper.send_goal("open") #open gripper
         handle_vector = self.door.getHandleBehindPose() #get the pose (vector) of the handle
 
@@ -405,26 +430,111 @@ class openGripper(smach.State):
 class moveTreshold(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['goodPosition','fail'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(0.5)
 
     def execute(self, userata):
-        self.Setparameter.call("is_door_open","0")
-        self.Setparameter.call("go_treshold","1")
+        self.door_info.call("is_door_open")
+        self.door_info.call("go_treshold")
         self.rate.sleep()
         return 'goodPosition'
 
 class moveTresholdBehind(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['goodPosition','fail'])
-        self.Setparameter = rospy.ServiceProxy('SetParam', srv.SetParam)
+        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(0.5)
 
     def execute(self, userata):
-        self.Setparameter.call("is_door_open","0")
-        self.Setparameter.call("go_treshold_behind","1")
+        self.door_info.call("is_door_open")
+        self.door_info.call("go_treshold_behind")
         self.rate.sleep()
         return 'goodPosition'
+
+class robotBackInitialPosition(smach.State):
+    def __init__(self, arm):
+        smach.State.__init__(self, outcomes=['initialPosition','fail'])
+        self.arm = arm
+        self.rate = rospy.Rate(0.3)
+        
+    def execute(self, userdata):
+        #this is the joints position for reset in the robot.
+        joint1, joint2, joint3, joint4, joint5 = 0.01, 0.0, -1.57, -1.57, 0.0
+        list_trajectory = [joint1, joint2, joint3, joint4, joint5]
+        self.arm._arm._send_joint_trajectory([list_trajectory])
+        self.rate.sleep()
+        
+        return 'initialPosition'
+
+class crossDoor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['doorIsCrossed','fail'])
+        self.rate = rospy.Rate(0.5)
+        
+    def execute(self, userdata):
+        self.rate.sleep()
+        return 'doorIsCrossed'
+    
+class moveDoorOpen(smach.State):
+    def __init__(self, robot):
+        self.robot = robot
+        smach.State.__init__(self, outcomes=['doorFullyOpen','fail'])
+        
+    def execute(self, userdata):
+        return 'doorFullyOpen'
+
+def sm_grasp_handle(robot, arm, my_door):
+    #“smach state machine to grasp the handle
+    sm_grasp_handle = smach.StateMachine(outcomes=['handleIsGrasped', 'fail'],input_keys=['side_of_door'], output_keys = ['side_of_door'])
+    with sm_grasp_handle:
+        
+        """
+        #if I have to be closer behind
+        #smach.StateMachine.add('GraspeHandle', graspeHandle(robot, arm, my_door), transitions={'good_position_of_arm' : 'closeGripper', 'fail' : 'goMinimumPositionBehind'}, remapping = {'side_of_door' : 'side_of_door'})
+        #smach.StateMachine.add('goMinimumPositionBehind', moveTresholdBehind(), transitions={'goodPosition' : 'GraspeBehindHandle', 'fail' : 'fail'})
+        #if it is the same distance behind
+        """
+        smach.StateMachine.add('GraspeHandle', graspeHandle(robot, arm, my_door), transitions={'good_position_of_arm' : 'closeGripper', 'fail' : 'GraspeBehindHandle'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('GraspeBehindHandle', graspeBehindHandle(robot, arm, my_door), transitions={'good_position_of_arm' : 'closeGripper', 'fail' : 'fail'})
+        smach.StateMachine.add('closeGripper', closeGripper(arm), transitions={'gripperClose' : 'handleIsGrasped', 'fail' : 'fail'})
+        
+    return sm_grasp_handle
+
+def sm_open_door_close(robot, arm, my_door):
+    #get sm_grasp_handle
+    sm_grasp_handle_ = sm_grasp_handle(robot, arm, my_door)
+    
+    #get sm
+    sm_open_door_close = smach.StateMachine(outcomes=['doorIsNotClose', 'fail'], input_keys = ['side_of_door'], output_keys = ['side_of_door'])
+    with sm_open_door_close:
+        smach.StateMachine.add('goIFOhandle', goIFOhandle(), transitions={'IFO_handle' : 'updateHandleLocation', 'fail' : 'fail'})
+        smach.StateMachine.add('updateHandleLocation', updateHandleLocation(robot, my_door), transitions={'updated' : 'updateHandleBehindLocation', 'fail' : 'fail'})
+        smach.StateMachine.add('updateHandleBehindLocation', updateHandleBehindLocation(robot, my_door), transitions={'updated' : 'goMinimumPosition', 'fail' : 'fail'})
+        smach.StateMachine.add('goMinimumPosition', moveTreshold(), transitions={'goodPosition' : 'graspingHandle', 'fail' : 'fail'})
+        smach.StateMachine.add('graspingHandle', sm_grasp_handle_, transitions={'handleIsGrasped' : 'unlatchHandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('unlatchHandle', unlatchHandle(arm), transitions={'handleIsUnlatched_push' : 'pushDoorUnlatched','handleIsUnlatched_pull' : 'pullDoorUnlatched', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('pushDoorUnlatched',pushDoorUnlatched(robot, my_door), transitions={'doorIsPushed' :'openGripper', 'fail' : 'fail'} )
+        smach.StateMachine.add('pullDoorUnlatched',pullDoorUnlatched(robot, my_door), transitions={'doorIsPulled' :'openGripper', 'fail' : 'fail'} )
+        smach.StateMachine.add('openGripper',openGripper(arm), transitions={'gripperOpen' :'doorIsNotClose', 'fail' : 'fail'} )
+    
+    return sm_open_door_close
+
+def sm_cross_door(robot, arm, my_door):
+    #get open door that is closed
+    sm_open_door_close_=sm_open_door_close(robot, arm, my_door)
+    
+    sm_cross_door =  smach.StateMachine(outcomes=['doorIsCrossed', 'fail'])
+    sm_cross_door.userdata.side_of_door = 'Unknown'
+    
+    with sm_cross_door:
+        smach.StateMachine.add('goIFOdoor', goIFOdoor(), transitions={'IFO_door' : 'update_door_state', 'fail' : 'fail'})
+        smach.StateMachine.add('update_door_state', updateDoorState(), transitions={'close' : 'open_door_closed', 'intermediate' : 'move_door_open', 'open' : 'cross_door'})
+        smach.StateMachine.add('open_door_closed', sm_open_door_close_, transitions={'doorIsNotClose' :'doorIsCrossed', 'fail' : 'fail'},remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('robot_back_posInit', robotBackInitialPosition(arm), transitions={'initialPosition' : 'goIFOdoor', 'fail' : 'fail'})
+        smach.StateMachine.add('move_door_open', moveDoorOpen(robot), transitions={'doorFullyOpen' : 'doorIsCrossed', 'fail' : 'fail'})
+        smach.StateMachine.add('cross_door', crossDoor(), transitions={'doorIsCrossed' : 'doorIsCrossed', 'fail' : 'fail'})
+        
+    return sm_cross_door
 
 def main():
     rospy.init_node('open_door_smach_node',anonymous=True)
@@ -435,54 +545,9 @@ def main():
     door = robot.ed.get_entity(uuid="door_inside")
     my_door = Door(door)
 
-    #smach state machine to grasp the handle
-    sm_grasp_handle = smach.StateMachine(outcomes=['handleIsGrasped', 'fail'], output_keys = ['side_of_door'])
-    #sm_grasp_handle.userdata.side_of_door = 'Unknown'
-    with sm_grasp_handle:
-        smach.StateMachine.add('goMinimumPosition', moveTreshold(), transitions={'goodPosition' : 'GraspeHandle', 'fail' : 'fail'})
-        #if I have to be closer behind
-        #smach.StateMachine.add('GraspeHandle', graspeHandle(robot, arm, my_door), transitions={'good_position_of_arm' : 'closeGripper', 'fail' : 'goMinimumPositionBehind'}, remapping = {'side_of_door' : 'side_of_door'})
-        #smach.StateMachine.add('goMinimumPositionBehind', moveTresholdBehind(), transitions={'goodPosition' : 'GraspeBehindHandle', 'fail' : 'fail'})
-        #if it is the same distance behind
-        smach.StateMachine.add('GraspeHandle', graspeHandle(robot, arm, my_door), transitions={'good_position_of_arm' : 'closeGripper', 'fail' : 'GraspeBehindHandle'}, remapping = {'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('GraspeBehindHandle', graspeBehindHandle(robot, arm, my_door), transitions={'good_position_of_arm' : 'closeGripper', 'fail' : 'fail'})
-        smach.StateMachine.add('closeGripper', closeGripper(arm), transitions={'gripperClose' : 'handleIsGrasped', 'fail' : 'fail'})
-
-
-
     #smach state machine main
-    sm = smach.StateMachine(outcomes=['doorIsOpen', 'fail'])
-    sm.userdata.gripper_state = 0; #0 is close, 1 is open
-    sm.userdata.side_of_door = 'Unknown'
-
-    # in the container
-    with sm:
-        #smach.StateMachine.add('IFO_door', moveIFOdoor(), transitions={'outcome1' : 'updateHandleLocation', 'outcome2':'fail'})
-        smach.StateMachine.add('updateHandleLocation', updateHandleLocation(robot, my_door), transitions={'updated' : 'updateHandleBehindLocation', 'fail' : 'fail'})
-        smach.StateMachine.add('updateHandleBehindLocation', updateHandleBehindLocation(robot, my_door), transitions={'updated' : 'graspingHandle', 'fail' : 'fail'})
-        smach.StateMachine.add('graspingHandle', sm_grasp_handle, transitions={'handleIsGrasped' : 'unlatchHandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('unlatchHandle', unlatchHandle(arm), transitions={'handleIsUnlatched_push' : 'pushDoorUnlatched','handleIsUnlatched_pull' : 'pullDoorUnlatched', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('pushDoorUnlatched',pushDoorUnlatched(robot, my_door), transitions={'doorIsPushed' :'openGripper', 'fail' : 'fail'} )
-        smach.StateMachine.add('pullDoorUnlatched',pullDoorUnlatched(robot, my_door), transitions={'doorIsPulled' :'openGripper', 'fail' : 'fail'} )
-        smach.StateMachine.add('openGripper',openGripper(arm), transitions={'gripperOpen' :'doorIsOpen', 'fail' : 'fail'} )
-        """savoir quel cote de la porte on est (peute etre DetermineDoorDirection)
-            preparer l'autre cote
-            pullDoorOpen
-            pushDoor
-            PullDoor
-            tourner la poignee"""
-
-        # add some states
-        # sm_sub = smach.StateMachine(outcomes=['success_move','fail'])
-        # with sm_sub:
-        #     smach.StateMachine.add('IFO_door', moveIFOdoor(), transitions={'outcome1' : 'move_arm', 'outcome2':'fail'})
-        #     smach.StateMachine.add('move_arm', moveArm(arm), transitions={'outcome1' : 'success_move', 'outcome2':'fail'})
-        # smach.StateMachine.add('SUB', sm_sub, transitions={'success_move':'open_gripper'})
-        # smach.StateMachine.add('open_gripper', openGripper(arm), transitions={'outcome1' : 'move_treshold','outcome2':'push_door', 'outcome3':'fail'}, remapping={'gripper_state_in':'gripper_state', 'gripper_state_out':'gripper_state'})
-        # smach.StateMachine.add('move_treshold', moveTreshold(), transitions={'outcome1' : 'open_gripper', 'outcome2':'fail'})
-        # smach.StateMachine.add('push_door', pushDoor(), transitions={'outcome1' : 'doorIsOpen', 'outcome2':'fail'})
-
-    outcome = sm.execute()
+    sm_main = sm_cross_door(robot, arm, my_door)
+    outcome = sm_main.execute()
 
 if __name__ == '__main__':
     main()

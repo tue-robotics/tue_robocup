@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   robot_skills
   rospy
   rosapi
+  message_generation
+  std_msgs
 )
 
 # add robot-console
@@ -18,9 +20,15 @@ catkin_add_env_hooks(60.robot_smach_states SHELLS sh DIRECTORY ${CMAKE_CURRENT_S
 
 catkin_python_setup()
 
+add_service_files(
+  DIRECTORY srv
+  FILES door_info.srv 
+)
+generate_messages( DEPENDENCIES std_msgs)
+
 catkin_package(
   INCLUDE_DIRS
-  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros
+  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros message_runtime std_msgs
 )
 
 include_directories(
@@ -29,7 +37,7 @@ include_directories(
 )
 
 add_executable(open_the_door_service
-  open_the_door_service.cpp
+  src/my_service_server.cpp
 )
 
 target_link_libraries(open_the_door_service
