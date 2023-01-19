@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "opening_door/door_info.h"
+#include "robot_smach_states/door_info.h"
 #include "std_srvs/SetBool.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
@@ -150,7 +150,7 @@ class doorOpener {
             }
         }
 
-        bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
+        bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
             ros::Rate sleeping_time(0.5);
             if(msg_rqst.input_string == "goIFOhandle") {
                 ROS_INFO("go to the door");
