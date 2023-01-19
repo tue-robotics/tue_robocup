@@ -22,7 +22,7 @@ catkin_python_setup()
 
 add_service_files(
   DIRECTORY srv
-  FILES door_info.srv 
+  FILES door_info.srv
 )
 generate_messages( DEPENDENCIES std_msgs)
 
@@ -37,7 +37,7 @@ include_directories(
 )
 
 add_executable(open_the_door_service
-  src/my_service_server.cpp
+  my_service_server.cpp
 )
 
 target_link_libraries(open_the_door_service
