@@ -109,7 +109,7 @@ class doorOpener {
 
             if(sharedLaserMessage == NULL) {
                 ROS_INFO("error in getDoorState");
-            return 15;
+                return 15;
             }
 
             int position_angle_zero = int(-(sharedLaserMessage->angle_min)/sharedLaserMessage->angle_increment);
@@ -120,7 +120,7 @@ class doorOpener {
             int number_of_value_from_position_angle_zero = int(angle_max/sharedLaserMessage->angle_increment); //get the difference from angle 0
             ROS_INFO("number_of_value = %d", number_of_value_from_position_angle_zero);
             //get the the position of the 2 value to check
-            int value_to_check_min = position_angle_zero - number_of_value_from_position_angle_zero; 
+            int value_to_check_min = position_angle_zero - number_of_value_from_position_angle_zero;
             int value_to_check_max = position_angle_zero + number_of_value_from_position_angle_zero;
 
             float d_angle_min = sharedLaserMessage->ranges[value_to_check_min];
@@ -132,14 +132,14 @@ class doorOpener {
             d_value = pow(d_value,0.5);
 
             ROS_INFO("d_value = %f", d_value);
-            
+
             //calcul on the value we have
             if (distance > 1)  {
                 ROS_INFO("door is totally open\n");
                 return 1;
             }
 
-            if (abs(d_angle_max-d_angle_min)>0.03){
+            if (abs(d_angle_max-d_angle_min)>0.07){
                 ROS_INFO("door is open, but not toattly\n");
                 return 2;
             }
