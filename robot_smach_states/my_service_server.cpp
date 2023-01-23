@@ -175,7 +175,7 @@ class doorOpener {
 
             if(msg_rqst.input_string == "goIFOhandle") {
                 ROS_INFO("go to the handle");
-                geometry_msgs::PoseStamped pub1 = poseStamped_message(6.55, 0.381, 0, 0, 0, 0.001, 0.99);
+                geometry_msgs::PoseStamped pub1 = poseStamped_message(6.55, 0.300, 0, 0, 0, 0.001, 0.99);
                 chatter_planner.publish(pub1);
                 // geometry_msgs::PoseWithCovarianceStamped pub1 = pose_message(6.55, 0.381, 0, 0, 0, 0.003, 0.99);
                 // chatter_pose.publish(pub1);
