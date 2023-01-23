@@ -2,6 +2,7 @@
 #include "robot_smach_states/door_info.h"
 #include "std_srvs/SetBool.h"
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "sensor_msgs/LaserScan.h"
 #include "control_msgs/FollowJointTrajectoryActionGoal.h"
@@ -31,6 +32,21 @@ geometry_msgs::PoseWithCovarianceStamped pose_message(float a, float b, float c,
     return pub;
 }
 
+geometry_msgs::PoseStamped poseStamped_message(float a, float b, float c, float d, float e, float f, float g) {
+    geometry_msgs::PoseStamped pub;
+    pub.pose.position.x = a;
+    pub.pose.position.y = b;
+    pub.pose.position.z = c;
+
+    pub.pose.orientation.x = d;
+    pub.pose.orientation.y = e;
+    pub.pose.orientation.z = f;
+    pub.pose.orientation.w = g;
+
+    return pub;
+}
+
+
 class doorOpener {
 
     public:
@@ -39,8 +55,8 @@ class doorOpener {
         ros::ServiceServer service;
         ros::Publisher chatter_pose;
         ros::Publisher chatter_twist;
+        ros::Publisher chatter_planner;
         ros::Subscriber sub;
-
 
         boost::shared_ptr<sensor_msgs::LaserScan const> sharedLaserMessage;
         sensor_msgs::LaserScan laserMessage;
@@ -48,13 +64,13 @@ class doorOpener {
         //other variables
         bool find_end;
 
-
         //constructor
         doorOpener(ros::NodeHandle* nh_ptr): nh(nh_ptr) {
             //initialise service and publisher
             this -> service  = nh -> advertiseService("door_info", &doorOpener::doorInfo_callback, this);
             chatter_pose = nh -> advertise<geometry_msgs::PoseWithCovarianceStamped>("/hero/initialpose",1);
             chatter_twist = nh -> advertise<geometry_msgs::Twist>("/hero/base/references",1);
+            chatter_planner = nh -> advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
             }
 
         void go_treshold(float limite){
@@ -73,7 +89,7 @@ class doorOpener {
                     }
 
                     else {
-                        geometry_msgs::Twist pub = twist_message(0, 0, 0, 0.05, 0, 0);
+                        geometry_msgs::Twist pub = twist_message(0, 0, 0, 0.05, -0.01, 0);
                         chatter_twist.publish(pub);
                     }
 
@@ -101,8 +117,8 @@ class doorOpener {
             // else return true;
         }
 
-        int getDoorState() {
-            float size_to_check = 0.35; //the door is around 0.92m.
+        int getDoorState(float rot_y) {
+            float size_to_check = 0.3; //the door is around 0.92m.
             //call once the sensor data in order to know if we are in front of the door
             boost::shared_ptr<sensor_msgs::LaserScan const> sharedLaserMessage;
             sharedLaserMessage = ros::topic::waitForMessage<sensor_msgs::LaserScan>("/hero/base_laser/scan",*nh);
@@ -112,13 +128,17 @@ class doorOpener {
                 return 15;
             }
 
-            int position_angle_zero = int(-(sharedLaserMessage->angle_min)/sharedLaserMessage->angle_increment);
+            float position_angle_zero_according_robot = -(sharedLaserMessage->angle_min)/sharedLaserMessage->angle_increment;
+            ROS_INFO("before update : %f, angle increment = %f, rot_y = %f", position_angle_zero_according_robot, sharedLaserMessage->angle_increment, rot_y);
+
+            int position_angle_zero = int(position_angle_zero_according_robot - (rot_y/sharedLaserMessage->angle_increment)); //to take into account the rotation of the robot
+            ROS_INFO("after update : %d",position_angle_zero);
             float distance = sharedLaserMessage->ranges[position_angle_zero];
-            ROS_INFO("distance = %f", distance); //get the distance to the door
+            //ROS_INFO("distance = %f", distance); //get the distance to the door
             float angle_max = atan(size_to_check/distance); //get the angle we have to ckeck the value
 
             int number_of_value_from_position_angle_zero = int(angle_max/sharedLaserMessage->angle_increment); //get the difference from angle 0
-            ROS_INFO("number_of_value = %d", number_of_value_from_position_angle_zero);
+            //ROS_INFO("number_of_value = %d", number_of_value_from_position_angle_zero);
             //get the the position of the 2 value to check
             int value_to_check_min = position_angle_zero - number_of_value_from_position_angle_zero;
             int value_to_check_max = position_angle_zero + number_of_value_from_position_angle_zero;
@@ -134,42 +154,54 @@ class doorOpener {
             ROS_INFO("d_value = %f", d_value);
 
             //calcul on the value we have
-            if (distance > 1)  {
-                ROS_INFO("door is totally open\n");
+            if (distance > 1.4)  {
+                ROS_INFO("door state : door is totally open");
                 return 1;
             }
 
-            if (abs(d_angle_max-d_angle_min)>0.07){
-                ROS_INFO("door is open, but not toattly\n");
+            if (abs(d_angle_max-d_angle_min)>0.08){
+                ROS_INFO("door state : door is open, but not totally");
                 return 2;
             }
 
             else {
-                ROS_INFO("door is close\n");
+                ROS_INFO("door state : door is close");
                 return 3;
             }
         }
 
         bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
             ros::Rate sleeping_time(0.5);
+
             if(msg_rqst.input_string == "goIFOhandle") {
-                ROS_INFO("go to the door");
-                geometry_msgs::PoseWithCovarianceStamped pub1 = pose_message(6.55, 0.381, 0, 0, 0, 0.003, 0.99);
-                chatter_pose.publish(pub1);
+                ROS_INFO("go to the handle");
+                geometry_msgs::PoseStamped pub1 = poseStamped_message(6.55, 0.381, 0, 0, 0, 0.001, 0.99);
+                chatter_planner.publish(pub1);
+                // geometry_msgs::PoseWithCovarianceStamped pub1 = pose_message(6.55, 0.381, 0, 0, 0, 0.003, 0.99);
+                // chatter_pose.publish(pub1);
                 return true;
             }
 
             else if(msg_rqst.input_string == "goIFOhandle2") {
-                ROS_INFO("go to the door2");
+                ROS_INFO("go to the handle");
                 geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(6.5, 0.381, 0, 0, 0, 0.003, 0.99);
                 chatter_pose.publish(pub3);
                 return true;
             }
 
             else if(msg_rqst.input_string == "goBehindDoor") {
-                ROS_INFO("go behinf the door");
+                ROS_INFO("go behind the handle");
                 geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(8.1, 0.37, 0, 0, 0, -0.99, 0.022);
                 chatter_pose.publish(pub3);
+                return true;
+            }
+
+            else if(msg_rqst.input_string == "goIFOdoor") {
+                ROS_INFO("go IFO door");
+                geometry_msgs::PoseStamped pub3 = poseStamped_message(6, 0.450, 0, 0, 0, 0.01, 0.99);
+                chatter_planner.publish(pub3);
+                // geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(6, 0.450, 0, 0, 0, 0.01, 0.99);
+                // chatter_pose.publish(pub3);
                 return true;
             }
 
@@ -177,8 +209,8 @@ class doorOpener {
                 ROS_INFO("going forward until threshold");
                 //start the subscription to laser
                 this -> find_end = false;
-                //this -> go_treshold(0.40);
-                this -> go_treshold(0.58);
+                this -> go_treshold(0.40);
+                //this -> go_treshold(0.59);
                 return true;
             }
 
@@ -217,10 +249,17 @@ class doorOpener {
             }
 
             else if (msg_rqst.input_string == "door_state") {
-                ROS_INFO("get door state");
+                //ROS_INFO("get door state");
                 //start the subscription to laser
-                int result = this -> getDoorState();
+                int result = this -> getDoorState(msg_rqst.input_int);
                 msg_rsps.output_int = result;
+                return true;
+            }
+
+            else if (msg_rqst.input_string == "go_other_side") {
+                ROS_INFO("go other side of the door");
+                geometry_msgs::PoseStamped pub3 = poseStamped_message(8.1, 0.37, 0, 0, 0, -0.01, 0.99);
+                chatter_planner.publish(pub3);
                 return true;
             }
 

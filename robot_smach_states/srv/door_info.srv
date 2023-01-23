@@ -1,3 +1,4 @@
 string input_string
+float64 input_int
 ---
-int32 output_int
+int64 output_int
