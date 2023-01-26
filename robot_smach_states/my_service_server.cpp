@@ -1,4 +1,7 @@
 #include "ros/ros.h"
+//SIMULATION
+//#include "opening_door/door_info.h"
+//REALITY
 #include "robot_smach_states/door_info.h"
 #include "std_srvs/SetBool.h"
 #include "geometry_msgs/Twist.h"
@@ -6,6 +9,7 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "sensor_msgs/LaserScan.h"
 #include "control_msgs/FollowJointTrajectoryActionGoal.h"
+#include "cb_base_navigation_msgs/LocalPlannerActionResult.h"
 #include <cmath>
 
 geometry_msgs::Twist twist_message(float a, float b, float c, float d, float e, float f){
@@ -61,8 +65,12 @@ class doorOpener {
         boost::shared_ptr<sensor_msgs::LaserScan const> sharedLaserMessage;
         sensor_msgs::LaserScan laserMessage;
 
+        boost::shared_ptr<cb_base_navigation_msgs::LocalPlannerActionResult const> sharedPlannerMessage;
+        cb_base_navigation_msgs::LocalPlannerActionResult PlannerMessage;
+
         //other variables
         bool find_end;
+        bool arrive_at_destination;
 
         //constructor
         doorOpener(ros::NodeHandle* nh_ptr): nh(nh_ptr) {
@@ -72,6 +80,21 @@ class doorOpener {
             chatter_twist = nh -> advertise<geometry_msgs::Twist>("/hero/base/references",1);
             chatter_planner = nh -> advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
             }
+
+        void position_achieve() {
+           
+            //wait for result of action_server message
+            sharedPlannerMessage = ros::topic::waitForMessage<cb_base_navigation_msgs::LocalPlannerActionResult>("/hero/local_planner/action_server/result",*nh);
+            
+            if (sharedPlannerMessage != NULL) {
+                PlannerMessage = *sharedPlannerMessage;
+                arrive_at_destination = true;
+            }
+            else {
+                ROS_INFO("problem in position_achieve");
+                arrive_at_destination = true;
+            }
+        }
 
         void go_treshold(float limite){
             while (ros::ok() && !(this -> find_end)) {
@@ -129,10 +152,10 @@ class doorOpener {
             }
 
             float position_angle_zero_according_robot = -(sharedLaserMessage->angle_min)/sharedLaserMessage->angle_increment;
-            ROS_INFO("before update : %f, angle increment = %f, rot_y = %f", position_angle_zero_according_robot, sharedLaserMessage->angle_increment, rot_y);
+            //ROS_INFO("before update : %f, angle increment = %f, rot_y = %f", position_angle_zero_according_robot, sharedLaserMessage->angle_increment, rot_y);
 
             int position_angle_zero = int(position_angle_zero_according_robot - (rot_y/sharedLaserMessage->angle_increment)); //to take into account the rotation of the robot
-            ROS_INFO("after update : %d",position_angle_zero);
+            //ROS_INFO("after update : %d",position_angle_zero);
             float distance = sharedLaserMessage->ranges[position_angle_zero];
             //ROS_INFO("distance = %f", distance); //get the distance to the door
             float angle_max = atan(size_to_check/distance); //get the angle we have to ckeck the value
@@ -146,12 +169,12 @@ class doorOpener {
             float d_angle_min = sharedLaserMessage->ranges[value_to_check_min];
             float d_angle_max = sharedLaserMessage->ranges[value_to_check_max];
 
-            ROS_INFO("d_angle_min = %f, d_angle_max = %f", d_angle_min, d_angle_max); //get the distance to the door
+            //ROS_INFO("d_angle_min = %f, d_angle_max = %f", d_angle_min, d_angle_max); //get the distance to the door
 
             float d_value = (pow(size_to_check,2) + pow(distance,2));
             d_value = pow(d_value,0.5);
 
-            ROS_INFO("d_value = %f", d_value);
+            //ROS_INFO("d_value = %f", d_value);
 
             //calcul on the value we have
             if (distance > 1.4)  {
@@ -170,13 +193,17 @@ class doorOpener {
             }
         }
 
-        bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
+        bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
             ros::Rate sleeping_time(0.5);
 
             if(msg_rqst.input_string == "goIFOhandle") {
                 ROS_INFO("go to the handle");
-                geometry_msgs::PoseStamped pub1 = poseStamped_message(6.55, 0.300, 0, 0, 0, 0.001, 0.99);
+                geometry_msgs::PoseStamped pub1 = poseStamped_message(6.55, 0.381, 0, 0, 0, 0.001, 0.99);
                 chatter_planner.publish(pub1);
+                
+                //Set arrive at destination on false. When it becomes tue, it means we arrive at destination
+                this -> arrive_at_destination = false;
+
                 // geometry_msgs::PoseWithCovarianceStamped pub1 = pose_message(6.55, 0.381, 0, 0, 0, 0.003, 0.99);
                 // chatter_pose.publish(pub1);
                 return true;
@@ -200,6 +227,10 @@ class doorOpener {
                 ROS_INFO("go IFO door");
                 geometry_msgs::PoseStamped pub3 = poseStamped_message(6, 0.450, 0, 0, 0, 0.01, 0.99);
                 chatter_planner.publish(pub3);
+                
+                //Set arrive at destination on false. When it becomes tue, it means we arrive at destination
+                this -> arrive_at_destination = false;
+
                 // geometry_msgs::PoseWithCovarianceStamped pub3 = pose_message(6, 0.450, 0, 0, 0, 0.01, 0.99);
                 // chatter_pose.publish(pub3);
                 return true;
@@ -209,7 +240,9 @@ class doorOpener {
                 ROS_INFO("going forward until threshold");
                 //start the subscription to laser
                 this -> find_end = false;
+                //REALITY
                 this -> go_treshold(0.40);
+                //SIMULATION
                 //this -> go_treshold(0.59);
                 return true;
             }
@@ -260,6 +293,15 @@ class doorOpener {
                 ROS_INFO("go other side of the door");
                 geometry_msgs::PoseStamped pub3 = poseStamped_message(8.1, 0.37, 0, 0, 0, -0.01, 0.99);
                 chatter_planner.publish(pub3);
+                return true;
+            }
+
+            else if (msg_rqst.input_string == "arrive_at_destination"){
+                //wait to acheve the goal
+                while(ros::ok() && !this -> arrive_at_destination){
+                    this -> position_achieve();
+                }
+                msg_rsps.output_int = 1;  
                 return true;
             }
 
