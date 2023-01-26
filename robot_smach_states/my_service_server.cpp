@@ -82,10 +82,10 @@ class doorOpener {
             }
 
         void position_achieve() {
-           
+
             //wait for result of action_server message
             sharedPlannerMessage = ros::topic::waitForMessage<cb_base_navigation_msgs::LocalPlannerActionResult>("/hero/local_planner/action_server/result",*nh);
-            
+
             if (sharedPlannerMessage != NULL) {
                 PlannerMessage = *sharedPlannerMessage;
                 arrive_at_destination = true;
@@ -193,14 +193,14 @@ class doorOpener {
             }
         }
 
-        bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
+        bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
             ros::Rate sleeping_time(0.5);
 
             if(msg_rqst.input_string == "goIFOhandle") {
                 ROS_INFO("go to the handle");
                 geometry_msgs::PoseStamped pub1 = poseStamped_message(6.55, 0.381, 0, 0, 0, 0.001, 0.99);
                 chatter_planner.publish(pub1);
-                
+
                 //Set arrive at destination on false. When it becomes tue, it means we arrive at destination
                 this -> arrive_at_destination = false;
 
@@ -227,7 +227,7 @@ class doorOpener {
                 ROS_INFO("go IFO door");
                 geometry_msgs::PoseStamped pub3 = poseStamped_message(6, 0.450, 0, 0, 0, 0.01, 0.99);
                 chatter_planner.publish(pub3);
-                
+
                 //Set arrive at destination on false. When it becomes tue, it means we arrive at destination
                 this -> arrive_at_destination = false;
 
@@ -301,7 +301,7 @@ class doorOpener {
                 while(ros::ok() && !this -> arrive_at_destination){
                     this -> position_achieve();
                 }
-                msg_rsps.output_int = 1;  
+                msg_rsps.output_int = 1;
                 return true;
             }
 

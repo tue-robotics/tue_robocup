@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosapi
   message_generation
   std_msgs
+  cb_base_navigation_msgs
 )
 
 # add robot-console
@@ -28,7 +29,7 @@ generate_messages( DEPENDENCIES std_msgs)
 
 catkin_package(
   INCLUDE_DIRS
-  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros message_runtime std_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros message_runtime std_msgs cb_base_navigation_msgs
 )
 
 include_directories(
