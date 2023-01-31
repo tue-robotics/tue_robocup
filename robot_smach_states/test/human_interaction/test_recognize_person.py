@@ -2,10 +2,10 @@
 import unittest
 
 # TU/e Robotics
-from image_recognition_msgs.msg import CategoricalDistribution, CategoryProbability, Recognition
+from image_recognition_msgs.msg import CategoryProbability, Recognition
 
 # Robot Smach States
-from robot_smach_states.human_interaction.recognize_person import get_operator_name
+from robot_smach_states.human_interaction.recognize_person import get_operator_name, NoDetections, NoRecognitionMatch
 
 BEST_LABEL = "best"
 BEST_PROBABILITY = 6.0
@@ -39,7 +39,7 @@ class TestGetPersonName(unittest.TestCase):
         recognition.categorical_distribution.probabilities = [
             worst_match,
         ]
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(NoRecognitionMatch) as context:
             get_operator_name(
                 recognition, threshold=recognition.categorical_distribution.probabilities[0].probability+0.1
             )
@@ -47,7 +47,7 @@ class TestGetPersonName(unittest.TestCase):
 
     def test_empty_recognition(self):
         recognition = Recognition()
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(NoDetections) as context:
             get_operator_name(recognition)
             self.assertIn("Recognition does not contain probabilities", context.exception)
 

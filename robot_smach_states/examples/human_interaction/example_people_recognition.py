@@ -46,7 +46,8 @@ class ExamplePeopleRecognition(smach.StateMachine):
                 RecognizePerson(robot=robot, name_designator=name_designator.writeable),
                 transitions={
                     "succeeded": "SAY_RECOGNIZED",
-                    "failed": "SAY_RECOGNITION_FAILED",
+                    "no_operator_detected": "SAY_RECOGNITION_FAILED",
+                    "operator_not_recognized": "SAY_RECOGNITION_FAILED",
                 },
             )
 
