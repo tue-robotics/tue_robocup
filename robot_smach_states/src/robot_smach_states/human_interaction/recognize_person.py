@@ -78,7 +78,8 @@ class RecognizePerson(smach.State):
 
     # noinspection PyUnusedLocal
     def execute(self, userdata=None):
-        self._robot.head.look_at_standing_person(timeout=3.0)
+        self._robot.head.look_at_standing_person(timeout=5.0)
+        rospy.sleep(rospy.Duration(1.0))  # Timeout to accomodate delays in head motions and image streams
         try:
             operator_recognition = self._robot.perception.detect_operator_face(
                 expected_operator_position=self._expected_operator_position,
@@ -86,7 +87,7 @@ class RecognizePerson(smach.State):
             )
             operator_name = get_operator_name(recognition=operator_recognition)
             rospy.loginfo(f"Operator name: {operator_name}")
-        except NoDetections as e:
+        except (RuntimeError, NoDetections) as e:
             rospy.loginfo(f"Did not detect the operator: {e}")
             return "no_operator_detected"
         except NoRecognitionMatch as e:
