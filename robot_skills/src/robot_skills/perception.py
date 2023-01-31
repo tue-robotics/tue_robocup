@@ -232,7 +232,7 @@ class Perception(RobotPart):
 
         :param recognitions: recognitions
         :param expected_operator_pos: expected position of the operator w.r.t. the robot
-        :param threshold: if the distance between the recognition and the expected pos exceed the threshold, an error
+        :param threshold: if the distance between the recognition and the expected pos exceed the threshold, a Runtime error
         is raised
         :return: Recognition closed to the expected position
         :raises: RuntimeError
