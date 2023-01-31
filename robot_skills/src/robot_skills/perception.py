@@ -26,7 +26,15 @@ from robot_skills.util.image_operations import img_cutout, img_recognitions_to_r
 
 
 class Perception(RobotPart):
-    def __init__(self, robot_name, tf_buffer, image_topic=None, projection_srv=None, camera_base_ns=''):
+    def __init__(
+        self,
+        robot_name,
+        tf_buffer,
+        image_topic=None,
+        projection_srv=None,
+        camera_base_ns='',
+        robot_base_frame_id=None,
+    ):
         super(Perception, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         if image_topic is None:
             self.image_topic = "/" + self.robot_name + "/top_kinect/rgb/image"
@@ -61,6 +69,8 @@ class Perception(RobotPart):
             self.create_service_client('/' + robot_name + '/people_recognition/detect_people_3d', RecognizePeople3D)
 
         # self._locate_handle_client = self.create_simple_action_client('/' + robot_name + '/handle_locator/locate_handle', LocateDoorHandleAction)
+
+        self._robot_base_frame_id = robot_base_frame_id if robot_base_frame_id else f"{robot_name}/base_link"
 
     def close(self):
         pass
@@ -237,8 +247,7 @@ class Perception(RobotPart):
         :return: Recognition closed to the expected position
         :raises: RuntimeError
         """
-        frame_id = f"{self.robot_name}/base_link"
-        projected_recognitions = [(rcg, self.project_roi(rcg.roi, frame_id)) for rcg in recognitions]
+        projected_recognitions = [(rcg, self.project_roi(rcg.roi, self._robot_base_frame_id)) for rcg in recognitions]
         expected_operator_pos = kdl.Vector(1.0, 0.0, 0.0) if expected_operator_pos is None else expected_operator_pos
 
         def _distance_from_expected(
