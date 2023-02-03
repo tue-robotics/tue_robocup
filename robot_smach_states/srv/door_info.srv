@@ -1,4 +1,0 @@
-string input_string
-float64 input_int
----
-int64 output_int

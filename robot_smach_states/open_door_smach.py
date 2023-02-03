@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+simulation = False
 
 #system import
 import typing
@@ -10,14 +11,17 @@ from rosapi import srv
 from std_msgs.msg import String, Header
 import actionlib
 from tue_msgs.msg import LocateDoorHandleGoal
-from geometry_msgs.msg import PointStamped, Point, PoseStamped, Pose, Quaternion
+from geometry_msgs.msg import PointStamped, Point, PoseStamped, Pose, Quaternion, Twist
 from pykdl_ros import FrameStamped, VectorStamped
 from cb_base_navigation_msgs.msg import LocalPlannerActionResult
+from sensor_msgs.msg import LaserScan
 
-# SIMULATION
-#from opening_door.srv import door_info
-# REALITY
-from robot_smach_states.srv import door_info
+# # SIMULATION
+# if simulation:
+#     from opening_door.srv import door_info
+# # REALITY
+# else:
+#     from robot_smach_states.srv import door_info
 
 # robot import
 from ed.entity import Entity
@@ -32,6 +36,7 @@ from robot_smach_states.util.designators import Designator
 import numpy
 import PyKDL as kdl
 import tf2_pykdl_ros as tf2_kdl
+import math
 
 #function use to create geometry_msgs
 def create_pose_stamped(x, y, z, qx, qy, qz, qw):
@@ -45,6 +50,17 @@ def create_pose_stamped(x, y, z, qx, qy, qz, qw):
     pose.pose.orientation.w = qw
     return pose
 
+def create_twist(a,b,c,d,e,f):
+    pub = Twist()
+    pub.angular.x = a
+    pub.angular.y = b
+    pub.angular.z = c
+    pub.linear.x = d
+    pub.linear.y = e
+    pub.linear.z = f
+
+    return pub
+
 #fonction that allow us to know when we arrive at destination
 def position_achieve():
     shared_planner_message = rospy.wait_for_message("/hero/local_planner/action_server/result", LocalPlannerActionResult)
@@ -54,7 +70,7 @@ def position_achieve():
     return True
 
 #fct that has to be destroyed in the futur.
-#it currezntly allows to a convertion beteween frame and so to find interessant position in door_inside frame when I want it
+#it currently allows convertion beteween frames and to find interessant position in door_inside frame when I want it
 def convert_frame(robot, frame):
         pose_message_convert_in_frame_door = robot.tf_buffer.transform(frame, "door_inside", rospy.Duration(1.0))
         rospy.loginfo("position frame door")
@@ -218,7 +234,6 @@ class getSOD(smach.State):
 class goIFOdoor(smach.State):
     def __init__(self, door, robot):
         smach.State.__init__(self, outcomes=['IFO_door','fail'], input_keys=['side_of_door'])
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.door = door
         self.robot = robot
         self.pub = rospy.Publisher('/move_base_simple/goal',PoseStamped, queue_size=2)
@@ -254,27 +269,53 @@ class goIFOdoor(smach.State):
 class updateDoorState(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['close','intermediate','open', 'fail'])
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(0.3)
         self.robot = robot
 
     def execute(self, userdata):
-        position = self.robot.base.get_location()
-        rot_y = position.frame.M.GetRot()[2]
-        response = self.door_info.call("door_state",rot_y)
-        self.rate.sleep()
+        """
+        This function check the state of the door.
+        It first finds the distance of the door.
+        Then, if the distance is big enough, the door is considered open
+        if the distance is not big enough, we are using the laserdata in the following way:
+            We check the distance a bit on the right and a bit on the left from the middle of the door.
+            If those distance are similar, it means the door is close.
+            If those distance aren't, it means the door is intermediate
+        """
+        #usefull variable
+        size_to_check = 0.3 #it is hard-coded according to the size of the door
 
-        if response.output_int == 1:
+        #get the rotation angle
+        position = self.robot.base.get_location()
+        rot_y = position.frame.M.GetRot()[2] #TODO rotation like this is only usable if our model !
+
+        #work on the message
+        msg_laser = rospy.wait_for_message("/hero/base_laser/scan", LaserScan) #get the laser message
+        position_angle_zero_according_robot = msg_laser.angle_min/msg_laser.angle_increment #get angle 0 according to the robot
+        position_angle_zero = int(position_angle_zero_according_robot - (rot_y/msg_laser.angle_increment)) #get real angle 0, taking into account the rotation of the robot
+        distance = msg_laser.ranges[position_angle_zero] #get the distance
+        if distance > 1.4:
+            rospy.sleep(0.5)
+            #case door is fully open, no need for the rest to execute
             return 'open'
 
-        elif response.output_int == 2:
+        angle_max = math.atan(size_to_check/distance) #get the angle to check
+        number_of_value_from_position_angle_zero = int(angle_max/msg_laser.angle_increment) #nb of value on right and left away from angle zero
+
+        #get the two value to check (angle right and and angle left)
+        value_to_check_min = position_angle_zero - number_of_value_from_position_angle_zero;
+        value_to_check_max = position_angle_zero + number_of_value_from_position_angle_zero;
+
+        #get the distance on the right and the left
+        d_angle_min = msg_laser.ranges[value_to_check_min];
+        d_angle_max = msg_laser.ranges[value_to_check_max];
+
+        rospy.sleep(0.5)
+        if abs(d_angle_max-d_angle_min)>0.08:
             return 'intermediate'
 
-        elif response.output_int == 3:
-            return 'close'
-
         else:
-            return 'fail'
+            return 'close'
 
 class updateHandleLocation(smach.State):
     def __init__(self, robot, door):
@@ -326,7 +367,6 @@ class updateHandleLocation(smach.State):
 class goIFOhandle(smach.State):
     def __init__(self, door, robot):
         smach.State.__init__(self, outcomes=['IFO_handle','fail'], input_keys=['side_of_door'])
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.door = door
         self.robot = robot
         self.pub = rospy.Publisher('/move_base_simple/goal',PoseStamped, queue_size=2)
@@ -347,7 +387,13 @@ class goIFOhandle(smach.State):
         kdl_quaternion = frameIFOhandle_map.frame.M.GetQuaternion()
 
         #create the pose stamped message with the position IFO the door
-        pose_stamped_IFOhandle = create_pose_stamped(kdl_vector[0], kdl_vector[1], kdl_vector[2], kdl_quaternion[0], kdl_quaternion[1], kdl_quaternion[2], kdl_quaternion[3])
+        if not simulation:
+            #REALITY
+            pose_stamped_IFOhandle = create_pose_stamped(kdl_vector[0], kdl_vector[1], kdl_vector[2], kdl_quaternion[0], kdl_quaternion[1], kdl_quaternion[2], kdl_quaternion[3])
+        else:
+            #SIMULATION
+            pose_stamped_IFOhandle = create_pose_stamped(6.55, 0.381, 0, 0, 0, 0.001, 0.99)
+
 
         #publication
         rospy.sleep(0.5)
@@ -365,15 +411,14 @@ class graspeHandle(smach.State):
         self.robot = robot
         self.door = door
         self.arm = arm
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
         self.rate = rospy.Rate(1)
         smach.State.__init__(self, outcomes=['good_position_of_arm', 'fail'], input_keys=['side_of_door'])
 
     def execute(self, userdata):
         self.arm.gripper.send_goal("open")
 
-        rospy.loginfo("info about position")
-        rospy.loginfo(self.robot.base.get_location())
+        # rospy.loginfo("info about position")
+        # rospy.loginfo(self.robot.base.get_location())
 
         handle_vector = self.door.getHandlePose() #get the pose (vector) of the handle
 
@@ -383,19 +428,20 @@ class graspeHandle(smach.State):
         kdl_vector = handle_vector.vector
 
         #change some value of the kdl vector before
-        #REALITY
-        if userdata.side_of_door == "face":
-            kdl_vector[0] = kdl_vector[0] -0.056
-            kdl_vector[1]=kdl_vector[1]+0.05
+        if not simulation:
+            #REALITY
+            if userdata.side_of_door == "face":
+                kdl_vector[0] = kdl_vector[0] -0.056
+                kdl_vector[1]=kdl_vector[1]+0.05
+            else:
+                kdl_vector[0] = kdl_vector[0] + 0.045
         else:
-            kdl_vector[0] = kdl_vector[0] + 0.045
-
-        #SIMULATION
-        # if userdata.side_of_door == "face":
-        #     kdl_vector[0] = kdl_vector[0] -0.045
-        #     kdl_vector[1]=kdl_vector[1]+0.02
-        # else:
-        #     kdl_vector[0] = kdl_vector[0] + 0.045
+            #SIMULATION
+            if userdata.side_of_door == "face":
+                kdl_vector[0] = kdl_vector[0] -0.045
+                kdl_vector[1]=kdl_vector[1]+0.02
+            else:
+                kdl_vector[0] = kdl_vector[0] + 0.045
 
         kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
         handle_frame = FrameStamped(kdl_frame,rospy.Time.now(), frame_id = "map") #map is hard coded but it must change #get the frame of the handle from the vector
@@ -456,11 +502,10 @@ class pushDoorUnlatched(smach.State):
         self.robot = robot
         self.door = door
         smach.State.__init__(self, outcomes=['doorIsPushed', 'fail'])
-        #self.rate = rospy.Rate(0.5)
+        self.rate = rospy.Rate(0.5)
 
     def execute(self, userdata):
-        #self.rate.sleep()
-        rospy.sleep(2)
+        self.rate.sleep()
         #get some frame
         #these are frame of the door according to the robot point of view (TT transform)
         door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
@@ -478,8 +523,8 @@ class pushDoorUnlatched(smach.State):
 
         self.robot.base.force_drive(0.1, y / (x / 0.1), 0, x )
 
-        #self.rate.sleep()
-        rospy.sleep(3)
+        self.rate.sleep()
+
         return 'doorIsPushed'
 
 class pullDoorUnlatched(smach.State):
@@ -512,6 +557,27 @@ class pullDoorUnlatched(smach.State):
 
         return 'doorIsPulled'
 
+class goUpHandle(smach.State):
+    def __init__(self, arm):
+        self.arm = arm
+        smach.State.__init__(self, outcomes=['handleIsUp', 'fail'])
+        self.rate = rospy.Rate(0.3)
+
+    def execute(self, userdata):
+
+        #get the position of the join
+        joint_states = self.arm.get_joint_states()
+        joint1, joint2, joint3, joint4, joint5 = joint_states['arm_lift_joint'], joint_states['arm_flex_joint'], joint_states['arm_roll_joint'], joint_states['wrist_flex_joint'], joint_states['wrist_roll_joint']
+
+        joint1_new_position = joint1 + 0.05
+
+        list_trajectory = [joint1_new_position, joint2, joint3, joint4, joint5]
+        self.arm._arm._send_joint_trajectory([list_trajectory])
+        self.arm.wait_for_motion_done()
+        self.rate.sleep()
+
+        return 'handleIsUp'
+
 class openGripper(smach.State):
     def __init__(self, arm):
         self.arm = arm
@@ -534,40 +600,106 @@ class robotBackInitialPosition(smach.State):
         list_trajectory = [joint1, joint2, joint3, joint4, joint5]
         self.arm._arm._send_joint_trajectory([list_trajectory])
         self.arm.wait_for_motion_done()
-        rospy.sleep(8)
+        #rospy.sleep(8)
 
         return 'initialPosition'
 
+class goAwayFromObstacle(smach.State):
+    def __init__(self, robot):
+        self.robot = robot
+        smach.State.__init__(self, outcomes=['away', 'fail'])
+        self.away = False
+        self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
+
+    def execute (self, userdata):
+        if simulation:
+            dmin = 0.4 # minimum away distance from obstacle
+            dget = 0.3
+        else:
+            dmin = 0.4 # minimum away distance from obstacle
+            dget = 0.3
+
+        while dget < dmin:
+            dget, angle_min = self.laserData_callback()
+            x_direction = - math.cos(angle_min)
+            y_direction = - math.sin(angle_min)
+            twist_message = create_twist(0,0,0, x_direction/15, y_direction/15, 0) #use of /15 because we want to move slowly and to update often the minimum distance
+            self.pub.publish(twist_message)
+            rospy.sleep(0.5)
+
+        return 'away'
+
+    def laserData_callback(self):
+
+        msg = rospy.wait_for_message("/hero/base_laser/scan", LaserScan)
+
+        count = 1
+        minimum = msg.ranges[0]
+        minimum_count = 0
+
+        length = len(msg.ranges)
+
+        while not rospy.is_shutdown() and count < length: # length -1 maybe
+            if minimum > msg.ranges[count]: #check all the ranges list
+                minimum = msg.ranges[count]
+                minimum_count = count
+
+            count +=1
+
+        #get the angle
+        min_angle = msg.angle_min + msg.angle_increment * minimum_count
+        return minimum, min_angle
+
 class pushDoorOpen(smach.State):
     def __init__(self, robot, door):
-        # self.robot = robot
-        # self.door = door
+        self.robot = robot
+        self.door = door
+        self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
         smach.State.__init__(self, outcomes=['doorIsPushed', 'fail'])
-        # self.rate = rospy.Rate(0.15)
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
+
 
     def execute(self, userdata):
-        self.rate.sleep()
-        #get some frame
-        #these are frame of the door according to the robot point of view (TT transform)
-        door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
-        door_frame_robot_right = self.robot.tf_buffer.transform(self.door.frame_points[1], self.robot.base_link_frame, rospy.Duration(1.0)) #frame right
+        end = False # is false until we are in the point
 
-        #get the coordinate
-        x1 = door_frame_robot_left.vector.x()
-        y1 = door_frame_robot_left.vector.y()
-        x2 = door_frame_robot_right.vector.x()
-        y2 = door_frame_robot_right.vector.y()
+        while not end:
+            #get the frame of the edges of the door
+            #these are frame of the door according to the robot point of view (TT transform)
+            door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
+            door_frame_robot_right = self.robot.tf_buffer.transform(self.door.frame_points[1], self.robot.base_link_frame, rospy.Duration(1.0)) #frame right
 
-        #mean of right and left
-        x = (x1 + x2) / 2.0
-        y = (y1 + y2) / 2.0
+            #get the coordinate
+            x1 = door_frame_robot_left.vector.x()
+            y1 = door_frame_robot_left.vector.y()
+            x2 = door_frame_robot_right.vector.x()
+            y2 = door_frame_robot_right.vector.y()
 
-        self.robot.base.force_drive(0.1, y/(x/0.007) , 0, 15)
-        rospy.sleep(10)
+            #mean of right and left
+            x = (x1 + x2) / 2.0
+            y = (y1 + y2) / 2.0
 
-        #self.door_info.call("go_other_side",0)
-        #rospy.sleep(15)
+            position = self.robot.base.get_location()
+            rot_y = position.frame.M.GetRot()[2]
+
+            if rot_y > 0.1:
+               twist_message = create_twist(0,0,-0.05,0,0,0)
+               self.pub.publish(twist_message)
+            elif rot_y < -0.1:
+                twist_message = create_twist(0,0,0.05,0,0,0)
+                self.pub.publish(twist_message)
+
+            elif y < -0.1:
+                twist_message = create_twist(0,0,0,0,-0.05,0)
+                self.pub.publish(twist_message)
+            elif y > 0.1:
+                twist_message = create_twist(0,0,0,0,+0.05,0)
+                self.pub.publish(twist_message)
+            elif x > 0.1:
+                twist_message = create_twist(0,0,0,0.1,0,0)
+                self.pub.publish(twist_message)
+            else:
+                end = True
+
+            rospy.sleep(0.5)
 
         return 'doorIsPushed'
 
@@ -583,44 +715,87 @@ class pullDoorOpen(smach.State):
 
 class crossDoor(smach.State):
     def __init__(self, robot, door):
-        smach.State.__init__(self, outcomes=['doorIsCrossed','fail'])
-        # self.robot = robot
-        # self.door = door
-        # self.rate = rospy.Rate(0.5)
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
+        self.robot = robot
+        self.door = door
+        self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
+        smach.State.__init__(self, outcomes=['doorIsCrossed', 'fail'])
+
 
     def execute(self, userdata):
+        end = False # is false until we are in the point
 
-        # #get some frame
-        # #these are frame of the door according to the robot point of view (TT transform)
-        # door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
-        # door_frame_robot_right = self.robot.tf_buffer.transform(self.door.frame_points[1], self.robot.base_link_frame, rospy.Duration(1.0)) #frame right
+        while not end:
+            #get the frame of the edges of the door
+            #these are frame of the door according to the robot point of view (TT transform)
+            door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
+            door_frame_robot_right = self.robot.tf_buffer.transform(self.door.frame_points[1], self.robot.base_link_frame, rospy.Duration(1.0)) #frame right
 
-        # #get the coordinate
-        # x1 = door_frame_robot_left.vector.x()
-        # y1 = door_frame_robot_left.vector.y()
-        # x2 = door_frame_robot_right.vector.x()
-        # y2 = door_frame_robot_right.vector.y()
+            #get the coordinate
+            x1 = door_frame_robot_left.vector.x()
+            y1 = door_frame_robot_left.vector.y()
+            x2 = door_frame_robot_right.vector.x()
+            y2 = door_frame_robot_right.vector.y()
 
-        # #mean of right and left
-        # x = (x1 + x2) / 2.0
-        # y = (y1 + y2) / 2.0
+            #mean of right and left
+            x = (x1 + x2) / 2.0
+            x = x + 1.5
+            y = (y1 + y2) / 2.0
 
-        # self.robot.base.force_drive(0.1, y/(x/0.007) , 0, 20)
-        self.door_info.call("go_other_side",0)
-        rospy.sleep(15)
+            position = self.robot.base.get_location()
+            rot_y = position.frame.M.GetRot()[2]
+
+
+            if rot_y > 0.1:
+               twist_message = create_twist(0,0,-0.05,0,0,0)
+               self.pub.publish(twist_message)
+            elif rot_y < -0.1:
+                twist_message = create_twist(0,0,0.05,0,0,0)
+                self.pub.publish(twist_message)
+            elif y < -0.1:
+                twist_message = create_twist(0,0,0,0,-0.05,0)
+                self.pub.publish(twist_message)
+            elif y > 0.1:
+                twist_message = create_twist(0,0,0,0,+0.05,0)
+                self.pub.publish(twist_message)
+            elif x > 0.1:
+                twist_message = create_twist(0,0,0,0.1,0,0)
+                self.pub.publish(twist_message)
+            else:
+                end = True
+
+            rospy.sleep(0.5)
+
         return 'doorIsCrossed'
 
 class moveTreshold(smach.State):
-    def __init__(self):
+    def __init__(self, robot):
+        self.robot = robot
         smach.State.__init__(self, outcomes=['goodPosition','fail'])
-        self.door_info = rospy.ServiceProxy('door_info', door_info)
+        self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
 
     def execute(self, userata):
-        #self.door_info.call("is_door_open",0)
-        self.door_info.call("go_treshold",0)
-        rospy.sleep(10)
+        if simulation:
+            treshold = 0.59
+            d = 0.7
+        else:
+            treshold = 0.40
+            d = 0.7
+
+        while d > treshold:
+            d = self.laserData_callback()
+            twist_message = create_twist(0, 0, 0, 0.05, -0.01, 0)
+            self.pub.publish(twist_message)
+            rospy.sleep(0.5)
+
         return 'goodPosition'
+
+    def laserData_callback(self):
+        msg_laser = rospy.wait_for_message("/hero/base_laser/scan", LaserScan)
+        position_angle_zero = int(msg_laser.angle_min/msg_laser.angle_increment)
+        distance = msg_laser.ranges[position_angle_zero]
+
+        return distance
+
 
 class moveDoorOpen(smach.State):
     def __init__(self):
@@ -651,11 +826,12 @@ def sm_open_door_close(robot, arm, my_door):
     with sm_open_door_close:
         smach.StateMachine.add('goIFOhandle', goIFOhandle(my_door, robot), transitions={'IFO_handle' : 'updateHandleLocation', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('updateHandleLocation', updateHandleLocation(robot, my_door), transitions={'updated' : 'goMinimumPosition', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('goMinimumPosition', moveTreshold(), transitions={'goodPosition' : 'graspingHandle', 'fail' : 'fail'})
+        smach.StateMachine.add('goMinimumPosition', moveTreshold(robot), transitions={'goodPosition' : 'graspingHandle', 'fail' : 'fail'})
         smach.StateMachine.add('graspingHandle', sm_grasp_handle_, transitions={'handleIsGrasped' : 'unlatchHandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('unlatchHandle', unlatchHandle(arm), transitions={'handleIsUnlatched_push' : 'pushDoorUnlatched','handleIsUnlatched_pull' : 'pullDoorUnlatched', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('pushDoorUnlatched',pushDoorUnlatched(robot, my_door), transitions={'doorIsPushed' :'openGripper', 'fail' : 'fail'} )
-        smach.StateMachine.add('pullDoorUnlatched',pullDoorUnlatched(robot, my_door), transitions={'doorIsPulled' :'openGripper', 'fail' : 'fail'} )
+        smach.StateMachine.add('pushDoorUnlatched',pushDoorUnlatched(robot, my_door), transitions={'doorIsPushed' :'goUpHandle', 'fail' : 'fail'} )
+        smach.StateMachine.add('pullDoorUnlatched',pullDoorUnlatched(robot, my_door), transitions={'doorIsPulled' :'goUpHandle', 'fail' : 'fail'} )
+        smach.StateMachine.add('goUpHandle', goUpHandle(arm), transitions={'handleIsUp' : 'openGripper', 'fail' : 'fail'})
         smach.StateMachine.add('openGripper',openGripper(arm), transitions={'gripperOpen' :'doorIsNotClose', 'fail' : 'fail'} )
 
     return sm_open_door_close
@@ -683,7 +859,8 @@ def sm_cross_door(robot, arm, my_door):
         smach.StateMachine.add('update_door_state', updateDoorState(robot), transitions={'close' : 'open_door_closed', 'intermediate' : 'open_door_open', 'open' : 'cross_door', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('open_door_closed', sm_open_door_close_, transitions={'doorIsNotClose' :'robot_back_posInit', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('open_door_open', sm_open_door_open_, transitions={'doorIsOpen' : 'cross_door', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('robot_back_posInit', robotBackInitialPosition(arm), transitions={'initialPosition' : 'goIFOdoor', 'fail' : 'fail'})
+        smach.StateMachine.add('robot_back_posInit', robotBackInitialPosition(arm), transitions={'initialPosition' : 'move_away_from_obstacle', 'fail' : 'fail'})
+        smach.StateMachine.add('move_away_from_obstacle', goAwayFromObstacle(robot), transitions={'away' : 'goIFOdoor', 'fail' : 'fail'})
         smach.StateMachine.add('cross_door', crossDoor(robot, my_door), transitions={'doorIsCrossed' : 'doorIsCrossed', 'fail' : 'fail'})
 
     return sm_cross_door
