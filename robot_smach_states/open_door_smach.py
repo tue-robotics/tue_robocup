@@ -561,7 +561,7 @@ class goUpHandle(smach.State):
     def __init__(self, arm):
         self.arm = arm
         smach.State.__init__(self, outcomes=['handleIsUp', 'fail'])
-        self.rate = rospy.Rate(0.3)
+        #self.rate = rospy.Rate(0.3)
 
     def execute(self, userdata):
 
@@ -574,7 +574,7 @@ class goUpHandle(smach.State):
         list_trajectory = [joint1_new_position, joint2, joint3, joint4, joint5]
         self.arm._arm._send_joint_trajectory([list_trajectory])
         self.arm.wait_for_motion_done()
-        self.rate.sleep()
+        rospy.sleep(1)
 
         return 'handleIsUp'
 
@@ -582,11 +582,11 @@ class openGripper(smach.State):
     def __init__(self, arm):
         self.arm = arm
         smach.State.__init__(self, outcomes=['gripperOpen', 'fail'])
-        self.rate = rospy.Rate(0.2)
+        #self.rate = rospy.Rate(0.2)
 
     def execute(self, userdata):
           self.arm.gripper.send_goal("open")
-          self.rate.sleep()
+          rospy.sleep(1)
           return 'gripperOpen'
 
 class robotBackInitialPosition(smach.State):
@@ -676,7 +676,7 @@ class pushDoorOpen(smach.State):
             #mean of right and left
             x = (x1 + x2) / 2.0
             y = (y1 + y2) / 2.0
-
+            y = y - 0.1
             position = self.robot.base.get_location()
             rot_y = position.frame.M.GetRot()[2]
 
@@ -694,7 +694,7 @@ class pushDoorOpen(smach.State):
                 twist_message = create_twist(0,0,0,0,+0.05,0)
                 self.pub.publish(twist_message)
             elif x > 0.1:
-                twist_message = create_twist(0,0,0,0.1,0,0)
+                twist_message = create_twist(0,0,0,0.05,0,0)
                 self.pub.publish(twist_message)
             else:
                 end = True
@@ -740,6 +740,7 @@ class crossDoor(smach.State):
             x = (x1 + x2) / 2.0
             x = x + 1.5
             y = (y1 + y2) / 2.0
+            y = y - 0.1
 
             position = self.robot.base.get_location()
             rot_y = position.frame.M.GetRot()[2]
@@ -758,7 +759,7 @@ class crossDoor(smach.State):
                 twist_message = create_twist(0,0,0,0,+0.05,0)
                 self.pub.publish(twist_message)
             elif x > 0.1:
-                twist_message = create_twist(0,0,0,0.1,0,0)
+                twist_message = create_twist(0,0,0,0.05,0,0)
                 self.pub.publish(twist_message)
             else:
                 end = True
