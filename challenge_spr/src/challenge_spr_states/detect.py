@@ -66,7 +66,7 @@ class DetectCrowd(smach.State):
             rospy.sleep(1)
 
             image = self.robot.perception.get_image()
-            face_rois = self.robot.perception.detect_faces(image=image)
+            face_rois, _ = self.robot.perception.detect_faces(image=image)
 
             if len(face_rois) > number_of_people:
                 number_of_people = len(face_rois)
