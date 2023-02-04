@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-simulation = True
+simulation = False
 
 #system import
 import typing
@@ -236,7 +236,7 @@ class goIFOdoor(smach.State):
         self.door = door
         self.robot = robot
         self.pub = rospy.Publisher('/move_base_simple/goal',PoseStamped, queue_size=2)
-    
+
     def execute(self, userdata):
         #onvert_frame(self.robot, 8.1, 0.37, 0, 0, 0, -0.99, 0.022)
         #according to the SOD we are working on, we are going to get and publish a different poseStamped
@@ -281,12 +281,12 @@ class updateDoorState(smach.State):
             We check the distance a bit on the right and a bit on the left from the middle of the door.
             If those distance are similar, it means the door is close.
             If those distance aren't, it means the door is intermediate
-            
+
         Before doing all of this, we have to check the rotation of the robot, to be sure to use the data straight to the door, even if the robot is a bit turned according to the door
         """
         #usefull variable
         size_to_check = 0.3 #it is hard-coded according to the size of the door
-        
+
         # first part, getting the position the robot has to be (especially the rotation), it depends on which SOD we are
         # this process is similar to the one in goIFOdoor
         if userdata.side_of_door == 'face':
@@ -294,16 +294,16 @@ class updateDoorState(smach.State):
 
         else:
             frameIFOdoor_door = self.door.getFrameIFOdoor_behind()
-        
+
         frameIFOdoor_map = self.robot.tf_buffer.transform(frameIFOdoor_door, "map", rospy.Duration(1.0))
         rot_y_expected = frameIFOdoor_map.frame.M.GetRot()[2] # get the rot_y we want to have
-        
+
         #get the rotation angle
         position = self.robot.base.get_location()
         rot_y_real = position.frame.M.GetRot()[2] #rotation of the robot according to map frame
 
         rot_y = - (rot_y_expected - rot_y_real) # real reottaion difference
-            
+
         #work on the message
         msg_laser = rospy.wait_for_message("/hero/base_laser/scan", LaserScan) #get the laser message
         position_angle_zero_according_robot = msg_laser.angle_min/msg_laser.angle_increment #get angle 0 according to the robot
@@ -496,7 +496,7 @@ class unlatchHandle(smach.State):
         joint_states = self.arm.get_joint_states()
         joint1, joint2, joint3, joint4, joint5 = joint_states['arm_lift_joint'], joint_states['arm_flex_joint'], joint_states['arm_roll_joint'], joint_states['wrist_flex_joint'], joint_states['wrist_roll_joint']
 
-        joint1_new_position = joint1 - 0.05
+        joint1_new_position = joint1 - 0.055
 
         list_trajectory = [joint1_new_position, joint2, joint3, joint4, joint5]
         self.arm._arm._send_joint_trajectory([list_trajectory])
@@ -582,7 +582,7 @@ class goUpHandle(smach.State):
         joint_states = self.arm.get_joint_states()
         joint1, joint2, joint3, joint4, joint5 = joint_states['arm_lift_joint'], joint_states['arm_flex_joint'], joint_states['arm_roll_joint'], joint_states['wrist_flex_joint'], joint_states['wrist_roll_joint']
 
-        joint1_new_position = joint1 + 0.05
+        joint1_new_position = joint1 + 0.055
 
         list_trajectory = [joint1_new_position, joint2, joint3, joint4, joint5]
         self.arm._arm._send_joint_trajectory([list_trajectory])
@@ -676,12 +676,12 @@ class pushDoorOpen(smach.State):
         # first part, getting the position the robot has to be (especially the rotation), it depends on which SOD we are
         # this process is similar to the one in goIFOdoor
         # the expected rotation is the same as beiing IFO door because we want the robot to be straight IFO the door
-         
+
         frameIFOdoor_door = self.door.getFrameIFOdoor_face()
-        
+
         frameIFOdoor_map = self.robot.tf_buffer.transform(frameIFOdoor_door, "map", rospy.Duration(1.0))
         rot_y_expected = frameIFOdoor_map.frame.M.GetRot()[2] # get the rot_y we want to have
-        
+
         while not end:
             #get the frame of the edges of the door
             #these are frame of the door according to the robot point of view (TT transform)
@@ -699,7 +699,7 @@ class pushDoorOpen(smach.State):
             y = (y1 + y2) / 2.0
             if not simulation:
                 y = y - 0.1
-            
+
             #get the rotation angle
             position = self.robot.base.get_location()
             rot_y_real = position.frame.M.GetRot()[2] #rotation of the robot according to map frame
@@ -756,10 +756,10 @@ class crossDoor(smach.State):
 
         else:
             frameIFOdoor_door = self.door.getFrameIFOdoor_behind()
-        
+
         frameIFOdoor_map = self.robot.tf_buffer.transform(frameIFOdoor_door, "map", rospy.Duration(1.0))
         rot_y_expected = frameIFOdoor_map.frame.M.GetRot()[2] # get the rot_y we want to have
-        
+
         while not end:
             #get the frame of the edges of the door
             #these are frame of the door according to the robot point of view (TT transform)
@@ -776,7 +776,7 @@ class crossDoor(smach.State):
             x = (x1 + x2) / 2.0
             x = x + 1.5
             y = (y1 + y2) / 2.0
-            
+
             if not simulation:
                 y = y - 0.1
 
@@ -822,13 +822,13 @@ class moveTreshold(smach.State):
         else:
             treshold = 0.40
             d = 0.7
-        
+
         if userata.side_of_door == 'face':
             x = 0.05
         else:
             x = -0.05
         y = -0.01
-        
+
         while d > treshold:
             d = self.laserData_callback()
             twist_message = create_twist(0, 0, 0, x, y, 0)
