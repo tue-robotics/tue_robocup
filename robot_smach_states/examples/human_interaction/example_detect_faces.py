@@ -6,7 +6,7 @@ import argparse
 
 # Detect face
 from robot_skills import get_robot
-from robot_smach_states import DetectFace
+from robot_smach_states.human_interaction import DetectFace
 
 
 if __name__ == "__main__":
