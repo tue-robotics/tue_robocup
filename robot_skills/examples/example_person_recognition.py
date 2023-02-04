@@ -56,7 +56,7 @@ while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts 
     # a recognition contains a CategoricalDistribution
     # a CategoricalDistribution is a list of CategoryProbabilities
     # a CategoryProbability has a label and a float
-    raw_detections = robot.perception.detect_faces()
+    raw_detections, _ = robot.perception.detect_faces()
 
     if raw_detections:
         robot.speech.speak("There are {count} raw_recognitions".format(count=len(raw_detections)))

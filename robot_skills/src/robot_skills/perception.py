@@ -186,24 +186,19 @@ class Perception(RobotPart):
 
         return True
 
-    def detect_faces(self, image=None, stamp=False):
+    def detect_faces(self, image=None):
         """
         Snap an image with the camera and return the recognized faces.
 
         :param image: image to use for recognition
         :type image: sensor_msgs/Image
-        :param stamp: Return recognitions and stamp
-        :type stamp: bool
         :return: recognitions of the faces
-        :rtype: list[image_recognition_msgs/Recognition]
+        :rtype: tuple(list[image_recognition_msgs/Recognition], stamp)
         """
         if not image:
             image = self.get_image()
-        # ToDo: create a consistent API: either return a tuple, a message or a list
-        if stamp:
-            return self._get_faces(image).recognitions, image.header.stamp
-        else:
-            return self._get_faces(image).recognitions
+
+        return self._get_faces(image).recognitions, image.header.stamp
 
     def detect_operator_face(
         self,
@@ -222,7 +217,7 @@ class Perception(RobotPart):
         :return: image_recognition_msgs/Recognition
         :raises: RuntimeError
         """
-        recognitions = self.detect_faces(image)
+        recognitions, _ = self.detect_faces(image)
         if not recognitions:
             raise RuntimeError("No faces detected")
         operator_recognition = self._filter_operator_recognition(
@@ -361,7 +356,7 @@ class Perception(RobotPart):
         if not faces:
             if not image:
                 image = self.get_image()
-            face_recognitions = self.detect_faces(image=image)
+            face_recognitions, _ = self.detect_faces(image=image)
             rois = img_recognitions_to_rois(face_recognitions)
             faces = img_cutout(image, rois)
 
