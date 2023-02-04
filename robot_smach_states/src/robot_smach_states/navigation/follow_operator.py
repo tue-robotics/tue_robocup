@@ -489,7 +489,7 @@ class FollowOperator(smach.State):
             # a recognition contains a CategoricalDistribution
             # a CategoricalDistribution is a list of CategoryProbabilities
             # a CategoryProbability has a label and a float
-            raw_detections = self._robot.perception.detect_faces()
+            raw_detections, _ = self._robot.perception.detect_faces()
             best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
 
             rospy.loginfo("best_detection = {}".format(best_detection))

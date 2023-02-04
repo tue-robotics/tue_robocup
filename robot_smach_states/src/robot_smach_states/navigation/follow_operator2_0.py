@@ -354,7 +354,7 @@ class Recovery(smach.State):
             if i == len(head_goals):
                 i = 0
             self._robot.head.wait_for_motion_done()
-            raw_detections = self._robot.perception.detect_faces()
+            raw_detections, _ = self._robot.perception.detect_faces()
             best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator", probability_threshold=3.0)
 
             rospy.loginfo("best_detection = {}".format(best_detection))
