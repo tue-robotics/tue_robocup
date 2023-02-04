@@ -6,7 +6,7 @@ import sys
 
 import rospy
 
-from robot_skills.util.robot_constructor import robot_constructor
+from robot_skills.get_robot import get_robot
 
 if len(sys.argv) < 2:
     print("Please specify a robot name")
@@ -16,7 +16,7 @@ robot_name = sys.argv[1]
 
 rospy.init_node("test_person_recognition")
 
-robot = robot_constructor(robot_name)
+robot = get_robot(robot_name)
 
 try:
     OPERATOR_NAME = sys.argv[2]
