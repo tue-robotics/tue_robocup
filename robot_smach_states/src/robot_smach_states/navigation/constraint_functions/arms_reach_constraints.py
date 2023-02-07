@@ -19,7 +19,7 @@ def arms_reach_constraint(pose_designator, arm_designator, look=True):
 
     :param pose_designator: designator that resolves to a FrameStamped of the point to be reached
     :param arm_designator: PublicArmDesignator or arm to use for manipulation
-    :param look: bool, whether or not the orientation must be constrained as well
+    :param look: bool, whether the orientation must be constrained as well
     :return: navigation constraints, if a designator does not resolve None is returned
     :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
