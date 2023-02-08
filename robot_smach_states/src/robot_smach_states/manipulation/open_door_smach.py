@@ -81,6 +81,7 @@ class Door(Entity):
     FRAME_LEFT_POINT_ID = "frame_left_point"
     FRAME_RIGHT_POINT_ID = "frame_right_point"
     HANDLE_POSE = None
+    FRAME_ID = "door_inside"
 
     #constructor.
     #no more init that a classic entity
@@ -133,9 +134,11 @@ class Door(Entity):
         return VectorStamped.from_xyz(cp_map.x(), cp_map.y(), cp_map.z(), rospy.Time.now(),"map")
 
     def updateHandlePose(self,new_pose):
+        rospy.loginfo("new pose = " + str(new_pose))
         self.HANDLE_POSE = new_pose
 
     def getHandlePose(self):
+        rospy.loginfo("handle pose = " + str(self.HANDLE_POSE))
         return self.HANDLE_POSE
 
     def getFrameIFOdoor_face(self):
@@ -183,7 +186,7 @@ class Door(Entity):
         It rpresents ths position the robot has to be in the fonction goIFOhandme according to the door frame.
         This position has to be converted to the frame map before being send to the global planner.
         """
-        kdl_vector = kdl.Vector(-0.77, 0.13, 0)
+        kdl_vector = kdl.Vector(-0.6248, 0.202, 0)
         kdl_rot = kdl.Rotation.RPY(0,0,0.0444)
         kdl_frame = kdl.Frame(kdl_rot, kdl_vector)
         kdl_frame_stamped = FrameStamped(kdl_frame, rospy.Time.now(), frame_id = "door_inside")
@@ -284,6 +287,7 @@ class updateDoorState(smach.State):
 
         Before doing all of this, we have to check the rotation of the robot, to be sure to use the data straight to the door, even if the robot is a bit turned according to the door
         """
+
         #usefull variable
         size_to_check = 0.3 #it is hard-coded according to the size of the door
 
@@ -364,6 +368,9 @@ class updateHandleLocation(smach.State):
             rospy.loginfo("detecting handle is a success")
             result = self.robot.perception.locate_handle_client.get_result() #get the result
 
+            # rospy.loginfo("info about results")
+            # rospy.loginfo(result)
+
             #use the result to get the middle of the handle
             x = numpy.average([result.handle_edge_point1.point.x, result.handle_edge_point2.point.x])
             y = numpy.average([result.handle_edge_point1.point.y, result.handle_edge_point2.point.y])
@@ -406,8 +413,10 @@ class goIFOhandle(smach.State):
             pose_stamped_IFOhandle = create_pose_stamped(kdl_vector[0], kdl_vector[1], kdl_vector[2], kdl_quaternion[0], kdl_quaternion[1], kdl_quaternion[2], kdl_quaternion[3])
         else:
             #SIMULATION
-            pose_stamped_IFOhandle = create_pose_stamped(6.55, 0.381, 0, 0, 0, 0.001, 0.99)
-
+            if userdata.side_of_door == 'face':
+                pose_stamped_IFOhandle = create_pose_stamped(6.55, 0.381, 0, 0, 0, 0.001, 0.99)
+            else:
+                pose_stamped_IFOhandle = create_pose_stamped(kdl_vector[0], kdl_vector[1], kdl_vector[2], kdl_quaternion[0], kdl_quaternion[1], kdl_quaternion[2], kdl_quaternion[3])
 
         #publication
         rospy.sleep(0.5)
@@ -445,21 +454,24 @@ class graspeHandle(smach.State):
         if not simulation:
             #REALITY
             if userdata.side_of_door == "face":
-                kdl_vector[0] = kdl_vector[0] -0.056
+                kdl_vector[0] = kdl_vector[0] -0.055
                 kdl_vector[1]=kdl_vector[1]+0.05
             else:
-                kdl_vector[0] = kdl_vector[0] + 0.045
+                kdl_vector[0] = kdl_vector[0] + 0.053
         else:
             #SIMULATION
             if userdata.side_of_door == "face":
-                kdl_vector[0] = kdl_vector[0] -0.045
-                kdl_vector[1]=kdl_vector[1]+0.02
+                kdl_vector[0] = kdl_vector[0] - 0.045
+                kdl_vector[1] = kdl_vector[1] + 0.02
+
             else:
-                kdl_vector[0] = kdl_vector[0] + 0.045
+                kdl_vector[0] = 7.5
+                kdl_vector[1] = 0.3
+                kdl_vector[2] = 1.15
+
 
         kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
         handle_frame = FrameStamped(kdl_frame,rospy.Time.now(), frame_id = "map") #map is hard coded but it must change #get the frame of the handle from the vector
-
         #create a goal
         goal_handle = self.robot.tf_buffer.transform(handle_frame, self.robot.base_link_frame, rospy.Duration(1.0))
         goal_handle.frame.M = kdl.Rotation.RPY(-1.57, 0.0, 0.0) #rotation of the gripper in order to be able to grasp the handle
@@ -535,7 +547,7 @@ class pushDoorUnlatched(smach.State):
         x = (x1 + x2) / 2.0
         y = (y1 + y2) / 2.0
 
-        self.robot.base.force_drive(0.1, y / (x / 0.1), 0, x )
+        self.robot.base.force_drive(0.1, y / (x / 0.1), 0, x ) #TODO
 
         self.rate.sleep()
 
@@ -546,30 +558,113 @@ class pullDoorUnlatched(smach.State):
         self.robot = robot
         self.door = door
         smach.State.__init__(self, outcomes=['doorIsPulled', 'fail'])
-        self.rate = rospy.Rate(0.5)
+        self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
+        if simulation:
+            self.door_size = 0.8 #meters
+            self.nb_step = 40
+        else:
+            self.door_size = 0.92
+            self.nb_step = 30
 
     def execute(self,userdata):
-        self.rate.sleep()
-        #get some frame
-        #these are frame of the door according to the robot point of view (TT transform)
-        door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
-        door_frame_robot_right = self.robot.tf_buffer.transform(self.door.frame_points[1], self.robot.base_link_frame, rospy.Duration(1.0)) #frame right
+        rospy.sleep(0.5)
+        angle = math.pi / 4
 
-        #get the coordinate
-        x1 = door_frame_robot_left.vector.x()
-        y1 = door_frame_robot_left.vector.y()
-        x2 = door_frame_robot_right.vector.x()
-        y2 = door_frame_robot_right.vector.y()
+        #get the handle position
+        handle_vector = self.door.getHandlePose()
+        kdl_vector = handle_vector.vector
+        kdl_rotation = kdl.Rotation()
 
-        #mean of right and left
-        x = (x1 + x2) / 2.0
-        y = (y1 + y2) / 2.0
+        #change some value of the kdl vector before
+        if not simulation:
+            kdl_vector[0] = kdl_vector[0] + 0.045
 
-        self.robot.base.force_drive(-0.1, y / (x / 0.1), 0, 0.5 )
+        else:
+            kdl_vector[0] = 7.5
+            kdl_vector[1] = 0.3
+            kdl_vector[2] = 1.15
 
-        rospy.loginfo("robot has moved")
+        kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
+        handle_frame_map  = FrameStamped(kdl_frame,rospy.Time.now(), frame_id = "map") #frame map
+        handle_frame_door = self.robot.tf_buffer.transform(handle_frame_map, "door_inside", rospy.Duration(1.0))
 
+        #convert in position edge of the door
+        X_handle_d = handle_frame_door.frame.p[0]
+        Y_handle_d = handle_frame_door.frame.p[1]
+        X_handle_e, Y_handle_e = self.convert_position_from_door_to_edge(X_handle_d, Y_handle_d)
+
+        #get the robot position
+        position_frame_map = self.robot.base.get_location() #position of the robot in the map frame
+        position_frame_door = self.robot.tf_buffer.transform(position_frame_map, self.door.FRAME_ID, rospy.Duration(1.0)) #position of the robot in the door frame
+
+        X_robot_current_d = position_frame_door.frame.p[0]
+        Y_robot_current_d = position_frame_door.frame.p[1]
+        rot_robot_current_d = position_frame_door.frame.M.GetRPY()[2]
+        rot_robot_origin_d = rot_robot_current_d
+        rot_robot_destinate_d = rot_robot_current_d
+
+        X_robot_d = position_frame_door.frame.p[0]
+        Y_robot_d = position_frame_door.frame.p[1]
+
+        #convert in position edge of the door
+        X_robot_e, Y_robot_e = self.convert_position_from_door_to_edge(X_robot_d, Y_robot_d)
+
+        #move the robot
+        for i in range (1, self.nb_step):
+            theta = angle * i / self.nb_step
+
+            #calculate the futur position of the handle accroding to edge
+            x_handle_destination_e = -Y_handle_e*math.sin(theta)
+            y_handle_destination_e = Y_handle_e*math.cos(theta)
+
+            #calculate the futur position of the robot according to edge
+            x_robot_destination_e = x_handle_destination_e + X_robot_e*math.cos(theta)
+            y_robot_destination_e = y_handle_destination_e + X_robot_e*math.sin(theta)
+
+            #convert this futur position according to the door
+            x_robot_destination_d, y_robot_destination_d = self.convert_position_from_edge_to_door(x_robot_destination_e, y_robot_destination_e)
+            rot_robot_destinate_d = rot_robot_origin_d + theta
+
+            # rospy.loginfo("i = " + str(i) + " theta = " + str(theta))
+            # rospy.loginfo("X_robot_current_d = " + str(X_robot_current_d) + " x_robot_destination_d = " + str(x_robot_destination_d))
+            # rospy.loginfo("Y_robot_current_d = " + str(Y_robot_current_d) + " y_robot_destination_d = " + str(y_robot_destination_d))
+            # rospy.loginfo(" ")
+
+            while abs(abs(X_robot_current_d) - abs(x_robot_destination_d)) > 0.012 or abs(abs(Y_robot_current_d) - abs(y_robot_destination_d)) > 0.05 or abs(abs(rot_robot_destinate_d) - abs(rot_robot_current_d)) > 0.1:
+                if abs(abs(X_robot_current_d) - abs(x_robot_destination_d)) > 0.012:
+                    if X_robot_current_d > x_robot_destination_d:
+                        twist_message = create_twist(0,0,0,-0.05,0,0)
+                    else:
+                        twist_message = create_twist(0,0,0,0.05,0,0)
+                elif abs(abs(Y_robot_current_d) - abs(y_robot_destination_d)) > 0.05:
+                    twist_message = create_twist(0,0,0,0,-0.05,0)
+                else:
+                    twist_message = create_twist(0,0,0.05,0,0,0)
+
+                self.pub.publish(twist_message)
+                rospy.sleep(0.1)
+                #update
+                #get the robot position
+                position_frame_map = self.robot.base.get_location() #position of the robot in the map frame
+                position_frame_door = self.robot.tf_buffer.transform(position_frame_map, self.door.FRAME_ID, rospy.Duration(1.0)) #position of the robot in the door frame
+
+                X_robot_current_d = position_frame_door.frame.p[0]
+                Y_robot_current_d = position_frame_door.frame.p[1]
+                rot_robot_current_d = position_frame_door.frame.M.GetRPY()[2]
+
+
+        rospy.sleep(3)
         return 'doorIsPulled'
+
+    def convert_position_from_edge_to_door(self, Xe, Ye):
+        Xd = Xe
+        Yd = Ye - self.door_size/2
+        return Xd, Yd
+
+    def convert_position_from_door_to_edge(self, Xd, Yd):
+        Xe = Xd
+        Ye = Yd + self.door_size/2
+        return Xe, Ye
 
 class goUpHandle(smach.State):
     def __init__(self, arm):
@@ -677,12 +772,11 @@ class pushDoorOpen(smach.State):
         # this process is similar to the one in goIFOdoor
         # the expected rotation is the same as beiing IFO door because we want the robot to be straight IFO the door
 
-        frameIFOdoor_door = self.door.getFrameIFOdoor_face()
-
-        frameIFOdoor_map = self.robot.tf_buffer.transform(frameIFOdoor_door, "map", rospy.Duration(1.0))
-        rot_y_expected = frameIFOdoor_map.frame.M.GetRot()[2] # get the rot_y we want to have
 
         while not end:
+            frameIFOdoor_door = self.door.getFrameIFOdoor_face()
+
+
             #get the frame of the edges of the door
             #these are frame of the door according to the robot point of view (TT transform)
             door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
@@ -696,23 +790,25 @@ class pushDoorOpen(smach.State):
 
             #mean of right and left
             x = (x1 + x2) / 2.0
+
             y = (y1 + y2) / 2.0
+
             if not simulation:
                 y = y - 0.1
 
-            #get the rotation angle
-            position = self.robot.base.get_location()
-            rot_y_real = position.frame.M.GetRot()[2] #rotation of the robot according to map frame
+            else:
+                y = y - 0.1
 
-            rot_y = - (rot_y_expected - rot_y_real) # real rotation difference
+            #get rot_y expected in robot frame
+            frameIFOdoor_robot = self.robot.tf_buffer.transform(frameIFOdoor_door, self.robot.base_link_frame, rospy.Duration(1.0))
+            rot_y_expected = frameIFOdoor_robot.frame.M.GetRot()[2] # get the rot_y we want to have
 
-            if rot_y > 0.1:
-               twist_message = create_twist(0,0,-0.05,0,0,0)
-               self.pub.publish(twist_message)
-            elif rot_y < -0.1:
+            if rot_y_expected > 0.1:
                 twist_message = create_twist(0,0,0.05,0,0,0)
                 self.pub.publish(twist_message)
-
+            elif rot_y_expected < -0.1:
+                twist_message = create_twist(0,0,-0.05,0,0,0)
+                self.pub.publish(twist_message)
             elif y < -0.1:
                 twist_message = create_twist(0,0,0,0,-0.05,0)
                 self.pub.publish(twist_message)
@@ -722,10 +818,13 @@ class pushDoorOpen(smach.State):
             elif x > 0.1:
                 twist_message = create_twist(0,0,0,0.05,0,0)
                 self.pub.publish(twist_message)
+            elif x < -0.1:
+                twist_message = create_twist(0,0,0,-0.05,0,0)
+                self.pub.publish(twist_message)
             else:
                 end = True
 
-            rospy.sleep(0.5)
+            rospy.sleep(0.1)
 
         return 'doorIsPushed'
 
@@ -757,10 +856,12 @@ class crossDoor(smach.State):
         else:
             frameIFOdoor_door = self.door.getFrameIFOdoor_behind()
 
-        frameIFOdoor_map = self.robot.tf_buffer.transform(frameIFOdoor_door, "map", rospy.Duration(1.0))
-        rot_y_expected = frameIFOdoor_map.frame.M.GetRot()[2] # get the rot_y we want to have
-
         while not end:
+            if userdata.side_of_door == 'face':
+                frameIFOdoor_door = self.door.getFrameIFOdoor_face()
+            else:
+                frameIFOdoor_door = self.door.getFrameIFOdoor_behind()
+
             #get the frame of the edges of the door
             #these are frame of the door according to the robot point of view (TT transform)
             door_frame_robot_left = self.robot.tf_buffer.transform(self.door.frame_points[0], self.robot.base_link_frame, rospy.Duration(1.0)) #frame left
@@ -774,24 +875,33 @@ class crossDoor(smach.State):
 
             #mean of right and left
             x = (x1 + x2) / 2.0
-            x = x + 1.5
+            if userdata.side_of_door == 'face':
+                x = x + 1.5
+            else:
+                x = x + 1.5
+
             y = (y1 + y2) / 2.0
 
             if not simulation:
-                y = y - 0.1
+                if userdata.side_of_door == 'face':
+                    y = y - 0.1
+                else:
+                    y = y + 0.1
+            else:
+                if userdata.side_of_door == 'face':
+                    y = y - 0.1
+                else:
+                    y = y + 0.05
 
-            #get the rotation angle
-            position = self.robot.base.get_location()
-            rot_y_real = position.frame.M.GetRot()[2] #rotation of the robot according to map frame
+            #get rot_y expected in robot frame
+            frameIFOdoor_robot = self.robot.tf_buffer.transform(frameIFOdoor_door, self.robot.base_link_frame, rospy.Duration(1.0))
+            rot_y_expected = frameIFOdoor_robot.frame.M.GetRot()[2] # get the rot_y we want to have
 
-            rot_y = - (rot_y_expected - rot_y_real) # real reottaion difference
-
-
-            if rot_y > 0.1:
-               twist_message = create_twist(0,0,-0.05,0,0,0)
-               self.pub.publish(twist_message)
-            elif rot_y < -0.1:
+            if rot_y_expected > 0.1:
                 twist_message = create_twist(0,0,0.05,0,0,0)
+                self.pub.publish(twist_message)
+            elif rot_y_expected < -0.1:
+                twist_message = create_twist(0,0,-0.05,0,0,0)
                 self.pub.publish(twist_message)
             elif y < -0.1:
                 twist_message = create_twist(0,0,0,0,-0.05,0)
@@ -802,10 +912,13 @@ class crossDoor(smach.State):
             elif x > 0.1:
                 twist_message = create_twist(0,0,0,0.05,0,0)
                 self.pub.publish(twist_message)
+            elif x < -0.1:
+                twist_message = create_twist(0,0,0,-0.05,0,0)
+                self.pub.publish(twist_message)
             else:
                 end = True
 
-            rospy.sleep(0.5)
+            rospy.sleep(0.1)
 
         return 'doorIsCrossed'
 
@@ -817,17 +930,23 @@ class moveTreshold(smach.State):
 
     def execute(self, userata):
         if simulation:
-            treshold = 0.59
+            #simulation
+            if userata.side_of_door == 'face':
+                treshold = 0.59
+            else:
+                treshold = 0.59
             d = 0.7
         else:
+            #reality
             treshold = 0.40
             d = 0.7
 
+        x = 0.05
         if userata.side_of_door == 'face':
-            x = 0.05
+            y = -0.01
         else:
-            x = -0.05
-        y = -0.01
+            y = 0.01
+
 
         while d > treshold:
             d = self.laserData_callback()
@@ -843,7 +962,6 @@ class moveTreshold(smach.State):
         distance = msg_laser.ranges[position_angle_zero]
 
         return distance
-
 
 class moveDoorOpen(smach.State):
     def __init__(self):
@@ -885,11 +1003,11 @@ def sm_open_door_close(robot, arm, my_door):
     return sm_open_door_close
 
 def sm_open_door_open(robot, arm, my_door):
-    sm_open_door_open = smach.StateMachine(outcomes=['doorIsOpen', 'fail'], input_keys = ['side_of_door'])
+    sm_open_door_open = smach.StateMachine(outcomes=['doorIsOpen', 'fail', 'go_IFO_door'], input_keys = ['side_of_door'])
     with sm_open_door_open:
-        smach.StateMachine.add('move_door_open', moveDoorOpen(), transitions={'face' : 'push_door_open', 'behind' : 'pull_door_open'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('move_door_open', moveDoorOpen(), transitions={'face' : 'push_door_open', 'behind' : 'go_IFO_door'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('push_door_open', pushDoorOpen(robot, my_door), transitions={'doorIsPushed' : 'doorIsOpen', 'fail' : "fail"})
-        smach.StateMachine.add('pull_door_open', pullDoorOpen(robot, my_door), transitions={'doorIsPulled' : 'doorIsOpen', 'fail' : "fail"})
+        smach.StateMachine.add('pull_door_open', pullDoorOpen(robot, my_door), transitions={'doorIsPulled' : 'go_IFO_door', 'fail' : "fail"})
 
     return sm_open_door_open
 
@@ -906,7 +1024,7 @@ def sm_cross_door(robot, arm, my_door):
         smach.StateMachine.add('goIFOdoor', goIFOdoor(my_door, robot), transitions={'IFO_door' : 'update_door_state', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('update_door_state', updateDoorState(robot, my_door), transitions={'close' : 'open_door_closed', 'intermediate' : 'open_door_open', 'open' : 'cross_door', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('open_door_closed', sm_open_door_close_, transitions={'doorIsNotClose' :'robot_back_posInit', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
-        smach.StateMachine.add('open_door_open', sm_open_door_open_, transitions={'doorIsOpen' : 'cross_door', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('open_door_open', sm_open_door_open_, transitions={'doorIsOpen' : 'cross_door','go_IFO_door' : 'goIFOdoor' ,'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('robot_back_posInit', robotBackInitialPosition(arm), transitions={'initialPosition' : 'open_door_open', 'fail' : 'fail'})
         #smach.StateMachine.add('move_away_from_obstacle', goAwayFromObstacle(robot), transitions={'away' : 'goIFOdoor', 'fail' : 'fail'})
         smach.StateMachine.add('cross_door', crossDoor(robot, my_door), transitions={'doorIsCrossed' : 'doorIsCrossed', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
