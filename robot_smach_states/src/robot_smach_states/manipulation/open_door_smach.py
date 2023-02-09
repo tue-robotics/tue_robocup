@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-simulation = False
+simulation = True
 
 #system import
 import typing
@@ -134,11 +134,11 @@ class Door(Entity):
         return VectorStamped.from_xyz(cp_map.x(), cp_map.y(), cp_map.z(), rospy.Time.now(),"map")
 
     def updateHandlePose(self,new_pose):
-        rospy.loginfo("new pose = " + str(new_pose))
+        #rospy.loginfo("new pose = " + str(new_pose))
         self.HANDLE_POSE = new_pose
 
     def getHandlePose(self):
-        rospy.loginfo("handle pose = " + str(self.HANDLE_POSE))
+        #rospy.loginfo("handle pose = " + str(self.HANDLE_POSE))
         return self.HANDLE_POSE
 
     def getFrameIFOdoor_face(self):
@@ -630,8 +630,8 @@ class pullDoorUnlatched(smach.State):
             # rospy.loginfo("Y_robot_current_d = " + str(Y_robot_current_d) + " y_robot_destination_d = " + str(y_robot_destination_d))
             # rospy.loginfo(" ")
 
-            while abs(abs(X_robot_current_d) - abs(x_robot_destination_d)) > 0.012 or abs(abs(Y_robot_current_d) - abs(y_robot_destination_d)) > 0.05 or abs(abs(rot_robot_destinate_d) - abs(rot_robot_current_d)) > 0.1:
-                if abs(abs(X_robot_current_d) - abs(x_robot_destination_d)) > 0.012:
+            while abs(abs(X_robot_current_d) - abs(x_robot_destination_d)) > 0.006 or abs(abs(Y_robot_current_d) - abs(y_robot_destination_d)) > 0.05 or abs(abs(rot_robot_destinate_d) - abs(rot_robot_current_d)) > 0.005:
+                if abs(abs(X_robot_current_d) - abs(x_robot_destination_d)) > 0.006:
                     if X_robot_current_d > x_robot_destination_d:
                         twist_message = create_twist(0,0,0,-0.05,0,0)
                     else:
@@ -954,6 +954,10 @@ class moveTreshold(smach.State):
             self.pub.publish(twist_message)
             rospy.sleep(0.5)
 
+        
+        #before returning, I want the position
+        position = self.robot.base.get_location()
+        rospy.loginfo("position: " +  str(position))    
         return 'goodPosition'
 
     def laserData_callback(self):
