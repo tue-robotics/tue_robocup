@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-simulation = False
+simulation = True
 
 #system import
 import typing
@@ -466,9 +466,9 @@ class graspeHandle(smach.State):
                 kdl_vector[1] = kdl_vector[1] + 0.02
 
             else:
-                kdl_vector[0] = 7.5
+                kdl_vector[0] = 7.47
                 kdl_vector[1] = 0.3
-                kdl_vector[2] = 1.15
+                kdl_vector[2] = 1.12
 
 
         kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
@@ -607,7 +607,7 @@ class pullDoorClose(smach.State):
         twist_msg = create_twist(0,0,0,x,y,0)
 
         self.pub.publish(twist_msg)
-        rospy.sleep(3)
+        rospy.sleep(1.5)
         return 'door_pulled'
 
 class positionRobotDoorClose(smach.State):
@@ -631,26 +631,33 @@ class positionRobotDoorClose(smach.State):
             if abs(abs(rot) - abs(userdata.angle)) > 0.05:
                 if userdata.angle < 0:
                     if abs(rot) - abs(userdata.angle) > 0:
-                        twist_msg = create_twist(0,0,-0.05,0,0,0)
+                        twist_msg = create_twist(0,0,-0.05,0,0,1)
                         self.pub.publish(twist_msg)
-                        rospy.sleep(0.1)
+                        rospy.sleep(3)
                     else:
-                        twist_msg = create_twist(0,0,0.05,0,0,0)
+                        twist_msg = create_twist(0,0,0.05,0,0,1)
                         self.pub.publish(twist_msg)
-                        rospy.sleep(0.1)
+                        rospy.sleep(3)
 
                 else:
-                    if abs(rot) - abs(userdata.angle) < 0:
-                        twist_msg = create_twist(0,0,-0.05,0,0,0)
+                    
+                    #userdata.angle > 0
+                    if abs(rot) < abs(userdata.angle):
+                        rospy.loginfo('rot < angle' + 'rot: ' + str(rot) + ' userdata.angle: ' + str(userdata.angle))
+                        twist_msg = create_twist(0,0,-0.05,0,0,-1)
                         self.pub.publish(twist_msg)
-                        rospy.sleep(0.1)
+                        rospy.sleep(1)
                     else:
-                        twist_msg = create_twist(0,0,0.05,0,0,0)
+                        #rost > userdata.angle
+                        rospy.loginfo('\n')
+                        rospy.loginfo('rot > angle : ' + 'rot: ' + str(rot) + ' userdata.angle: ' + str(userdata.angle))
+                        rospy.sleep(1)
+                        twist_msg = create_twist(0,0,0.1,0,0,-1)
                         self.pub.publish(twist_msg)
-                        rospy.sleep(0.1)
+                        
             else:
                 end_rot = True
-
+        
         while not end_mov:
             msg_line_segments = rospy.wait_for_message("/line_segments", LineSegmentList) #get the message
             segments = msg_line_segments.line_segments # extract the segments
@@ -667,30 +674,29 @@ class positionRobotDoorClose(smach.State):
                 #calculate distance
                 distance_start = math.sqrt(start[0]**2 + start[1]**2)
                 distance_end = math.sqrt(end[0]**2 + end[1]**2)
-                rospy.loginfo("userdata.distance_start: " + str(userdata.distance_start) + " distance_start: " + str(distance_start))
+                
                 #compare the distance
                 if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.035:
-
+                    rospy.loginfo('\n')
+                    rospy.loginfo("userdata.distance_start: " + str(userdata.distance_start) + " distance_start: " + str(distance_start))
+                    rospy.loginfo("userdata.distance_end: " + str(userdata.distance_end) + " distance_end: " + str(distance_end))
+                    rospy.sleep(3)
                     if userdata.angle > 0:
                         beta = math.pi/2 - angle
                         x = math.cos(beta) / 50
                         y = - abs(math.sin(beta)) / 50
                         twist_msg = create_twist(1,0,0,x,y,0)
                         self.pub.publish(twist_msg)
-                        rospy.sleep(1)
                     else:
-                        rospy.loginfo("decresing difference: diff = "+ str(abs(abs(rot) - abs(userdata.angle))))
-
                         beta = math.pi/2 - angle
                         x = - abs(math.cos(beta)) / 20
                         y = - abs(math.sin(beta)) / 20
                         twist_msg = create_twist(1,0,0,x,y,0)
                         self.pub.publish(twist_msg)
-                        rospy.sleep(1)
                 else:
-                    rospy.loginfo("position should be ok, diff = "+ str(abs(abs(rot) - abs(userdata.angle))))
+                    
                     end_mov = True
-
+        
         return 'position_achieve'
 
 class goUpHandle(smach.State):
@@ -1036,7 +1042,7 @@ def sm_open_door_close(robot, arm, my_door):
         smach.StateMachine.add('goIFOhandle', goIFOhandle(my_door, robot), transitions={'IFO_handle' : 'updateHandleLocation', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('updateHandleLocation', updateHandleLocation(robot, my_door), transitions={'updated' : 'goMinimumPosition', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('goMinimumPosition', moveTreshold(robot), transitions={'goodPosition' : 'graspingHandle', 'fail' : 'fail'})
-        smach.StateMachine.add('graspingHandle', sm_grasp_handle_, transitions={'handleIsGrasped' : 'unlatchHandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('graspingHandle', sm_grasp_handle_, transitions={'handleIsGrasped' : 'pullDoorUnlatched', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'}) #TODO
         smach.StateMachine.add('unlatchHandle', unlatchHandle(arm), transitions={'handleIsUnlatched_push' : 'pushDoorUnlatched','handleIsUnlatched_pull' : 'pullDoorUnlatched', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('pushDoorUnlatched',pushDoorUnlatched(robot, my_door), transitions={'doorIsPushed' :'goUpHandle', 'fail' : 'fail'} )
         smach.StateMachine.add('pullDoorUnlatched',sm_pull_door_close_, transitions={'doorIsPulled' :'goUpHandle', 'fail' : 'fail'} )
