@@ -1,7 +1,7 @@
-from  pykdl_ros import FrameStamped
 import rospy
 from robot_smach_states.util.designators import Designator
 from visualization_msgs.msg import MarkerArray, Marker
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_stamped_from_XYZRPY
 
 
 class EmptyShelfDesignator(Designator):
@@ -13,7 +13,7 @@ class EmptyShelfDesignator(Designator):
     robot = amigo
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
-    cabinet = ds.EntityByIdDesignator(robot, uuid=CABINET, name="pick_shelf")
+    cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
     place_position = ds.LockingDesignator(ds.EmptyShelfDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
     """
     def __init__(self, robot, place_location_designator, name=None, area=None):
@@ -58,7 +58,7 @@ class EmptyShelfDesignator(Designator):
             return ret
 
 
-    def create_marker(self, x, y, z, frame_id="map"):
+    def create_marker(self, x, y, z, frame_id="/map"):
         marker = Marker()
         marker.id = len(self.marker_array.markers)
         marker.type = 2
@@ -105,14 +105,14 @@ class EmptyShelfDesignator(Designator):
         :return:
         """
         # Just to be sure, copy e
-        e = self.robot.ed.get_entity(uuid=e.uuid)
+        e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
 
         if area in e.volumes:
             box = e.volumes[area]
         else:
-            rospy.logwarn("Entity {0} has no volume named {1}".format(e.uuid, area))
+            rospy.logwarn("Entity {0} has no volume named {1}".format(e.id, area))
 
         if not self._candidate_list_obj:
             for y in [0, self._spacing, -self._spacing, 2.0 * self._spacing, -2.0 * self._spacing]:
@@ -120,20 +120,20 @@ class EmptyShelfDesignator(Designator):
                     rospy.logerr("Spacing of empty spot designator is too large!!!")
                     continue
 
-                fs = FrameStamped.from_xyz_rpy(box.max_corner.x() - self._edge_distance,
-                                               y,
-                                               box.min_corner.z() - 0.04,  # 0.04 is the usual z offset
-                                               0, 0, 0, rospy.Time.now(), e.uuid)
+                fs = kdl_frame_stamped_from_XYZRPY(frame_id=e.id,
+                                                   x=box.max_corner.x() - self._edge_distance,
+                                                   y=y,
+                                                   z=box.min_corner.z() - 0.04)  # 0.04 is the usual z offset
 
                 self._candidate_list_obj.append(fs)
 
         # publish marker
         self.marker_array = MarkerArray()
-        for fs in self._candidate_list_obj:
+        for ps in self._candidate_list_obj:
             self.marker_array.markers.append(self.create_marker(fs.vector.p.x,
                                                                 fs.vector.p.y,
                                                                 fs.vector.p.z,
-                                                                e.uuid))
+                                                                e.id))
         self.marker_pub.publish(self.marker_array)
 
         return self._candidate_list_obj

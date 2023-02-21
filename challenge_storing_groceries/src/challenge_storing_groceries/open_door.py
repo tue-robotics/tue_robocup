@@ -9,10 +9,11 @@ import tf2_ros
 import tf2_geometry_msgs  # required for transforms
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
-
+# TU/e
+from robot_skills.util.kdl_conversions import VectorStamped
 
 # Challenge storing groceries
-from tf_conversions import transformations
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 import robot_smach_states as states
 
@@ -39,8 +40,9 @@ def _get_yaw_from_quaternion_msg(msg):
     :return: Yaw angle
     """
     orientation_list = [msg.x, msg.y, msg.z, msg.w]
-    _, _, yaw = transformations.euler_from_quaternion(orientation_list)
+    _, _, yaw = euler_from_quaternion(orientation_list)
     return yaw
+
 
 
 class UpdateCabinetPose(smach.State):
@@ -56,7 +58,7 @@ class UpdateCabinetPose(smach.State):
 
         rospy.sleep(1)
         # Now update the pose of the cabinet
-        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet.uuid))
+        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet.id_))
 
         return 'succeeded'
 
@@ -73,11 +75,13 @@ class OpenDoor(smach.State):
         self._goal_position_tolerance = 0.01
         self._goal_rotation_tolerance = 0.1
 
+        self._tf_buffer = tf2_ros.Buffer()
+        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
         self._cmd_vel_publisher = rospy.Publisher("/" + robot.robot_name + "/base/references", Twist, queue_size=1)
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
         goal_pose.header.stamp = rospy.Time.now()
-        pose = self.robot.tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
+        pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
@@ -113,16 +117,16 @@ class OpenDoor(smach.State):
     def _align_with_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi - 0.05))
+        goal_pose.header.frame_id = self.cabinet.id_
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
         goal_pose.pose.position.x = 0.6
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
 
     def _return_from_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
+        goal_pose.header.frame_id = self.cabinet.id_
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
         goal_pose.pose.position.x = 1.0
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.5, 0.5, 0.5)
 
@@ -135,8 +139,8 @@ class OpenDoor(smach.State):
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi - 0.8))
+        goal_pose.header.frame_id = self.cabinet.id_
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.8))
         goal_pose.pose.position.x = 0.75
         goal_pose.pose.position.y = -0.02
         self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
@@ -153,25 +157,26 @@ class OpenDoor(smach.State):
 
 
 class OpenDoorMachine(smach.StateMachine):
-    def __init__(self, robot, cabinet_id, cabinet_navigate_area, cabinet_inspect_area):
+    def __init__(self, robot, shelf_designator, cabinet_navigate_area="in_front_of"):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        self.cabinet = ds.EntityByIdDesignator(robot=robot, uuid=cabinet_id)
+        self.shelfDes = shelf_designator
+        cabinet_inspect_area = "Todo"
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_CABINET",
-                                   states.NavigateToSymbolic(robot, {self.cabinet: cabinet_navigate_area}, self.cabinet),
+                                   states.navigation.NavigateToSymbolic(robot, {self.shelfDes: cabinet_navigate_area}, self.shelfDes),
                                    transitions={'arrived': 'UPDATE_CABINET_POSE',
                                                 'unreachable': 'failed',
                                                 'goal_not_defined': 'failed'})
 
             smach.StateMachine.add("UPDATE_CABINET_POSE",
-                                   UpdateCabinetPose(robot, self.cabinet, cabinet_inspect_area),
+                                   UpdateCabinetPose(robot, self.shelfDes, cabinet_inspect_area),
                                    transitions={'succeeded': 'OPEN_DOOR',
                                                 'failed': 'failed'})
 
             smach.StateMachine.add("OPEN_DOOR",
-                                   OpenDoor(robot, self.cabinet),
+                                   OpenDoor(robot, self.shelfDes),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'})
 

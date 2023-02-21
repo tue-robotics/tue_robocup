@@ -27,7 +27,6 @@ class StoreSingleItem(smach.StateMachine):
     def __init__(self, robot, item_designator, place_pose_designator, arm=None):
         """
         Constructor
-
         :param robot: robot object
         :param item_designator:
         :param place_pose_designator: EdEntityDesignator designating the item to grab
