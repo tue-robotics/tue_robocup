@@ -15,9 +15,9 @@ from robocup_knowledge import load_knowledge
 from robot_skills.classification_result import ClassificationResult
 
 # Challenge storing groceries
-from inspect_shelves import InspectAreas
-from manipulate_machine import StoreItems
-from open_door import OpenDoorMachine
+from challenge_storing_groceries.inspect_shelves import InspectAreas
+from challenge_storing_groceries.manipulate_machine import StoreItems
+from challenge_storing_groceries.open_door import OpenDoorMachine
 
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
 

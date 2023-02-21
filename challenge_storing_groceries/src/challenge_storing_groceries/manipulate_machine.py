@@ -3,17 +3,17 @@ import rospy
 import smach
 
 # TU/e
+from ed.entity import Entity
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills import arms
+from robot_skills.arm.arms import GripperTypes
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.util.entity import Entity
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
-from near_object_designator import NearObjectSpotDesignator
-from similarity import SimilarEntityDesignator
+from challenge_storing_groceries.near_object_designator import NearObjectSpotDesignator
+from challenge_storing_groceries.similarity import SimilarEntityDesignator
 
 MIN_GRAB_OBJECT_HEIGHT = 0.0
 MAX_GRAB_OBJECT_WIDTH = 1.8
@@ -39,7 +39,7 @@ class StoreSingleItem(smach.StateMachine):
         if not arm:
             arm = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp", "prepare_place"],
                                                      "required_goals": ["carrying_pose"],
-                                                     "required_gripper_types": [arms.GripperTypes.GRASPING]},
+                                                     "required_gripper_types": [GripperTypes.GRASPING]},
                                              name="empty_arm_designator").lockable()
 
         with self:
@@ -84,7 +84,7 @@ class StoreItems(smach.StateMachine):
 
         arm = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp", "prepare_place"],
                                                  "required_goals": ["carrying_pose"],
-                                                 "required_gripper_types": [arms.GripperTypes.GRASPING]},
+                                                 "required_gripper_types": [GripperTypes.GRASPING]},
                                          name="empty_arm_designator").lockable()
         place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area="on_top_of", name="empty_spot_designator")
 

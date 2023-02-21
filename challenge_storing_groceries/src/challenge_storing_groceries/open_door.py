@@ -8,9 +8,9 @@ import smach
 import tf2_ros
 import tf2_geometry_msgs  # required for transforms
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
-from robot_skills.amigo import Amigo
+
 # TU/e
-from robot_skills.util.kdl_conversions import VectorStamped
+from pykdl_ros import VectorStamped
 
 # Challenge storing groceries
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -184,7 +184,8 @@ class OpenDoorMachine(smach.StateMachine):
 if __name__ == '__main__':
     rospy.init_node('test_open_door')
 
-    robot = Amigo()
+    from robot_skills.get_robot import get_robot
+    robot = get_robot("hero")
     robot.ed.reset()
     robot.leftArm.reset()
     robot.torso.reset()

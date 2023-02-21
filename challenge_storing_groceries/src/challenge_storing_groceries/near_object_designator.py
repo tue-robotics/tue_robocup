@@ -10,7 +10,7 @@ import PyKDL as kdl
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
+from pykdl_ros import FrameStamped
 from robot_smach_states.util.designators.ed_designators import Designator
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
 
@@ -166,10 +166,14 @@ class NearObjectSpotDesignator(Designator):
         for a in arange(0, 2*math.pi, spacing/radius):
             dx = radius * math.cos(a)
             dy = radius * math.sin(a)
-            fs = kdl_frame_stamped_from_XYZRPY(x=near_place.x() + dx,
-                                               y=near_place.y() + dy,
-                                               z=near_place.z(),
-                                               frame_id="/map")
+            fs = FrameStamped.from_xyz_rpy(x=near_place.x() + dx,
+                                           y=near_place.y() + dy,
+                                           z=near_place.z(),
+                                           roll=0.0,
+                                           pitch=0.0,
+                                           yaw=0.0,
+                                           stamp=rospy.Time.now(),
+                                           frame_id="/map")
             points += [fs]
         return points
 

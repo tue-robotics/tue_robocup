@@ -2,7 +2,7 @@
 
 import rospy
 
-from robot_skills.util.entity import Entity
+from ed.entity import Entity
 from robot_smach_states.util.designators import Designator
 
 

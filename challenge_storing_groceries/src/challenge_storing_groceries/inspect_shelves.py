@@ -6,14 +6,15 @@ import rospy
 import smach
 
 # TU/e
+from ed.entity import Entity
+
 from robot_smach_states.navigation import NavigateToSymbolic, NavigateToObserve
 from robot_smach_states.util.designators import Designator, VariableDesignator, check_type
 from robot_smach_states.world_model import SegmentObjects
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.rise import RiseForInspect
 
-from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped
+from pykdl_ros import VectorStamped
 from robot_skills.classification_result import ClassificationResult
 
 
