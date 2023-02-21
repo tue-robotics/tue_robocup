@@ -26,8 +26,8 @@ def setup_statemachine(robot):
     state_machine = smach.StateMachine(outcomes=['Done', 'Failed', 'Aborted'])
 
     skip_door = rospy.get_param("~skip_door", True)
-    shelfDes = ds.EntityByIdDesignator(robot, id=challenge_knowledge.shelf)
-    tableDes = ds.EntityByIdDesignator(robot, id=challenge_knowledge.table)
+    shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
+    tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
     objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
 
     with state_machine:
