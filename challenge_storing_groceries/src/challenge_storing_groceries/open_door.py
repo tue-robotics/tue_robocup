@@ -69,7 +69,8 @@ class OpenDoor(smach.State):
         self.robot = robot
         self.cabinet = cabinet
 
-        self.arm = self.robot.leftArm  # Joint goals are tuned for this arm only
+        self.arm = self.robot.get_arm()  # hotfix for hero
+        # self.arm = self.robot.leftArm  # Joint goals are tuned for this arm only
 
         self._rate = rospy.Rate(10)
         self._goal_position_tolerance = 0.01
