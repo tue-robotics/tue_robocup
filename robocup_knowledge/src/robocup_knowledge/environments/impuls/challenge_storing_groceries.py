@@ -8,7 +8,7 @@ common = knowledge_loader.load_knowledge("common")
 starting_point = 'initial_pose'
 
 # Detection
-shelf = "bookcase"
+shelf = "closet"
 object_shelves = ["shelf3", "shelf4", "shelf5"]
 object_types = [obj["name"] for obj in common.objects]
 
