@@ -32,7 +32,7 @@ class InspectAreaDesignator(Designator):
 
     def _resolve(self):
         entity = self.entityDes.resolve()
-        return self.knowledge.common.get_inspect_areas(entity.id)
+        return self.knowledge.common.get_inspect_areas(entity.uuid)
 
 
 class InspectAreas(smach.StateMachine):
