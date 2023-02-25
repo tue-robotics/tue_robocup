@@ -178,5 +178,5 @@ class NearObjectSpotDesignator(Designator):
         return points
 
     def __repr__(self):
-        return "EmptySpotDesignator(place_location_designator={}, name='{}', area='{}')"\
+        return "NearObjectSpotDesignator(place_location_designator={}, name='{}', area='{}')"\
                     .format(self.place_location_designator, self._name, self._area)
