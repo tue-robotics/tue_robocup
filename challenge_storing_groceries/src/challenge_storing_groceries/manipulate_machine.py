@@ -101,7 +101,7 @@ class StoreItems(smach.StateMachine):
                 entities = []
                 segmented_entities = segmented_entities_designator.resolve()
                 for seg_entity in segmented_entities:
-                    e = robot.ed.get_entity(seg_entity.id)
+                    e = robot.ed.get_entity(seg_entity.uuid)
                     entities.append(e)
                 writer = entities_designator.writeable
                 writer.write(entities)

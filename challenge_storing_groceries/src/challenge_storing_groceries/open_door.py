@@ -58,7 +58,7 @@ class UpdateCabinetPose(smach.State):
 
         rospy.sleep(1)
         # Now update the pose of the cabinet
-        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet.id_))
+        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet.uuid))
 
         return 'succeeded'
 
@@ -118,7 +118,7 @@ class OpenDoor(smach.State):
     def _align_with_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet.id_
+        goal_pose.header.frame_id = self.cabinet.uuid
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
         goal_pose.pose.position.x = 0.6
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
@@ -126,7 +126,7 @@ class OpenDoor(smach.State):
     def _return_from_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet.id_
+        goal_pose.header.frame_id = self.cabinet.uuid
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
         goal_pose.pose.position.x = 1.0
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.5, 0.5, 0.5)
@@ -140,7 +140,7 @@ class OpenDoor(smach.State):
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet.id_
+        goal_pose.header.frame_id = self.cabinet.uuid
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.8))
         goal_pose.pose.position.x = 0.75
         goal_pose.pose.position.y = -0.02

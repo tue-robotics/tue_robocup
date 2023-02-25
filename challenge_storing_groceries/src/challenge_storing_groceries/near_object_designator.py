@@ -84,7 +84,7 @@ class NearObjectSpotDesignator(Designator):
         """
         entities_at_poi = self.robot.ed.get_entities(center_point=poi.extractVectorStamped(),
                                                      radius=0.05)
-        entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
+        entities_at_poi = [entity for entity in entities_at_poi if entity.uuid != surface_entity.uuid]
         return not any(entities_at_poi)
 
     def _is_poi_in_area(self, poi, entity, area):
@@ -97,7 +97,7 @@ class NearObjectSpotDesignator(Designator):
         :return: bool
         """
         if area not in entity.volumes:
-            rospy.logerr_throttle("{} not an area of {}".format(area, entity.id))
+            rospy.logerr_throttle("{} not an area of {}".format(area, entity.uuid))
             return False
 
         poi_in_entity_frame = poi.projectToFrame(entity.frame_id, self.robot.tf_listener)

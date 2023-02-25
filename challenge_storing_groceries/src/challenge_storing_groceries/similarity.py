@@ -29,7 +29,7 @@ class SimilarEntityDesignator(Designator):
         match = find_similar_entity(original, entity_list, self.knowledge)
         if match:
             rospy.loginfo("Selected {}, as it is similar to {}".format(match, original))
-            return self.robot.ed.get_entity(id=match.id)
+            return self.robot.ed.get_entity(uuid=match.uuid)
         return None
 
 
@@ -47,15 +47,15 @@ def find_similar_entity(original, entity_list, knowledge):
     if not entity_list: # List is empty
         return None
 
-    original_type = original.type
-    matching_types = [entity for entity in entity_list if entity.type is original_type]
+    original_type = original.etype
+    matching_types = [entity for entity in entity_list if entity.etype is original_type]
     if matching_types:
         matching_types.sort(lambda obj: obj.probability, reverse=True)
         return matching_types[0]
 
     original_category = knowledge.common.get_object_category(original_type)
     matching_categories = [entity for entity in entity_list
-                           if entity.type in knowledge.common.object_names_of_category(original_category)]
+                           if entity.etype in knowledge.common.object_names_of_category(original_category)]
     if matching_categories:
         matching_categories.sort(lambda obj: obj.probability, reverse=True)
         return matching_categories[0]
