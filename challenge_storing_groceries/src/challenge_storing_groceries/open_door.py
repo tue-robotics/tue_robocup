@@ -82,7 +82,7 @@ class OpenDoor(smach.State):
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
         goal_pose.header.stamp = rospy.Time.now()
-        pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
+        pose = self._tf_buffer.transform(goal_pose, 'base_link', rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 

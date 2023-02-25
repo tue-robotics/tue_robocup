@@ -126,7 +126,7 @@ class NearObjectSpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers)
         marker.type = 2
-        marker.header.frame_id = "/map"
+        marker.header.frame_id = "map"
         marker.header.stamp = rospy.Time.now()
         marker.pose.position.x = x
         marker.pose.position.y = y
@@ -173,7 +173,7 @@ class NearObjectSpotDesignator(Designator):
                                            pitch=0.0,
                                            yaw=0.0,
                                            stamp=rospy.Time.now(),
-                                           frame_id="/map")
+                                           frame_id="map")
             points += [fs]
         return points
 
