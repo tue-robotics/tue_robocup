@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 # ROS
+import actionlib
 import rospy
 import smach
 import std_msgs.msg
@@ -168,6 +169,44 @@ class WaitForTrigger(smach.State):
 
         # Get the ~private namespace parameters from command line or launch file.
         self.rate = rate
+        topic = topic
+
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+
+        rospy.loginfo('topic: /%s', topic)
+        rospy.loginfo('rate:  %d Hz', self.rate)
+
+    def execute(self, userdata=None):
+        self.trigger_received = False
+
+        while not rospy.is_shutdown() and not self.trigger_received:
+            rospy.sleep(1/self.rate)
+
+        if self.trigger_received:
+            return self.trigger_received
+        else:
+            return 'preempted'
+
+    def callback(self, data):
+        # Simply print out values in our custom message.
+        if data.data in self.triggers:
+            rospy.loginfo('trigger received: %s', data.data)
+            self.trigger_received = data.data
+        else:
+            rospy.logwarn('wrong trigger received: %s', data.data)
+
+class WaitForWakeWord(smach.State):
+    """
+    This state will block execution until a suitable trigger command is received on the channel /trigger
+    It will receive std_msgs.String and will compare it to the strings in the array that is given.
+
+    """
+    def __init__(self, robot, wakeword, action_name):
+        smach.State.__init__(self,
+                             outcomes=['heard','preempted'])
+        self.robot = robot
+
+        # Get the ~private namespace parameters from command line or launch file.
         topic = topic
 
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)

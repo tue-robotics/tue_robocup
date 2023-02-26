@@ -20,7 +20,7 @@ from robot_skills.get_robot import get_robot
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
-from robot_smach_states.utility import WaitForTrigger
+from robot_smach_states.human_interaction.wakeword import WaitForWakeWord
 
 
 def task_result_to_report(task_result):
@@ -92,7 +92,7 @@ def main():
     finished = False
     start_time = rospy.get_time()
 
-    trigger = WaitForTrigger(robot, ["gpsr"], "/" + robot_name + "/trigger")
+    trigger = WaitForWakeWord(robot, "hero", "hero-o_en_linux_v2_1_0", "/get_keyword")
 
     while True:
         # Navigate to the GPSR meeting point
