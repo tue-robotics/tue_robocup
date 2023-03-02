@@ -1,0 +1,4 @@
+string input_string
+geometry_msgs/PointStamped point_in
+---
+geometry_msgs/PointStamped point_out
