@@ -37,7 +37,7 @@ if simulation:
     from opening_door.srv import door_info
 else:
     from robot_smach_states.srv import door_info
-    
+
 #function use to create geometry_msgs
 def create_pose_stamped(x, y, z, qx, qy, qz, qw):
     pose = PoseStamped()
@@ -350,14 +350,14 @@ class updateHandleLocationFromServiceServer(smach.State):
         #service
         self.door_info = rospy.ServiceProxy('door_info', door_info)
         smach.State.__init__(self, outcomes=['updated','fail'], input_keys=['side_of_door'])
-        
+
     def execute(self, userdata):
         #get the frame of the handle
         if userdata.side_of_door == 'face':
             handle_estimate = self.door.handle_pose
         else:
             handle_estimate = self.door.handle_behind_pose
-            
+
         #write y direction in service server
         PointStamped_y = PointStamped()
         PointStamped_y.header.frame_id = "door_inside"
@@ -365,32 +365,32 @@ class updateHandleLocationFromServiceServer(smach.State):
         PointStamped_y.point.y = -1
         PointStamped_y.point.z = 0
         self.door_info.call("set_y_direction", PointStamped_y)
-            
+
         #handle estimate is a vectorStamped, i have to convert it to a frameStamped
         handle_point_estimate = PointStamped()
         handle_point_estimate.header.frame_id = "map"
         handle_point_estimate.point.x = handle_estimate.vector.x()
         handle_point_estimate.point.y = handle_estimate.vector.y()
         handle_point_estimate.point.z = handle_estimate.vector.z()
-        
+
         handle_point_response = self.door_info.call("write_marker", handle_point_estimate)
-        # rospy.loginfo("handle_point_response:")
-        # rospy.loginfo(handle_point_response.point_out)
-        
+        rospy.loginfo("handle_point_response:")
+        rospy.loginfo(handle_point_response.point_out)
+
         rospy.sleep(1)
-        
-        # self.door_info.call("publish_marker", handle_point_estimate)
+
+        self.door_info.call("publish_marker", handle_point_estimate)
         # rospy.sleep(1)
-        
+
         self.door.updateHandlePose(self.robot.tf_buffer.transform(handle_point_response.point_out, "map", rospy.Duration(1.0)))
-        
+
         return 'updated'
-    
+
 class updateHandleLocation(smach.State):
     def __init__(self, robot, door):
         self.robot = robot
         self.door = door
-        
+
         smach.State.__init__(self, outcomes=['updated','fail'], input_keys=['side_of_door'])
 
     def execute(self, userdata):
@@ -411,7 +411,7 @@ class updateHandleLocation(smach.State):
         rospy.loginfo("goal_estimate")
         rospy.loginfo(goal_estimate)
         goal.handle_location_estimate = goal_estimate
-        
+
 
         #to use the 3 following fct, hero has to be IFO the door (TT RVIZ or TT service)
         self.robot.perception.locate_handle_client.send_goal(goal) #ask hero to watch
@@ -525,9 +525,13 @@ class graspeHandle(smach.State):
         #         # kdl_vector[1] = 0.3
         #         # kdl_vector[2] = 1.12
         if simulation:
-            if not userdata == "face":
+            if not userdata.side_of_door == "face":
                 kdl_vector[2] = kdl_vector[2] + 0.05
-
+        else:
+            if userdata.side_of_door == "face":
+                kdl_vector[0] = kdl_vector[0] - 0.045
+            else:
+                kdl_vector[0] = kdl_vector[0] + 0.045
         kdl_frame = kdl.Frame(kdl_rotation, kdl_vector) #frame kdl
         handle_frame = FrameStamped(kdl_frame,rospy.Time.now(), frame_id = "map") #map is hard coded but it must change #get the frame of the handle from the vector
         #create a goal
@@ -647,7 +651,7 @@ class getDataDoorClose(smach.State):
 
 class pullDoorClose(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['door_pulled', 'fail'], input_keys=['angle'])
+        smach.State.__init__(self, outcomes=['door_pulled','ended', 'fail'], input_keys=['angle'])
         self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
         self.i = 0
 
@@ -668,6 +672,8 @@ class pullDoorClose(smach.State):
 
         self.pub.publish(twist_msg)
         rospy.sleep(1.5)
+        if self.i == 3:
+           return  'ended'
         return 'door_pulled'
 
 class positionRobotDoorClose(smach.State):
@@ -700,7 +706,7 @@ class positionRobotDoorClose(smach.State):
                         rospy.sleep(3)
 
                 else:
-                    
+
                     #userdata.angle > 0
                     if abs(rot) < abs(userdata.angle):
                         rospy.loginfo('rot < angle' + 'rot: ' + str(rot) + ' userdata.angle: ' + str(userdata.angle))
@@ -714,10 +720,10 @@ class positionRobotDoorClose(smach.State):
                         rospy.sleep(1)
                         twist_msg = create_twist(0,0,0.1,0,0,-1)
                         self.pub.publish(twist_msg)
-                        
+
             else:
                 end_rot = True
-        
+
         while not end_mov:
             msg_line_segments = rospy.wait_for_message("/line_segments", LineSegmentList) #get the message
             segments = msg_line_segments.line_segments # extract the segments
@@ -734,7 +740,7 @@ class positionRobotDoorClose(smach.State):
                 #calculate distance
                 distance_start = math.sqrt(start[0]**2 + start[1]**2)
                 distance_end = math.sqrt(end[0]**2 + end[1]**2)
-                
+
                 #compare the distance
                 if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.035:
                     rospy.loginfo('\n')
@@ -754,9 +760,9 @@ class positionRobotDoorClose(smach.State):
                         twist_msg = create_twist(1,0,0,x,y,0)
                         self.pub.publish(twist_msg)
                 else:
-                    
+
                     end_mov = True
-        
+
         return 'position_achieve'
 
 class goUpHandle(smach.State):
@@ -996,10 +1002,10 @@ class crossDoor(smach.State):
             elif rot_y_expected < -0.1:
                 twist_message = create_twist(0,0,-0.05,0,0,0)
                 self.pub.publish(twist_message)
-            elif y < -0.1:
+            elif y < -0.05:
                 twist_message = create_twist(0,0,0,0,-0.05,0)
                 self.pub.publish(twist_message)
-            elif y > 0.1:
+            elif y > 0.05:
                 twist_message = create_twist(0,0,0,0,+0.05,0)
                 self.pub.publish(twist_message)
             elif x > 0.1:
@@ -1078,7 +1084,7 @@ def sm_pull_door_close():
 
     with sm_pull_door_close:
         smach.StateMachine.add('get_data', getDataDoorClose(), transitions={'dataIsGet' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'distance_start' : 'distance_start', 'distance_end' : 'distance_end'})
-        smach.StateMachine.add('pull_door_close', pullDoorClose(), transitions={'door_pulled' : 'position_robot_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle'})
+        smach.StateMachine.add('pull_door_close', pullDoorClose(), transitions={'door_pulled' : 'position_robot_door_close','ended' : 'doorIsPulled', 'fail' : 'fail'}, remapping = {'angle' : 'angle'})
         smach.StateMachine.add('position_robot_door_close', positionRobotDoorClose(), transitions={'position_achieve' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'distance_start' : 'distance_start', 'distance_end' : 'distance_end'})
 
     return sm_pull_door_close
@@ -1149,7 +1155,7 @@ def main():
     arm = robot.get_arm(force_sensor_required=True)
     door = robot.ed.get_entity(uuid="door_inside")
     my_door = Door(door)
-    
+
 
     #smach state machine main
     sm_main = sm_cross_door(robot, arm, my_door)

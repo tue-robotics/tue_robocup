@@ -38,7 +38,7 @@
 #include <visualization_msgs/Marker.h>
 
 
-//size 
+//size
 #define BOUNDING_BOX_SIZE 0.5
 
 class doorOpener {
@@ -63,16 +63,21 @@ class doorOpener {
             tf2_ros::TransformListener tfListener(tf_buffer);
             geometry_msgs::TransformStamped transformStamped_doorToSensor;
             //convertion of this message into the sensor frame
-            if (tf_buffer.canTransform("head_rgbd_sensor_depth_frame", "door_inside", ros::Time(0), ros::Duration(1.0))) {
+            ROS_INFO("y_direction_frame_map = %f, %f, %f", y_direction_frame_map.vector.x, y_direction_frame_map.vector.y, y_direction_frame_map.vector.z);
+            if (tf_buffer.canTransform("head_rgbd_sensor_rgb_frame", "door_inside", ros::Time(0), ros::Duration(1.0))) {
                 try {
-                transformStamped_doorToSensor = tf_buffer.lookupTransform("head_rgbd_sensor_depth_frame", "door_inside", ros::Time(0), ros::Duration(1.0));
-                tf2::doTransform(y_direction_frame_map, this -> y_doorDirection_frame_sensor, transformStamped_doorToSensor);  
+                transformStamped_doorToSensor = tf_buffer.lookupTransform("head_rgbd_sensor_rgb_frame", "door_inside", ros::Time(0), ros::Duration(1.0));
+                tf2::doTransform(y_direction_frame_map, this -> y_doorDirection_frame_sensor, transformStamped_doorToSensor);
                 }
                 catch (tf2::TransformException &ex) {
                     ROS_WARN("%s",ex.what());
                     ros::Duration(1.0).sleep();
                 }
             }
+            else {
+            ROS_INFO("no transform possible");
+            }
+            ROS_INFO("y_doorDirection_frame_sensor = %f, %f, %f", this -> y_doorDirection_frame_sensor.vector.x, this -> y_doorDirection_frame_sensor.vector.y, this -> y_doorDirection_frame_sensor.vector.z);
             if (abs(this -> y_doorDirection_frame_sensor.vector.x) < 0.2) this -> y_doorDirection_frame_sensor.vector.x = 0;
             if (abs(this -> y_doorDirection_frame_sensor.vector.y) < 0.2) this -> y_doorDirection_frame_sensor.vector.y = 0;
             if (abs(this -> y_doorDirection_frame_sensor.vector.z) < 0.2) this -> y_doorDirection_frame_sensor.vector.z = 0;
@@ -81,7 +86,7 @@ class doorOpener {
         geometry_msgs::PointStamped write_marker(geometry_msgs::PointStamped handle_vv_location_frame_map) {
             //print info about y_doorDirection_frame_sensor
             //ROS_INFO("y_doorDirection_frame_sensor = %f, %f, %f", this -> y_doorDirection_frame_sensor.vector.x, this -> y_doorDirection_frame_sensor.vector.y, this -> y_doorDirection_frame_sensor.vector.z);
-            
+
             //get the mesage from depth_registered
             boost::shared_ptr<sensor_msgs::PointCloud2 const> sharedPointCloudMessage;
             sensor_msgs::PointCloud2 PointCloudMessage;
@@ -90,14 +95,14 @@ class doorOpener {
             tf2_ros::TransformListener tfListener(tf_buffer);
             //geometry_msgs::PointStamped handle_vv_location_frame_map;
 
-            //create a marker and a publisher for him           
+            //create a marker and a publisher for him
             // Set the frame ID and timestamp
             marker.header.stamp = ros::Time::now();
 
             // Set the namespace and ID for this marker
             marker.ns = "clustersMarker";
             marker.id = 10;
-            
+
             // Set the marker type to cube list
             marker.type = visualization_msgs::Marker::CUBE_LIST;
 
@@ -127,8 +132,8 @@ class doorOpener {
             }
 
             //ROS_INFO("height = %d , width = %d", PointCloudMessage.height, PointCloudMessage.width);
-            
-            
+
+
             // handle_vv_location_frame_map.header.frame_id = "map";
             // handle_vv_location_frame_map.point.x = 7.475;
             // handle_vv_location_frame_map.point.y = 0.135;
@@ -145,7 +150,7 @@ class doorOpener {
                 transformStamped = tf_buffer.lookupTransform(PointCloudMessage.header.frame_id, "map", ros::Time(0), ros::Duration(1.0));
                 transformStamped_sensorToMap = tf_buffer.lookupTransform("map", PointCloudMessage.header.frame_id, ros::Time(0), ros::Duration(1.0));
                 ROS_INFO("can transform");
-                tf2::doTransform(handle_vv_location_frame_map, handle_vv_location_frame_sensor, transformStamped);        
+                tf2::doTransform(handle_vv_location_frame_map, handle_vv_location_frame_sensor, transformStamped);
                 }
                 catch (tf2::TransformException& ex) {
                     ROS_WARN("%s", ex.what());
@@ -156,7 +161,7 @@ class doorOpener {
                 ROS_INFO("can not transform");
             }
             // ROS_INFO("after transform into frame sensor");
-            
+
             // ROS_INFO("Received PointStamped message:");
             // ROS_INFO("Header: frame_id: %s", handle_vv_location_frame_sensor.header.frame_id.c_str());
             // ROS_INFO("Point: \n- x: %f \n- y: %f \n- z: %f", handle_vv_location_frame_sensor.point.x, handle_vv_location_frame_sensor.point.y, handle_vv_location_frame_sensor.point.z);
@@ -175,8 +180,8 @@ class doorOpener {
             pcl::fromROSMsg(PointCloudMessage, *PC_ptr);
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr PC_cropped_frame_sensor_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); // pcl::PointXYZ is the type of point , ocl::PointCloud create a pointcloud from this type of point
-            
-            //create the crop variable 
+
+            //create the crop variable
             pcl::PassThrough<pcl::PointXYZ> crop_filter;
             crop_filter.setInputCloud(PC_ptr);
             //we are going to crop according to x, y  and z.
@@ -211,8 +216,9 @@ class doorOpener {
             uint32_t nb_point = PC_cropped_frame_sensor_ptr -> points.size();
 
             //this part is going to remove points that are plane from the cloud
-            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.8 * nb_point){
-                //segment the largest planar of the cloud
+            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.9 * nb_point){
+            //while(false){
+            //segment the largest planar of the cloud
                 seg.setInputCloud(PC_cropped_frame_sensor_ptr);
                 seg.segment(*inliers, *coefficients);
                 if (inliers -> indices.size() == 0) {
@@ -235,13 +241,13 @@ class doorOpener {
 
                 *PC_cropped_frame_sensor_ptr = *PC_plane_intermediate_ptr;
             }
-            
+
             // Creating the KdTree object for the search method of the extraction
             // a cluster is a group of points that are close to each other
 
             pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
             tree->setInputCloud(PC_cropped_frame_sensor_ptr);
-            
+
             std::vector<pcl::PointIndices> cluster_indices;
             pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
             ec.setClusterTolerance(0.01); // 1cm
@@ -255,7 +261,7 @@ class doorOpener {
 
             //check the position of every cluster to know which one is the closest the VV of the handle
             double i = 0; //count for marker color
-            double max_error = 0.5; //to get the point that will be use to grab the handle
+            double max_error = 0.2; //to get the point that will be use to grab the handle
             pcl::PointCloud<pcl::PointXYZ>::Ptr handle_cluster = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //cluster that will represent the handle
             std::vector<pcl::PointIndices> cluster_indices_selection; //dynamic array to store the index of the cluster that may represent the handle
             double min_y_frame_sensor = 15; //because we are going to choose the point that is closest to the sensor according to it y direction
@@ -263,7 +269,7 @@ class doorOpener {
             for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it) {
                 //create a new pointcloud for the cluster
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-                
+
                 //fill the pointcloud with the points of the cluster
                 for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit) cloud_cluster->points.push_back(PC_cropped_frame_sensor_ptr->points[*pit]);
                 //fill the other info
@@ -284,7 +290,7 @@ class doorOpener {
                 //print the info
                 //ROS_INFO("Cluster: size=%ld, centroid=(%f,%f,%f), Total error of the cluster = %f", cloud_cluster->size(), centroid[0], centroid[1], centroid[2], measured_error);
 
-                
+
 
 
                 geometry_msgs::Point p;
@@ -293,15 +299,15 @@ class doorOpener {
                 p.z = centroid[2];
 
                 std_msgs::ColorRGBA color;
-                color.r = 1.0;  
-                color.a = 1.0;  
+                color.r = 1.0;
+                color.a = 1.0;
                 marker.points.push_back(p);
                 marker.colors.push_back(color);
-                
+
 
                 if (measured_error < max_error){
-                    //selection based of the distance between the VV and the center of the cluster has been made    
-                    ROS_INFO("first selection done, this is cluster number %f", i);
+                    //selection based of the distance between the VV and the center of the cluster has been made
+                    //ROS_INFO("first selection done, this is cluster number %f", i);
                     //second criteria : according to the door, the point must be more in the middle than the VV
                     if (this -> y_doorDirection_frame_sensor.vector.x == 0) {
                         ROS_INFO("probleme in the direction");
@@ -309,14 +315,14 @@ class doorOpener {
                     }
 
                     if (this -> y_doorDirection_frame_sensor.vector.x > 0) {
-                        /* 
+                        /*
                         all the value that are in y direction < 0 according to the frame door are outisde of the door. (y frame door is x frame sensor)
                         It means they can't represent the handle, so we must keep only the one that are superior to y of the VV
                         So we are going to check if the x value of the center of the cluster is superior to the x value of the VV
                         */
                         if (centroid(0) > handle_vv_location_frame_sensor.point.x) {
                             //the cluster is in the right direction
-                            ROS_INFO("second selection done, this is cluster number %f", i);
+                            //ROS_INFO("second selection done, this is cluster number %f", i);
 
                             if (centroid(1) < min_y_frame_sensor) {
                                 //the cluster is the closest to the sensor
@@ -325,8 +331,8 @@ class doorOpener {
                                 ROS_INFO("third selection done, we have replace the handle frame this is cluster number %f", i);
                             }
 
-                        } 
-                            
+                        }
+
                     }
                     else {
                         // same idea but on the other side of the door
@@ -346,9 +352,9 @@ class doorOpener {
                 }
 
                 i++;
-                
+
             }
-               
+
             marker.header.frame_id = PointCloudMessage.header.frame_id;
 
             //making the handle cluster cube bigger than the other
@@ -360,8 +366,8 @@ class doorOpener {
             p.z = centroid[2];
 
             std_msgs::ColorRGBA color;
-            color.r = 0;  
-            color.a = 1.0;  
+            color.r = 0;
+            color.a = 1.0;
             color.g = 1.0;
             marker.points.push_back(p);
             marker.colors.push_back(color);
@@ -378,7 +384,7 @@ class doorOpener {
 
             return handle_location_frame_map;
         }
-        
+
         void publish_marker(){
             ros::Rate r(1);
             while (ros::ok()) {
@@ -410,7 +416,7 @@ class doorOpener {
             }
 
             else if (msg_rqst.input_string == "set_y_direction"){
-                //we are receiving a pointStamped, we need to write a vector stamped 
+                //we are receiving a pointStamped, we need to write a vector stamped
                 geometry_msgs::Vector3Stamped y_direction;
                 y_direction.header.frame_id = msg_rqst.point_in.header.frame_id;
                 y_direction.vector.x = msg_rqst.point_in.point.x;
