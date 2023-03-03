@@ -386,7 +386,6 @@ class updateHandleLocationFromServiceServer(smach.State):
         
         return 'updated'
     
-    
 class updateHandleLocation(smach.State):
     def __init__(self, robot, door):
         self.robot = robot
@@ -650,8 +649,11 @@ class pullDoorClose(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['door_pulled', 'fail'], input_keys=['angle'])
         self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
+        self.i = 0
 
     def execute(self, userdata):
+        self.i += 1
+        rospy.loginfo('i: ' + str(self.i))
         if userdata.angle < 0:
             beta = math.pi/2 + userdata.angle
             x = - math.sin(beta)/10
