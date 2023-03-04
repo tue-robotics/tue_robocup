@@ -142,3 +142,31 @@ class StoreItems(smach.StateMachine):
                                    transitions={'succeeded': 'ITERATE_ENTITY',
                                                 'failed': 'ITERATE_ENTITY'}
                                    )
+
+
+if __name__ == '__main__':
+    import sys
+    from robot_skills.get_robot import get_robot
+    from robot_smach_states.util.designators import EntityByIdDesignator, ArmDesignator
+
+    if len(sys.argv) < 2:
+        print(f"usage: python {sys.argv[0]} [entity ID] [Optional: shelf ID]")
+        sys.exit()
+
+    place_area = "on_top_of"
+    if len(sys.argv) > 2:
+        place_area = sys.argv[2]
+
+    rospy.init_node('test_inspect_shelves')
+
+    robot = get_robot("hero")
+    robot.reset_all_arms()
+
+    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[1])
+
+    shelfDes = EntityByIdDesignator(robot, uuid="closet")
+    armDes = ArmDesignator(robot)
+    placePoseDes = EmptySpotDesignator(robot, shelfDes, armDes, area=place_area, name="empty_spot_designator")
+
+    sm = StoreSingleItem(robot, entityDes, placePoseDes)
+    sm.execute()
