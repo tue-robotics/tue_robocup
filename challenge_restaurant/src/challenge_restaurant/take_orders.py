@@ -44,18 +44,8 @@ class TakeOrder(smach.State):
 
     def _confirm(self):
         try:
-            if self.number_of_tries == 0:
-                speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
-                                                                                              "T[False] -> no",
-                                                      target="T")
-                self.number_of_tries += 1
-
-            else:
-                try:
-                    speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
-                                                          target="T")
-                except TimeoutException:
-                    return True
+            speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+                                                                                          "T[False] -> no", target="T")
 
         except TimeoutException:
             return False
@@ -63,7 +53,6 @@ class TakeOrder(smach.State):
         return speech_result.semantics
 
     def execute(self, userdata=None):
-        self.number_of_tries = 0
 
         person = self._entity_designator.resolve()
         if person:
@@ -93,20 +82,8 @@ class TakeOrder(smach.State):
                     if count < 3:
                         self._robot.speech.speak("Please speak even louder and directly into my microphone")
                     else:
-                        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
-                        drink = random.choice(potential_orders)
-                        self._robot.speech.speak("I understood that you would like a {}, "
-                                                 "is this correct?".format(drink), block=True)
-                        try:
-                            self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
-                                                  target="T")
-                        except TimeoutException:
-                            pass
-                        self._orders.append(drink)
+                        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
                         self._robot.head.cancel_goal()
-                        self._robot.speech.speak("Ok, I will get your order", block=False)
-
-                        # self._robot.head.cancel_goal()
                         return "failed"
 
             try:
@@ -124,20 +101,8 @@ class TakeOrder(smach.State):
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
 
-        potential_orders = ['coke', 'milk', 'ice tea', 'strawberry', 'tonic', 'peach']
-        drink = random.choice(potential_orders)
-        self._robot.speech.speak("I understood that you would like a {}, "
-                                 "is this correct?".format(drink), block=True)
-        try:
-            self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;",
-                                  target="T")
-        except TimeoutException:
-            pass
-        self._orders.append(drink)
+        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
         self._robot.head.cancel_goal()
-        self._robot.speech.speak("Ok, I will get your order", block=False)
-        # self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
-        # self._robot.head.cancel_goal()
         return "failed"
 
 
