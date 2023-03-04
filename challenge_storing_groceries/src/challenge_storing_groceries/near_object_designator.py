@@ -180,3 +180,23 @@ class NearObjectSpotDesignator(Designator):
     def __repr__(self):
         return "NearObjectSpotDesignator(place_location_designator={}, name='{}', area='{}')"\
                     .format(self.place_location_designator, self._name, self._area)
+
+
+if __name__ == '__main__':
+    import sys
+    from robot_skills.get_robot import get_robot
+    from robot_smach_states.util.designators import EntityByIdDesignator
+
+    if len(sys.argv) < 2:
+        print(f"usage: python {sys.argv[0]} [entity ID]")
+        sys.exit()
+
+    rospy.init_node('test_inspect_shelves')
+
+    robot = get_robot("hero")
+
+    shelfDes = EntityByIdDesignator(robot, uuid="closet")
+    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[1])
+
+    nearObjectDes = NearObjectSpotDesignator(robot, entityDes, shelfDes)
+    nearObjectDes.resolve()

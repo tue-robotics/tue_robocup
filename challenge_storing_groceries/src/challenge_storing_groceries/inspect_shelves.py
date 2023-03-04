@@ -114,6 +114,6 @@ if __name__ == '__main__':
 
     shelfDes = EntityByIdDesignator(robot, uuid="closet")
     searchAreasDes = VariableDesignator(["shelf3", "shelf4", "shelf5"])
-    # Create entity designator for the cabinet
+
     sm = InspectAreas(robot, shelfDes, searchAreas=searchAreasDes, navigation_area="in_front_of")
     sm.execute()
