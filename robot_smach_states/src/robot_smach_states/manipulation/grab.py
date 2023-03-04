@@ -197,19 +197,7 @@ class PickUp(smach.State):
 
         # Close gripper
         arm.gripper.send_goal('close')
-
         arm.gripper.occupied_by = grab_entity
-
-        # Lift
-        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
-        rospy.loginfo('Start lifting')
-        roll = 0.0
-
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
-        goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
-        rospy.loginfo("Start lift")
-        if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.uuid]):
-            rospy.logerr('Failed lift')
 
         # Retract
         goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
@@ -217,7 +205,7 @@ class PickUp(smach.State):
         roll = 0.0
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.1)  # Go 10 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.uuid]):
