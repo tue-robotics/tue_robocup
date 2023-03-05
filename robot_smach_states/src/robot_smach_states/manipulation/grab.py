@@ -206,7 +206,7 @@ class PickUp(smach.State):
         roll = 0.0
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.01)  # Go 10 cm higher
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.1)  # Go 10 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.uuid]):
