@@ -63,7 +63,7 @@ class doorOpener {
             tf2_ros::TransformListener tfListener(tf_buffer);
             geometry_msgs::TransformStamped transformStamped_doorToSensor;
             //convertion of this message into the sensor frame
-            ROS_INFO("y_direction_frame_map = %f, %f, %f", y_direction_frame_map.vector.x, y_direction_frame_map.vector.y, y_direction_frame_map.vector.z);
+            //ROS_INFO("y_direction_frame_map = %f, %f, %f", y_direction_frame_map.vector.x, y_direction_frame_map.vector.y, y_direction_frame_map.vector.z);
             if (tf_buffer.canTransform("head_rgbd_sensor_rgb_frame", "door_inside", ros::Time(0), ros::Duration(1.0))) {
                 try {
                 transformStamped_doorToSensor = tf_buffer.lookupTransform("head_rgbd_sensor_rgb_frame", "door_inside", ros::Time(0), ros::Duration(1.0));
@@ -77,7 +77,7 @@ class doorOpener {
             else {
             ROS_INFO("no transform possible");
             }
-            ROS_INFO("y_doorDirection_frame_sensor = %f, %f, %f", this -> y_doorDirection_frame_sensor.vector.x, this -> y_doorDirection_frame_sensor.vector.y, this -> y_doorDirection_frame_sensor.vector.z);
+            //ROS_INFO("y_doorDirection_frame_sensor = %f, %f, %f", this -> y_doorDirection_frame_sensor.vector.x, this -> y_doorDirection_frame_sensor.vector.y, this -> y_doorDirection_frame_sensor.vector.z);
             if (abs(this -> y_doorDirection_frame_sensor.vector.x) < 0.2) this -> y_doorDirection_frame_sensor.vector.x = 0;
             if (abs(this -> y_doorDirection_frame_sensor.vector.y) < 0.2) this -> y_doorDirection_frame_sensor.vector.y = 0;
             if (abs(this -> y_doorDirection_frame_sensor.vector.z) < 0.2) this -> y_doorDirection_frame_sensor.vector.z = 0;
@@ -214,11 +214,13 @@ class doorOpener {
             pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_intermediate_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the intermediate output
 
             uint32_t nb_point = PC_cropped_frame_sensor_ptr -> points.size();
-
+            ROS_INFO("print nb_point");
+            ROS_INFO("there are = %u points", nb_point);
             //this part is going to remove points that are plane from the cloud
-            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.9 * nb_point){
+            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.05 * nb_point){
             //while(false){
-            //segment the largest planar of the cloud
+                
+                //segment the largest planar of the cloud
                 seg.setInputCloud(PC_cropped_frame_sensor_ptr);
                 seg.segment(*inliers, *coefficients);
                 if (inliers -> indices.size() == 0) {
@@ -240,6 +242,7 @@ class doorOpener {
                 extract.filter(*PC_plane_intermediate_ptr);
 
                 *PC_cropped_frame_sensor_ptr = *PC_plane_intermediate_ptr;
+                ROS_INFO("now, there are = %lu points", PC_cropped_frame_sensor_ptr -> points.size());
             }
 
             // Creating the KdTree object for the search method of the extraction
