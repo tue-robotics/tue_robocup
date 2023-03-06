@@ -154,6 +154,7 @@ class doorOpener {
                 }
                 catch (tf2::TransformException& ex) {
                     ROS_WARN("%s", ex.what());
+                    ROS_INFO("pb in transformation");
                     return handle_vv_location_frame_map;
                 }
             }
@@ -217,9 +218,9 @@ class doorOpener {
             ROS_INFO("print nb_point");
             ROS_INFO("there are = %u points", nb_point);
             //this part is going to remove points that are plane from the cloud
-            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.05 * nb_point){
+            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.4 * nb_point){
             //while(false){
-                
+
                 //segment the largest planar of the cloud
                 seg.setInputCloud(PC_cropped_frame_sensor_ptr);
                 seg.segment(*inliers, *coefficients);
@@ -264,11 +265,11 @@ class doorOpener {
 
             //check the position of every cluster to know which one is the closest the VV of the handle
             double i = 0; //count for marker color
-            double max_error = 0.2; //to get the point that will be use to grab the handle
+            double max_error = 0.3; //to get the point that will be use to grab the handle
             pcl::PointCloud<pcl::PointXYZ>::Ptr handle_cluster = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //cluster that will represent the handle
             std::vector<pcl::PointIndices> cluster_indices_selection; //dynamic array to store the index of the cluster that may represent the handle
             double min_y_frame_sensor = 15; //because we are going to choose the point that is closest to the sensor according to it y direction
-
+            ROS_INFO("handle_vv_location_frame_sensor.point.x = %f and y_doorDirection_frame_sensor.vector.x = %f", handle_vv_location_frame_sensor.point.x, y_doorDirection_frame_sensor.vector.x);
             for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it) {
                 //create a new pointcloud for the cluster
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -291,7 +292,7 @@ class doorOpener {
                 double measured_error = error_x + error_y + error_z;
 
                 //print the info
-                //ROS_INFO("Cluster: size=%ld, centroid=(%f,%f,%f), Total error of the cluster = %f", cloud_cluster->size(), centroid[0], centroid[1], centroid[2], measured_error);
+                ROS_INFO("Cluster: size=%ld, centroid=(%f,%f,%f), Total error of the cluster = %f", cloud_cluster->size(), centroid[0], centroid[1], centroid[2], measured_error);
 
 
 
@@ -310,7 +311,7 @@ class doorOpener {
 
                 if (measured_error < max_error){
                     //selection based of the distance between the VV and the center of the cluster has been made
-                    //ROS_INFO("first selection done, this is cluster number %f", i);
+                    ROS_INFO("first selection done, this is cluster number %f", i);
                     //second criteria : according to the door, the point must be more in the middle than the VV
                     if (this -> y_doorDirection_frame_sensor.vector.x == 0) {
                         ROS_INFO("probleme in the direction");
@@ -323,11 +324,11 @@ class doorOpener {
                         It means they can't represent the handle, so we must keep only the one that are superior to y of the VV
                         So we are going to check if the x value of the center of the cluster is superior to the x value of the VV
                         */
-                        if (centroid(0) > handle_vv_location_frame_sensor.point.x) {
+                        if (centroid(0) > handle_vv_location_frame_sensor.point.x - 0.05) { //3cm to remain safe
                             //the cluster is in the right direction
-                            //ROS_INFO("second selection done, this is cluster number %f", i);
+                            ROS_INFO("second selection done, this is cluster number %f", i);
 
-                            if (centroid(1) < min_y_frame_sensor) {
+                            if (centroid(2) < min_y_frame_sensor) {
                                 //the cluster is the closest to the sensor
                                 min_y_frame_sensor = centroid(1);
                                 *handle_cluster = *cloud_cluster;
@@ -339,11 +340,11 @@ class doorOpener {
                     }
                     else {
                         // same idea but on the other side of the door
-                        if (centroid(0) < handle_vv_location_frame_sensor.point.x) {
+                        if (centroid(0) < handle_vv_location_frame_sensor.point.x + 0.05) { //3 cm to remain safe
                             //the cluster is in the right direction
                             ROS_INFO("second selection done, this is cluster number %f", i);
 
-                            if (centroid(1) < min_y_frame_sensor) {
+                            if (centroid(2) < min_y_frame_sensor) {
                                 //the cluster is the closest to the sensor
                                 min_y_frame_sensor = centroid(1);
                                 *handle_cluster = *cloud_cluster;
