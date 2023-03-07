@@ -2,9 +2,9 @@
 
 #include "ros/ros.h"
 //SIMULATION
-//#include "opening_door/door_info.h"
+#include "opening_door/door_info.h"
 //REALITY
-#include "robot_smach_states/door_info.h"
+//#include "robot_smach_states/door_info.h"
 #include "std_srvs/SetBool.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -84,16 +84,12 @@ class doorOpener {
         }
 
         geometry_msgs::PointStamped write_marker(geometry_msgs::PointStamped handle_vv_location_frame_map) {
-            //print info about y_doorDirection_frame_sensor
-            //ROS_INFO("y_doorDirection_frame_sensor = %f, %f, %f", this -> y_doorDirection_frame_sensor.vector.x, this -> y_doorDirection_frame_sensor.vector.y, this -> y_doorDirection_frame_sensor.vector.z);
-
             //get the mesage from depth_registered
             boost::shared_ptr<sensor_msgs::PointCloud2 const> sharedPointCloudMessage;
             sensor_msgs::PointCloud2 PointCloudMessage;
             //transform variable
             tf2_ros::Buffer tf_buffer(ros::Duration(20));
             tf2_ros::TransformListener tfListener(tf_buffer);
-            //geometry_msgs::PointStamped handle_vv_location_frame_map;
 
             //create a marker and a publisher for him
             // Set the frame ID and timestamp
@@ -128,16 +124,9 @@ class doorOpener {
             }
             else{
                 ROS_INFO("No point cloud message received");
-                return handle_vv_location_frame_map;
+                EXIT_FAILURE;
             }
 
-            //ROS_INFO("height = %d , width = %d", PointCloudMessage.height, PointCloudMessage.width);
-
-
-            // handle_vv_location_frame_map.header.frame_id = "map";
-            // handle_vv_location_frame_map.point.x = 7.475;
-            // handle_vv_location_frame_map.point.y = 0.135;
-            // handle_vv_location_frame_map.point.z = 1.06;
             geometry_msgs::PointStamped handle_vv_location_frame_sensor;
 
 
@@ -154,17 +143,13 @@ class doorOpener {
                 catch (tf2::TransformException& ex) {
                     ROS_WARN("%s", ex.what());
                     ROS_INFO("pb in transformation");
-                    return handle_vv_location_frame_map;
+                    EXIT_FAILURE;
                 }
             }
             else {
                 ROS_INFO("can not transform");
             }
-            // ROS_INFO("after transform into frame sensor");
 
-            // ROS_INFO("Received PointStamped message:");
-            // ROS_INFO("Header: frame_id: %s", handle_vv_location_frame_sensor.header.frame_id.c_str());
-            // ROS_INFO("Point: \n- x: %f \n- y: %f \n- z: %f", handle_vv_location_frame_sensor.point.x, handle_vv_location_frame_sensor.point.y, handle_vv_location_frame_sensor.point.z);
 
             // This crops the pointcloud to a bounding box of 25 cm around the original handle location
             double min_x = handle_vv_location_frame_sensor.point.x - (BOUNDING_BOX_SIZE/2.0);
@@ -193,69 +178,82 @@ class doorOpener {
             crop_filter.setFilterLimits(min_z, max_z);
             crop_filter.filter(*PC_cropped_frame_sensor_ptr);
 
-            // ROS_INFO("pass through filter done, here is some info about the header, the height, the width and the fields of cropped pointcloud:");
-            // ROS_INFO("Header: frame_id: %s", PC_cropped_frame_sensor_ptr -> header.frame_id.c_str());
-            // ROS_INFO("height = %d , width = %d", PC_cropped_frame_sensor_ptr -> height,  PC_cropped_frame_sensor_ptr -> width);
-            //ROS_INFO("fields = %s", (PC_cropped_frame_sensor_ptr -> fields)[0]);
+            // // Create the segmentation object for the planar model and set all the parameters
+            // pcl::SACSegmentation<pcl::PointXYZ> seg; //segmentation object
+            // pcl::PointIndices::Ptr inliers = pcl::make_shared<pcl::PointIndices>(); //inliers points of the shape
+            // pcl::ModelCoefficients::Ptr coefficients = pcl::make_shared<pcl::ModelCoefficients>(); //
+            // pcl::PCDWriter writer;
 
-            // Create the segmentation object for the planar model and set all the parameters
-            pcl::SACSegmentation<pcl::PointXYZ> seg; //segmentation object
-            pcl::PointIndices::Ptr inliers = pcl::make_shared<pcl::PointIndices>(); //inliers points of the shape
-            pcl::ModelCoefficients::Ptr coefficients = pcl::make_shared<pcl::ModelCoefficients>(); //
-            pcl::PCDWriter writer;
+            // seg.setOptimizeCoefficients(true);
+            // seg.setModelType(pcl::SACMODEL_PLANE);
+            // seg.setMethodType(pcl::SAC_RANSAC);
+            // seg.setMaxIterations(100);
+            // seg.setDistanceThreshold(0.01);
 
-            seg.setOptimizeCoefficients(true);
-            seg.setModelType(pcl::SACMODEL_PLANE);
-            seg.setMethodType(pcl::SAC_RANSAC);
-            seg.setMaxIterations(100);
-            seg.setDistanceThreshold(0.01);
+            // pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the output
+            // pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_intermediate_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the intermediate output
 
-            pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the output
-            pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_intermediate_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the intermediate output
+            // uint32_t nb_point = PC_cropped_frame_sensor_ptr -> points.size();
+            // //this part is going to remove points that are plane from the cloud
+            // while (PC_cropped_frame_sensor_ptr -> points.size() > 0.4 * nb_point){
 
-            uint32_t nb_point = PC_cropped_frame_sensor_ptr -> points.size();
-            //this part is going to remove points that are plane from the cloud
-            while (PC_cropped_frame_sensor_ptr -> points.size() > 0.4 * nb_point){
-            //while(false){
+            //     //segment the largest planar of the cloud
+            //     seg.setInputCloud(PC_cropped_frame_sensor_ptr);
+            //     seg.segment(*inliers, *coefficients);
+            //     if (inliers -> indices.size() == 0) {
+            //         ROS_INFO("Could not estimate a planar model for the given dataset.");
+            //         return handle_vv_location_frame_map;
+            //     }
 
-                //segment the largest planar of the cloud
-                seg.setInputCloud(PC_cropped_frame_sensor_ptr);
-                seg.segment(*inliers, *coefficients);
-                if (inliers -> indices.size() == 0) {
-                    ROS_INFO("Could not estimate a planar model for the given dataset.");
-                    return handle_vv_location_frame_map;
-                }
+            //     //extract the planar inliehandlers from the input cloud
+            //     pcl::ExtractIndices<pcl::PointXYZ> extract;
+            //     extract.setInputCloud(PC_cropped_frame_sensor_ptr);
+            //     extract.setIndices(inliers);
+            //     extract.setNegative(false);
 
-                //extract the planar inliehandlers from the input cloud
-                pcl::ExtractIndices<pcl::PointXYZ> extract;
-                extract.setInputCloud(PC_cropped_frame_sensor_ptr);
-                extract.setIndices(inliers);
-                extract.setNegative(false);
+            //     //get the points associated with the planar surface
+            //     extract.filter(*PC_plane_intermediate_ptr);
 
-                //get the points associated with the planar surface
-                extract.filter(*PC_plane_intermediate_ptr);
+            //     //remove the planar inliers, extract the rest
+            //     extract.setNegative(true);
+            //     extract.filter(*PC_plane_intermediate_ptr);
 
-                //remove the planar inliers, extract the rest
-                extract.setNegative(true);
-                extract.filter(*PC_plane_intermediate_ptr);
-
-                *PC_cropped_frame_sensor_ptr = *PC_plane_intermediate_ptr;
-            }
+            //     *PC_cropped_frame_sensor_ptr = *PC_plane_intermediate_ptr;
+            // }
 
             // Creating the KdTree object for the search method of the extraction
             // a cluster is a group of points that are close to each other
 
-            pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
-            tree->setInputCloud(PC_cropped_frame_sensor_ptr);
-
+            long nb_cluster = 100;
             std::vector<pcl::PointIndices> cluster_indices;
-            pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-            ec.setClusterTolerance(0.01); // 1cm
-            ec.setMinClusterSize(100);
-            ec.setMaxClusterSize(25000);
-            ec.setSearchMethod(tree);
-            ec.setInputCloud(PC_cropped_frame_sensor_ptr);
-            ec.extract(cluster_indices);
+
+            while (nb_cluster > 10) {
+                PC_cropped_frame_sensor_ptr = this -> removePlaneSurface(PC_cropped_frame_sensor_ptr);
+                pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
+                tree->setInputCloud(PC_cropped_frame_sensor_ptr);    
+                pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+                ec.setClusterTolerance(0.01); // 1cm
+                ec.setMinClusterSize(100);
+                ec.setMaxClusterSize(25000);
+                ec.setSearchMethod(tree);
+                ec.setInputCloud(PC_cropped_frame_sensor_ptr);
+                ec.extract(cluster_indices);
+
+                nb_cluster = cluster_indices.size();
+            }
+
+            // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
+            // tree->setInputCloud(PC_cropped_frame_sensor_ptr);
+
+            // std::vector<pcl::PointIndices> cluster_indices;
+            // pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+            // ec.setClusterTolerance(0.01); // 1cm
+            // ec.setMinClusterSize(100);
+            // ec.setMaxClusterSize(25000);
+            // ec.setSearchMethod(tree);
+            // ec.setInputCloud(PC_cropped_frame_sensor_ptr);
+            // ec.extract(cluster_indices);
+            
 
             ROS_INFO("there are %ld clusters", cluster_indices.size());
 
@@ -311,7 +309,7 @@ class doorOpener {
                     //second criteria : according to the door, the point must be more in the middle than the VV
                     if (this -> y_doorDirection_frame_sensor.vector.x == 0) {
                         ROS_INFO("probleme in the direction");
-                        return handle_vv_location_frame_map;
+                        EXIT_FAILURE;
                     }
 
                     if (this -> y_doorDirection_frame_sensor.vector.x > 0) {
@@ -385,6 +383,57 @@ class doorOpener {
             return handle_location_frame_map;
         }
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr removePlaneSurface(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in){
+            /*
+            this fct remove 50% of the point cloud, it is used to remove the plane surface of the door
+            */
+
+           ROS_INFO("removing some points");
+
+            uint32_t nb_point = cloud_in -> points.size();
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_intermediate = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+
+            // Create the segmentation object for the planar model and set all the parameters
+            pcl::SACSegmentation<pcl::PointXYZ> seg; //segmentation object
+            pcl::PointIndices::Ptr inliers = pcl::make_shared<pcl::PointIndices>(); //inliers points of the shape
+            pcl::ModelCoefficients::Ptr coefficients = pcl::make_shared<pcl::ModelCoefficients>(); //
+            pcl::PCDWriter writer;
+
+            seg.setOptimizeCoefficients(true);
+            seg.setModelType(pcl::SACMODEL_PLANE);
+            seg.setMethodType(pcl::SAC_RANSAC);
+            seg.setMaxIterations(100);
+            seg.setDistanceThreshold(0.01);
+
+            while (cloud_in -> points.size() > 0.5 * nb_point) {
+                //segment the largest planar of the cloud
+                seg.setInputCloud(cloud_in);
+                seg.segment(*inliers, *coefficients);
+
+                if (inliers -> indices.size() == 0) {
+                    ROS_INFO("Could not estimate a planar model for the given dataset.");
+                    EXIT_FAILURE;
+                }
+
+                //extract the planar inliehandlers from the input cloud
+                pcl::ExtractIndices<pcl::PointXYZ> extract;
+                extract.setInputCloud(cloud_in);
+                extract.setIndices(inliers);
+                extract.setNegative(false);
+
+                //get the points associated with the planar surface
+                extract.filter(*cloud_intermediate);
+
+                //remove the planar inliers, extract the rest
+                extract.setNegative(true);
+                extract.filter(*cloud_intermediate);
+
+                *cloud_in = *cloud_intermediate;
+            }
+
+            return cloud_in;
+        }
+
         void publish_marker(){
             ros::Rate r(1);
             while (ros::ok()) {
@@ -398,9 +447,9 @@ class doorOpener {
             }
         }
         //REALITY
-        bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
+        // bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
         //SIMULATION
-        //bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
+        bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
             ros::Rate sleeping_time(0.5);
 
             if (msg_rqst.input_string == "write_marker"){

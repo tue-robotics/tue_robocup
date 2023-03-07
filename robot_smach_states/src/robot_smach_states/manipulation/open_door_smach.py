@@ -1156,7 +1156,7 @@ def detection_handle(robot, my_door, arm):
     sm_detect_handle.userdata.side_of_door = 'Unknown'
 
     with sm_detect_handle:
-        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'updateHandleLocation', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'goIFOhandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('goIFOhandle', goIFOhandle(my_door, robot), transitions={'IFO_handle' : 'updateHandleLocation', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('updateHandleLocation', updateHandleLocationFromServiceServer(robot, my_door), transitions={'updated' : 'handleIsDetected', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
     return sm_detect_handle
