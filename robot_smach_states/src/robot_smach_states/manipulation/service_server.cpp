@@ -149,7 +149,6 @@ class doorOpener {
                 try {
                 transformStamped = tf_buffer.lookupTransform(PointCloudMessage.header.frame_id, "map", ros::Time(0), ros::Duration(1.0));
                 transformStamped_sensorToMap = tf_buffer.lookupTransform("map", PointCloudMessage.header.frame_id, ros::Time(0), ros::Duration(1.0));
-                ROS_INFO("can transform");
                 tf2::doTransform(handle_vv_location_frame_map, handle_vv_location_frame_sensor, transformStamped);
                 }
                 catch (tf2::TransformException& ex) {
@@ -215,8 +214,6 @@ class doorOpener {
             pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_intermediate_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the intermediate output
 
             uint32_t nb_point = PC_cropped_frame_sensor_ptr -> points.size();
-            ROS_INFO("print nb_point");
-            ROS_INFO("there are = %u points", nb_point);
             //this part is going to remove points that are plane from the cloud
             while (PC_cropped_frame_sensor_ptr -> points.size() > 0.4 * nb_point){
             //while(false){
@@ -243,7 +240,6 @@ class doorOpener {
                 extract.filter(*PC_plane_intermediate_ptr);
 
                 *PC_cropped_frame_sensor_ptr = *PC_plane_intermediate_ptr;
-                ROS_INFO("now, there are = %lu points", PC_cropped_frame_sensor_ptr -> points.size());
             }
 
             // Creating the KdTree object for the search method of the extraction

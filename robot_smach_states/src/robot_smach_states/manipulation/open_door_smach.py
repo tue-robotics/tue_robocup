@@ -141,7 +141,7 @@ class Door(Entity):
         return VectorStamped.from_xyz(cp_map.x(), cp_map.y(), cp_map.z(), rospy.Time.now(),"map")
 
     def updateHandlePose(self,new_pose):
-        rospy.loginfo("new pose = " + str(new_pose))
+        #rospy.loginfo("new pose = " + str(new_pose))
         self.HANDLE_POSE = new_pose
 
     def getHandlePose(self):
@@ -379,7 +379,7 @@ class updateHandleLocationFromServiceServer(smach.State):
 
         rospy.sleep(1)
 
-        self.door_info.call("publish_marker", handle_point_estimate)
+        # self.door_info.call("publish_marker", handle_point_estimate)
         # rospy.sleep(1)
 
         self.door.updateHandlePose(self.robot.tf_buffer.transform(handle_point_response.point_out, "map", rospy.Duration(1.0)))
@@ -464,15 +464,10 @@ class goIFOhandle(smach.State):
         #create the pose stamped message with the position IFO the door
         if not simulation:
             #REALITY
-            #kdl_vector[1] = kdl_vector[1]+0.1
+            if not userdata.side_of_door == 'face':
+                kdl_vector[1] = kdl_vector[1]+0.1
             pose_stamped_IFOhandle = create_pose_stamped(kdl_vector[0], kdl_vector[1], kdl_vector[2], kdl_quaternion[0], kdl_quaternion[1], kdl_quaternion[2], kdl_quaternion[3])
-            rospy.loginfo("info about pose_stamped_IFO_handle")
-            rospy.loginfo("before")
-            rospy.loginfo(pose_stamped_IFOhandle)
 
-            kdl_vector[1] = kdl_vector[1]+0.1
-            rospy.loginfo("after")
-            rospy.loginfo(pose_stamped_IFOhandle)
         else:
             #SIMULATION
             if userdata.side_of_door == 'face':
@@ -1144,7 +1139,7 @@ def sm_cross_door(robot, arm, my_door):
     sm_cross_door.userdata.side_of_door = 'Unknown'
 
     with sm_cross_door:
-        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'open_door_closed', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'goIFOdoor', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('goIFOdoor', goIFOdoor(my_door, robot), transitions={'IFO_door' : 'update_door_state', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('update_door_state', updateDoorState(robot, my_door), transitions={'close' : 'open_door_closed', 'intermediate' : 'open_door_open', 'open' : 'cross_door', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('open_door_closed', sm_open_door_close_, transitions={'doorIsNotClose' :'robot_back_posInit', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
@@ -1155,6 +1150,15 @@ def sm_cross_door(robot, arm, my_door):
 
     return sm_cross_door
 
+def detection_handle(robot, my_door, arm):
+    sm_detect_handle = smach.StateMachine(outcomes=['handleIsDetected', 'fail'])
+    sm_detect_handle.userdata.side_of_door = 'Unknown'
+    
+    with sm_detect_handle:
+        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'goIFOhandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('goIFOhandle', goIFOhandle(my_door, robot), transitions={'IFO_handle' : 'updateHandleLocation', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('updateHandleLocation', updateHandleLocationFromServiceServer(robot, my_door), transitions={'updated' : 'handleIsDetected', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
+
 def main():
     rospy.init_node('open_door_smach_node',anonymous=True)
 
@@ -1164,7 +1168,10 @@ def main():
     door = robot.ed.get_entity(uuid="door_inside")
     my_door = Door(door)
 
-
+    #smach test detection handle
+    # sm_detection_handle = detection_handle(robot, my_door, arm)
+    # outcome = sm_detection_handle.execute()
+    
     #smach state machine main
     sm_main = sm_cross_door(robot, arm, my_door)
     outcome = sm_main.execute()
