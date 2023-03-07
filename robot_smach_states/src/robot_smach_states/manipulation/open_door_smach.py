@@ -379,7 +379,7 @@ class updateHandleLocationFromServiceServer(smach.State):
 
         rospy.sleep(1)
 
-        # self.door_info.call("publish_marker", handle_point_estimate)
+        self.door_info.call("publish_marker", handle_point_estimate)
         # rospy.sleep(1)
 
         self.door.updateHandlePose(self.robot.tf_buffer.transform(handle_point_response.point_out, "map", rospy.Duration(1.0)))
@@ -464,8 +464,8 @@ class goIFOhandle(smach.State):
         #create the pose stamped message with the position IFO the door
         if not simulation:
             #REALITY
-            if not userdata.side_of_door == 'face':
-                kdl_vector[1] = kdl_vector[1]+0.1
+            #if not userdata.side_of_door == 'face':
+            kdl_vector[1] = kdl_vector[1]+0.1
             pose_stamped_IFOhandle = create_pose_stamped(kdl_vector[0], kdl_vector[1], kdl_vector[2], kdl_quaternion[0], kdl_quaternion[1], kdl_quaternion[2], kdl_quaternion[3])
 
         else:
@@ -483,7 +483,7 @@ class goIFOhandle(smach.State):
 
         rospy.loginfo("we are IFO the handle")
 
-        rospy.sleep(7)
+        rospy.sleep(10)
         return 'IFO_handle'
 
 class graspeHandle(smach.State):
@@ -1045,9 +1045,10 @@ class moveTreshold(smach.State):
 
         x = 0.05
         if userata.side_of_door == 'face':
-            y = 0.01
+            y = - 0.01
+            #y = 0
         else:
-            y = -0.01
+            y = 0.01
 
 
         while d > treshold:
@@ -1153,11 +1154,12 @@ def sm_cross_door(robot, arm, my_door):
 def detection_handle(robot, my_door, arm):
     sm_detect_handle = smach.StateMachine(outcomes=['handleIsDetected', 'fail'])
     sm_detect_handle.userdata.side_of_door = 'Unknown'
-    
+
     with sm_detect_handle:
-        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'goIFOhandle', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
+        smach.StateMachine.add('getSOD', getSOD(robot, my_door), transitions={'find_SOD' : 'updateHandleLocation', 'fail' : 'fail'}, remapping = {'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('goIFOhandle', goIFOhandle(my_door, robot), transitions={'IFO_handle' : 'updateHandleLocation', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
         smach.StateMachine.add('updateHandleLocation', updateHandleLocationFromServiceServer(robot, my_door), transitions={'updated' : 'handleIsDetected', 'fail' : 'fail'}, remapping={'side_of_door' : 'side_of_door'})
+    return sm_detect_handle
 
 def main():
     rospy.init_node('open_door_smach_node',anonymous=True)
@@ -1169,12 +1171,12 @@ def main():
     my_door = Door(door)
 
     #smach test detection handle
-    # sm_detection_handle = detection_handle(robot, my_door, arm)
-    # outcome = sm_detection_handle.execute()
-    
+    sm_detection_handle = detection_handle(robot, my_door, arm)
+    outcome = sm_detection_handle.execute()
+
     #smach state machine main
-    sm_main = sm_cross_door(robot, arm, my_door)
-    outcome = sm_main.execute()
+    #sm_main = sm_cross_door(robot, arm, my_door)
+    #outcome = sm_main.execute()
 
 if __name__ == '__main__':
     main()
