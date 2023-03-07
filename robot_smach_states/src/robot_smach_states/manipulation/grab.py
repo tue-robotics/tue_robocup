@@ -79,7 +79,7 @@ class PickUp(smach.State):
                                "required_goals": ["carrying_pose"], }
 
     def __init__(self, robot: Robot, arm: ArmDesignator, grab_entity: Designator,
-                 check_occupancy: bool = False, visual_servoing: bool = False) -> None:
+                 check_occupancy: bool = False) -> None:
         """
         Pick up an item given an arm and an entity to be picked up
 
@@ -87,7 +87,6 @@ class PickUp(smach.State):
         :param arm: Designator that resolves to the arm to grasp with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         :param check_occupancy: Indicates whether to check if gripper is occupied
-        :param visual_servoing: Indicates whether to use visual servoing
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -98,7 +97,6 @@ class PickUp(smach.State):
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
-        self._use_visual_servoing = visual_servoing
 
         assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
@@ -175,16 +173,6 @@ class PickUp(smach.State):
                     return 'failed'
             except tf2_ros.TransformException as tfe:
                 rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
-                return 'failed'
-
-        # Pre-grasp --> this is only necessary when using visual servoing
-        if self._use_visual_servoing:
-            rospy.loginfo('Starting Pre-grasp')
-            if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id=self.robot.base_link_frame,
-                                 timeout=20, pre_grasp=True, first_joint_pos_only=True):
-                rospy.logerr('Pre-grasp failed:')
-                arm.reset()
-                arm.gripper.send_goal('close', timeout=None)
                 return 'failed'
 
         # Grasp
