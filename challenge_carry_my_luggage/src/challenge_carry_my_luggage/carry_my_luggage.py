@@ -79,7 +79,7 @@ class CarryMyLuggage(StateMachine):
             def move_to_custom_carry_pose(_):
                 p = [0.15, 0, -1.1, -1.37, 0]
                 # noinspection PyProtectedMember
-                self._arm._send_joint_trajectory([p], timeout=rospy.Duration(0))
+                self._arm._send_joint_trajectory([p], timeout=0)
                 self._arm.wait_for_motion_done()
                 self._arm.gripper.send_goal('open')
                 self._arm.wait_for_motion_done()
