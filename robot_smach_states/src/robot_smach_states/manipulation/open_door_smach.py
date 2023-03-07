@@ -379,7 +379,7 @@ class updateHandleLocationFromServiceServer(smach.State):
 
         rospy.sleep(1)
 
-        self.door_info.call("publish_marker", handle_point_estimate)
+        #self.door_info.call("publish_marker", handle_point_estimate)
         # rospy.sleep(1)
 
         self.door.updateHandlePose(self.robot.tf_buffer.transform(handle_point_response.point_out, "map", rospy.Duration(1.0)))
@@ -505,8 +505,8 @@ class graspeHandle(smach.State):
         #we have to transform this vector into a frameStamped to be able to use some functions
         # we have to first create a kdl vector that will allow to create a frameStamped
         kdl_rotation = kdl.Rotation()
-        kdl_vector = kdl.Vector(handle_position.point.x, handle_position.point.y, handle_position.point.z)
-
+        #kdl_vector = kdl.Vector(handle_position.point.x, handle_position.point.y, handle_position.point.z)
+        kdl_vector = kdl.Vector(7.37, 0.25, 1.05)
         #change some value of the kdl vector before
         # if not simulation:
         #     #REALITY
@@ -656,27 +656,23 @@ class pullDoorClose(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['door_pulled', 'ended', 'fail'], input_keys=['angle'])
         self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
-        self.i = 0
+
 
     def execute(self, userdata):
-        self.i += 1
-        rospy.loginfo('i: ' + str(self.i))
         if userdata.angle < 0:
             beta = math.pi/2 + userdata.angle
-            x = - math.sin(beta)/10
-            y = - math.cos(beta)/10
+            x = - math.sin(beta)/30
+            y = - math.cos(beta)/30
         else:
             beta = userdata.angle
 
-            x = - math.cos(beta) / 10
-            y = - math.sin(beta) / 10
+            x = - math.cos(beta) / 30
+            y = - math.sin(beta) / 30
 
         twist_msg = create_twist(0,0,0,x,y,0)
 
         self.pub.publish(twist_msg)
         rospy.sleep(1.5)
-        if self.i == 3:
-           return  'ended'
         return 'door_pulled'
 
 class positionRobotDoorClose(smach.State):
@@ -1171,12 +1167,12 @@ def main():
     my_door = Door(door)
 
     #smach test detection handle
-    sm_detection_handle = detection_handle(robot, my_door, arm)
-    outcome = sm_detection_handle.execute()
+    #sm_detection_handle = detection_handle(robot, my_door, arm)
+    #outcome = sm_detection_handle.execute()
 
     #smach state machine main
-    #sm_main = sm_cross_door(robot, arm, my_door)
-    #outcome = sm_main.execute()
+    sm_main = sm_cross_door(robot, arm, my_door)
+    outcome = sm_main.execute()
 
 if __name__ == '__main__':
     main()

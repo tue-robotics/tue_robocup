@@ -2,9 +2,9 @@
 
 #include "ros/ros.h"
 //SIMULATION
-#include "opening_door/door_info.h"
+//#include "opening_door/door_info.h"
 //REALITY
-//#include "robot_smach_states/door_info.h"
+#include "robot_smach_states/door_info.h"
 #include "std_srvs/SetBool.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -228,18 +228,23 @@ class doorOpener {
             std::vector<pcl::PointIndices> cluster_indices;
 
             while (nb_cluster > 10) {
+                std::vector<pcl::PointIndices> cluster_result;
                 PC_cropped_frame_sensor_ptr = this -> removePlaneSurface(PC_cropped_frame_sensor_ptr);
                 pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
-                tree->setInputCloud(PC_cropped_frame_sensor_ptr);    
+                tree->setInputCloud(PC_cropped_frame_sensor_ptr);
                 pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
                 ec.setClusterTolerance(0.01); // 1cm
                 ec.setMinClusterSize(100);
                 ec.setMaxClusterSize(25000);
                 ec.setSearchMethod(tree);
                 ec.setInputCloud(PC_cropped_frame_sensor_ptr);
-                ec.extract(cluster_indices);
+                ec.extract(cluster_result);
 
-                nb_cluster = cluster_indices.size();
+                nb_cluster = cluster_result.size();
+                ROS_INFO("there are %ld clusters now", nb_cluster);
+                if (nb_cluster <= 10){
+                    cluster_indices = cluster_result;
+                }
             }
 
             // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
@@ -253,7 +258,7 @@ class doorOpener {
             // ec.setSearchMethod(tree);
             // ec.setInputCloud(PC_cropped_frame_sensor_ptr);
             // ec.extract(cluster_indices);
-            
+
 
             ROS_INFO("there are %ld clusters", cluster_indices.size());
 
@@ -324,7 +329,7 @@ class doorOpener {
 
                             if (centroid(2) < min_y_frame_sensor) {
                                 //the cluster is the closest to the sensor
-                                min_y_frame_sensor = centroid(1);
+                                min_y_frame_sensor = centroid(2);
                                 *handle_cluster = *cloud_cluster;
                                 ROS_INFO("third selection done, we have replace the handle frame this is cluster number %f", i);
                             }
@@ -447,9 +452,9 @@ class doorOpener {
             }
         }
         //REALITY
-        // bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
+        bool doorInfo_callback(robot_smach_states::door_info::Request &msg_rqst, robot_smach_states::door_info::Response &msg_rsps) {
         //SIMULATION
-        bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
+        //bool doorInfo_callback(opening_door::door_info::Request &msg_rqst, opening_door::door_info::Response &msg_rsps) {
             ros::Rate sleeping_time(0.5);
 
             if (msg_rqst.input_string == "write_marker"){
