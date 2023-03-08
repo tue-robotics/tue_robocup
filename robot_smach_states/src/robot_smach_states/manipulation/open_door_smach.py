@@ -305,15 +305,20 @@ class updateDoorState(smach.State):
 
         else:
             frameIFOdoor_door = self.door.getFrameIFOdoor_behind()
-        
+
         frameIFOdoor_robot = self.robot.tf_buffer.transform(frameIFOdoor_door, self.robot.base_link_frame, rospy.Duration(1.0))
-        rot_y = frameIFOdoor_robot.frame.M.GetRot()[2] #rot_y expected according to the robot frame  
+        rot_y = frameIFOdoor_robot.frame.M.GetRot()[2] #rot_y expected according to the robot frame
 
         # #work on the message
         msg_laser = rospy.wait_for_message("/hero/base_laser/scan", LaserScan) #get the laser message
         position_angle_zero_according_robot = msg_laser.angle_max/msg_laser.angle_increment #get angle 0 according to the robot
 
+        rospy.loginfo("position_angle_zero_according_robot" + str(position_angle_zero_according_robot))
+
         position_angle_zero = int(position_angle_zero_according_robot + (rot_y/msg_laser.angle_increment)) #get real angle 0, taking into account the rotation of the robot
+
+        rospy.loginfo("position_angle_zero" + str (position_angle_zero))
+
         distance = msg_laser.ranges[position_angle_zero] #get the distance
         if distance > 1.4:
             rospy.sleep(0.5)
@@ -614,24 +619,24 @@ class getDataDoorClose(smach.State):
                 end = segment.end
                 angle = segment.angle
 
-        
+
         userdata.angle = angle
         # userdata.start = start
         # userdata.end = end
 
         #calculate the distance between the robot and the start of the segment and the robot and the end of the segment
         middle_point = [(start[0]+end[0])/2, (start[1]+end[1])/2]
-        
+
         distance_start = math.sqrt(start[0]**2 + start[1]**2)
         distance_end = math.sqrt(end[0]**2 + end[1]**2)
         distance_middle = math.sqrt(middle_point[0]**2 + middle_point[1]**2)
-        
+
         rospy.loginfo('distance_start: ' + str(distance_start) + ' distance_end: ' + str(distance_end) + ' distance_middle ' + str(distance_middle) + ' angle: ' + str(angle))
 
         userdata.distance_start = distance_start
         userdata.distance_end = distance_end
         userdata.distance_middle = distance_middle
-        
+
         return 'dataIsGet'
 
 class pullDoorClose(smach.State):
@@ -661,7 +666,10 @@ class pullDoorClose(smach.State):
         rospy.sleep(0.5)
         self.pub.publish(twist_msg)
         rospy.sleep(1.5)
-         
+
+        if self.counter == 1:
+            rospy.sleep(5)
+
         return 'door_pulled'
 
 class positionAngleRobotDoorClose(smach.State):
@@ -682,30 +690,30 @@ class positionAngleRobotDoorClose(smach.State):
                     rospy.loginfo(" in the rotation, angle = " + str(segment.angle))
                     rot = segment.angle #get the angle
 
-            if abs(abs(rot) - abs(userdata.angle)) > 0.1:
-            #if abs(abs(rot) - abs(userdata.angle)) > 0.05:
+            #if abs(abs(rot) - abs(userdata.angle)) > 0.1:
+            if abs(abs(rot) - abs(userdata.angle)) > 0.05:
                 if rot > userdata.angle:
                     if simulation:
                         twist_msg = create_twist(0,0,0.2,0,0,0)
                     else:
-                        twist_msg = create_twist(0,0,0.05,0,0,0)  
+                        twist_msg = create_twist(0,0,0.05,0,0,0)
                 else:
                     if simulation:
                         twist_msg = create_twist(0,0,-0.2,0,0,0)
                     else:
                         twist_msg = create_twist(0,0,-0.05,0,0,0)
-                        
+
                 self.pub.publish(twist_msg)
                 if simulation:
                     rospy.sleep(1)
                 else:
-                    rospy.sleep(5)
-            
+                    rospy.sleep(0.5)
+
             else:
                 if userdata.end_mov == True:
                     return 'position_achieve'
                 else:
-                    return 'angle_achieve'   
+                    return 'angle_achieve'
 
 class positionDistanceRobotDoorClose(smach.State):
     def __init__(self):
@@ -720,7 +728,7 @@ class positionDistanceRobotDoorClose(smach.State):
         #get the useful segment
         for segment in segments:
             if segment.start[1] < 0 and segment.end[1] > 0:
-                
+
                 #get start and end vector
                 angle = segment.angle
                 start = segment.start
@@ -731,12 +739,12 @@ class positionDistanceRobotDoorClose(smach.State):
         distance_start = math.sqrt(start[0]**2 + start[1]**2)
         distance_end = math.sqrt(end[0]**2 + end[1]**2)
         distance_middle = math.sqrt(middle_point[0]**2 + middle_point[1]**2)
-        
-        rospy.loginfo('in the movment, distance_start: ' + str(distance_start) + ' distance_end: ' + str(distance_end) + ' distance_middle ' + str(distance_middle) + ' angle: ' + str(angle))
-        
+
+        rospy.loginfo('in the movment '+ ' distance_middle ' + str(distance_middle) + ' angle: ' + str(angle))
+
         #compare the distance
         if abs(abs(userdata.distance_middle) - abs(distance_middle)) > 0.03: #3 cm
-        #if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.05: #5 cm       
+        #if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.05: #5 cm
             if userdata.angle > 0:
                 beta = math.pi/2 - angle
                 x = math.cos(beta) / 30
@@ -745,12 +753,12 @@ class positionDistanceRobotDoorClose(smach.State):
 
             else:
                 beta = math.pi/2 - angle
-                x = - abs(math.cos(beta)) / 30 
+                x = - abs(math.cos(beta)) / 30
                 y = - abs(math.sin(beta)) / 30
                 twist_msg = create_twist(1,0,0,x,y,0)
-                    
+
             self.pub.publish(twist_msg)
-            rospy.sleep(5)
+            rospy.sleep(0.5)
         else:
             userdata.end_mov = True
 
@@ -1075,13 +1083,13 @@ def sm_pull_door_close():
     sm_pull_door_close.userdata.distance_start = None
     sm_pull_door_close.userdata.end_mov = None
     sm_pull_door_close.userdata.distance_middle = None
-    
+
     with sm_pull_door_close:
         smach.StateMachine.add('get_data', getDataDoorClose(), transitions={'dataIsGet' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'distance_start' : 'distance_start', 'distance_end' : 'distance_end'})
         smach.StateMachine.add('pull_door_close', pullDoorClose(), transitions={'door_pulled' : 'position_angle_robot_door_close', 'ended' : 'doorIsPulled', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'end_mov' : 'end_mov'})
         smach.StateMachine.add('position_angle_robot_door_close', positionAngleRobotDoorClose(), transitions={'angle_achieve' : 'position_distance_robot_door_close', 'position_achieve' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'end_mov' : 'end_mov'})
         smach.StateMachine.add('position_distance_robot_door_close', positionDistanceRobotDoorClose(), transitions={'distance_achieve' : 'position_angle_robot_door_close', 'fail' : 'fail'}, remapping = {'distance_start' : 'distance_start', 'distance_end' : 'distance_end', 'angle' : 'angle', 'end_mov' : 'end_mov', 'distance_middle' : 'distance_middle'})
-        
+
     return sm_pull_door_close
 
 def sm_grasp_handle(robot, arm, my_door):
