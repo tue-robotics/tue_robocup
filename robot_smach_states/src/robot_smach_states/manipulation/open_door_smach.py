@@ -596,7 +596,7 @@ class pushDoorUnlatched(smach.State):
 
 class getDataDoorClose(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['dataIsGet', 'fail'], output_keys=['angle', 'distance_start', 'distance_end'])
+        smach.State.__init__(self, outcomes=['dataIsGet', 'fail'], output_keys=['angle', 'distance_start', 'distance_end', 'distance_middle'])
 
     def execute(self, userdata):
         """
@@ -620,28 +620,35 @@ class getDataDoorClose(smach.State):
         # userdata.end = end
 
         #calculate the distance between the robot and the start of the segment and the robot and the end of the segment
+        middle_point = [(start[0]+end[0])/2, (start[1]+end[1])/2]
+        
         distance_start = math.sqrt(start[0]**2 + start[1]**2)
         distance_end = math.sqrt(end[0]**2 + end[1]**2)
+        distance_middle = math.sqrt(middle_point[0]**2 + middle_point[1]**2)
         
-        rospy.loginfo('distance_start: ' + str(distance_start) + ' distance_end: ' + str(distance_end) + ' angle: ' + str(angle))
+        rospy.loginfo('distance_start: ' + str(distance_start) + ' distance_end: ' + str(distance_end) + ' distance_middle ' + str(distance_middle) + ' angle: ' + str(angle))
 
         userdata.distance_start = distance_start
         userdata.distance_end = distance_end
-
+        userdata.distance_middle = distance_middle
+        
         return 'dataIsGet'
 
 class pullDoorClose(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['door_pulled', 'ended', 'fail'], input_keys=['angle'], output_keys=['end_mov'])
         self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
-
+        self.counter = 0
 
     def execute(self, userdata):
+        self.counter += 1
+        if self.counter%5 == 0:
+            rospy.loginfo('counter worth: ' + str(self.counter))
         userdata.end_mov = False
         if userdata.angle < 0:
             beta = math.pi/2 + userdata.angle
-            x = - math.sin(beta)/30
-            y = - math.cos(beta)/30
+            x = - math.sin(beta)/20
+            y = - math.cos(beta)/20
         else:
             beta = userdata.angle
 
@@ -651,12 +658,15 @@ class pullDoorClose(smach.State):
         twist_msg = create_twist(0,0,0,x,y,0)
 
         self.pub.publish(twist_msg)
+        rospy.sleep(0.5)
+        self.pub.publish(twist_msg)
         rospy.sleep(1.5)
+         
         return 'door_pulled'
 
 class positionAngleRobotDoorClose(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['angle_achieve', 'position_achieve', 'fail'], input_keys=['angle', 'distance_start', 'distance_end', 'end_mov'])
+        smach.State.__init__(self, outcomes=['angle_achieve', 'position_achieve', 'fail'], input_keys=['angle', 'end_mov'])
         self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
 
     def execute(self, userdata):
@@ -699,7 +709,7 @@ class positionAngleRobotDoorClose(smach.State):
 
 class positionDistanceRobotDoorClose(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['distance_achieve', 'fail'], input_keys=['angle', 'distance_start', 'distance_end'], output_keys=['end_mov'])
+        smach.State.__init__(self, outcomes=['distance_achieve', 'fail'], input_keys=['angle', 'distance_start', 'distance_end', 'distance_middle'], output_keys=['end_mov'])
         self.pub = rospy.Publisher('/hero/base/references',Twist, queue_size=2)
 
     def execute(self, userdata):
@@ -716,30 +726,33 @@ class positionDistanceRobotDoorClose(smach.State):
                 start = segment.start
                 end = segment.end
 
-            #calculate distance
-            distance_start = math.sqrt(start[0]**2 + start[1]**2)
-            distance_end = math.sqrt(end[0]**2 + end[1]**2)
-            rospy.loginfo('in the movment, distance_start: ' + str(distance_start) + ' distance_end: ' + str(distance_end) + ' angle: ' + str(angle))
-            
-            #compare the distance
-            if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.03: #3 cm
-            #if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.05: #5 cm       
-                if userdata.angle > 0:
-                    beta = math.pi/2 - angle
-                    x = math.cos(beta) / 30
-                    y = - abs(math.sin(beta)) / 30
-                    twist_msg = create_twist(1,0,0,x,y,0)
+        #calculate distance
+        middle_point = [(start[0]+end[0])/2, (start[1]+end[1])/2]
+        distance_start = math.sqrt(start[0]**2 + start[1]**2)
+        distance_end = math.sqrt(end[0]**2 + end[1]**2)
+        distance_middle = math.sqrt(middle_point[0]**2 + middle_point[1]**2)
+        
+        rospy.loginfo('in the movment, distance_start: ' + str(distance_start) + ' distance_end: ' + str(distance_end) + ' distance_middle ' + str(distance_middle) + ' angle: ' + str(angle))
+        
+        #compare the distance
+        if abs(abs(userdata.distance_middle) - abs(distance_middle)) > 0.03: #3 cm
+        #if abs(abs(userdata.distance_start) - abs(distance_start)) > 0.05: #5 cm       
+            if userdata.angle > 0:
+                beta = math.pi/2 - angle
+                x = math.cos(beta) / 30
+                y = - abs(math.sin(beta)) / 30
+                twist_msg = create_twist(1,0,0,x,y,0)
 
-                else:
-                    beta = math.pi/2 - angle
-                    x = - abs(math.cos(beta)) / 30 
-                    y = - abs(math.sin(beta)) / 30
-                    twist_msg = create_twist(1,0,0,x,y,0)
-                        
-                self.pub.publish(twist_msg)
-                rospy.sleep(5)
             else:
-                userdata.end_mov = True
+                beta = math.pi/2 - angle
+                x = - abs(math.cos(beta)) / 30 
+                y = - abs(math.sin(beta)) / 30
+                twist_msg = create_twist(1,0,0,x,y,0)
+                    
+            self.pub.publish(twist_msg)
+            rospy.sleep(5)
+        else:
+            userdata.end_mov = True
 
         return 'distance_achieve'
 
@@ -1061,12 +1074,13 @@ def sm_pull_door_close():
     sm_pull_door_close.userdata.angle = None
     sm_pull_door_close.userdata.distance_start = None
     sm_pull_door_close.userdata.end_mov = None
-
+    sm_pull_door_close.userdata.distance_middle = None
+    
     with sm_pull_door_close:
         smach.StateMachine.add('get_data', getDataDoorClose(), transitions={'dataIsGet' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'distance_start' : 'distance_start', 'distance_end' : 'distance_end'})
         smach.StateMachine.add('pull_door_close', pullDoorClose(), transitions={'door_pulled' : 'position_angle_robot_door_close', 'ended' : 'doorIsPulled', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'end_mov' : 'end_mov'})
-        smach.StateMachine.add('position_angle_robot_door_close', positionAngleRobotDoorClose(), transitions={'angle_achieve' : 'position_distance_robot_door_close', 'position_achieve' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'distance_start' : 'distance_start', 'distance_end' : 'distance_end', 'end_mov' : 'end_mov'})
-        smach.StateMachine.add('position_distance_robot_door_close', positionDistanceRobotDoorClose(), transitions={'distance_achieve' : 'position_angle_robot_door_close', 'fail' : 'fail'}, remapping = {'distance_start' : 'distance_start', 'distance_end' : 'distance_end', 'angle' : 'angle', 'end_mov' : 'end_mov'})
+        smach.StateMachine.add('position_angle_robot_door_close', positionAngleRobotDoorClose(), transitions={'angle_achieve' : 'position_distance_robot_door_close', 'position_achieve' : 'pull_door_close', 'fail' : 'fail'}, remapping = {'angle' : 'angle', 'end_mov' : 'end_mov'})
+        smach.StateMachine.add('position_distance_robot_door_close', positionDistanceRobotDoorClose(), transitions={'distance_achieve' : 'position_angle_robot_door_close', 'fail' : 'fail'}, remapping = {'distance_start' : 'distance_start', 'distance_end' : 'distance_end', 'angle' : 'angle', 'end_mov' : 'end_mov', 'distance_middle' : 'distance_middle'})
         
     return sm_pull_door_close
 
