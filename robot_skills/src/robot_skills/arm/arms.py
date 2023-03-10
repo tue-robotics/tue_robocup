@@ -491,7 +491,7 @@ class Arm(RobotPart):
                 return True
             else:
                 # failure
-                rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
+                rospy.logerr(f"grasp precompute goal failed({result}): \n{repr(myargs)}")
                 return False
 
     def send_joint_goal(self, configuration: str, timeout: float = JOINT_TIMEOUT,
