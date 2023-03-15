@@ -84,6 +84,11 @@ class doorOpener {
         }
 
         geometry_msgs::PointStamped write_marker(geometry_msgs::PointStamped handle_vv_location_frame_map) {
+
+            //create a handle to return in case of an error.
+            bool find = false; 
+
+
             //get the mesage from depth_registered
             boost::shared_ptr<sensor_msgs::PointCloud2 const> sharedPointCloudMessage;
             sensor_msgs::PointCloud2 PointCloudMessage;
@@ -132,12 +137,12 @@ class doorOpener {
 
             //test transform
             geometry_msgs::TransformStamped transformStamped;
-            geometry_msgs::TransformStamped transformStamped_sensorToMap;
+            geometry_msgs::TransformStamped transformStamped_sensorToHero;
 
             if (tf_buffer.canTransform( PointCloudMessage.header.frame_id, "map", ros::Time(0), ros::Duration(1.0))) {
                 try {
                 transformStamped = tf_buffer.lookupTransform(PointCloudMessage.header.frame_id, "map", ros::Time(0), ros::Duration(1.0));
-                transformStamped_sensorToMap = tf_buffer.lookupTransform("map", PointCloudMessage.header.frame_id, ros::Time(0), ros::Duration(1.0));
+                transformStamped_sensorToHero = tf_buffer.lookupTransform("hero/base_link", PointCloudMessage.header.frame_id , ros::Time(0), ros::Duration(1.0));
                 tf2::doTransform(handle_vv_location_frame_map, handle_vv_location_frame_sensor, transformStamped);
                 }
                 catch (tf2::TransformException& ex) {
@@ -148,6 +153,7 @@ class doorOpener {
             }
             else {
                 ROS_INFO("can not transform");
+                EXIT_FAILURE;
             }
 
 
@@ -178,48 +184,6 @@ class doorOpener {
             crop_filter.setFilterLimits(min_z, max_z);
             crop_filter.filter(*PC_cropped_frame_sensor_ptr);
 
-            // // Create the segmentation object for the planar model and set all the parameters
-            // pcl::SACSegmentation<pcl::PointXYZ> seg; //segmentation object
-            // pcl::PointIndices::Ptr inliers = pcl::make_shared<pcl::PointIndices>(); //inliers points of the shape
-            // pcl::ModelCoefficients::Ptr coefficients = pcl::make_shared<pcl::ModelCoefficients>(); //
-            // pcl::PCDWriter writer;
-
-            // seg.setOptimizeCoefficients(true);
-            // seg.setModelType(pcl::SACMODEL_PLANE);
-            // seg.setMethodType(pcl::SAC_RANSAC);
-            // seg.setMaxIterations(100);
-            // seg.setDistanceThreshold(0.01);
-
-            // pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the output
-            // pcl::PointCloud<pcl::PointXYZ>::Ptr PC_plane_intermediate_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //pointcloud for the intermediate output
-
-            // uint32_t nb_point = PC_cropped_frame_sensor_ptr -> points.size();
-            // //this part is going to remove points that are plane from the cloud
-            // while (PC_cropped_frame_sensor_ptr -> points.size() > 0.4 * nb_point){
-
-            //     //segment the largest planar of the cloud
-            //     seg.setInputCloud(PC_cropped_frame_sensor_ptr);
-            //     seg.segment(*inliers, *coefficients);
-            //     if (inliers -> indices.size() == 0) {
-            //         ROS_INFO("Could not estimate a planar model for the given dataset.");
-            //         return handle_vv_location_frame_map;
-            //     }
-
-            //     //extract the planar inliehandlers from the input cloud
-            //     pcl::ExtractIndices<pcl::PointXYZ> extract;
-            //     extract.setInputCloud(PC_cropped_frame_sensor_ptr);
-            //     extract.setIndices(inliers);
-            //     extract.setNegative(false);
-
-            //     //get the points associated with the planar surface
-            //     extract.filter(*PC_plane_intermediate_ptr);
-
-            //     //remove the planar inliers, extract the rest
-            //     extract.setNegative(true);
-            //     extract.filter(*PC_plane_intermediate_ptr);
-
-            //     *PC_cropped_frame_sensor_ptr = *PC_plane_intermediate_ptr;
-            // }
 
             // Creating the KdTree object for the search method of the extraction
             // a cluster is a group of points that are close to each other
@@ -247,18 +211,6 @@ class doorOpener {
                 }
             }
 
-            // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree = pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>();
-            // tree->setInputCloud(PC_cropped_frame_sensor_ptr);
-
-            // std::vector<pcl::PointIndices> cluster_indices;
-            // pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-            // ec.setClusterTolerance(0.01); // 1cm
-            // ec.setMinClusterSize(100);
-            // ec.setMaxClusterSize(25000);
-            // ec.setSearchMethod(tree);
-            // ec.setInputCloud(PC_cropped_frame_sensor_ptr);
-            // ec.extract(cluster_indices);
-
 
             ROS_INFO("there are %ld clusters", cluster_indices.size());
 
@@ -268,7 +220,7 @@ class doorOpener {
             pcl::PointCloud<pcl::PointXYZ>::Ptr handle_cluster = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(); //cluster that will represent the handle
             std::vector<pcl::PointIndices> cluster_indices_selection; //dynamic array to store the index of the cluster that may represent the handle
             double min_y_frame_sensor = 15; //because we are going to choose the point that is closest to the sensor according to it y direction
-            ROS_INFO("handle_vv_location_frame_sensor.point.x = %f and y_doorDirection_frame_sensor.vector.x = %f", handle_vv_location_frame_sensor.point.x, y_doorDirection_frame_sensor.vector.x);
+            //ROS_INFO("handle_vv_location_frame_sensor.point.x = %f and y_doorDirection_frame_sensor.vector.x = %f", handle_vv_location_frame_sensor.point.x, y_doorDirection_frame_sensor.vector.x);
             for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it) {
                 //create a new pointcloud for the cluster
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -310,7 +262,7 @@ class doorOpener {
 
                 if (measured_error < max_error){
                     //selection based of the distance between the VV and the center of the cluster has been made
-                    ROS_INFO("first selection done, this is cluster number %f", i);
+                    //ROS_INFO("first selection done, this is cluster number %f", i);
                     //second criteria : according to the door, the point must be more in the middle than the VV
                     if (this -> y_doorDirection_frame_sensor.vector.x == 0) {
                         ROS_INFO("probleme in the direction");
@@ -332,6 +284,7 @@ class doorOpener {
                                 min_y_frame_sensor = centroid(2);
                                 *handle_cluster = *cloud_cluster;
                                 ROS_INFO("third selection done, we have replace the handle frame this is cluster number %f", i);
+                                find = true;
                             }
 
                         }
@@ -339,6 +292,7 @@ class doorOpener {
                     }
                     else {
                         // same idea but on the other side of the door
+                        //ROS_INFO("we are in the else, negative side");
                         if (centroid(0) < handle_vv_location_frame_sensor.point.x + 0.05) { //3 cm to remain safe
                             //the cluster is in the right direction
                             ROS_INFO("second selection done, this is cluster number %f", i);
@@ -348,6 +302,7 @@ class doorOpener {
                                 min_y_frame_sensor = centroid(1);
                                 *handle_cluster = *cloud_cluster;
                                 ROS_INFO("third selection done, we have replace the handle frame this is cluster number %f", i);
+                                find = true;
                             }
                         }
 
@@ -380,12 +335,80 @@ class doorOpener {
             handle_location_frame_sensor.point.x = centroid[0];
             handle_location_frame_sensor.point.y = centroid[1];
             handle_location_frame_sensor.point.z = centroid[2];
+            
+
+            //compute the edges of the handle
+            Eigen::Vector4f min_point;
+            Eigen::Vector4f max_point;
+            pcl::getMinMax3D(*handle_cluster, min_point, max_point);
+
+            //print min_point and max_point
+            ROS_INFO("min_point = (%f, %f, %f)", min_point[0], min_point[1], min_point[2]);
+            ROS_INFO("max_point = (%f, %f, %f)", max_point[0], max_point[1], max_point[2]);
+
+            geometry_msgs::PointStamped handle_location_edge_frame_sensor; //pointStamped that represent the edge
+            handle_location_edge_frame_sensor.header.frame_id = PointCloudMessage.header.frame_id;
+
+            //select the point that represent the good edge of the handle
+
+            if (this -> y_doorDirection_frame_sensor.vector.x > 0) {
+                if (min_point[0] > max_point[0]) {
+                    handle_location_edge_frame_sensor.point.x = min_point[0];
+                    handle_location_edge_frame_sensor.point.y = min_point[1];
+                    handle_location_edge_frame_sensor.point.z = min_point[2];
+                    ROS_INFO("we have selected the min point");
+                }
+                else{
+                    handle_location_edge_frame_sensor.point.x = max_point[0];
+                    handle_location_edge_frame_sensor.point.y = max_point[1];
+                    handle_location_edge_frame_sensor.point.z = max_point[2];
+                    ROS_INFO("we have selected the max point");
+                }
+            }
+            else{
+                if (min_point[0] < max_point[0]) {
+                    handle_location_edge_frame_sensor.point.x = min_point[0];
+                    handle_location_edge_frame_sensor.point.y = min_point[1];
+                    handle_location_edge_frame_sensor.point.z = min_point[2];
+                    ROS_INFO("we have selected the min point");
+                }
+                else{
+                    handle_location_edge_frame_sensor.point.x = max_point[0];
+                    handle_location_edge_frame_sensor.point.y = max_point[1];
+                    handle_location_edge_frame_sensor.point.z = max_point[2];
+                    ROS_INFO("we have selected the max point");
+                }
+            }
+
+
+            // //making the handle cluster cube bigger than the other
+            geometry_msgs::Point p2;
+            p2.x = handle_location_edge_frame_sensor.point.x;
+            p2.y = handle_location_edge_frame_sensor.point.y;
+            p2.z = handle_location_edge_frame_sensor.point.z;
+
+            marker.points.push_back(p2);
+            marker.colors.push_back(color);
+
+
+
+            //mean of edge_point and handle_point
+            geometry_msgs::PointStamped handle_location_frame_sensor_mean; //pointStamped that will be return
+            handle_location_frame_sensor_mean.header.frame_id = PointCloudMessage.header.frame_id;
+            handle_location_frame_sensor_mean.point.x = (handle_location_frame_sensor.point.x + handle_location_edge_frame_sensor.point.x) / 2;
+            handle_location_frame_sensor_mean.point.y = (handle_location_frame_sensor.point.y + handle_location_edge_frame_sensor.point.y) / 2;
+            handle_location_frame_sensor_mean.point.z = (handle_location_frame_sensor.point.z + handle_location_edge_frame_sensor.point.z) / 2;
+           
 
             //transform the point from sensor frame to map frame
-            geometry_msgs::PointStamped handle_location_frame_map;
-            tf2::doTransform(handle_location_frame_sensor, handle_location_frame_map, transformStamped_sensorToMap);
+            geometry_msgs::PointStamped handle_location_frame_robot;
+            tf2::doTransform(handle_location_frame_sensor, handle_location_frame_robot, transformStamped_sensorToHero);
+            
+            ROS_INFO("find = %d", find);
+            if (! find) EXIT_FAILURE;
 
-            return handle_location_frame_map;
+            return handle_location_frame_robot;
+            
         }
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr removePlaneSurface(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in){
@@ -393,7 +416,7 @@ class doorOpener {
             this fct remove 50% of the point cloud, it is used to remove the plane surface of the door
             */
 
-           ROS_INFO("removing some points");
+           //ROS_INFO("removing some points");
 
             uint32_t nb_point = cloud_in -> points.size();
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_intermediate = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -440,6 +463,7 @@ class doorOpener {
         }
 
         void publish_marker(){
+            ROS_INFO("publishing marker");
             ros::Rate r(1);
             while (ros::ok()) {
                 ros::spinOnce();
