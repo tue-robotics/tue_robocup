@@ -277,8 +277,8 @@ class doorOpener {
                         */
                         if (centroid(0) > handle_vv_location_frame_sensor.point.x - 0.05) { //3cm to remain safe
                             //the cluster is in the right direction
-                            ROS_INFO("second selection done, this is cluster number %f", i);
-
+                            ROS_INFO("Second selection done, >0 , this is cluster number %f", i);
+                            ROS_INFO("centroid(2) = %f and min_y_frame_sensor = %f", centroid(2), min_y_frame_sensor);
                             if (centroid(2) < min_y_frame_sensor) {
                                 //the cluster is the closest to the sensor
                                 min_y_frame_sensor = centroid(2);
@@ -295,11 +295,11 @@ class doorOpener {
                         //ROS_INFO("we are in the else, negative side");
                         if (centroid(0) < handle_vv_location_frame_sensor.point.x + 0.05) { //3 cm to remain safe
                             //the cluster is in the right direction
-                            ROS_INFO("second selection done, this is cluster number %f", i);
-
+                            ROS_INFO("second selection done, <0 ,  this is cluster number %f", i);
+                            ROS_INFO("centroid(2) = %f and min_y_frame_sensor = %f", centroid(2), min_y_frame_sensor);
                             if (centroid(2) < min_y_frame_sensor) {
                                 //the cluster is the closest to the sensor
-                                min_y_frame_sensor = centroid(1);
+                                min_y_frame_sensor = centroid(2);
                                 *handle_cluster = *cloud_cluster;
                                 ROS_INFO("third selection done, we have replace the handle frame this is cluster number %f", i);
                                 find = true;
@@ -382,13 +382,13 @@ class doorOpener {
 
 
             // //making the handle cluster cube bigger than the other
-            geometry_msgs::Point p2;
-            p2.x = handle_location_edge_frame_sensor.point.x;
-            p2.y = handle_location_edge_frame_sensor.point.y;
-            p2.z = handle_location_edge_frame_sensor.point.z;
+            // geometry_msgs::Point p2;
+            // p2.x = handle_location_edge_frame_sensor.point.x;
+            // p2.y = handle_location_edge_frame_sensor.point.y;
+            // p2.z = handle_location_edge_frame_sensor.point.z;
 
-            marker.points.push_back(p2);
-            marker.colors.push_back(color);
+            // marker.points.push_back(p2);
+            // marker.colors.push_back(color);
 
 
 
