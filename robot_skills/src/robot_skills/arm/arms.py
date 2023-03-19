@@ -554,7 +554,7 @@ class Arm(RobotPart):
             configuration. A single value can be given, which will be used for all joints, or a list of values can be
             given in which the order has to agree with the joints according to the joints_references.
         :param timeout: Timeout for each joint configuration in rospy.Duration(seconds). If 0.0 function will return without waiting for motion done.
-        :return: Whether or not the motion was completed within the timeout.
+        :return: Whether the motion was completed within the timeout.
         """
         timeout = rospy.Duration(timeout)
 
