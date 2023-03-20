@@ -18,6 +18,8 @@
 
   <depend>robot_skills</depend>
 
+  <exec_depend>hsrb_interface_py</exec_depend>
+
   <test_depend>rostest</test_depend>
   <test_depend>hero_description</test_depend>
 
