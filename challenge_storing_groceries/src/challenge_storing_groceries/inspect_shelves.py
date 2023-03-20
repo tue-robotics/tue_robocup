@@ -1,104 +1,104 @@
-from __future__ import print_function
-
 # System
 import os
 
 # ROS
-from pykdl_ros import VectorStamped
 import rospy
 import smach
 
+# TU/e
+from ed.entity import Entity
 
-# Challenge storing groceries
-import config
+from robot_smach_states.navigation import NavigateToSymbolic, NavigateToObserve
+from robot_smach_states.util.designators import Designator, VariableDesignator, check_type
+from robot_smach_states.world_model import SegmentObjects
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.rise import RiseForInspect
+
+from pykdl_ros import VectorStamped
+from robot_skills.classification_result import ClassificationResult
 
 
-class InspectShelves(smach.State):
-    """ Inspect all object shelves """
+class InspectAreaDesignator(Designator):
+    """
+    Resolve to the inspect areas of a piece of furniture
 
-    def __init__(self, robot, cabinet):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'nothing_found'])
-        self.robot = robot
-        self.cabinet = cabinet
-        self.object_shelves = config.OBJECT_SHELVES
+    :param entityDes: entity designator
+    :param knowledge: robocup knowledge object
+    """
+    def __init__(self, entityDes, knowledge, name=None):
+        super(InspectAreaDesignator, self).__init__(resolve_type=[str], name=name)
+        self.entityDes = entityDes
+        self.knowledge = knowledge
 
-    def execute(self, userdata=None):
+    def _resolve(self):
+        entity = self.entityDes.resolve()
+        return self.knowledge.common.get_inspect_areas(entity.uuid)
 
-        # Get cabinet entity
-        # Sleep for a while to make sure that the robot is actually in ED
-        rospy.sleep(rospy.Duration(0.25))
-        cabinet_entity = self.robot.ed.get_entity(uuid=self.cabinet.uuid)
 
-        # Get the pose of all shelves
-        shelves = []
-        for k, v in cabinet_entity.volumes.items():
-            if k in config.OBJECT_SHELVES:
-                rospy.loginfo("Adding {} to shelves".format(k))
-                vector = 0.5 * (v.min_corner + v.max_corner)
-                shelves.append({'ps': VectorStamped(vector, rospy.Time.now(), cabinet_entity.uuid), 'name': k})
+class InspectAreas(smach.StateMachine):
+    """
+    Class to navigate to a(n) (furniture) object and segment the objects on top of it.
+    """
 
-        # Sort the list in ascending order
-        shelves = sorted(shelves, key=lambda x: x['ps'].vector.z())
-        for shelf in shelves:
+    def __init__(self, robot, entityDes, objectIDsDes=None, searchAreas=None, navigation_area=None,
+                 knowledge=None, unknown_threshold=0.0, filter_threshold=0.0):
+        """
+        Constructor
 
-            ps = shelf['ps']
+        :param robot: robot object
+        :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
+        :param objectIDsDes: designator that is used to store the segmented objects
+        :param searchAreas: (designator to) array of strings defining where the objects are w.r.t. the entity,
+            if none is provided we will use the knowledge to decide them
+        :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
+            If left empty, NavigateToObserve is used.
+        :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
+        :param filter_threshold: Entities whose classification score is lower than this float are ignored
+            (i.e. are not added to the segmented_entity_ids_designator)
+        """
+        smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
-            # Send goals to torso and head
-            height = min(0.4, max(0.1, ps.vector.z() - 0.55))
-            self.robot.torso._send_goal([height])
-            self.robot.head.look_at_point(ps)
+        check_type(entityDes, Entity)
 
-            # Wait for the motions to finish
-            self.robot.torso.wait_for_motion_done(timeout=5.0)
-            # ToDo: wait for head?
+        if not objectIDsDes:
+            objectIDsDes = VariableDesignator([], resolve_type=[ClassificationResult])
 
-            # Sleep for 1 second
-            do_wait = os.environ.get('ROBOT_REAL')
-            if do_wait == 'true':
-                rospy.sleep(3.0)  # ToDo: remove???
-                rospy.logwarn("Do we have to wait this long???")
+        if searchAreas:
+            check_type(searchAreas, [str])
+        else:
+            if not knowledge:
+                rospy.logerr("Please provide a list of searchAreas or a knowledge object!")
+            # get search area's from knowledge
+            searchAreas = InspectAreaDesignator(entityDes, knowledge)
 
-            if config.DEBUG:
-                rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
-                import ipdb; ipdb.set_trace()
-                continue
+        rospy.loginfo("searchAreas: {}".format(searchAreas.resolve()))
+        searchArea = VariableDesignator(resolve_type=str)
 
-            # Enable kinect segmentation plugin (only one image frame)
-            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.uuid))
-            # print("Segmented new entities: {}".format(segmented_entities.new_ids))
+        with self:
+            if navigation_area:
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: navigation_area},
+                                                                                 entityDes),
+                                       transitions={'unreachable': 'failed',
+                                                    'goal_not_defined': 'failed',
+                                                    'arrived': 'ITERATE_AREA'})
+            else:
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
+                                       transitions={'unreachable': 'failed',
+                                                    'goal_not_defined': 'failed',
+                                                    'arrived': 'ITERATE_AREA'})
 
-            for uuid in segmented_entities.new_ids:
-                # In simulation, the entity type is not yet updated...
-                entity = self.robot.ed.get_entity(uuid=uuid)
-                config.SEGMENTED_ENTITIES.append((entity, uuid))
-            # print("Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES))
+            smach.StateMachine.add('ITERATE_AREA',
+                                   IterateDesignator(searchAreas, searchArea.writeable),
+                                   transitions={'next': 'RISE',
+                                                'stop_iteration': 'done'}
+                                   )
 
-            # ToDo: classification threshold
-            entity_types_and_probs = self.robot.ed.classify(uuids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
-            # print("Types and probs: {}".format(entity_types_and_probs))
+            smach.StateMachine.add('RISE', RiseForInspect(robot, entityDes, searchArea),
+                                   transitions={'succeeded': 'SEGMENT',
+                                                'failed': 'SEGMENT'})
 
-            # Recite entities
-            for etp in entity_types_and_probs:
-                self.robot.speech.speak("I have seen {0}".format(etp.etype), block=False)
-
-            # Lock entities
-            self.robot.ed.lock_entities(lock_ids=[e.uuid for e in entity_types_and_probs], unlock_ids=[])
-
-            for e in entity_types_and_probs:
-                # In simulation, the entity type is not yet updated...
-                entity = self.robot.ed.get_entity(uuid=e.uuid)
-                config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
-
-            config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1],
-                                                        reverse=True)
-
-        # Reset the head goal
-        self.robot.head.cancel_goal()
-
-        if not config.DETECTED_OBJECTS_WITH_PROBS:
-            return "nothing_found"
-
-        # Sort based on probability
-        # DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
-
-        return 'succeeded'
+            smach.StateMachine.add('SEGMENT',
+                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
+                                                  unknown_threshold=unknown_threshold,
+                                                  filter_threshold=filter_threshold),
+                                   transitions={'done': 'ITERATE_AREA'})
