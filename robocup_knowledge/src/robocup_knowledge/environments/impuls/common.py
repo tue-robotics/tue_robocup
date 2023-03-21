@@ -19,8 +19,8 @@ locations = [
     {'name': 'couch_long',    'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
     {'name': 'couch_short',   'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
 
-    {'name': 'workbench1',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
-    {'name': 'workbench2',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
+    {'name': 'work_bench1',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
+    {'name': 'work_bench2',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -100,7 +100,7 @@ default_target_radius = 0.2
 
 most_probable_location_in_room_map = {
     'livingroom': 'dinner_table',
-    'workshop': 'workbench1',
+    'workshop': 'work_bench2',
     'kitchen': 'salon_table'
 }
 
