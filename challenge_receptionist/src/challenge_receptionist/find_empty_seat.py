@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+from typing import List
+
 import random
 
 import rospy
@@ -37,7 +39,7 @@ class SeatsInRoomDesignator(ds.Designator):
 
         true_seats = [seat for seat in seats if seat is not None]  # get_entity returns None if entity does not exist
 
-        seats_in_room = room.entities_in_volume(true_seats,"in")
+        seats_in_room = room.entities_in_volume(true_seats, "in")
 
         return seats_in_room
 
@@ -91,7 +93,8 @@ class FindEmptySeat(smach.StateMachine):
                                                 'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, volumes_des, 0.6, None),
+                                   CheckVolumeEmpty(robot=robot, entity_des=seat_ent_des, volume=volumes_des,
+                                                    volume_threshold_percentage=0.6, volume_threshold_val=0.6),
                                    transitions={'occupied': 'ITERATE_NEXT_VOLUME',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',

@@ -155,7 +155,7 @@ class CheckVolumeEmpty(smach.StateMachine):
         robot,
         entity_des,
         volume="on_top_of",
-        volume_threshold_per: Optional[float] = None,
+        volume_threshold_percentage: Optional[float] = None,
         volume_threshold_val: Optional[float] = None,
         fit_supporting_entity: bool = True,
     ):
@@ -165,7 +165,7 @@ class CheckVolumeEmpty(smach.StateMachine):
         :param robot: robot object
         :param entity_des: EdEntityDesignator indicating the (furniture) object to check
         :param volume: string or designator to a string, defining volume of the entity to be checked
-        :param volume_threshold_per: Indicating the free volume percentage above which the area is considered
+        :param volume_threshold_percentage: Indicating the free volume percentage above which the area is considered
         partially_occupied (If both thresholds are None any entities filling the volume will result in 'occupied')
         :param volume_threshold_val: float [m^3] indicating the free volume above which the area is considered
         partially_occupied. (If both thresholds are None any entities filling the volume will result in 'occupied')
@@ -205,7 +205,7 @@ class CheckVolumeEmpty(smach.StateMachine):
             smach.StateMachine.add(
                 "CHECK_VOLUME_PERCENTAGE",
                 CheckFreeSpacePercentage(
-                    robot, seen_entities_des, entity_des, volume, threshold_perc=volume_threshold_per
+                    robot, seen_entities_des, entity_des, volume, threshold_perc=volume_threshold_percentage
                 ),
                 transitions={"empty": "partially_occupied", "occupied": "occupied", "failed": "failed"},
             )
