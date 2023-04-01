@@ -54,8 +54,8 @@ class SayForIntroduceGuest(smach.State):
                         pose = pose[1][1:]
                     else:
                         pose = pose[0][1:]
-                    self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, is {pose} and"
-                                            " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
+                    self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, "
+                                            "is {pose} and wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
                                                                                    age=age, pose=pose, shirt_color=shirt_color))
             # else:
             #     self.robot.speech.speak("This is {name} who likes {drink}".format(name="charlie",

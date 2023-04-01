@@ -2,20 +2,19 @@
 
 from __future__ import print_function
 
+import random
 from typing import List
 
-import random
-
 import rospy
-from ed.entity import Entity
-
-from robot_smach_states.human_interaction import Say
-from robot_smach_states.designator_iterator import IterateDesignator
-from robot_smach_states.world_model import CheckVolumeEmpty
-from robot_smach_states.reset import ResetArms
-from challenge_receptionist.point_at_receptionist import PointAtReception
-import robot_smach_states.util.designators as ds
 import smach
+
+import robot_smach_states.util.designators as ds
+from challenge_receptionist.point_at_receptionist import PointAtReception
+from ed.entity import Entity
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.reset import ResetArms
+from robot_smach_states.world_model import CheckVolumeEmpty
 
 
 class SeatsInRoomDesignator(ds.Designator):
@@ -53,19 +52,20 @@ class FindEmptySeat(smach.StateMachine):
     That can be done with an Inspect and then query for any Entities inside that volume.
     If there are none, then the seat is empty
     """
-    def __init__(self, robot, seats_to_inspect, room, fit_supporting_entity=False, seat_is_for=None ):
+
+    def __init__(self, robot, seats_to_inspect, room, fit_supporting_entity=False, seat_is_for=None):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
-        #TODO eventually get this into the robocup knowledge and make it generic such that it is changable per seat
+        # TODO eventually get this into the robocup knowledge and make it generic such that it is changable per seat
         volumes = ['on_top_of']
         # TODO: this is a robocup hack to workaround the problem that (sizes of) the entities in the CheckEmpty state
         #  are not correct, the calculations seem correct so the problem probably lies in the entites somehow.
         random.shuffle(volumes)
         volumes = ds.Designator(volumes)
         volumes_des = ds.VariableDesignator(resolve_type=str)
-        #todo assert?
+        # todo assert?
         if not volumes:
             raise RuntimeError('Empty volumes')
 
@@ -77,9 +77,10 @@ class FindEmptySeat(smach.StateMachine):
         with self:
             smach.StateMachine.add('SAY_LETS_FIND_SEAT',
                                    Say(robot,
-                                            ["Let me find a place for {name} to sit. Please be patient while I check out where there's place to sit"],
-                                             name=seat_is_for,
-                                            block=False),
+                                       ["Let me find a place for {name} to sit. Please be patient while I check "
+                                        "out where there's place to sit"],
+                                       name=seat_is_for,
+                                       block=False),
                                    transitions={'spoken': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('ITERATE_NEXT_SEAT',
@@ -102,7 +103,8 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
                                    PointAtReception(robot=robot,
-                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals': ['point_at']}),
+                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {
+                                                        'required_goals': ['point_at']}),
                                                     point_at_designator=seat_ent_des,
                                                     volume=volumes_des,
                                                     look_at_designator=seat_ent_des),
@@ -111,16 +113,17 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
                                    Say(robot,
-                                            ["Please sit on the {seat}, {name}. Please leave some space for any"
-                                             " potential future guests!"],
-                                             name=seat_is_for,
-                                             seat=ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str),
-                                             block=True),
+                                       ["Please sit on the {seat}, {name}. Please leave some space for any"
+                                        " potential future guests!"],
+                                       name=seat_is_for,
+                                       seat=ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str),
+                                       block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('POINT_AT_PARTIALLY_OCCUPIED_SEAT',
                                    PointAtReception(robot=robot,
-                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                                                    arm_designator=ds.UnoccupiedArmDesignator(robot, {
+                                                        'required_goals': ['point_at']}),
                                                     point_at_designator=seat_ent_des,
                                                     volume=volumes_des,
                                                     look_at_designator=seat_ent_des),
@@ -129,17 +132,17 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_SEAT_PARTIALLY_OCCUPIED',
                                    Say(robot,
-                                            ["I think there's some space left here where you can sit {name},"
-                                             "Please leave some space for any potential future guests!"],
-                                             name=seat_is_for,
-                                             block=True),
+                                       ["I think there's some space left here where you can sit {name},"
+                                        "Please leave some space for any potential future guests!"],
+                                       name=seat_is_for,
+                                       block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
                                    Say(robot,
-                                            ["Sorry, there are no empty seats. I guess you just have to stand {name}"],
-                                             name=seat_is_for,
-                                             block=True),
+                                       ["Sorry, there are no empty seats. I guess you just have to stand {name}"],
+                                       name=seat_is_for,
+                                       block=True),
                                    transitions={'spoken': 'RESET_FAIL'})
 
             smach.StateMachine.add('RESET_FAIL',
@@ -156,7 +159,8 @@ if __name__ == "__main__":
     from robot_skills import get_robot
 
     if len(sys.argv) < 4:
-        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",)
+        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table "
+              "bar dinnertable", )
         sys.exit(1)
 
     robot_name = sys.argv[1]

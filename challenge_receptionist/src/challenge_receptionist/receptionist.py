@@ -48,9 +48,9 @@ class HandleSingleGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
                                    Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. "
                                                "Please follow me closely until i'll point you a seat"],
-                                                       name=guest_name_des, drink=guest_drinkname_des,
-                                                       block=False,
-                                                       look_at_standing_person=True),
+                                       name=guest_name_des, drink=guest_drinkname_des,
+                                       block=False,
+                                       look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_LIVINGROOM'})
 
             smach.StateMachine.add('GOTO_LIVINGROOM',
@@ -111,14 +111,14 @@ class ChallengeReceptionist(smach.StateMachine):
 
             smach.StateMachine.add('SAY_DONE',
                                    Say(robot, ["That's all folks, my job is done, bye bye!"],
-                                              block=False),
+                                       block=False),
                                    transitions={'spoken': 'GO_BACK'})
 
             smach.StateMachine.add('GO_BACK',
                                    NavigateToWaypoint(robot,
-                                                             ds.EntityByIdDesignator(robot,
-                                                                                     challenge_knowledge.waypoint_door['id']),
-                                                             challenge_knowledge.waypoint_door['radius']),
+                                                      ds.EntityByIdDesignator(robot,
+                                                                              challenge_knowledge.waypoint_door['id']),
+                                                      challenge_knowledge.waypoint_door['radius']),
                                    transitions={'arrived': 'succeeded',
                                                 'unreachable': 'succeeded',
                                                 'goal_not_defined': 'succeeded'})
