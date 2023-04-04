@@ -21,8 +21,8 @@ from visualization_msgs.msg import Marker
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from ed.entity import Entity
 from hmi import TimeoutException
-from ..util.startup import startup
-from ..util.designators import VariableDesignator
+from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import VariableDesignator
 
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):
