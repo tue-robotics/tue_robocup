@@ -698,7 +698,7 @@ class FollowOperator(smach.State):
                     # If replanned: if recently replanned, only update navigation if not standing still for too long
                     # (to make sure that local planner reaches align state) or just started following
                     rospy.loginfo("Replan=True, so check if we replanned...")
-                    if self._replan_time.to_sec() > self._time_started.to_sec():
+                    if self._replan_time > self._time_started:
                         rospy.loginfo("We did replan at least once")
                         if self._replan_active:
                             rospy.loginfo("and this plan is still active, so I'll give the global planner a chance")
