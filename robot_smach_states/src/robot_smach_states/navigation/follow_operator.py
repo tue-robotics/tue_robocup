@@ -89,8 +89,8 @@ class FollowOperator(smach.State):
         self._replan_active = False
         self._last_operator = None
         self._replan_allowed = replan
-        self._replan_timeout = 15 # seconds before another replan is allowed
-        self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
+        self._replan_timeout = 15  # seconds before another replan is allowed
+        self._replan_time = None
         self._replan_attempts = 0
         self._max_replan_attempts = 3
         self._period = update_period
@@ -672,6 +672,9 @@ class FollowOperator(smach.State):
             return "no_operator"
 
         self._time_started = rospy.Time.now()
+
+        if self._replan_time is None:
+            self._replan_time = self._time_started - rospy.Duration(self._replan_timeout)
 
         while not rospy.is_shutdown():
 
