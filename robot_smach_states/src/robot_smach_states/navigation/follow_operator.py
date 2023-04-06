@@ -655,7 +655,6 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_operator_fs = None
         self._breadcrumbs = []
-        old_no_breadcrumbs = len(self._breadcrumbs)
 
         if self._operator_id_des:
             operator_id = self._operator_id_des.resolve()
@@ -695,7 +694,6 @@ class FollowOperator(smach.State):
                 self._turn_towards_operator()
             else:
                 # Only update navigation if there is something to update: operator must have moved
-                # if len(self._breadcrumbs) > old_no_breadcrumbs:
                 if self._replan_allowed:
                     # If replanned: if recently replanned, only update navigation if not standing still for too long
                     # (to make sure that local planner reaches align state) or just started following
