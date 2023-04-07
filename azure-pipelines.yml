@@ -62,6 +62,15 @@ jobs:
           $(Agent.OS) | ccache | $(System.TeamProject)
           $(Agent.OS) | ccache
         path: $(HOME)/.ccache
+    - task: Cache@2
+      displayName: Cache pip
+      inputs:
+        key: '$(Agent.OS) | pip | $(System.TeamProject) | $(PACKAGE) | $(Build.SourceVersion)'
+        restoreKeys: |
+          $(Agent.OS) | pip | $(System.TeamProject) | $(PACKAGE)
+          $(Agent.OS) | pip | $(System.TeamProject)
+          $(Agent.OS) | pip
+        path: $(HOME)/.cache/pip
     - task: Bash@3
       displayName: Get CI scripts
       inputs:
