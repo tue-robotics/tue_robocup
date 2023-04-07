@@ -1,12 +1,9 @@
 #! /usr/bin/env python
 
+from typing import Optional
+
 from collections import OrderedDict
-try:
-    # Python 3
-    from collections.abc import Sequence, Set
-except ImportError:
-    # Python 2
-    from collections import Sequence, Set
+from collections.abc import Sequence, Set
 
 # ROS
 import geometry_msgs
@@ -27,20 +24,24 @@ from .functionalities.add_functionalities import add_functionalities
 DEFAULT_CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 
 
-class Robot(object):
+class Robot:
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", tf_buffer=None, connection_timeout=DEFAULT_CONNECTION_TIMEOUT):
+    def __init__(
+        self,
+        robot_name: str = "",
+        tf_buffer: Optional[tf2_ros.Buffer] = None,
+        base_link_frame: Optional[str] = None,
+        connection_timeout: float = DEFAULT_CONNECTION_TIMEOUT
+    ):
         """
         Constructor
 
         :param robot_name: Name of the robot
-        :type robot_name: str
         :param tf_buffer: tf2_ros.Buffer object
-        :type tf_buffer: Optional[tf2_ros.Buffer]
+        :param base_link_frame: Frame id of the base_link (default: {robot_name}/base_link
         :param connection_timeout: timeout to wait for ROS connections
-        :type connection_timeout: Optional[float]
         """
 
         self.robot_name = robot_name
@@ -49,6 +50,11 @@ class Robot(object):
             self._tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         else:
             self.tf_buffer = tf_buffer
+
+        if base_link_frame is None:
+            base_link_frame = f"{robot_name}/base_link"
+
+        self.base_link_frame = base_link_frame
 
         self._connection_timeout = float(connection_timeout)
 
@@ -65,7 +71,6 @@ class Robot(object):
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
-        self.base_link_frame = self.robot_name+"/base_link"
 
         self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
         self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)

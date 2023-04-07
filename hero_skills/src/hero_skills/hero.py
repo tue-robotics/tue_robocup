@@ -21,7 +21,7 @@ class Hero(robot.Robot):
         :param connection_timeout: timeout to wait for ROS connections
         :type connection_timeout: Optional[float]
         """
-        super(Hero, self).__init__(robot_name="hero", connection_timeout=connection_timeout)
+        super().__init__(robot_name="hero", base_link_frame="base_link", connection_timeout=connection_timeout)
 
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 

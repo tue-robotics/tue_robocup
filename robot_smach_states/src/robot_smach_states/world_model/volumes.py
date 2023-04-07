@@ -29,10 +29,8 @@ class CheckEmpty(smach.State):
 
     def execute(self, userdata=None):
         seen_entities = self.seen_entities_des.resolve()
-        if seen_entities:
-            return "occupied"
-        else:
-            return "empty"
+
+        return "occupied" if seen_entities else "empty"
 
 
 class CheckFreeSpaceVolume(smach.State):
@@ -195,7 +193,7 @@ class CheckVolumeEmpty(smach.StateMachine):
             smach.StateMachine.add(
                 "CHECK_EMPTY",
                 CheckEmpty(robot, seen_entities_des),
-                transitions={"empty": "empty", "occupied": "CHECK_VOLUME", "failed": "failed"},
+                transitions={"empty": "empty", "occupied": "CHECK_VOLUME"},
             )
 
             smach.StateMachine.add(

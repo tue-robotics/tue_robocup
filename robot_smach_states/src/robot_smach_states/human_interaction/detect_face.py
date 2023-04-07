@@ -26,7 +26,7 @@ class DetectFace(smach.State):
         rospy.sleep(1.0)
 
         image = self._robot.perception.get_image()
-        faces = self._robot.perception.detect_faces(image=image)
+        faces, _ = self._robot.perception.detect_faces(image=image)
 
         # Check result
         if not faces:

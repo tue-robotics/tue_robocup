@@ -43,21 +43,9 @@ class PreparePlace(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        # Torso up (non-blocking)
-        self._robot.torso.reset()
-
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_place', timeout=0)
         arm.wait_for_motion_done()
-
-        # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
-        # Hence, we want the torso to go to the place height - 0.6
-        # Note: this is awefully hardcoded for AMIGO
-        # Sending it to 'high' seems to work much better...
-        # torso_goal = placement_fs.frame.p.z() - 0.6
-        # torso_goal = max(0.09, min(0.4, torso_goal))
-        # rospy.logwarn("Torso goal before placing: {0}".format(torso_goal))
-        # self._robot.torso._send_goal(torso_pos=[torso_goal])
 
         return 'succeeded'
 
@@ -101,6 +89,7 @@ class Put(smach.State):
         if not placement_fs:
             rospy.logerr("Could not resolve placement_pose")
             return "failed"
+        placement_fs.header.stamp = rospy.Time(0)  # always query the latest pose info
 
         arm = self._arm_designator.resolve()
         if not arm:
@@ -112,8 +101,7 @@ class Put(smach.State):
         # placement_pose is a PyKDL.Frame
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
 
-        # Wait for torso and arm to finish their motions
-        self._robot.torso.wait_for_motion_done()
+        # Wait for arm to finish their motions
         arm.wait_for_motion_done()
 
         try:
@@ -123,7 +111,7 @@ class Put(smach.State):
 
         # Pre place
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height+0.15, 0, 0, 0, rospy.Time.now(),
+                                                       height+0.15, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10,
                              pre_grasp=True):
@@ -132,7 +120,7 @@ class Put(smach.State):
 
             rospy.loginfo("Retrying preplace")
             if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                           height+0.15, 0, 0, 0, rospy.Time.now(),
+                                                           height+0.15, 0, 0, 0, rospy.Time(0),
                                                            frame_id=self._robot.base_link_frame),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
@@ -142,7 +130,7 @@ class Put(smach.State):
         # Place
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height+0.1, 0, 0, 0, rospy.Time.now(),
+                                                       height+0.1, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
@@ -151,7 +139,7 @@ class Put(smach.State):
         if not place_entity:
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
-            self._robot.ed.update_entity(place_entity.id, frame_stamped=placement_fs)
+            self._robot.ed.update_entity(place_entity.uuid, frame_stamped=placement_fs)
             arm.gripper.occupied_by = None
 
         # Open gripper
@@ -166,24 +154,19 @@ class Put(smach.State):
                                                 place_pose_bl.frame.p.y(),
                                                 place_pose_bl.frame.p.z() + 0.15,
                                                 0, 0, 0,
-                                                rospy.Time.now(),
+                                                rospy.Time(0),
                                                 frame_id=self._robot.base_link_frame),
                       timeout=0.0)
 
-        arm.wait_for_motion_done()
-        self._robot.base.force_drive(-0.125, 0, 0, 1.5)
+        # Move back
+        self._robot.base.force_drive(-0.125, 0, 0, 1.5, ax=0.5)
 
         if not arm.wait_for_motion_done(timeout=5.0):
             rospy.logwarn('Retraction failed')
             arm.cancel_goals()
 
-        # Close gripper
-        arm.gripper.send_goal('close', timeout=0.0)
-
         arm.reset()
         arm.wait_for_motion_done()
-        self._robot.torso.reset()
-        self._robot.torso.wait_for_motion_done()
 
         return 'succeeded'
 

@@ -69,7 +69,10 @@ class GetFurnitureFromOperatorPose(State):
         # rgb, depth, depth_info = self._robot.perception.get_rgb_depth_caminfo()
         # self._robot.hmi.show_image_from_msg(rgb, timeout)
         image_data = self._robot.perception.get_rgb_depth_caminfo()
-        self._robot.hmi.show_image_from_msg(image_data[0], timeout)
+        if all(msg is not None for msg in image_data):
+            self._robot.hmi.show_image_from_msg(image_data[0], timeout)
+        else:
+            rospy.logwarn("Could not get RGB, depth or camera info")
         return image_data
 
     def _prep_operator(self, attempts=5):
@@ -77,7 +80,13 @@ class GetFurnitureFromOperatorPose(State):
         self._robot.head.reset()
         self._robot.speech.speak("Let's point, please stand in front of me!", block=False)
         for i in range(attempts):
-            success, found_people_ids = self._robot.ed.detect_people(*self._show_image(timeout=1))
+            image_data = self._show_image(timeout=1)
+            if any(msg is None for msg in image_data):
+                rospy.logwarn("Could not get RGB, depth and camera info")
+                rospy.sleep(0.2)
+                continue
+
+            success, found_people_ids = self._robot.ed.detect_people(*image_data)
             if any(found_people_ids):
                 break
             rospy.sleep(0.4)
