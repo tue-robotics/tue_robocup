@@ -89,8 +89,8 @@ class FollowOperator(smach.State):
         self._replan_active = False
         self._last_operator = None
         self._replan_allowed = replan
-        self._replan_timeout = 15 # seconds before another replan is allowed
-        self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
+        self._replan_timeout = 15  # seconds before another replan is allowed
+        self._replan_time = None
         self._replan_attempts = 0
         self._max_replan_attempts = 3
         self._period = update_period
@@ -655,7 +655,6 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_operator_fs = None
         self._breadcrumbs = []
-        old_no_breadcrumbs = len(self._breadcrumbs)
 
         if self._operator_id_des:
             operator_id = self._operator_id_des.resolve()
@@ -673,6 +672,9 @@ class FollowOperator(smach.State):
             return "no_operator"
 
         self._time_started = rospy.Time.now()
+
+        if self._replan_time is None:
+            self._replan_time = self._time_started - rospy.Duration(self._replan_timeout)
 
         while not rospy.is_shutdown():
 
@@ -695,12 +697,11 @@ class FollowOperator(smach.State):
                 self._turn_towards_operator()
             else:
                 # Only update navigation if there is something to update: operator must have moved
-                # if len(self._breadcrumbs) > old_no_breadcrumbs:
                 if self._replan_allowed:
                     # If replanned: if recently replanned, only update navigation if not standing still for too long
                     # (to make sure that local planner reaches align state) or just started following
                     rospy.loginfo("Replan=True, so check if we replanned...")
-                    if self._replan_time.to_sec() > self._time_started.to_sec():
+                    if self._replan_time > self._time_started:
                         rospy.loginfo("We did replan at least once")
                         if self._replan_active:
                             rospy.loginfo("and this plan is still active, so I'll give the global planner a chance")
