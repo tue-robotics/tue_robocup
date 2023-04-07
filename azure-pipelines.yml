@@ -59,6 +59,7 @@ stages:
         strategy:
           matrix: $[ stageDependencies.package_selection.package_selection.outputs['matrix.json_string'] ]
         steps:
+        - checkout: none
         - task: Cache@2
           displayName: Cache ccache
           inputs:
