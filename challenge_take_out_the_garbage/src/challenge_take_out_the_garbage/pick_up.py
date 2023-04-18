@@ -254,7 +254,8 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                            "beun_picture.png"
                                        ),
                                        duration=5),
-                                   transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
+                                   transitions={"failed": "CLOSE_AFTER_INSERT",
+                                                "succeeded": "CLOSE_AFTER_INSERT"})
 
             smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(
                 robot,
