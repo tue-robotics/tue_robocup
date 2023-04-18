@@ -25,18 +25,16 @@ from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from smach import StateMachine, cb_interface, CBState
 
-NUM_LOOKS = 2 
 PERSON_DETECTIONS = []
 
 
 class LocatePeople(StateMachine):
-    def __init__(self, robot, room_id):
+    def __init__(self, robot, room_id, num_looks=2):
         StateMachine.__init__(self, outcomes=['done'])
 
         @cb_interface(outcomes=['done'])
         def detect_persons(_):
             global PERSON_DETECTIONS
-            global NUM_LOOKS
 
             # with open(os.path.expanduser('~/find_my_mates/floorplan-2022-06-12-17-53-28.pickle'), 'rb') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
@@ -58,7 +56,7 @@ class LocatePeople(StateMachine):
             ])
             while len(PERSON_DETECTIONS) < 4 and not rospy.is_shutdown():
                 rospy.loginfo("Looking for people loop")
-                for _ in range(NUM_LOOKS):
+                for _ in range(num_looks):
                     rospy.loginfo("Looking for people..")
                     sentences.rotate(1)
                     robot.speech.speak(sentences[0], block=False)
