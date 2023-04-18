@@ -115,11 +115,12 @@ class NavigateToAndPlaceItemInDishwasherRack(StateMachine):
 
         marker_array_pub = rospy.Publisher("/markers", visualization_msgs.msg.MarkerArray, queue_size=1, latch=True)
 
-        _publish_item_poses(marker_array_pub, item_poses)
-
         place = EdEntityDesignator(robot=robot, uuid=PLACE_ID)
 
         with self:
+            StateMachine.add_auto(
+                "PUBLISH_MARKERS", CBState(_publish_item_poses, cb_args=[marker_array_pub, item_poses]), ["done"]
+            )
             StateMachine.add(
                 "NAVIGATE",
                 NavigateToSymbolic(robot, {place: PLACE_AREA_ID}, place),
@@ -141,6 +142,7 @@ class NavigateToAndPlaceItemInDishwasherRack(StateMachine):
             )
 
 
+@cb_interface(outcomes=["done"])
 def _publish_item_poses(marker_array_pub, items):
     """
     Publishes item poses as a visualization marker array
@@ -156,7 +158,7 @@ def _publish_item_poses(marker_array_pub, items):
         marker_id += 1
         marker_msg = visualization_msgs.msg.Marker()
         marker_msg.header.frame_id = posestamped.header.frame_id
-        marker_msg.header.stamp = rospy.Time.now()
+        marker_msg.header.stamp = rospy.Time()
         marker_msg.id = marker_id
         marker_msg.type = visualization_msgs.msg.Marker.SPHERE
         marker_msg.action = 0
@@ -175,6 +177,8 @@ def _publish_item_poses(marker_array_pub, items):
         array_msg.markers.append(marker_msg2)
 
     marker_array_pub.publish(array_msg)
+
+    return "done"
 
 
 if __name__ == "__main__":

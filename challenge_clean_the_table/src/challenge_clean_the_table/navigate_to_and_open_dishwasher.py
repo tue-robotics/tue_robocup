@@ -98,22 +98,29 @@ class NavigateToAndOpenDishwasher(StateMachine):
 
         dishwasher = EdEntityDesignator(robot=robot, uuid=DISHWASHER_ID)
 
-        array_msg = visualization_msgs.msg.MarkerArray()
-        marker_msg = visualization_msgs.msg.Marker()
-        marker_msg.header.frame_id = DISHWASHER_ID
-        marker_msg.header.stamp = rospy.Time.now()
-        marker_msg.ns = "open_dishwasher_vector"
-        marker_msg.type = visualization_msgs.msg.Marker.SPHERE
-        marker_msg.action = 0
-        marker_msg.pose = item_frame_to_pose(item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR), DISHWASHER_ID).pose
-        marker_msg.pose.position.z += 1.0
-        marker_msg.scale = Vector3(0.05, 0.05, 0.05)
-        marker_msg.color = ColorRGBA(0.2, 1.0, 0.2, 1)
-        array_msg.markers.append(marker_msg)
+        @cb_interface(outcomes=["done"])
+        def _publish_item_poses():
+            """
+            Publishes item poses as a visualization marker array
+            """
+            array_msg = visualization_msgs.msg.MarkerArray()
+            marker_msg = visualization_msgs.msg.Marker()
+            marker_msg.header.frame_id = DISHWASHER_ID
+            marker_msg.header.stamp = rospy.Time()
+            marker_msg.ns = "open_dishwasher_vector"
+            marker_msg.type = visualization_msgs.msg.Marker.SPHERE
+            marker_msg.action = 0
+            marker_msg.pose = item_frame_to_pose(item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR), DISHWASHER_ID).pose
+            marker_msg.pose.position.z += 1.0
+            marker_msg.scale = Vector3(0.05, 0.05, 0.05)
+            marker_msg.color = ColorRGBA(0.2, 1.0, 0.2, 1)
+            array_msg.markers.append(marker_msg)
 
-        NavigateToAndOpenDishwasher.marker_array_pub.publish(array_msg)
+            NavigateToAndOpenDishwasher.marker_array_pub.publish(array_msg)
+            return "done"
 
         with self:
+            StateMachine.add_auto("PUBLISH_MARKERS", CBState(_publish_item_poses), ["done"])
             StateMachine.add(
                 "NAVIGATE_TO_DISHWASHER",
                 NavigateToSymbolic(robot, {dishwasher: DISHWASHER_AREA_ID}, dishwasher),

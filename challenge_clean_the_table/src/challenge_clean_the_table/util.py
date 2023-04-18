@@ -29,7 +29,7 @@ def item_vector_to_item_frame(item_vector):
 
 def item_frame_to_pose(item_frame, frame_id):
     goal_pose = PoseStamped()
-    goal_pose.header.stamp = rospy.Time.now()
+    goal_pose.header.stamp = rospy.Time()
     goal_pose.header.frame_id = frame_id
     goal_pose.pose = toMsg(item_frame)
 
