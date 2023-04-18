@@ -1,9 +1,5 @@
-from __future__ import print_function
-
-
 import rospy
 from ed.entity import Entity
-from hmi import HMIResult
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.find_people_in_room import FindPeopleInRoom
 from robot_smach_states.designator_iterator import IterateDesignator
@@ -22,8 +18,8 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class SayForIntroduceGuest(smach.State):
-    #todo test
-    # todo make sure that has person_properties
+    # ToDo: test
+    # ToDo: make sure that has person_properties
     def __init__(self, robot_name, entity_des, guest_drinkname_des, assume_john, previous_guest_drink_des):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot_name
@@ -90,7 +86,6 @@ class GuestDescriptionStrDesignator(ds.Designator):
         return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drinkname)
 
 
-
 class IntroduceGuest(smach.StateMachine):
     num_tries = 0
 
@@ -125,8 +120,8 @@ class IntroduceGuest(smach.StateMachine):
                                    FindPeopleInRoom(robot,
                                                     room=challenge_knowledge.waypoint_livingroom['id'],
                                                     found_people_designator=all_old_guests.writeable),
-                                   transitions = {'found': 'CHECK_NUM_PEOPLE',
-                                                   'not_found': 'CHECK_NUM_PEOPLE'})
+                                   transitions={"found": "CHECK_NUM_PEOPLE",
+                                                "not_found": "CHECK_NUM_PEOPLE"})
 
             @cb_interface(outcomes=["incorrect", "correct", "continue"])
             def check_num_people(_):

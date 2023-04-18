@@ -51,19 +51,19 @@ class FindEmptySeat(smach.StateMachine):
     That can be done with an Inspect and then query for any Entities inside that volume.
     If there are none, then the seat is empty
     """
-    def __init__(self, robot, seats_to_inspect, room, fit_supporting_entity=False, seat_is_for=None ):
+    def __init__(self, robot, seats_to_inspect, room, fit_supporting_entity=False, seat_is_for=None):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
-        #TODO eventually get this into the robocup knowledge and make it generic such that it is changable per seat
+        # TODO: Eventually get this into the robocup knowledge and make it generic such that it is changeable per seat
         volumes = ['on_top_of_l', 'on_top_of_m', 'on_top_of_r']
-        # TODO: this is a robocup hack to workaround the problem that (sizes of) the entities in the CheckEmpty state
-        #  are not correct, the calculations seem correct so the problem probably lies in the entites somehow.
+        # TODO: this is a roboCup hack to workaround the problem that (sizes of) the entities in the CheckEmpty state
+        #  are not correct, the calculations seem correct so the problem probably lies in the entities somehow.
         random.shuffle(volumes)
         volumes = ds.Designator(volumes)
         volumes_des = ds.VariableDesignator(resolve_type=str)
-        #todo assert?
+        # ToDo: assert?
         if not volumes:
             raise RuntimeError('Empty volumes')
 
