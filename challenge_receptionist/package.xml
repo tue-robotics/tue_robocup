@@ -17,6 +17,7 @@
 
   <depend>ed_python</depend>
   <depend>rospy</depend>
+  <depend>robocup_knowledge</depend>
   <depend>robot_skills</depend>
   <depend>robot_smach_states</depend>
 
