@@ -138,9 +138,10 @@ def get_image(robot, room_id, person_detections):
 
         # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
-    os.makedirs(os.path.expanduser('~/find_my_mates'), exist_ok=True)
+    os.makedirs(os.path.expanduser(os.path.join("~", "find_my_mates")), exist_ok=True)
     filename = os.path.expanduser(
-        '~/find_my_mates/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+        os.path.join("~", "find_my_mates", f"floorplan-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.png")
+    )
     cv2.imwrite(filename, floorplan.map)
     rospy.loginfo(f"Wrote image to {filename}")
 
