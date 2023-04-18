@@ -125,7 +125,7 @@ class IntroduceGuest(smach.StateMachine):
                                                 "not_found": "CHECK_NUM_PEOPLE"})
 
             @cb_interface(outcomes=["incorrect", "correct", "continue"])
-            def check_num_people():
+            def check_num_people(ud=None):
                 check_correct_num_people = all_old_guests.resolve()
                 self.num_tries += 1
                 if self.num_tries > 2:
