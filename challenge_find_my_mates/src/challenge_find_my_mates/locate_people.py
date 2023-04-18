@@ -117,7 +117,7 @@ class LocatePeople(StateMachine):
 
             try:
                 image_filename = get_image(robot, room_id, PERSON_DETECTIONS)
-            except:
+            except Exception:
                 rospy.logwarn("Could not get a proper image, retrying..")
                 return "retry"
 
@@ -145,5 +145,5 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot = get_robot("hero", 1)
     # robot.reset()
-    challenge_knowledge = load_knowledge('challenge_find_my_mates')
+    challenge_knowledge = load_knowledge("challenge_find_my_mates")
     LocatePeople(robot, challenge_knowledge.room).execute()

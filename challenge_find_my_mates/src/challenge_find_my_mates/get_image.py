@@ -53,7 +53,6 @@ class Face:
         py_image = min(max(0, int(self.py - self.image_height / 2)), target_image_height - self.image_height - 1)
 
         # Alter px_image and py_image to not overlap any other face
-
         if px_image >= 0 and py_image >= 0:
             # Could not broadcast input array from shape (150, 150, 3) into shape (106, 150, 3)
             target_image[py_image:py_image + self.image_height, px_image:px_image + self.image_width] = self.image
@@ -71,7 +70,7 @@ def get_image(robot, room_id, person_detections):
         rospy.logerr(msg)
         raise ValueError(msg)
 
-    padding = -0.3
+    padding = -0.3  # ToDo: magic number
 
     def _get_clusters():
         in_room_detections = [d for d in person_detections if room_entity.in_volume(d['map_vs'], "in", padding)]
@@ -166,5 +165,5 @@ if __name__ == '__main__':
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot = get_robot("hero", 1)
-    challenge_knowledge = load_knowledge('challenge_find_my_mates')
+    challenge_knowledge = load_knowledge("challenge_find_my_mates")
     get_image(robot, challenge_knowledge.room, ppl_dicts)

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import pickle
 from collections import defaultdict
 import numpy as np
@@ -46,8 +44,6 @@ def cluster_people(people_dicts, room_center, n_clusters=4, plot=False):
         plt.scatter(xs2, ys2, c='b')
         plt.show()
 
-    # locations = zip(xs2, ys2)
-
     return persons_closest_to_room_center.values()
 
 
@@ -65,9 +61,9 @@ if __name__ == "__main__":
 
     clustered_ppl = cluster_people(ppl_dicts, room_center=np.array([6, 0]), plot=True)
 
-    xs2 = [person['map_vs'].vector.x() for person in clustered_ppl]
-    ys2 = [person['map_vs'].vector.y() for person in clustered_ppl]
-    locations = zip(xs2, ys2)
+    people_x = [person['map_vs'].vector.x() for person in clustered_ppl]
+    people_y = [person['map_vs'].vector.y() for person in clustered_ppl]
+    locations = zip(people_x, people_y)
     pprint.pprint(list(locations))
 
     with open(filename_base + '_kmeans_output.pickle', 'wb') as f:
