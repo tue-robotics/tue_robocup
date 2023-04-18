@@ -11,6 +11,10 @@ from tf_conversions import transformations
 
 
 class ControlToTrashBin(StateMachine):
+    """
+    Positions the robot to the trashbin and aligns arm
+    """
+    
     def __init__(self, robot, trashbin_id, radius, yaw_offset):
         StateMachine.__init__(self, outcomes=['done'])
 
@@ -26,6 +30,9 @@ class ControlToTrashBin(StateMachine):
 
             desired_base_position = trash_bin_position + radius * trash_bin_to_base_vector
 
+            angle = math.atan2(trash_bin_to_base_vector.y(), trash_bin_to_base_vector.x())
+            min_angle = min(angle, 2*math.pi - angle)
+
             goal_pose = PoseStamped(
                 header=Header(
                     stamp=rospy.Time.now(),
@@ -38,13 +45,12 @@ class ControlToTrashBin(StateMachine):
                     ),
                     orientation=Quaternion(
                         *transformations.quaternion_from_euler(
-                            0, 0, math.atan2(trash_bin_to_base_vector.y(),
-                                             trash_bin_to_base_vector.x()) - math.pi + yaw_offset
+                            0, 0, min_angle - math.pi + yaw_offset
                         )
                     )
                 )
             )
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.2)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.1)).execute({})
             return 'done'
 
         with self:
@@ -55,5 +61,5 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    ControlToTrashBin(robot_instance, 'trash_bin', 0.45, -0.2).execute()
+    ControlToTrashBin(robot_instance, 'trash_bin', 0.4, -0.2).execute()
     robot_instance.leftArm().send_joint_goal('grab_trash_bag')
