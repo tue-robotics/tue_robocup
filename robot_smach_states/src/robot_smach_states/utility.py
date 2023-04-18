@@ -257,6 +257,36 @@ class SetTimeMarker(smach.State):
         return "done"
 
 
+class CheckTimeOut(smach.State):
+    def __init__(self, time_out_seconds, reset_des):
+        smach.State.__init__(self, outcomes=["not_yet", "time_out"])
+        self.time_out_seconds = time_out_seconds
+        self.reset_des = reset_des
+
+        check_type(reset_des, bool)
+        is_writeable(reset_des)
+        self.start = None
+
+    def execute(self, userdata=None):
+        current_seconds = rospy.Time.now().to_sec()
+
+        if self.reset_des.resolve():
+            rospy.loginfo("Resetting timeout")
+            self.start = None
+            self.reset_des.write(False)
+
+        if self.start is None:
+            self.start = current_seconds
+
+        dt = current_seconds - self.start
+
+        if dt > self.time_out_seconds:
+            rospy.loginfo("Timer reached timeout")
+            return "time_out"
+
+        return "not_yet"
+
+
 class WaitForDesignator(smach.State):
     """
     Waits for a given designator to answer. It will retry to resolve the designator a given number of times, with
