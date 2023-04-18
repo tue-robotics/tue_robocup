@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(challenge_receptionist)
+project(challenge_serve_breakfast)
 
 find_package(catkin REQUIRED COMPONENTS
   robot_skills

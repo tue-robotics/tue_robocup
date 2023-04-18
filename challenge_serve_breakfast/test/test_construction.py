@@ -9,9 +9,9 @@ class TestChallengeConstruction(unittest.TestCase):
         """
         os.environ["ROBOT_ENV"] = "impuls"
         from robot_skills.mockbot import Mockbot
-        from challenge_receptionist.receptionist import ChallengeReceptionist
+        from challenge_serve_breakfast.serve_breakfast import setup_statemachine
         robot = Mockbot()
-        ChallengeReceptionist(robot)
+        setup_statemachine(robot)
 
 
 if __name__ == '__main__':

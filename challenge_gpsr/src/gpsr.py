@@ -58,7 +58,7 @@ class ConversationEngineWithHmi(ConversationEngine):
             self.robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
-                                                                              id=self.knowledge.starting_pose),
+                                                                              uuid=self.knowledge.starting_pose),
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
@@ -75,7 +75,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         if (self.tasks_done >= self.tasks_to_be_done or self.finished) and not self.skip:
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
-                                                                              id=self.knowledge.exit_waypoint),
+                                                                              uuid=self.knowledge.exit_waypoint),
                                      radius=0.3)
             self.robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)
             nwc.execute()
@@ -271,7 +271,7 @@ def main():
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.starting_pose),
+                                                                              uuid=knowledge.starting_pose),
                                      radius=0.3)
             nwc.execute()
 
