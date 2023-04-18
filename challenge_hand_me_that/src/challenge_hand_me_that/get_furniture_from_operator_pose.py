@@ -7,7 +7,6 @@
 import os
 
 import rospy
-import tf2_ros
 
 from ed.entity import Entity
 from geometry_msgs.msg import PoseStamped
@@ -16,12 +15,7 @@ from robot_smach_states.util.designators import is_writeable, VariableDesignator
 from robot_smach_states.utility import CheckTimeOut, WriteDesignator
 from smach import StateMachine, cb_interface, CBState
 from std_msgs.msg import Header
-from ed_sensor_integration_msgs.srv import RayTraceResponse
 from people_recognition_msgs.msg import Person3D
-
-from tf2_ros import TransformBroadcaster, TransformStamped
-import tf2_pykdl_ros
-import tf2_geometry_msgs
 
 
 OPERATOR = None  # type: Person3D
