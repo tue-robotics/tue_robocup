@@ -1,5 +1,6 @@
 # System
 import enum
+
 # ROS
 import math
 import os
@@ -9,6 +10,7 @@ import rospy
 
 import robot_smach_states.util.designators as ds
 import smach
+
 # TU/e
 from ed.entity import Entity
 from hmi import HMIResult
@@ -19,7 +21,9 @@ from robot_smach_states.human_interaction import (
     HearOptions,
     HearOptionsExtra,
     Say,
-    WaitForPersonInFront, human_interaction, ShowImageState,
+    WaitForPersonInFront,
+    human_interaction,
+    ShowImage,
 )
 from robot_smach_states.navigation import guidance, NavigateToSymbolic, NavigateToWaypoint, ForceDrive
 from robot_smach_states.utility import WaitTime
@@ -195,7 +199,7 @@ class GuideToRoomOrObject(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def head_reset_stay_there(userdata=None):
                 robot.head.reset()
-                rospy.sleep(2.)
+                rospy.sleep(2.0)
                 return "done"
 
             smach.StateMachine.add(
@@ -250,26 +254,26 @@ class InformMachine(smach.StateMachine):
             )
 
             smach.StateMachine.add(
-                "RESET_HMI_ATTEMPT", smach.CBState(_reset_location_hmi_attempt), transitions={"reset": "SHOW_IMAGE_SPEAK"}
+                "RESET_HMI_ATTEMPT",
+                smach.CBState(_reset_location_hmi_attempt),
+                transitions={"reset": "SHOW_IMAGE_SPEAK"},
             )
 
             smach.StateMachine.add(
-                'SHOW_IMAGE_SPEAK',
-                ShowImageState(
+                "SHOW_IMAGE_SPEAK",
+                ShowImage(
                     robot,
-                    os.path.join(rospkg.RosPack().get_path('challenge_restaurant'), "images", "speak.jpg"),
-                    seconds=10
+                    os.path.join(rospkg.RosPack().get_path("challenge_restaurant"), "images", "speak.jpg"),
+                    duration=10,
                 ),
-                transitions={'succeeded': 'INSTRUCT', 'failed': 'INSTRUCT'}
+                transitions={"succeeded": "INSTRUCT", "failed": "INSTRUCT"},
             )
 
             smach.StateMachine.add(
                 "INSTRUCT",
                 Say(
                     robot,
-                    [
-                        "Please tell me where you would like to go. Talk loudly into my microphone."
-                    ],
+                    ["Please tell me where you would like to go. Talk loudly into my microphone."],
                     block=True,
                 ),
                 transitions={"spoken": "LISTEN_FOR_LOCATION"},
@@ -286,10 +290,9 @@ class InformMachine(smach.StateMachine):
                 # PICO voice implementation, can not be simulated
                 smach.StateMachine.add(
                     "LISTEN_FOR_LOCATION",
-                    HearOptionsExtraPicovoice(robot, 'where_is_this', self.answer_des.writeable, 6),
+                    HearOptionsExtraPicovoice(robot, "where_is_this", self.answer_des.writeable, 6),
                     transitions={"heard": "ASK_CONFIRMATION", "no_result": "HANDLE_FAILED_HMI"},
                 )
-
 
             smach.StateMachine.add(
                 "ASK_CONFIRMATION",
@@ -417,7 +420,7 @@ class InformMachine(smach.StateMachine):
                 transitions={
                     "arrived": "succeeded",
                     "unreachable": "RETURN_TO_INFORMATION_POINT_FAILED",
-                    "goal_not_defined": "failed"
+                    "goal_not_defined": "failed",
                 },
             )
 
