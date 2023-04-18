@@ -7,7 +7,7 @@ class TestChallengeConstruction(unittest.TestCase):
         """
         If no exception is raised, this test will succeed
         """
-        os.environ["ROBOT_ENV"] = "robotics_testlabs"
+        os.environ["ROBOT_ENV"] = "impuls"
         from robot_skills.mockbot import Mockbot
         from challenge_find_my_mates.find_my_mates import setup_statemachine
         robot = Mockbot()
