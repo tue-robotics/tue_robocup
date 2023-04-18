@@ -8,42 +8,42 @@ import rospy
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import WaitTime
-from smach import StateMachine, cb_interface, CBState
+from smach import State, StateMachine
 from .knowledge import ITEMS
 from .navigate_to_and_open_dishwasher import NavigateToAndOpenDishwasher
 from .navigate_to_and_pick_item import NavigateToAndPickItem
 from .navigate_to_and_place_item_in_dishwasher_rack import NavigateToAndPlaceItemInDishwasherRack
 
-items_picked = []
-iteration = 0
-max_iterations = 20
 
+class CheckIfWeHaveItAll(State):
+    def __init__(self, robot, max_iterations=20):
+        State.__init__(self, outcomes=["we_have_it_all", "keep_going"], input_keys=["item_picked"])
+        self.robot = robot
+        self.iteration = 0
+        self.items_picked = []
+        self.max_iterations = max_iterations
 
-@cb_interface(outcomes=["we_have_it_all", "keep_going"], input_keys=["item_picked"])
-def check_if_we_have_it_all(user_data, robot):
-    global items_picked
-    global iteration
+    def execute(self, userdata):
+        self.iteration += 1
+        if self.iteration > self.max_iterations:
+            return "we_have_it_all"
 
-    iteration += 1
-    if iteration > max_iterations:
-        return "we_have_it_all"
+        item_picked = userdata["item_picked"]
 
-    item_picked = user_data["item_picked"]
+        if item_picked and item_picked not in self.items_picked:
+            self.items_picked.append(item_picked)
+        else:
+            rospy.logwarn("Invalid item picked: %s", item_picked)
 
-    if item_picked and item_picked not in items_picked:
-        items_picked.append(item_picked)
-    else:
-        rospy.logwarn("Invalid item picked: %s", item_picked)
+        missing_items = [item for item in ITEMS if item not in self.items_picked]
 
-    missing_items = [item for item in ITEMS if item not in items_picked]
+        if missing_items:
+            self.robot.speech.speak(f"So far we have: {' '.join(self.items_picked)}", block=False)
+            self.robot.speech.speak(f"Still missing the {missing_items}", block=False)
+        else:
+            self.robot.speech.speak("We have everything now", block=False)
 
-    if missing_items:
-        robot.speech.speak("So far we have: {}".format(" ".join(items_picked)), block=False)
-        robot.speech.speak("Still missing the {}".format(missing_items), block=False)
-    else:
-        robot.speech.speak("We have everything now", block=False)
-
-    return "keep_going" if missing_items else "we_have_it_all"
+        return "keep_going" if missing_items else "we_have_it_all"
 
 
 def setup_statemachine(robot):
@@ -91,7 +91,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "CHECK_IF_WE_HAVE_IT_ALL",
-            CBState(check_if_we_have_it_all, cb_args=[robot]),
+            CheckIfWeHaveItAll(robot),
             transitions={"we_have_it_all": "NAVIGATE_TO_AND_OPEN_DISHWASHER", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
         )
 
