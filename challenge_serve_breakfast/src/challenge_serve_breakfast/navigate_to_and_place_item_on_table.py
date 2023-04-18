@@ -121,11 +121,12 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
 
         marker_array_pub = rospy.Publisher('/markers', visualization_msgs.msg.MarkerArray, queue_size=1, latch=True)
 
-        _publish_item_poses(marker_array_pub, item_poses)
-
         table = EdEntityDesignator(robot=robot, uuid=table_id)
 
         with self:
+            StateMachine.add_auto(
+                "PUBLISH_MARKERS", CBState(_publish_item_poses, cb_args=[marker_array_pub, item_poses]), ["done"]
+            )
             StateMachine.add(
                 "NAVIGATE_TO_TABLE_CLOSE",
                 NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
@@ -162,7 +163,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
                 transitions={"succeeded": "succeeded", "failed": "failed"},
             )
 
-
+@cb_interface(outcomes=["done"])
 def _publish_item_poses(marker_array_pub, items):
     """
     Publishes item poses as a visualization marker array
@@ -197,6 +198,8 @@ def _publish_item_poses(marker_array_pub, items):
         array_msg.markers.append(marker_msg2)
 
     marker_array_pub.publish(array_msg)
+
+    return "done"
 
 
 if __name__ == "__main__":
