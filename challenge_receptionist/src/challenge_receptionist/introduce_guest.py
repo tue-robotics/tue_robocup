@@ -87,10 +87,11 @@ class GuestDescriptionStrDesignator(ds.Designator):
 
 
 class IntroduceGuest(smach.StateMachine):
-    num_tries = 0
 
     def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des, assume_john=False):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
+
+        self.num_tries = 0
 
         ds.check_type(guest_name_des, str)
         ds.check_type(guest_drinkname_des, str)
@@ -124,15 +125,15 @@ class IntroduceGuest(smach.StateMachine):
                                                 "not_found": "CHECK_NUM_PEOPLE"})
 
             @cb_interface(outcomes=["incorrect", "correct", "continue"])
-            def check_num_people(_):
+            def check_num_people():
                 check_correct_num_people = all_old_guests.resolve()
-                IntroduceGuest.num_tries += 1
-                if IntroduceGuest.num_tries > 2:
+                self.num_tries += 1
+                if self.num_tries > 2:
                     return "continue"
 
                 if check_correct_num_people:
                     if len(check_correct_num_people) == 1 and assume_john:
-                        IntroduceGuest.num_tries = 0
+                        self.num_tries = 0
                         return "correct"
 
                     if len(check_correct_num_people) == 2 and not assume_john:
