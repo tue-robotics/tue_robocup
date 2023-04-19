@@ -1,4 +1,4 @@
-# COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
+# COMMON KNOWLEDGE FILE IMPULS
 from __future__ import print_function
 
 female_names = ["anna", "beth", "carmen", "jennifer", "jessica", "kimberly", "kristina", "laura", "mary", "sarah"]
@@ -8,27 +8,26 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'bookcase',      'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'cabinet',       'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'closet',        'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'dinner_table',    'room': 'dining_room', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'cabinet',         'room': 'dining_room', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'bookcase',        'room': 'dining_room', 'category': 'shelf',   'manipulation': 'yes'},
 
-    {'name': 'kitchen_cabinet', 'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
-    {'name': 'fridge',        'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
-    {'name': 'salon_table',   'room': 'kitchen',    'category': 'table', 'manipulation': 'yes'},
-    {'name': 'couch_long',    'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
-    {'name': 'couch_short',   'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
+    {'name': 'fridge',          'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
 
-    {'name': 'work_bench1',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
-    {'name': 'work_bench2',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
+    {'name': 'salon_table',     'room': 'living_room', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'couch_long',      'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'couch_short',     'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+
+    {'name': 'work_bench1',     'room': 'office',      'category': 'table',   'manipulation': 'yes'},
+    {'name': 'work_bench2',     'room': 'office',      'category': 'table',   'manipulation': 'yes'},
+    {'name': 'closet',          'room': 'office',      'category': 'shelf',   'manipulation': 'yes'},
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
 location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
-
-rooms = location_rooms + ["workshop"]
 
 objects = [
     {'category': 'food',                'name': 'apple',            'color': 'green',           'volume': 301,      'weight': 100},  # fruit
@@ -99,9 +98,9 @@ default_target_radius = 0.2
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 most_probable_location_in_room_map = {
-    'livingroom': 'dinner_table',
-    'workshop': 'work_bench2',
-    'kitchen': 'salon_table'
+    'dining_room': 'dinner_table',
+    'office': 'work_bench2',
+    'living_room': 'salon_table'
 }
 
 
