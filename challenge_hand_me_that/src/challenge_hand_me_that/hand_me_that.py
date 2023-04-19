@@ -4,14 +4,16 @@
 #
 # \author Rein Appeldoorn
 
-from smach import StateMachine
+import smach
 
 from ed.entity import Entity
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
-from robot_smach_states.human_interaction import Say
+from robot_smach_states.human_interaction import Say, FindPerson
+from robot_smach_states.perception import RotateToEntity
+from robot_smach_states.utility import WaitTime
 from robocup_knowledge import load_knowledge
 
 from .get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
@@ -22,48 +24,98 @@ challenge_knowledge = load_knowledge('challenge_hand_me_that')
 
 STARTING_POINT = challenge_knowledge.starting_point  # Location where the challenge starts
 HOME_LOCATION = challenge_knowledge.home_location  # Location where the robot will go and look at the operator
+POSSIBLE_FURNITURE = challenge_knowledge.all_possible_furniture
+ROOM = challenge_knowledge.room
 
 
-def setup_statemachine(robot):
-    state_machine = StateMachine(outcomes=['done'])
+class HandMeThat(smach.StateMachine):
+    """ Main StateMachine for the challenge """
 
-    furniture_designator = ds.VariableDesignator(resolve_type=Entity)
-    entity_designator = ds.VariableDesignator(resolve_type=Entity)
-    arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['done'])
 
-    with state_machine:
-        # Intro
-        StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
-                         transitions={'Done': 'SAY_START',
-                                      'Aborted': 'done',
-                                      'Failed': 'SAY_START'})
+        furniture_designator = ds.VariableDesignator(resolve_type=Entity)
+        entity_designator = ds.VariableDesignator(resolve_type=[Entity])
+        operator_designator = ds.VariableDesignator(resolve_type=Entity).writeable
+        arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
+        room_designator = ds.EntityByIdDesignator(robot, uuid=ROOM)
 
-        # Say we're gonna start
-        StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
-                         transitions={'spoken': 'NAVIGATE_TO_START'})
+        TESTING = False
 
-        # Drive to the start location
-        StateMachine.add('NAVIGATE_TO_START',
-                         NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, uuid=HOME_LOCATION)),
-                         transitions={'arrived': 'GET_FURNITURE_FROM_OPERATOR_POSE',
-                                      'unreachable': 'NAVIGATE_TO_START',  # ToDo: other fallback
-                                      'goal_not_defined': 'done'})  # I'm not even going to fill this in
+        with self:
+            if not TESTING:
+                # Intro
+                smach.StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
+                                       transitions={'Done': 'SAY_START',
+                                                    'Aborted': 'done',
+                                                    'Failed': 'SAY_START'})
 
-        # The pre-work
-        StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
-                         GetFurnitureFromOperatorPose(robot, furniture_designator.writeable),
-                         transitions={'done': 'INSPECT_FURNITURE'})
+            # Say we're gonna start
+            smach.StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
+                                   transitions={'spoken': 'NAVIGATE_TO_START'})
 
-        # Go to the furniture object that was pointing to see what's there
-        StateMachine.add('INSPECT_FURNITURE',
-                         InspectFurniture(robot, furniture_designator, entity_designator.writeable),
-                         transitions={"succeeded": "IDENTIFY_OBJECT",
-                                      "failed": "NAVIGATE_TO_START"})  # If no entities, try again
+            # Drive to the start location
+            smach.StateMachine.add('NAVIGATE_TO_START',
+                                   NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, uuid=HOME_LOCATION)),
+                                   transitions={'arrived': 'FIND_OPERATOR_IN_ROOM',
+                                                'unreachable': 'NAVIGATE_TO_START',  # ToDo: other fallback
+                                                'goal_not_defined': 'done'})  # I'm not even going to fill this in
 
-        # Point at the object
-        StateMachine.add('IDENTIFY_OBJECT',
-                         IdentifyObject(robot, entity_designator, arm_designator),
-                         transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
-                                      'failed': 'NAVIGATE_TO_START'})  # Just keep on going
+            # The pre-work
+            smach.StateMachine.add('FIND_OPERATOR_IN_ROOM',
+                                   FindPerson(robot=robot,
+                                              found_entity_designator=operator_designator,
+                                              discard_other_labels=False,
+                                              room=ROOM,
+                                              search_timeout=20),
+                                   transitions={'found': 'LOOK_AT_PERSON',
+                                                'failed': 'LOOK_AT_CENTER_OF_ROOM'})
 
-    return state_machine
+            smach.StateMachine.add('LOOK_AT_PERSON',
+                                   RotateToEntity(robot=robot, entity=operator_designator),
+                                   transitions={'succeeded': 'ASK_TO_POINT',
+                                                'failed': 'LOOK_AT_CENTER_OF_ROOM'})
+
+            # Ask what operator needs
+            smach.StateMachine.add('ASK_TO_POINT', Say(robot, "What do you need?", block=True),
+                                   transitions={'spoken': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
+
+            smach.StateMachine.add('LOOK_AT_CENTER_OF_ROOM',
+                                   RotateToEntity(robot=robot, entity=room_designator),
+                                   transitions={'succeeded': 'SAY_CANT_FIND_PERSON',
+                                                'failed': 'SAY_CANT_FIND_PERSON'})
+
+            smach.StateMachine.add('SAY_CANT_FIND_PERSON',
+                                   Say(robot, 'I did not find you, please stand in my view'),
+                                   transitions={'spoken': 'WAIT_FOR_OPERATOR'})
+
+            smach.StateMachine.add('WAIT_FOR_OPERATOR', WaitTime(robot, 3),
+                                   transitions={'waited': 'ASK_TO_POINT',
+                                                'preempted': 'ASK_TO_POINT'})
+
+            smach.StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
+                                   GetFurnitureFromOperatorPose(robot, furniture_designator.writeable,
+                                                                POSSIBLE_FURNITURE),
+                                   transitions={'done': 'INSPECT_FURNITURE',
+                                                'failed': 'SAY_TRY_NEXT'})
+
+            # Go to the furniture object that was pointing to see what's there
+            smach.StateMachine.add('INSPECT_FURNITURE',
+                                   InspectFurniture(robot, furniture_designator, entity_designator.writeable),
+                                   transitions={"succeeded": "IDENTIFY_OBJECT",
+                                                "failed": "SAY_NO_OBJECT"})  # If no entities, try again
+
+            # Tell when you failed to
+            smach.StateMachine.add('SAY_NO_OBJECT', Say(robot, ['I did not find any object object there']),
+                                   transitions={'spoken': 'NAVIGATE_TO_START'})
+
+            # Point at the object
+            smach.StateMachine.add('IDENTIFY_OBJECT',
+                                   IdentifyObject(robot, entity_designator, arm_designator),
+                                   transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
+                                                'failed': 'SAY_TRY_NEXT'})  # Just keep on going
+
+            smach.StateMachine.add('SAY_TRY_NEXT', Say(robot, ['I am sorry, lets skip this one and'
+                                                               ' let me try another one',
+                                                               'I will go for the next item']),
+                                   transitions={'spoken': 'NAVIGATE_TO_START'})
