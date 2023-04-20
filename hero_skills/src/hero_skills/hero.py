@@ -62,10 +62,6 @@ class Hero(robot.Robot):
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
                                           lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                           lambda: self.lights.set_color_rgba_msg(lights.RESET)))
-        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_buffer,
-                                             lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
-                                             lambda: self.lights.set_color_rgba_msg(lights.RESET)))
-
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
         self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_buffer, topic="/hero/runstop_button"))
 
