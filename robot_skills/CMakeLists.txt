@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   hmi
   hmi_msgs
   people_recognition_msgs
+  picovoice_msgs
   pykdl_ros
   rgbd_msgs
   rospy
