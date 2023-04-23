@@ -286,6 +286,52 @@ class HearOptionsExtra(smach.State):
         return "no_result"
 
 
+class HearOptionsExtraPicovoice(smach.State):
+    def __init__(
+        self,
+        robot,
+        context,
+        speech_result_designator,
+        require_endpoint=True,
+        timeout=10.0,
+        look_at_standing_person=True,
+    ):
+        smach.State.__init__(self, outcomes=["heard", "no_result"])
+
+        self.robot = robot
+
+        ds.check_resolve_type(speech_result_designator, HMIResult)
+        ds.is_writeable(speech_result_designator)
+
+        self.context = context
+        self.speech_result_designator = speech_result_designator
+        self.require_endpoint = require_endpoint
+        self.timeout = timeout
+        self.look_at_standing_person = look_at_standing_person
+
+    def execute(self, userdata=None):
+        if self.look_at_standing_person:
+            self.robot.head.look_at_standing_person()
+
+        try:
+            answer = self.robot.picovoice.get_intent(self.context, self.require_endpoint, self.timeout)
+
+            if answer:
+                if answer.semantics:
+                    self.speech_result_designator.write(answer)
+                    return "heard"
+            else:
+                self.robot.speech.speak("Something is wrong with my ears, please take a look!")
+        except TimeoutException:
+            return "no_result"
+
+        finally:
+            if self.look_at_standing_person:
+                self.robot.head.cancel_goal()
+
+        return "no_result"
+
+
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=10, look_at_standing_person=True):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
