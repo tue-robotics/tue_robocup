@@ -1,3 +1,4 @@
+from typing import List, Optional
 import rospy
 
 from hmi.client import TimeoutException
@@ -11,18 +12,27 @@ class PicoVoice(RobotPart):
         super().__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._action_client = self.create_simple_action_client(f"/{robot_name}/get_intent", GetIntentAction)
 
-    def get_intent(self, context_url: str, require_endpoint=True, timeout: float = 10.0) -> HMIResult:
+    def get_intent(
+        self,
+        context_url: str,
+        intents: Optional[List[str]] = None,
+        require_endpoint: bool = True,
+        timeout: float = 10.0,
+    ) -> HMIResult:
         """
         get_intent
 
-        :param context_url:
-        :param require_endpoint:
-        :param timeout:
-        :return:
+        :param context_url: PicoVoice context
+        :param intents: Only accept these intents, when none provided, no filtering is applied
+        :param require_endpoint: endpoint is required or not
+        :param timeout: timeout
+        :return: intent
         :raises TimeoutException: In case of timeout
         """
+        if intents is None:
+            intents = []
         timeout = rospy.Duration.from_sec(timeout)
-        goal = GetIntentGoal(context_url=context_url, require_endpoint=require_endpoint)
+        goal = GetIntentGoal(context_url=context_url, intents=intents, require_endpoint=require_endpoint)
         rospy.logdebug(f"PicoVoice.get_intent: {goal=}")
         if not self._action_client.send_goal_and_wait(goal, execute_timeout=timeout, preempt_timeout=timeout):
             rospy.logerr("PicoVoice.get_intent: failed")
