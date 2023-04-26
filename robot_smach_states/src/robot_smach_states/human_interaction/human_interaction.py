@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from typing import List, Optional, Union
 
 import math
 import random
@@ -287,24 +287,46 @@ class HearOptionsExtra(smach.State):
 
 
 class HearOptionsExtraPicovoice(smach.State):
+    """
+    Listen to what the user said using the PicoVoice backend
+    """
     def __init__(
         self,
-        robot,
-        context,
-        speech_result_designator,
-        require_endpoint=True,
-        timeout=10.0,
-        look_at_standing_person=True,
+        robot: Robot,
+        context: Union[ds.Designator, str],
+        speech_result_designator: ds.Designator,
+        intents: Optional[Union[ds.Designator, List[str]]],
+        require_endpoint: Union[ds.Designator, bool] = True,
+        timeout: float = 10.0,
+        look_at_standing_person: bool = True,
     ):
+        """
+        Constructor
+
+        :param robot: robot object
+        :param context: designator or value for the picovoice context to be used
+        :param speech_result_designator: result is stored in this designator
+        :param intents: designator or value whether only a limited set of intents are allowed
+        :param require_endpoint: designator or value whether the picovoice context requires an endpoint
+        :param timeout: timeout for the goal
+        :param look_at_standing_person: the robot should look at a standing person in front of the robot
+        """
         smach.State.__init__(self, outcomes=["heard", "no_result"])
+
+        if intents is None:
+            intents = []
 
         self.robot = robot
 
+        ds.check_type(context, str)
         ds.check_resolve_type(speech_result_designator, HMIResult)
+        ds.check_type(intents, list[str])
+        ds.check_type(require_endpoint, bool)
         ds.is_writeable(speech_result_designator)
 
         self.context = context
         self.speech_result_designator = speech_result_designator
+        self.intents = intents
         self.require_endpoint = require_endpoint
         self.timeout = timeout
         self.look_at_standing_person = look_at_standing_person
@@ -313,8 +335,13 @@ class HearOptionsExtraPicovoice(smach.State):
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
 
+        context = self.context.resolve() if hasattr(self.context, "resolve") else self.context
+        intents = self.intents.resolve() if hasattr(self.intents, "resolve") else self.intents
+        require_endpoint = (
+            self.require_endpoint.resolve() if hasattr(self.require_endpoint, "resolve") else self.require_endpoint
+        )
         try:
-            answer = self.robot.picovoice.get_intent(self.context, self.require_endpoint, self.timeout)
+            answer = self.robot.picovoice.get_intent(context, intents, require_endpoint, self.timeout)
 
             if answer:
                 if answer.semantics:
