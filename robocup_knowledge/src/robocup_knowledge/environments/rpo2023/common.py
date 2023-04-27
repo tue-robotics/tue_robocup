@@ -1,10 +1,11 @@
 # COMMON KNOWLEDGE FILE IMPULS
 from __future__ import print_function
 
-female_names = ["anna", "beth", "carmen", "jennifer", "jessica", "kimberly", "kristina", "laura", "mary", "sarah"]
-male_names = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 
-names = female_names + male_names
+female_names = ["amelia", "angel", "ava", "charlie", "Charlotte", "hunter", "max", "mia", "olivia", "parker", "sam"]
+male_names = ["angel", "charlie", "hunter", "jack", "max", "noah", "oliver", "parker", "sam", "thomas", "william"]
+
+names = list(set(female_names + male_names))
 
 # This dict holds all locations
 locations = [
