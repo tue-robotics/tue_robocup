@@ -295,7 +295,7 @@ class HearOptionsExtraPicovoice(smach.State):
         robot: Robot,
         context: Union[ds.Designator, str],
         speech_result_designator: ds.Designator,
-        intents: Optional[Union[ds.Designator, List[str]]],
+        intents: Optional[Union[ds.Designator, List[str]]] = None,
         require_endpoint: Union[ds.Designator, bool] = True,
         timeout: float = 10.0,
         look_at_standing_person: bool = True,
@@ -320,7 +320,7 @@ class HearOptionsExtraPicovoice(smach.State):
 
         ds.check_type(context, str)
         ds.check_resolve_type(speech_result_designator, HMIResult)
-        ds.check_type(intents, list[str])
+        ds.check_type(intents, [str])
         ds.check_type(require_endpoint, bool)
         ds.is_writeable(speech_result_designator)
 
