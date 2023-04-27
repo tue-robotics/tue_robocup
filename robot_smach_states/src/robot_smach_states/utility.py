@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from typing import Union
 
 # ROS
 import rospy
@@ -6,7 +6,7 @@ import smach
 import std_msgs.msg
 
 # TU/e Robotics
-from .util.designators import check_type, is_writeable, LockingDesignator
+from .util.designators import check_type, is_writeable, Designator, LockingDesignator
 from .util.robocup_recorder import start_robocup_recorder
 
 
@@ -283,6 +283,36 @@ class CheckTimeOut(smach.State):
         if dt > self.time_out_seconds:
             rospy.loginfo("Timer reached timeout")
             return "time_out"
+
+        return "not_yet"
+
+
+class CheckTries(smach.State):
+    """
+    This state will check if the number of tries is below a certain number.
+    """
+    def __init__(self, max_tries: Union[int, Designator], reset_des: Designator):
+        smach.State.__init__(self, outcomes=["not_yet", "max_tries"])
+        self.max_tries = max_tries
+        self.reset_des = reset_des
+
+        check_type(max_tries, int)
+        check_type(reset_des, bool)
+        is_writeable(reset_des)
+        self._counter = 0
+
+    def execute(self, userdata=None):
+        if self.reset_des.resolve():
+            rospy.loginfo("Resetting counter")
+            self._counter = 0
+            self.reset_des.write(False)
+
+        self._counter += 1
+
+        max_tries = self.max_tries.resolve() if hasattr(self.max_tries, "resolve") else self.max_tries
+        if self._counter >= max_tries:
+            rospy.loginfo(f"Max number of tries ({max_tries}) reached")
+            return "max_tries"
 
         return "not_yet"
 
