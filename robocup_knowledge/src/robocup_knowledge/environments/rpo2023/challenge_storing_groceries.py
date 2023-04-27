@@ -8,9 +8,9 @@ common = knowledge_loader.load_knowledge("common")
 starting_point = 'initial_pose'
 
 # Detection
-shelf = "closet"
+shelf = "cabinet"
 object_shelves = ["shelf3", "shelf4", "shelf5"]
 object_types = [obj["name"] for obj in common.objects]
 
 # Grasping
-table = "dinner_table"
+table = "side_board"
