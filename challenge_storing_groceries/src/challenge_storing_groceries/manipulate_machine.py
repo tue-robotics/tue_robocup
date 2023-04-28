@@ -77,7 +77,7 @@ class StoreItems(smach.StateMachine):
         entities_designator = ds.VariableDesignator([], resolve_type=[Entity])
         item_designator = ds.VariableDesignator(resolve_type=Entity)
 
-        room_designator = ds.EntityByIdDesignator(robot, knowledge.room)
+        room_designator = ds.EntityByIdDesignator(robot, knowledge.room, name="room_designator")
 
         near_object_designator = SimilarEntityDesignator(robot, item_designator, item_classifications, knowledge,
                                                          name="similar_object_designator")
