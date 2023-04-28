@@ -5,9 +5,12 @@ import os.path
 import numpy as np
 import rospkg
 
+from robot_skills.simulation.sim_mode import is_sim_mode
+from robot_smach_states.utility import CheckTries, WriteDesignator
+import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 import smach
-from challenge_restaurant.ask_take_order import AskTakeTheOrder
+from challenge_restaurant.ask_take_order import AskTakeTheOrder, AskTakeTheOrderPicoVoice
 from challenge_restaurant.store_waypoint import StoreWaypoint
 from challenge_restaurant.take_orders import TakeOrder, ReciteOrders, ClearOrders
 from ed.entity import Entity
@@ -36,6 +39,9 @@ class Restaurant(smach.StateMachine):
         customer_id = 'current_customer'
         customer_designator = states.util.designators.VariableDesignator(resolve_type=Entity, name=customer_id)
         orders = []
+
+        if not is_sim_mode():
+            reset_tries_des = ds.VariableDesignator(resolve_type=bool, initial_value=False).writeable
 
         with self:
             smach.StateMachine.add('SAY_WAVING',
@@ -101,10 +107,24 @@ class Restaurant(smach.StateMachine):
                                               'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
                                    transitions={"spoken": 'WAIT_FOR_START'})
 
-            smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
-                                   transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
-                                                'wait': 'SAY_WAVING_2',
-                                                'timeout': 'SAY_WAVING_2'})
+            if is_sim_mode():
+                smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
+                                       transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
+                                                    'wait': 'SAY_WAVING_2',
+                                                    'timeout': 'SAY_WAVING_2'})
+            else:
+                smach.StateMachine.add('WAIT_FOR_START',
+                                       WriteDesignator(reset_tries_des, True),
+                                       transitions={'written': 'ASK_TAKE_ORDER'})
+
+                smach.StateMachine.add('ASK_TAKE_ORDER', AskTakeTheOrderPicoVoice(robot),
+                                       transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
+                                                    'wait': 'SAY_WAVING_2',
+                                                    'timeout': 'MAX_TRIES'})
+                smach.StateMachine.add('MAX_TRIES',
+                                       CheckTries(robot, max_tries=3, reset_des=reset_tries_des),
+                                       transitions={'not_yet': 'ASK_TAKE_ORDER',
+                                                    'max_tries': 'SAY_WAVING_2'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER',
                                    states.human_interaction.Say(
