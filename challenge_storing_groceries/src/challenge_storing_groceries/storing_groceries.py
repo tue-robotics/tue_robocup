@@ -61,14 +61,14 @@ def setup_statemachine(robot):
                                states.navigation.NavigateToSymbolic(robot,
                                                                     {shelfDes: "in_front_of"},
                                                                     shelfDes, room=roomDes),
-                               transitions={'arrived': 'INSPECT_SHELVES',
-                                            'unreachable': 'INSPECT_SHELVES',
-                                            'goal_not_defined': 'INSPECT_SHELVES'})
+                               transitions={'arrived': 'SKIP_INSPECT',
+                                            'unreachable': 'SKIP_INSPECT',
+                                            'goal_not_defined': 'SKIP_INSPECT'})
 
         smach.StateMachine.add("SKIP_INSPECT",
                                CheckBool(skip_inspect),
-                               transitions={'true': "STORE_GROCERIES",
-                                            'false': "INSPECT_SHELVES"})
+                               transitions={'true': 'STORE_GROCERIES',
+                                            'false': 'INSPECT_SHELVES'})
 
         smach.StateMachine.add("INSPECT_SHELVES",
                                InspectAreas(robot, shelfDes, objectsDes, roomDes, knowledge=challenge_knowledge,
