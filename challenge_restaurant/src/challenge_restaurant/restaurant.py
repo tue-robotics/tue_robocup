@@ -169,14 +169,14 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'SHOW_IMAGE_2'})
 
             smach.StateMachine.add('SHOW_IMAGE_2',
-                                   states.human_interaction.ShowImageState(
+                                   states.human_interaction.ShowImage(
                                        robot,
                                        os.path.join(
                                            rospkg.RosPack().get_path('challenge_restaurant'),
                                            "images",
                                            "waving.jpg"
                                        ),
-                                       seconds=10),
+                                       duration=10),
                                    transitions={'succeeded': 'WAIT_FOR_CUSTOMER',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
 
