@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from ed.entity import Entity
 from pykdl_ros import FrameStamped
 from .navigation import NavigateTo
-from .constraint_functions import arms_reach_constraint, symbolic_constraint
+from .constraint_functions import arms_reach_constraint, symbolic_constraint, combine_constraints
 from ..util.designators import check_resolve_type, AttrDesignator
 
 
@@ -29,4 +29,4 @@ class NavigateToGrasp(NavigateTo):
         if room_designator:
             constraint_list.append(lambda: symbolic_constraint(robot, {room_designator: "in"}))
 
-        super(NavigateToGrasp, self).__init__(robot, constraint_list, reset_head=False)
+        super(NavigateToGrasp, self).__init__(robot, lambda: combine_constraints(constraint_list), reset_head=False)
