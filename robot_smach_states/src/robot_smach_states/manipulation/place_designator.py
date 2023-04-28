@@ -82,6 +82,9 @@ class EmptySpotDesignator(Designator):
                                                                      z_max=place_location.shape.z_max,
                                                                      convex_hull=place_location.shape.convex_hull)
 
+        if not vectors_of_interest:
+            rospy.logerr("EmptySpotDesignator: No valid points of interest found")
+            return None
         assert all(isinstance(v, Candidate) for v in vectors_of_interest)
         assert all(isinstance(v.frame_stamped, FrameStamped) for v in vectors_of_interest)
 
@@ -106,7 +109,7 @@ class EmptySpotDesignator(Designator):
                 self.marker_pub.publish(MarkerArray([selection]))
                 return candidate.frame_stamped
 
-        rospy.logerr("Could not find an empty spot")
+        rospy.logerr("EmptySpotDesignator: Could not find an empty spot")
         return None
 
     def _is_poi_unoccupied(self, frame_stamped, surface_entity):
@@ -204,6 +207,7 @@ class EmptySpotDesignator(Designator):
         # We want to give it a convex hull using the designated area
 
         if area not in entity.volumes:
+            rospy.logerr(f"EmptySpotDesignator: Entity {entity.uuid} does not have a volume called {area}, available areas are {entity.volumes}")
             return []
 
         box = entity.volumes[area]
