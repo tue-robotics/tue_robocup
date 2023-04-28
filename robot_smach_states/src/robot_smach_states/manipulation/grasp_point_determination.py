@@ -140,6 +140,10 @@ class GraspPointDeterminant(object):
         self.visualize(candidates)
         rospy.loginfo("GPD took %f seconds" % (rospy.Time.now() - starttime).to_sec())
 
+        if not candidates:
+            rospy.logerr("No valid grasp candidates found")
+            return None
+
         return candidates[0]['vector']
 
     def visualize(self, candidates):
