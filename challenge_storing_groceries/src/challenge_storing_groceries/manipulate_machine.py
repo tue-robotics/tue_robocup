@@ -50,7 +50,7 @@ class StoreSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("GRAB",
                                    states.manipulation.Grab(robot, item_designator, arm,
-                                                            room_designator=room_designator),
+                                                            room=room_designator),
                                    transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
