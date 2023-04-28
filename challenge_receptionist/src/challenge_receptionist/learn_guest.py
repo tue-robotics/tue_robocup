@@ -4,7 +4,7 @@ from ed.entity import Entity
 from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, AskYesNo
+from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice
 from robot_smach_states.reset import ResetArms
 
 import robot_smach_states.util.designators as ds
@@ -154,12 +154,21 @@ class LearnGuest(smach.StateMachine):
                                        block=True,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'HEAR_DRINK_ANSWER'})
-
-            smach.StateMachine.add('HEAR_DRINK_ANSWER',
-                                   HearOptionsExtra(robot, self.drink_spec_des,
-                                                    guest_drink_des.writeable),
-                                   transitions={'heard': 'RESET_1',
-                                                'no_result': 'DEFAULT_DRINK'})
+            if is_sim_mode():
+                smach.StateMachine.add('HEAR_DRINK_ANSWER',
+                                       HearOptionsExtra(robot,
+                                                        self.drink_spec_des,
+                                                        guest_drink_des.writeable,
+                                                        look_at_standing_person=True),
+                                       transitions={'heard': 'RESET_1',
+                                                    'no_result': 'DEFAULT_DRINK'})
+            else:
+                smach.StateMachine.add('HEAR_DRINK_ANSWER',
+                                       HearOptionsExtraPicovoice(
+                                           robot, "drinks", guest_drink_des.writeable, look_at_standing_person=True
+                                       ),
+                                       transitions={'heard': 'RESET_1',
+                                                    'no_result': 'DEFAULT_DRINK'})
 
             smach.StateMachine.add('DEFAULT_DRINK',
                                    DrinkNotHeard(guest_drink_des.writeable, default_drink=default_drink),
