@@ -88,6 +88,8 @@ class StoreItems(smach.StateMachine):
 
         closest_item_designator = ds.VariableDesignator(resolve_type=Entity)
 
+        current_blacklist = []
+
         near_object_designator = SimilarEntityDesignator(robot, closest_item_designator, item_classifications,
                                                          knowledge,
                                                          name="similar_object_designator")
@@ -124,7 +126,11 @@ class StoreItems(smach.StateMachine):
                     return "no_entities"
 
                 for seg_entity in segmented_entities:
+                    if seg_entity.uuid in current_blacklist:
+                        continue
+                        
                     e = robot.ed.get_entity(seg_entity.uuid)
+
                     distance = e.distance_to_2d(hero_pose.frame.p)
                     entities.append(e)
                     distances.append(distance)
@@ -158,6 +164,15 @@ class StoreItems(smach.StateMachine):
                                                 'failed': 'INSPECT'}
                                    )
 
+            @smach.cb_interface(outcomes=["done"])
+            def add_item_to_blacklist(userdata=None):
+                current_blacklist.append(closest_item_designator.resolve().uuid)
+                return "done"
+
+            smach.StateMachine.add("ADD_ITEM_TO_BLACKLIST",
+                                   smach.CBState(add_item_to_blacklist),
+                                   transitions={"done": "INSPECT"})
+
             smach.StateMachine.add('STORE_ANYWHERE',
                                    StoreSingleItem(robot,
                                                    closest_item_designator,
@@ -165,7 +180,7 @@ class StoreItems(smach.StateMachine):
                                                    arm,
                                                    room=room),
                                    transitions={'succeeded': 'INSPECT',
-                                                'failed': 'INSPECT'}
+                                                'failed': 'ADD_ITEM_TO_BLACKLIST'}
                                    )
 
 
