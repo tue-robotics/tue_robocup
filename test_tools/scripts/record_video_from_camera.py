@@ -49,7 +49,7 @@ def main():
                         help="image topic of type sensor_msgs/Image encoded in bgr8")
     parser.add_argument("--file", default="video.avi",
                         help="name of the video file to save to")
-    args = parser.parse_args(rospy.myargv())
+    args = parser.parse_args()
 
     image_topic = args.topic
     video_name = args.file
