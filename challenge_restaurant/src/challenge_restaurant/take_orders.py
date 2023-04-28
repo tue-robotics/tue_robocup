@@ -13,6 +13,7 @@ import smach
 # TU/e Robotics
 from ed.entity import Entity
 from hmi import TimeoutException
+from robot_skills.simulation.sim_mode import is_sim_mode
 from robocup_knowledge import knowledge_loader
 import robot_smach_states.util.designators as ds
 
@@ -52,8 +53,15 @@ class TakeOrder(smach.State):
 
         return speech_result.semantics
 
-    def execute(self, userdata=None):
+    def _confirm_picovoice(self):
+        try:
+            speech_result = self._robot.picovoice.get_intent(context_url="yesOrNo")
+        except TimeoutException:
+            return False
 
+        return "yes" in speech_result.semantics
+
+    def execute(self, userdata=None):
         person = self._entity_designator.resolve()
         if person:
             self._robot.head.look_at_point(VectorStamped.from_framestamped(person.pose), timeout=0.0)
@@ -75,8 +83,11 @@ class TakeOrder(smach.State):
                 count += 1
 
                 try:
-                    speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                        grammar=knowledge.order_grammar, target="O")
+                    if is_sim_mode():
+                        speech_result = self._robot.hmi.query(description="Can I please take your order",
+                                                              grammar=knowledge.order_grammar, target="O")
+                    else:
+                        speech_result = self._robot.picovoice.get_intent(context_url="restaurant")
                     break
                 except TimeoutException:
                     if count < 3:
@@ -93,7 +104,7 @@ class TakeOrder(smach.State):
             except:
                 continue
 
-            if self._confirm():
+            if (is_sim_mode() and self._confirm()) or (not is_sim_mode() and self._confirm_picovoice()):
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
                 for item in speech_result.semantics.values():
                     self._orders.append(item)
