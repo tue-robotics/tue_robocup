@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
     entityDes = EntityByIdDesignator(robot, uuid=sys.argv[1])
 
-    shelfDes = EntityByIdDesignator(robot, uuid="closet")
+    shelfDes = EntityByIdDesignator(robot, uuid="cabinet")
     armDes = ArmDesignator(robot)
     placePoseDes = EmptySpotDesignator(robot, shelfDes, armDes, area=place_area, name="empty_spot_designator")
 
