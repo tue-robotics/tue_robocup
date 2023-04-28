@@ -515,7 +515,7 @@ class AskPersonName(smach.State):
     Ask the person's name, and try to hear one of the given names
     """
 
-    def __init__(self, robot, person_name_des, name_options, default_name='Operator', nr_tries=2):
+    def __init__(self, robot, person_name_des, name_options, default_name='operator', nr_tries=2):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'timeout'])
 
         self.robot = robot
@@ -575,7 +575,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
     Ask the person's name, and try to hear one of the given names
     """
 
-    def __init__(self, robot, person_name_des, default_name="Operator", nr_tries=2):
+    def __init__(self, robot, person_name_des, default_name="operator", nr_tries=2):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         ds.is_writeable(person_name_des)
