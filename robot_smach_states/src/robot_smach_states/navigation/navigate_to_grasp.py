@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from ed.entity import Entity
 from pykdl_ros import FrameStamped
 from .navigation import NavigateTo
-from .constraint_functions import arms_reach_constraint
+from .constraint_functions import arms_reach_constraint, symbolic_constraint, combine_constraints
 from ..util.designators import check_resolve_type, AttrDesignator
 
 
