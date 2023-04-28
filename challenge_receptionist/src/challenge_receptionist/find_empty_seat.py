@@ -51,21 +51,15 @@ class FindEmptySeat(smach.StateMachine):
     That can be done with an Inspect and then query for any Entities inside that volume.
     If there are none, then the seat is empty
     """
-    def __init__(self, robot, seats_to_inspect, room, fit_supporting_entity=False, seat_is_for=None):
+    def __init__(self, robot, seats_to_inspect: dict, room, fit_supporting_entity=False, seat_is_for=None):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
+        seats_volumes_des = ds.VariableDesignator(seats_to_inspect)
+        seats = SeatsInRoomDesignator(robot, list(seats_to_inspect.keys()), room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
-        # TODO: Eventually get this into the robocup knowledge and make it generic such that it is changeable per seat
-        volumes = ['on_top_of']
-        # TODO: this is a roboCup hack to workaround the problem that (sizes of) the entities in the CheckEmpty state
-        #  are not correct, the calculations seem correct so the problem probably lies in the entities somehow.
-        random.shuffle(volumes)
-        volumes = ds.Designator(volumes)
-        volumes_des = ds.VariableDesignator(resolve_type=str)
-        # ToDo: assert?
-        if not volumes:
-            raise RuntimeError('Empty volumes')
+        seat_ent_uuid_des = ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str)
+        volumes_des = ds.ValueByKeyDesignator(seats_volumes_des, seat_ent_uuid_des, resolve_type=[str], name="volumes_des")
+        volume_des = ds.VariableDesignator(resolve_type=str)
 
         if seat_is_for:
             ds.check_type(seat_is_for, str)
@@ -86,12 +80,12 @@ class FindEmptySeat(smach.StateMachine):
                                                 'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
 
             smach.StateMachine.add('ITERATE_NEXT_VOLUME',
-                                   IterateDesignator(volumes, volumes_des.writeable),
+                                   IterateDesignator(volumes_des, volume_des.writeable),
                                    transitions={'next': 'CHECK_SEAT_EMPTY',
                                                 'stop_iteration': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, volumes_des, 0.6, None),
+                                   CheckVolumeEmpty(robot, seat_ent_des, volume_des, 0.6, None),
                                    transitions={'occupied': 'ITERATE_NEXT_VOLUME',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
@@ -101,7 +95,7 @@ class FindEmptySeat(smach.StateMachine):
                                    PointAtReception(robot=robot,
                                                     arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals': ['point_at']}),
                                                     point_at_designator=seat_ent_des,
-                                                    volume=volumes_des,
+                                                    volume=volume_des,
                                                     look_at_designator=seat_ent_des),
                                    transitions={"succeeded": "SAY_SEAT_EMPTY",
                                                 "failed": "SAY_SEAT_EMPTY"})
@@ -119,7 +113,7 @@ class FindEmptySeat(smach.StateMachine):
                                    PointAtReception(robot=robot,
                                                     arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
                                                     point_at_designator=seat_ent_des,
-                                                    volume=volumes_des,
+                                                    volume=volume_des,
                                                     look_at_designator=seat_ent_des),
                                    transitions={"succeeded": "SAY_SEAT_PARTIALLY_OCCUPIED",
                                                 "failed": "SAY_SEAT_PARTIALLY_OCCUPIED"})
@@ -159,6 +153,8 @@ if __name__ == "__main__":
     robot_name = sys.argv[1]
     room = sys.argv[2]
     seats_to_inspect = sys.argv[3:]
+
+    seats_to_inspect = {seat: ['on_top_of'] for seat in seats_to_inspect}
 
     rospy.init_node('test_find_emtpy_seat')
     robot = get_robot(robot_name)
