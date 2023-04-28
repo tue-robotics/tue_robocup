@@ -18,8 +18,8 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class SayForIntroduceGuest(smach.State):
-    # ToDo: test
-    # ToDo: make sure that has person_properties
+    # TODO: test
+    # TODO: make sure that has person_properties
     def __init__(self, robot_name, entity_des, guest_drinkname_des, assume_john, previous_guest_drink_des):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot_name
