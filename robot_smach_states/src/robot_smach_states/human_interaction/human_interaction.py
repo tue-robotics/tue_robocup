@@ -383,6 +383,37 @@ class AskYesNo(HearOptions):
         HearOptions.__init__(self, robot, ['yes', 'no'], timeout, look_at_standing_person)
 
 
+class AskYesNoPicoVoice(HearOptionsExtraPicoVoice):
+    def __init__(self, robot, timeout=10, look_at_standing_person=True):
+        self.speech_result_designator = ds.VariableDesignator(resolve_type=HMIResult)
+        super().__init__(
+            robot,
+            "yesOrNo",
+            self.speech_result_designator.writeable,
+            timeout=timeout,
+            look_at_standing_person=look_at_standing_person,
+        )
+        smach.State.__init__(self, outcomes=["yes", "no", "no_result"])
+
+    def execute(self, userdata=None):
+        result = super().execute(userdata)
+        if result == "no_result":
+            return "no_result"
+
+        hmi_result = self.speech_result_designator.resolve()
+        if (
+            not hmi_result
+            or not hmi_result.semantics
+            or ("yes" not in hmi_result.semantics and "no" not in hmi_result.semantics)
+        ):
+            return "no_result"
+
+        if hmi_result.semantics["yes"]:
+            return "yes"
+        else:
+            return "no"
+
+
 class WaitForPersonInFront(smach.State):
     def __init__(self, robot, attempts=1, sleep_interval=1.0):
         """
