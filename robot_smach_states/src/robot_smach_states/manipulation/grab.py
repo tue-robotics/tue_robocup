@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 # ROS
 import PyKDL as kdl
-from pykdl_ros import VectorStamped
+from pykdl_ros import VectorStamped, FrameStamped
 import rospy
 import smach
 import tf2_ros
@@ -208,6 +208,12 @@ class PickUp(smach.State):
         arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
+        # Define the pose of the object relative to the gripper (which made contact at grasp_framestamped)
+        pose_in_hand = FrameStamped(grasp_framestamped.frame.Inverse() * grab_entity.pose.frame,
+                                    grasp_framestamped.header.stamp,
+                                    "map" # all entities in ED must be defined with respect to map. We will ignore this property
+                                    )
+        self.robot.ed.update_entity(uuid=grab_entity.uuid, frame_stamped=pose_in_hand)
         # Remove pose from ED as we are holding the object in the gripper
         self.robot.ed.update_entity(uuid=grab_entity.uuid, frame_stamped=pose_in_hand)
         self.robot.ed.update_entity(uuid=grab_entity.uuid, remove_pose=True)
