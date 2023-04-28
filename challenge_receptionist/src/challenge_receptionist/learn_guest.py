@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 import rospy
 from ed.entity import Entity
+from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, LearnPerson, HearOptionsExtra, AskYesNo
+from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, AskYesNo
 from robot_smach_states.reset import ResetArms
 
 import robot_smach_states.util.designators as ds
@@ -75,13 +76,20 @@ class LearnGuest(smach.StateMachine):
                                        block=False,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
-
-            smach.StateMachine.add('ASK_GUEST_NAME',
-                                   AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names,
-                                                 default_name=default_name),
-                                   transitions={'succeeded': 'LEARN_PERSON',
-                                                'failed': 'ASK_NAME_FAILED',
-                                                'timeout': 'ASK_NAME_FAILED'})
+            if is_sim_mode():
+                smach.StateMachine.add('ASK_GUEST_NAME',
+                                       AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names,
+                                                     default_name=default_name),
+                                       transitions={'succeeded': 'LEARN_PERSON',
+                                                    'failed': 'ASK_NAME_FAILED',
+                                                    'timeout': 'ASK_NAME_FAILED'})
+            else:
+                smach.StateMachine.add('ASK_GUEST_NAME',
+                                       AskPersonNamePicoVoice(
+                                           robot, guest_name_des.writeable, default_name=default_name, nr_tries=3
+                                       ),
+                                       transitions={'succeeded': 'LEARN_PERSON',
+                                                    'failed': 'ASK_NAME_FAILED'})
 
             smach.StateMachine.add('ASK_NAME_FAILED',
                                    Say(robot, ["I heard your name is {name}"],
