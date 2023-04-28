@@ -202,8 +202,8 @@ class PickUp(smach.State):
         arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
-        # Update Kinect once again to make sure the object disappears from ED
-        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.uuid)
+        # Remove pose from ED as we are holding the object in the gripper
+        self.robot.ed.update_entity(uuid=grab_entity.uuid, remove_pose=True)
 
         arm.wait_for_motion_done(cancel=True)
 
