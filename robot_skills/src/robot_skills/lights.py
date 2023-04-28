@@ -21,9 +21,6 @@ class LightsInterface(RobotPart):
         """
         super(LightsInterface, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
-    def close(self):
-        pass
-
     def set_color(self, r, g, b, a=1.0):
         """
         Set the color of the lights of the robot in RGBA values
