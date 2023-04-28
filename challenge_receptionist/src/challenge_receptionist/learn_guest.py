@@ -71,9 +71,8 @@ class LearnGuest(smach.StateMachine):
                                                 'failed': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_HELLO',
-                                   Say(robot, ["Hi there, please speak loudly and directly into my microphone"
-                                               "I'll learn your face now"],
-                                       block=False,
+                                   Say(robot, ["Hi there, please speak loudly and directly into my microphone"],
+                                       block=True,
                                        look_at_standing_person=True),
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
             if is_sim_mode():
