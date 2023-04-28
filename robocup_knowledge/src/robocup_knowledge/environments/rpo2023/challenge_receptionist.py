@@ -7,7 +7,7 @@ operator_name = "john"
 
 operator_drink = "beer"
 
-starting_point = "initial_pose"
+starting_point = "initial_pose_receptionist"
 
 waypoint_door = {'id': 'entry_door', 'radius': 0.5}
 
