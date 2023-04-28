@@ -49,8 +49,7 @@ class StoreSingleItem(smach.StateMachine):
                                    )
 
             smach.StateMachine.add("GRAB",
-                                   states.manipulation.Grab(robot, item_designator, arm,
-                                                            room=room_designator),
+                                   states.manipulation.Grab(robot, item_designator, arm, room_designator),
                                    transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
@@ -135,14 +134,13 @@ class StoreItems(smach.StateMachine):
                                                 "no_similar_item": "STORE_ANYWHERE"})
 
             smach.StateMachine.add('STORE_NEAR_ITEM',
-                                   StoreSingleItem(robot, item_designator, place_near_designator,
-                                                   room_designator=room_designator),
+                                   StoreSingleItem(robot, item_designator, place_near_designator, room_designator),
                                    transitions={'succeeded': 'ITERATE_ENTITY',
                                                 'failed': 'ITERATE_ENTITY'}
                                    )
 
             smach.StateMachine.add('STORE_ANYWHERE',
-                                   StoreSingleItem(robot, item_designator, place_anywhere_designator, arm),
+                                   StoreSingleItem(robot, item_designator, place_anywhere_designator, arm, room_designator),
                                    transitions={'succeeded': 'ITERATE_ENTITY',
                                                 'failed': 'ITERATE_ENTITY'}
                                    )
