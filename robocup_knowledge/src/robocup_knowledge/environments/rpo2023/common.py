@@ -9,20 +9,26 @@ names = list(set(female_names + male_names))
 
 # This dict holds all locations
 locations = [
-    {'name': 'dinner_table',    'room': 'dining_room', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'cabinet',         'room': 'dining_room', 'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'bookcase',        'room': 'dining_room', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'desk',          'room': 'office',  'category': 'table',   'manipulation': 'yes'},
+    {'name': 'side_table',    'room': 'office',  'category': 'table',   'manipulation': 'yes'},
 
-    {'name': 'kitchen_cabinet', 'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
-    {'name': 'fridge',          'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
+    {'name': 'cabinet',       'room': 'kitchen', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'dishwasher',    'room': 'kitchen', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'fridge',        'room': 'kitchen', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'kitchen_table', 'room': 'kitchen', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'side_board',    'room': 'kitchen', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'sink',          'room': 'kitchen', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'workstation',   'room': 'kitchen', 'category': 'table',   'manipulation': 'yes'},
 
-    {'name': 'salon_table',     'room': 'living_room', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'couch_long',      'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
-    {'name': 'couch_short',     'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'arm_chair',     'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'easy_chair',    'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'sofa',          'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'tv_stand',      'room': 'living_room', 'category': 'shelf',   'manipulation': 'no'},
+    {'name': 'tv_table',      'room': 'living_room', 'category': 'table',   'manipulation': 'yes'},
 
-    {'name': 'work_bench1',     'room': 'office',      'category': 'table',   'manipulation': 'yes'},
-    {'name': 'work_bench2',     'room': 'office',      'category': 'table',   'manipulation': 'yes'},
-    {'name': 'closet',          'room': 'office',      'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'bed',         'room': 'bed_room', 'category': 'utility', 'manipulation': 'yes'},
+    {'name': 'closet',      'room': 'bed_room', 'category': 'shelf',   'manipulation': 'no'},
+    {'name': 'night_stand', 'room': 'bed_room', 'category': 'table',   'manipulation': 'yes'},
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
