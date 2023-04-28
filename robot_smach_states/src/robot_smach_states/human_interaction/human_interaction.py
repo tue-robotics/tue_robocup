@@ -583,7 +583,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
         answer = ds.VariableDesignator(resolve_type=HMIResult)
 
         @smach.cb_interface(outcomes=["succeeded", "failed"])
-        def process_answer(answer_des, output_des):
+        def process_answer(_, answer_des, output_des):
             try:
                 answer_val = answer_des.resolve()
                 rospy.logdebug(f"{answer_val=}")
@@ -610,7 +610,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             self.add(
                 "HEAR",
                 HearOptionsExtraPicovoice(robot, "askPersonName", answer.writeable),
-                transitions={"heard": "succeeded", "no_result": "CHECK_TRIES"},
+                transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
             )
             self.add(
                 "PROCESS_ANSWER",
