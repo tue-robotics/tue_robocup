@@ -98,7 +98,7 @@ class StoreItems(smach.StateMachine):
                                                  "required_goals": ["carrying_pose"],
                                                  "required_gripper_types": [GripperTypes.GRASPING]},
                                          name="empty_arm_designator").lockable()
-        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area="on_top_of", name="empty_spot_designator")
+        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=knowledge.default_area, name="empty_spot_designator")
 
         with self:
             smach.StateMachine.add('INSPECT',
