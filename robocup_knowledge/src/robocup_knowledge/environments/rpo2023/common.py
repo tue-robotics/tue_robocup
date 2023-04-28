@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 
-female_names = ["amelia", "angel", "ava", "charlie", "Charlotte", "hunter", "max", "mia", "olivia", "parker", "sam"]
+female_names = ["amelia", "angel", "ava", "charlie", "charlotte", "hunter", "max", "mia", "olivia", "parker", "sam"]
 male_names = ["angel", "charlie", "hunter", "jack", "max", "noah", "oliver", "parker", "sam", "thomas", "william"]
 
 names = list(set(female_names + male_names))
