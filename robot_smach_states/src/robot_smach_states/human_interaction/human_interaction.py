@@ -401,17 +401,15 @@ class AskYesNoPicoVoice(HearOptionsExtraPicoVoice):
             return "no_result"
 
         hmi_result = self.speech_result_designator.resolve()
-        if (
-            not hmi_result
-            or not hmi_result.semantics
-            or ("yes" not in hmi_result.semantics and "no" not in hmi_result.semantics)
-        ):
+        if not hmi_result or not hmi_result.semantics:
             return "no_result"
 
-        if hmi_result.semantics["yes"]:
+        if "yes" in hmi_result.semantics:
             return "yes"
-        else:
+        elif "no" in hmi_result.semantics:
             return "no"
+        else:
+            return "no_result"
 
 
 class WaitForPersonInFront(smach.State):
