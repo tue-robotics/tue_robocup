@@ -16,9 +16,6 @@ class SimEButton(RobotPart):
         super(SimEButton, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         pass
 
-    def close(self):
-        pass
-
     @staticmethod
     def read_ebutton():
         """

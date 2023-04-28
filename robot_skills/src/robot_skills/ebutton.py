@@ -23,9 +23,6 @@ class EButton(RobotPart):
         topic = topic or "/{}/emergency_switch".format(robot_name)
         self._topic = self.create_subscriber(topic, Bool, self._listen)
 
-    def close(self):
-        pass
-
     def _listen(self, s):
         """
         Callback methods that listens to /emergency_switch
