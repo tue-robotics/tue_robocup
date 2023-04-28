@@ -14,7 +14,7 @@ ITEM3[{"item1": F1, "item2": F2, "item3": F3}] -> ITEM[F1] ITEM[F2] and ITEM[F3]
 
 # Create grammar
 for d in common.objects:
-    if d["category"] in ["drink", "fruit", "snack"] or d["name"] == "corn_flakes":
+    if d["category"] in ["drink", "fruit", "snack", "pantry_item"]:
         name = d["name"]
         order_grammar += f"\nITEM['{name}'] -> {name}"
 
