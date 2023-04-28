@@ -77,7 +77,9 @@ class IterateDesignator(smach.State):
         assert hasattr(collection_des, 'resolve'), "collection_des should have attribute 'resolve'"
         assert hasattr(collection_des.resolve_type, '__iter__') and \
                hasattr(collection_des.resolve_type, '__getitem__') and \
-               not isinstance(collection_des.resolve_type, type), "collection_des should resolve to an iterable type"
+               not isinstance(collection_des.resolve_type, type), f"collection_des of type " \
+                                                                  f"{collection_des.resolve_type} should resolve to " \
+                                                                  f"an iterable type"
         assert collection_des.resolve_type[0] == element_des.resolve_type, "Resolve type of collection and element" \
                                                                            "don't match"
 
