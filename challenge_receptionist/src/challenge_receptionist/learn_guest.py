@@ -164,7 +164,7 @@ class LearnGuest(smach.StateMachine):
                                                     'no_result': 'DEFAULT_DRINK'})
             else:
                 smach.StateMachine.add('HEAR_DRINK_ANSWER',
-                                       HearOptionsExtraPicovoice(
+                                       HearOptionsExtraPicoVoice(
                                            robot, "drinks", guest_drink_des.writeable, look_at_standing_person=True
                                        ),
                                        transitions={'heard': 'RESET_1',

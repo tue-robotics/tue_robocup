@@ -287,7 +287,7 @@ class HearOptionsExtra(smach.State):
         return "no_result"
 
 
-class HearOptionsExtraPicovoice(smach.State):
+class HearOptionsExtraPicoVoice(smach.State):
     """
     Listen to what the user said using the PicoVoice backend
     """
@@ -610,7 +610,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
             self.add(
                 "HEAR",
-                HearOptionsExtraPicovoice(robot, "askPersonName", answer.writeable),
+                HearOptionsExtraPicoVoice(robot, "askPersonName", answer.writeable),
                 transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
             )
             self.add(
