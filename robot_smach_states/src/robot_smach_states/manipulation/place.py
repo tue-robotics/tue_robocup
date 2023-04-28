@@ -206,6 +206,8 @@ class Place(smach.StateMachine):
                 place_area = place_volume.resolve()
             else:
                 raise AssertionError("Cannot place in {}".format(place_volume))
+        else:
+            place_area = None
 
         # Case 3
         if isinstance(place_pose, str):
