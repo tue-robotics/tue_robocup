@@ -104,7 +104,10 @@ class StoreItems(smach.StateMachine):
         with self:
             smach.StateMachine.add('INSPECT',
                                    states.world_model.Inspect(robot, source_entity,
-                                                              segmented_entities_designator, room=room),
+                                                              segmented_entities_designator,
+                                                              navigation_area=knowledge.inspect_area,
+                                                              fit_supporting_entity=False,
+                                                              room=room),
                                    transitions={'done': 'CONVERT_ENTITIES',
                                                 'failed': 'failed'})
 
