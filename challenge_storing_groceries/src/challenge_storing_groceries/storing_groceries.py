@@ -26,6 +26,7 @@ def setup_statemachine(robot):
     state_machine = smach.StateMachine(outcomes=['Done', 'Failed', 'Aborted'])
 
     skip_door = rospy.get_param("~skip_door", True)
+    skip_inspect = rospy.get_param("~skip inspect", True)
     shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
     tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
     objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
@@ -62,6 +63,11 @@ def setup_statemachine(robot):
                                transitions={'arrived': 'INSPECT_SHELVES',
                                             'unreachable': 'INSPECT_SHELVES',
                                             'goal_not_defined': 'INSPECT_SHELVES'})
+
+        smach.StateMachine.add("SKIP_INSPECT",
+                               CheckBool(skip_inspect),
+                               transitions={'true': "STORE_GROCERIES",
+                                            'false': "INSPECT_SHELVES"})
 
         smach.StateMachine.add("INSPECT_SHELVES",
                                InspectAreas(robot, shelfDes, objectsDes, knowledge=challenge_knowledge, navigation_area='in_front_of'),
