@@ -86,10 +86,10 @@ class StoreItems(smach.StateMachine):
 
         segmented_entities_designator = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
-        entities_designator = ds.VariableDesignator([], resolve_type=[Entity])
-        item_designator = ds.VariableDesignator(resolve_type=Entity)
+        closest_item_designator = ds.VariableDesignator(resolve_type=Entity)
 
-        near_object_designator = SimilarEntityDesignator(robot, item_designator, item_classifications, knowledge,
+        near_object_designator = SimilarEntityDesignator(robot, closest_item_designator, item_classifications,
+                                                         knowledge,
                                                          name="similar_object_designator")
         place_near_designator = NearObjectSpotDesignator(robot, near_object_designator, target_entity,
                                                          name="place_near_designator")
@@ -98,7 +98,8 @@ class StoreItems(smach.StateMachine):
                                                  "required_goals": ["carrying_pose"],
                                                  "required_gripper_types": [GripperTypes.GRASPING]},
                                          name="empty_arm_designator").lockable()
-        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=knowledge.default_area, name="empty_spot_designator")
+        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=knowledge.default_area,
+                                                        name="empty_spot_designator")
 
         with self:
             smach.StateMachine.add('INSPECT',
@@ -107,34 +108,38 @@ class StoreItems(smach.StateMachine):
                                    transitions={'done': 'CONVERT_ENTITIES',
                                                 'failed': 'failed'})
 
-            @smach.cb_interface(outcomes=["converted"])
+            @smach.cb_interface(outcomes=["converted", "no_entities"])
             def convert(userdata=None):
                 """ convert Classificationresult to Entitiy"""
                 # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
                 entities = []
+                distances = []
                 segmented_entities = segmented_entities_designator.resolve()
+                hero_pose = robot.base.get_location()
+
+                if not segmented_entities:
+                    return "no_entities"
+
                 for seg_entity in segmented_entities:
                     e = robot.ed.get_entity(seg_entity.uuid)
+                    distance = e.distance_to_2d(hero_pose.frame.p)
                     entities.append(e)
-                writer = entities_designator.writeable
-                writer.write(entities)
+                    distances.append(distance)
+
+                closest_entity = entities[distances.index(min(distances))]
+                writer = closest_item_designator.writeable
+                writer.write(closest_entity)
+
                 return "converted"
 
             smach.StateMachine.add("CONVERT_ENTITIES",
                                    smach.CBState(convert),
-                                   transitions={'converted': 'ITERATE_ENTITY'})
-
-            # Begin setup iterations
-            smach.StateMachine.add('ITERATE_ENTITY',
-                                   states.designator_iterator.IterateDesignator(entities_designator,
-                                                                                item_designator.writeable),
-                                   transitions={'next': 'CHECK_SIMILAR_ITEM',
-                                                'stop_iteration': 'succeeded'}
-                                   )
+                                   transitions={'converted': 'CHECK_SIMILAR_ITEM',
+                                                'no_entities': 'succeeded'})
 
             @smach.cb_interface(outcomes=["item_found", "no_similar_item"])
             def check_similar_item(userdata=None):
-                rospy.loginfo("Going to store entity {}".format(item_designator.resolve()))
+                rospy.loginfo("Going to store {}".format(closest_item_designator.resolve()))
                 if near_object_designator.resolve():
                     return "item_found"
                 return "no_similar_item"
@@ -145,19 +150,19 @@ class StoreItems(smach.StateMachine):
                                                 "no_similar_item": "STORE_ANYWHERE"})
 
             smach.StateMachine.add('STORE_NEAR_ITEM',
-                                   StoreSingleItem(robot, item_designator, place_near_designator, room=room),
-                                   transitions={'succeeded': 'ITERATE_ENTITY',
-                                                'failed': 'ITERATE_ENTITY'}
+                                   StoreSingleItem(robot, closest_item_designator, place_near_designator, room=room),
+                                   transitions={'succeeded': 'INSPECT',
+                                                'failed': 'INSPECT'}
                                    )
 
             smach.StateMachine.add('STORE_ANYWHERE',
                                    StoreSingleItem(robot,
-                                                   item_designator,
+                                                   closest_item_designator,
                                                    place_anywhere_designator,
                                                    arm,
                                                    room=room),
-                                   transitions={'succeeded': 'ITERATE_ENTITY',
-                                                'failed': 'ITERATE_ENTITY'}
+                                   transitions={'succeeded': 'INSPECT',
+                                                'failed': 'INSPECT'}
                                    )
 
 
