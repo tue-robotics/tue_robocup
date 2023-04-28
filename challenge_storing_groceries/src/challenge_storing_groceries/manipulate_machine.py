@@ -122,9 +122,6 @@ class StoreItems(smach.StateMachine):
                 segmented_entities = segmented_entities_designator.resolve()
                 hero_pose = robot.base.get_location()
 
-                if not segmented_entities:
-                    return "no_entities"
-
                 for seg_entity in segmented_entities:
                     if seg_entity.uuid in current_blacklist:
                         continue
@@ -134,6 +131,9 @@ class StoreItems(smach.StateMachine):
                     distance = e.distance_to_2d(hero_pose.frame.p)
                     entities.append(e)
                     distances.append(distance)
+
+                if not entities:
+                    return "no_entities"
 
                 closest_entity = entities[distances.index(min(distances))]
                 writer = closest_item_designator.writeable
