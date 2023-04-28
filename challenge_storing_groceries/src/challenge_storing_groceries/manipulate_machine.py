@@ -157,20 +157,20 @@ if __name__ == '__main__':
     from robot_skills.get_robot import get_robot
     from robot_smach_states.util.designators import EntityByIdDesignator, ArmDesignator
 
-    if len(sys.argv) < 2:
-        print(f"usage: python {sys.argv[0]} [entity ID] [Optional: shelf ID]")
+    if len(sys.argv) < 3:
+        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID [Optional: shelf ID]")
         sys.exit()
 
     place_area = "on_top_of"
-    if len(sys.argv) > 2:
-        place_area = sys.argv[2]
+    if len(sys.argv) > 3:
+        place_area = sys.argv[3]
 
     rospy.init_node('test_inspect_shelves')
 
-    robot = get_robot("hero")
+    robot = get_robot(sys.argv[1])
     robot.reset_all_arms()
 
-    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[1])
+    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[2])
 
     shelfDes = EntityByIdDesignator(robot, uuid="cabinet")
     armDes = ArmDesignator(robot)
