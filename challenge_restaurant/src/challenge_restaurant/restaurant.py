@@ -122,7 +122,7 @@ class Restaurant(smach.StateMachine):
                                                     'wait': 'SAY_WAVING_2',
                                                     'no_result': 'MAX_TRIES'})
                 smach.StateMachine.add('MAX_TRIES',
-                                       CheckTries(robot, max_tries=3, reset_des=reset_tries_des),
+                                       CheckTries(max_tries=3, reset_des=reset_tries_des),
                                        transitions={'not_yet': 'ASK_TAKE_ORDER',
                                                     'max_tries': 'SAY_WAVING_2'})
 
