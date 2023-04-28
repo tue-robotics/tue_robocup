@@ -8,10 +8,11 @@ from ed.entity import Entity
 from robocup_knowledge import load_knowledge
 from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
-from robot_smach_states.human_interaction import AskYesNo, Say, GetFurnitureFromOperatorPose
+from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, Say, GetFurnitureFromOperatorPose
 from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
 import robot_smach_states.util.designators as ds
 from robot_skills.arm import arms
+from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.utility import WaitTime
 
 
@@ -225,11 +226,18 @@ class CarryMyLuggage(StateMachine):
                 },
             )
 
-            StateMachine.add(
-                "WAIT_FOR_TASK",
-                AskYesNo(self.robot),
-                transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"}, #todo this last one can create an infitine loop
-            )
+            if is_sim_mode():
+                StateMachine.add(
+                    "WAIT_FOR_TASK",
+                    AskYesNo(self.robot),
+                    transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"}, #todo this last one can create an infitine loop
+                )
+            else:
+                StateMachine.add(
+                    "WAIT_FOR_TASK",
+                    AskYesNoPicoVoice(self.robot),
+                    transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"},  #ToDo this last one can create an infitine loop
+                )
 
             StateMachine.add(
                 "HANDOVER_TO_HUMAN",
