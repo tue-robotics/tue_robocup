@@ -24,7 +24,7 @@ class StoreSingleItem(smach.StateMachine):
     Store a single item at another place
     """
 
-    def __init__(self, robot, item_designator, place_pose_designator, arm=None):
+    def __init__(self, robot, item_designator, place_pose_designator, arm=None, room_designator=None):
         """
         Constructor
 
@@ -49,7 +49,8 @@ class StoreSingleItem(smach.StateMachine):
                                    )
 
             smach.StateMachine.add("GRAB",
-                                   states.manipulation.Grab(robot, item_designator, arm),
+                                   states.manipulation.Grab(robot, item_designator, arm,
+                                                            room_designator=room_designator),
                                    transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
@@ -76,6 +77,8 @@ class StoreItems(smach.StateMachine):
 
         entities_designator = ds.VariableDesignator([], resolve_type=[Entity])
         item_designator = ds.VariableDesignator(resolve_type=Entity)
+
+        room_designator = ds.EntityByIdDesignator(robot, knowledge.room)
 
         near_object_designator = SimilarEntityDesignator(robot, item_designator, item_classifications, knowledge,
                                                          name="similar_object_designator")
@@ -132,7 +135,8 @@ class StoreItems(smach.StateMachine):
                                                 "no_similar_item": "STORE_ANYWHERE"})
 
             smach.StateMachine.add('STORE_NEAR_ITEM',
-                                   StoreSingleItem(robot, item_designator, place_near_designator),
+                                   StoreSingleItem(robot, item_designator, place_near_designator,
+                                                   room_designator=room_designator),
                                    transitions={'succeeded': 'ITERATE_ENTITY',
                                                 'failed': 'ITERATE_ENTITY'}
                                    )
