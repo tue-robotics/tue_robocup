@@ -169,7 +169,8 @@ class ValueByKeyDesignator(Designator):
         # ToDo: possible cases: container=None, Missing key
         container = self._container.resolve()
         if container:
-            return container[self._key]
+            key = self._key.resolve() if hasattr(self._key, "resolve") else self._key
+            return container[key]
         else:
             return None
 
