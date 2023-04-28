@@ -3,8 +3,9 @@ from __future__ import absolute_import
 # TU/e Robotics
 from ed.entity import Entity
 from .navigation import NavigateTo
-from .constraint_functions import combine_constraints, look_at_constraint, radius_constraint
+from .constraint_functions import combine_constraints, look_at_constraint, radius_constraint, symbolic_constraint
 from ..util.designators import check_resolve_type
+from ..util.designators.core import Designator
 
 
 class NavigateToObserve(NavigateTo):
@@ -23,6 +24,9 @@ class NavigateToObserve(NavigateTo):
         :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
         """
         check_resolve_type(entity_designator, Entity)
+        if room:
+            check_resolve_type(room, Entity)
+
         constraint_list = [
             lambda: look_at_constraint(entity_designator),
             lambda: radius_constraint(entity_designator, radius, margin)

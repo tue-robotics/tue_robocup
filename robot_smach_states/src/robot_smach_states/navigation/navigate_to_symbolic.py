@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 # TU/e Robotics
 from ed.entity import Entity
+from ..util.designators.core import Designator
 from .navigation import NavigateTo
 from .constraint_functions import combine_constraints, symbolic_constraint, look_at_constraint
 from ..util.designators import check_resolve_type
@@ -23,8 +24,10 @@ class NavigateToSymbolic(NavigateTo):
         :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
         """
         # Check that the entity_designator_area_name_map's keys all resolve to EntityInfo's
-        assert(all(entity_desig.resolve_type == Entity for entity_desig in entity_designator_area_name_map.keys()))
+        assert (all(entity_desig.resolve_type == Entity for entity_desig in entity_designator_area_name_map.keys()))
         check_resolve_type(entity_lookat_designator, Entity)
+        if room:
+            check_resolve_type(room, Entity)
 
         constraint_list = [
             lambda: symbolic_constraint(robot, entity_designator_area_name_map),
