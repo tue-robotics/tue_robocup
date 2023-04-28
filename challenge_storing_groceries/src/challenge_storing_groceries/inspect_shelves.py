@@ -40,7 +40,7 @@ class InspectAreas(smach.StateMachine):
     Class to navigate to a(n) (furniture) object and segment the objects on top of it.
     """
 
-    def __init__(self, robot, entityDes, objectIDsDes=None, searchAreas=None, navigation_area=None,
+    def __init__(self, robot, entityDes, objectIDsDes=None, roomDes=None, searchAreas=None, navigation_area=None,
                  knowledge=None, unknown_threshold=0.0, filter_threshold=0.0):
         """
         Constructor
@@ -48,6 +48,7 @@ class InspectAreas(smach.StateMachine):
         :param robot: robot object
         :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
         :param objectIDsDes: designator that is used to store the segmented objects
+        :param roomDes: Room for robot to stay in while inspecting
         :param searchAreas: (designator to) array of strings defining where the objects are w.r.t. the entity,
             if none is provided we will use the knowledge to decide them
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
@@ -77,12 +78,13 @@ class InspectAreas(smach.StateMachine):
         with self:
             if navigation_area:
                 smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: navigation_area},
-                                                                                 entityDes),
+                                                                                 entityDes, room=roomDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'ITERATE_AREA'})
             else:
-                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes,
+                                                                                radius=1.0, room=roomDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'ITERATE_AREA'})

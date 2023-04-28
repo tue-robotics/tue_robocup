@@ -228,7 +228,7 @@ class Inspect(smach.StateMachine):
     Note that when inspecting a high entity the robot will end the Inspect in a high position.
     """
     def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area="",
-                 unknown_threshold=0.0, filter_threshold=0.0, fit_supporting_entity=True):
+                 unknown_threshold=0.0, filter_threshold=0.0, fit_supporting_entity=True, room=None):
         """
         Constructor
 
@@ -242,6 +242,7 @@ class Inspect(smach.StateMachine):
         :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
         :param fit_supporting_entity: Fit or not fit the supporting entity
+        :param room: EdEntityDesignator indicating the room in which the robot has to stay in
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -251,12 +252,13 @@ class Inspect(smach.StateMachine):
         with self:
             if navigation_area:
                 smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: navigation_area},
-                                                                                 entityDes),
+                                                                                 entityDes, room=room),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'RISE'})
             else:
-                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes,
+                                                                                radius=1.0, room=room),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'RISE'})

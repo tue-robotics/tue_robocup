@@ -30,6 +30,7 @@ def setup_statemachine(robot):
     shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
     tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
     objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
+    roomDes = ds.EntityByIdDesignator(robot, challenge_knowledge.room, name="room_designator")
 
     with state_machine:
 
@@ -59,7 +60,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add("NAV_TO_START",
                                states.navigation.NavigateToSymbolic(robot,
                                                                     {shelfDes: "in_front_of"},
-                                                                    shelfDes),
+                                                                    shelfDes, room=roomDes),
                                transitions={'arrived': 'INSPECT_SHELVES',
                                             'unreachable': 'INSPECT_SHELVES',
                                             'goal_not_defined': 'INSPECT_SHELVES'})
@@ -70,7 +71,8 @@ def setup_statemachine(robot):
                                             'false': "INSPECT_SHELVES"})
 
         smach.StateMachine.add("INSPECT_SHELVES",
-                               InspectAreas(robot, shelfDes, objectsDes, knowledge=challenge_knowledge, navigation_area='in_front_of'),
+                               InspectAreas(robot, shelfDes, objectsDes, roomDes, knowledge=challenge_knowledge,
+                                            navigation_area='in_front_of'),
                                transitions={'done': 'RESET_ARM',
                                             'failed': 'Failed'})
 
@@ -86,7 +88,7 @@ def setup_statemachine(robot):
 
         # store items
         smach.StateMachine.add("STORE_GROCERIES",
-                               StoreItems(robot, tableDes, shelfDes, objectsDes, challenge_knowledge),
+                               StoreItems(robot, tableDes, shelfDes, objectsDes, challenge_knowledge, room=roomDes),
                                transitions={'succeeded': 'AT_END',
                                             'preempted': 'Aborted',
                                             'failed': 'Failed'}
