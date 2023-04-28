@@ -21,6 +21,7 @@ from visualization_msgs.msg import Marker
 from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from ed.entity import Entity
 from hmi import TimeoutException
+from robot_skills.simulation.sim_mode import is_sim_mode
 from ..util.startup import startup
 from ..util.designators import VariableDesignator
 
@@ -179,12 +180,16 @@ class FollowOperator(smach.State):
                 sentence = "Should I follow you?"
                 self._robot.speech.speak(sentence, block=True)
                 try:
-                    answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+                    if is_sim_mode():
+                        answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+                    else:
+                        answer = self._robot.picovoice.get_intent("yesOrNo")
+
                 except TimeoutException as e:
                     self._robot.speech.speak("I did not hear you!")
                     rospy.sleep(2)
                 else:
-                    if answer.sentence == "yes":
+                    if (is_sim_mode() and answer.sentence == "yes") or (not is_sim_mode() and "yes" in answer.semantics):
                         operator = self._robot.ed.get_closest_laser_entity(
                             radius=1,
                             center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame))
