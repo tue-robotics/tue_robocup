@@ -120,7 +120,7 @@ class Restaurant(smach.StateMachine):
                 smach.StateMachine.add('ASK_TAKE_ORDER', AskTakeTheOrderPicoVoice(robot),
                                        transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
                                                     'wait': 'SAY_WAVING_2',
-                                                    'timeout': 'MAX_TRIES'})
+                                                    'no_result': 'MAX_TRIES'})
                 smach.StateMachine.add('MAX_TRIES',
                                        CheckTries(robot, max_tries=3, reset_des=reset_tries_des),
                                        transitions={'not_yet': 'ASK_TAKE_ORDER',
