@@ -296,13 +296,14 @@ class ResetOnFailure(smach.State):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator):
+    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, room_designator=None):
         """
         Let the given robot move to an entity and grab that entity using some arm
 
         :param robot: Robot to use
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
+        :param room: Designator that resolves to the room where her has to stay
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -315,7 +316,7 @@ class Grab(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item, room_designator=room_designator),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
