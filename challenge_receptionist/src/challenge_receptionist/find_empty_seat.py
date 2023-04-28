@@ -57,7 +57,7 @@ class FindEmptySeat(smach.StateMachine):
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
         # TODO: Eventually get this into the robocup knowledge and make it generic such that it is changeable per seat
-        volumes = ['on_top_of_l', 'on_top_of_m', 'on_top_of_r']
+        volumes = ['on_top_of']
         # TODO: this is a roboCup hack to workaround the problem that (sizes of) the entities in the CheckEmpty state
         #  are not correct, the calculations seem correct so the problem probably lies in the entities somehow.
         random.shuffle(volumes)
@@ -88,7 +88,7 @@ class FindEmptySeat(smach.StateMachine):
             smach.StateMachine.add('ITERATE_NEXT_VOLUME',
                                    IterateDesignator(volumes, volumes_des.writeable),
                                    transitions={'next': 'CHECK_SEAT_EMPTY',
-                                                'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
+                                                'stop_iteration': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
                                    CheckVolumeEmpty(robot, seat_ent_des, volumes_des, 0.6, None),
