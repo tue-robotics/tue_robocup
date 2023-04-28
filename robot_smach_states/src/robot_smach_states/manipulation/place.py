@@ -160,7 +160,7 @@ class Put(smach.State):
 
         # Wait for arm to finish their motions
         arm.wait_for_motion_done()
-        
+
         # Move back
         self._robot.base.force_drive(-0.125, 0, 0, 1.5, ax=0.5)
 
