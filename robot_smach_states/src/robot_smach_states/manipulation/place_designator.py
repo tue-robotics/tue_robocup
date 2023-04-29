@@ -219,6 +219,7 @@ class EmptySpotDesignator(Designator):
 
         if not hasattr(box, "bottom_area"):
             rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.uuid))
+            return []
 
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box
