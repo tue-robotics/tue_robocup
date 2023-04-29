@@ -75,8 +75,9 @@ class EmptySpotDesignator(Designator):
         place_frame = FrameStamped(frame=place_location._pose, stamp=rospy.Time.now(), frame_id="map")
 
         # points_of_interest = []
-        if self._area:
-            vectors_of_interest = self._determine_points_of_interest_with_area(place_location, self._area)
+        area = self._area.resolve() if hasattr(self._area, "resolve") else self._area
+        if area:
+            vectors_of_interest = self._determine_points_of_interest_with_area(place_location, area)
         else:
             vectors_of_interest = self._determine_points_of_interest(place_frame.frame,
                                                                      z_max=place_location.shape.z_max,
