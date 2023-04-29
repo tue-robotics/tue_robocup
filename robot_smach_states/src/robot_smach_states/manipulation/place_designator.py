@@ -125,6 +125,9 @@ class EmptySpotDesignator(Designator):
         :return: direct distance between a point and the place offset of the arm
         :rtype: double [meters]
         """
+        # ToDO: This base offset should be taken into account in combination with the orientation of a grasp pose.
+        #   therefore only the magnitude of the offset should be used but still in the correction direction.
+        #   Which can't be defined yet. So my current suggestion is to not use the base offset at all.
         bo = arm.base_offset
 
         offset_pose = base_pose.frame * bo
