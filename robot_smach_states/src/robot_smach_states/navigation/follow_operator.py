@@ -1,9 +1,12 @@
+from typing import List, Optional
+
 # System
 import copy
 from functools import partial
 import math
 
 # ROS
+import genpy
 from geometry_msgs.msg import PointStamped, PoseStamped
 import PyKDL as kdl
 from pykdl_ros import FrameStamped, VectorStamped
@@ -39,7 +42,8 @@ class FollowOperator(smach.State):
                  start_timeout=10, operator_timeout=20, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
                  operator_standing_still_timeout=3.0, replan=False, update_period=0.5):
-        """ Constructor
+        """
+        Constructor
 
         :param robot: robot object
         :param ask_follow:
@@ -47,10 +51,10 @@ class FollowOperator(smach.State):
         :param operator_radius:
         :param lookat_radius:
         :param start_timeout:
-        :param operator_timeout:
+        :param operator_timeout: Timeout for finding an operator
         :param lost_timeout: How long to look for the operator when we lost him/her?
         :param lost_distance:
-        :param operator_id_des:
+        :param operator_id_des: Designator that resolves to the operator id to start following
         :param standing_still_timeout:
         :param operator_standing_still_timeout:
         :param replan:
@@ -58,24 +62,24 @@ class FollowOperator(smach.State):
         """
         smach.State.__init__(self, outcomes=["stopped", 'lost_operator', "no_operator"])
         self._robot = robot
-        self._time_started = None
-        self._operator = None
-        self._operator_id = None
-        self._operator_name = "operator"
-        self._operator_radius = operator_radius
-        self._lookat_radius = lookat_radius
-        self._start_timeout = start_timeout
-        self._breadcrumbs = []  # List of Entity's
-        self._breadcrumb_distance = 0.1  # meters between dropped breadcrumbs
-        self._operator_timeout = operator_timeout
-        self._ask_follow = ask_follow
-        self._learn_face = learn_face
-        self._lost_timeout = lost_timeout
-        self._lost_distance = lost_distance
-        self._standing_still_timeout = standing_still_timeout
-        self._operator_standing_still_timeout = operator_standing_still_timeout
+        self._time_started: Optional[genpy.Time] = None
+        self._operator: Optional[Entity] = None
+        self._operator_id: Optional[str] = None
+        self._operator_name: str = "operator"
+        self._operator_radius: float = operator_radius
+        self._lookat_radius: float = lookat_radius
+        self._start_timeout: float = start_timeout
+        self._breadcrumbs: List[Entity] = []  # List of Entity's
+        self._breadcrumb_distance: float = 0.1  # meters between dropped breadcrumbs
+        self._operator_timeout: float = operator_timeout
+        self._ask_follow: bool = ask_follow
+        self._learn_face: bool = learn_face
+        self._lost_timeout: float = lost_timeout
+        self._lost_distance: float = lost_distance
+        self._standing_still_timeout: float = standing_still_timeout
+        self._operator_standing_still_timeout: float = operator_standing_still_timeout
         self._operator_id_des = operator_id_des
-        self._operator_distance = None
+        self._operator_distance: Optional[float] = None
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
                                              PointStamped, queue_size=10)
         self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
@@ -84,17 +88,17 @@ class FollowOperator(smach.State):
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
                                              PointStamped, queue_size=10)
 
-        self._last_pose_stamped = None
+        self._last_pose_stamped: Optional[FrameStamped] = None
         self._last_pose_stamped_time = None
-        self._last_operator_fs = None
-        self._replan_active = False
-        self._last_operator = None
+        self._last_operator_fs: Optional[FrameStamped] = None
+        self._replan_active: bool = False
+        self._last_operator: Optional[Entity] = None
         self._replan_allowed = replan
         self._replan_timeout = 10  # seconds before another replan is allowed
-        self._replan_time = None
-        self._replan_attempts = 0
-        self._max_replan_attempts = 3
-        self._period = update_period
+        self._replan_time: Optional[genpy.Time] = None
+        self._replan_attempts: int = 0
+        self._max_replan_attempts: int = 3
+        self._update_period: float = update_period
 
     def _operator_standing_still_for_x_seconds(self, timeout):
         """
@@ -107,7 +111,7 @@ class FollowOperator(smach.State):
         if not self._operator:
             return False
 
-        operator_current_fs = FrameStamped(self._operator._pose, rospy.Time.now(), "map")
+        operator_current_fs = FrameStamped(self._operator.pose.frame, rospy.Time.now(), "map")
         # rospy.loginfo("Operator position: %s" % self._operator.pose.position)
 
         if not self._last_operator_fs:
@@ -118,10 +122,12 @@ class FollowOperator(smach.State):
                 # Update the last pose
                 self._last_operator_fs = operator_current_fs
             else:
-                rospy.loginfo("Operator is standing still for %f seconds" % (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec())
+                time_passed = (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec()
+                rospy.loginfo(f"Operator is standing still for {time_passed} seconds")
                 # Check whether we passed the timeout
-                if (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec() > timeout:
+                if time_passed > timeout:
                     return True
+
         return False
 
     def _standing_still_for_x_seconds(self, timeout):
@@ -148,27 +154,31 @@ class FollowOperator(smach.State):
                 self._last_pose_stamped = current_frame
                 self._last_pose_stamped_time = rospy.Time.now()
             else:
-
-                rospy.loginfo( "Robot dit not move for x seconds: %f"%(now - self._last_pose_stamped_time).to_sec())
+                time_passed = (now - self._last_pose_stamped_time).to_sec()
+                rospy.loginfo(f"Robot dit not move for {time_passed} seconds")
 
                 # Check whether we passed the timeout
-                if (now - self._last_pose_stamped_time).to_sec() > timeout:
+                if time_passed > timeout:
                     return True
         return False
 
     def _register_operator(self):
-        """Robots looks at the operator and asks whether the operator should follow.
+        """
+        Robots looks at the operator and asks whether the operator should follow.
         If he says yes, then set self._operator.
-        Also adds the operator to the breadcrumb list"""
+        Also adds the operator to the breadcrumb list
+        """
         start_time = rospy.Time.now()
 
         self._robot.head.look_at_standing_person(distance=1.5)
 
         if self._operator_id:
+            # Can still result in None if the operator is not in ED
             operator = self._robot.ed.get_entity(uuid=self._operator_id)
         else:
             operator = None
 
+        # Try to get an operator entity
         while not operator:
             if self.preempt_requested():
                 return False
@@ -194,7 +204,7 @@ class FollowOperator(smach.State):
                             radius=1,
                             center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame),
                             ignore_z=True)
-                        rospy.loginfo("Operator: {op}".format(op=operator))
+                        rospy.loginfo(f"registering operator: {operator}")
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
                         else:
@@ -217,10 +227,12 @@ class FollowOperator(smach.State):
                     else:
                         return False
             else:
+                # Not asking for the operator, just going for the closest person
                 operator = self._robot.ed.get_closest_laser_entity(
                     radius=1,
                     center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame),
                     ignore_z=True)
+                rospy.loginfo(f"registering operator without asking: {operator}")
                 if not operator:
                     rospy.sleep(1)
 
@@ -238,13 +250,15 @@ class FollowOperator(smach.State):
         return True
 
     def _update_breadcrumb_path(self):
-        """ If the last breadcrumb is less than a threshold away, replace
+        """
+        If the last breadcrumb is less than a threshold away, replace
         the last breadcrumb with the latest operator position; otherwise
         just add it.
+        In case a breadcrumb is 'reached', remove all breadcrumbs up to that point
         """
         if self._operator_id:
             if self._breadcrumbs:
-                if self._breadcrumbs[-1].distance_to_2d(self._operator._pose.p) < self._breadcrumb_distance:
+                if self._breadcrumbs[-1].distance_to_2d(self._operator.pose.frame.p) < self._breadcrumb_distance:
                     self._breadcrumbs[-1] = self._operator
                 else:
                     self._breadcrumbs.append(self._operator)
@@ -263,22 +277,25 @@ class FollowOperator(smach.State):
 
         self._breadcrumbs = temp_crumbs
 
-        self._visualize_breadcrumbs()
+        self._visualize_breadcrumbs(self._breadcrumbs)
 
     def _backup_register(self):
         """This only happens when the operator was just registered, and never tracked"""
         rospy.loginfo("Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1")
-        self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame), ignore_z=True)
+        self._operator = self._robot.ed.get_closest_laser_entity(
+            radius=1,
+            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame),
+            ignore_z=True
+        )
         if self._operator:
             return True
         else:
             rospy.loginfo("Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1")
-            self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-                                                                     center_point=VectorStamped.from_xyz(
-                                                                         1.5, 0, 1, rospy.Time(),
-                                                                         self._robot.base_link_frame),
-                                                                     ignore_z=True)
+            self._operator = self._robot.ed.get_closest_laser_entity(
+                radius=1,
+                center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame),
+                ignore_z=True
+            )
 
         if self._operator:
             return True
@@ -286,7 +303,7 @@ class FollowOperator(smach.State):
             rospy.loginfo("Trying to register operator again")
             self._robot.speech.speak("Oops, let's try this again...", block=False)
             self._register_operator()
-            self._operator = self._robot.ed.get_entity(uuid=self._operator_id )
+            self._operator = self._robot.ed.get_entity(uuid=self._operator_id)
 
         if self._operator:
             self._last_operator = self._operator
@@ -304,14 +321,14 @@ class FollowOperator(smach.State):
             self._operator = None
 
         if self._operator:
-            if (rospy.Time.now() - self._operator.last_update_time).to_sec() > self._period:
+            if (rospy.Time.now() - self._operator.last_update_time).to_sec() > self._update_period:
                 self._robot.speech.speak("Not so fast!")
 
             # If the operator is still tracked, it is also the last_operator
             self._last_operator = self._operator
 
             operator_pos = PointStamped()
-            operator_pos.header.stamp = rospy.get_rostime()
+            operator_pos.header.stamp = rospy.Time.now()
             operator_pos.header.frame_id = self._operator_id
             operator_pos.point.x = 0.0
             operator_pos.point.y = 0.0
@@ -353,7 +370,7 @@ class FollowOperator(smach.State):
                 self._robot.speech.speak("Stop! I lost you! Until I find you again, please wait there.", block=False)
             return False
 
-    def _visualize_breadcrumbs(self):
+    def _visualize_breadcrumbs(self, breadcrumbs):
         breadcrumbs_msg = Marker()
         breadcrumbs_msg.type = Marker.POINTS
         breadcrumbs_msg.scale.x = 0.05
@@ -367,7 +384,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.id = 0
         breadcrumbs_msg.action = Marker.ADD
 
-        for crumb in self._breadcrumbs:
+        for crumb in breadcrumbs:
             breadcrumbs_msg.points.append(tf2_ros.convert(crumb.pose, PoseStamped).pose.position)
 
         self._breadcrumb_pub.publish(breadcrumbs_msg)
@@ -392,25 +409,27 @@ class FollowOperator(smach.State):
         self._plan_marker_pub.publish(line_strip)
 
     def _update_navigation(self):
-        """Set the navigation plan to match the breadcrumbs collected into self._breadcrumbs.
-        This list has all the Entity's of where the operator has been"""
+        """
+        Set the navigation plan to match the breadcrumbs collected into self._breadcrumbs.
+        This list has all the Entity's of where the operator has been
+        """
         self._robot.head.cancel_goal()
 
-        f = self._robot.base.get_location().frame
-        robot_position = f.p
-        operator_position = self._last_operator._pose.p
+        robot_position = self._robot.base.get_location().frame.p
+        operator_position = self._last_operator.pose.frame.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
-        p = PositionConstraint()
-        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x(), operator_position.y(),
-                                                      self._operator_radius)
+        pc = PositionConstraint()
+        pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
+                                                        self._operator_radius)
 
-        o = OrientationConstraint()
-        #if self._operator_id:
-        #    o.frame = self._operator_id
-        #else:
-        o.frame = 'map'
-        o.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
+        oc = OrientationConstraint()
+        # ToDo: should we check if the operator ID still exists in ED, before using it?
+        if self._operator_id:
+            oc.frame = self._operator_id
+        else:
+            oc.frame = "map"
+            oc.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -423,7 +442,7 @@ class FollowOperator(smach.State):
             breadcrumbs = self._breadcrumbs + [self._last_operator]
         for crumb in breadcrumbs:
             assert isinstance(crumb, Entity)
-            diff = crumb._pose.p - previous_point
+            diff = crumb.pose.frame.p - previous_point
             dx, dy = diff.x(), diff.y()
 
             length = crumb.distance_to_2d(previous_point)
@@ -441,7 +460,7 @@ class FollowOperator(smach.State):
                     y = previous_point.y() + i * dy_norm * res
                     kdl_plan.append(FrameStamped.from_xyz_rpy(x, y, 0, 0, 0, yaw, rospy.Time.now(), "map"))
 
-            previous_point = copy.deepcopy(crumb._pose.p)
+            previous_point = copy.deepcopy(crumb.pose.frame.p)
 
         # Delete the elements from the plan within the operator radius from the robot
         cutoff = int(self._operator_radius/(2.0*res))
@@ -452,23 +471,23 @@ class FollowOperator(smach.State):
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             rospy.loginfo("Breadcrumb plan is blocked, removing blocked points")
-            # Go through plan from operator to robot and pick the first unoccupied point as goal point
+            # Go through plan from operator to robot and pick the first unoccupied point as goal point and the points
+            # before that as the plan
             ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
         self._visualize_plan(ros_plan)
-        self._robot.base.local_planner.setPlan(ros_plan, p, o)
+        self._robot.base.local_planner.setPlan(ros_plan, pc, oc)
 
     def _recover_operator(self):
         if not self._learn_face:
             return False
         rospy.loginfo("Trying to recover the operator")
         self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
+        self._robot.speech.speak(f"{self._operator_name}, please look at me while I am looking for you", block=False)
 
         # Wait for the operator and find his/her face
         operator_recovery_timeout = self._lost_timeout
         start_time = rospy.Time.now()
-        recovered_operator = None
 
         look_distance = 2.0
         look_angles = [0.0,
@@ -526,7 +545,7 @@ class FollowOperator(smach.State):
                     self._operator_id = recovered_operator.uuid
                     rospy.loginfo(f"Recovered operator id: {self._operator_id}")
                     self._operator = recovered_operator
-                    self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
+                    self._robot.speech.speak("There you are! Go ahead, I'll follow you again", block=False)
                     self._robot.head.close()
                     self._time_started = rospy.Time.now()
                     return True
@@ -540,44 +559,32 @@ class FollowOperator(smach.State):
         return False
 
     def _turn_towards_operator(self):
-        f = self._robot.base.get_location().frame
-        robot_position = f.p
-        operator_position = self._last_operator._pose.p
+        robot_position = self._robot.base.get_location().frame.p
+        operator_position = self._last_operator.pose.frame.p
 
-        p = PositionConstraint()
-        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x(), operator_position.y(), self._operator_radius)
+        pc = PositionConstraint()
+        pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(), self._operator_radius)
 
-        o = OrientationConstraint()
+        oc = OrientationConstraint()
         if self._operator_id:
-            o.frame = self._operator_id
+            oc.frame = self._operator_id
         else:
-            o.frame = 'map'
-            o.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
+            oc.frame = 'map'
+            oc.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
         dx = operator_position.x() - robot_position.x()
         dy = operator_position.y() - robot_position.y()
 
         yaw = math.atan2(dy, dx)
-        # ToDo: make nice!
-        pose = PoseStamped()
-        pose.header.frame_id = "map"
-        pose.header.stamp = rospy.Time.now()
-        pose.pose.position.x = robot_position.x()
-        pose.pose.position.y = robot_position.y()
-        xx, yy, zz, ww = kdl.Rotation.RPY(0, 0, yaw).GetQuaternion()
-        pose.pose.orientation.x = xx
-        pose.pose.orientation.y = yy
-        pose.pose.orientation.z = zz
-        pose.pose.orientation.w = ww
-        plan = [pose]
-        rospy.loginfo("Operator within self._lookat_radius")
+        fs = FrameStamped.from_xyz_rpy(robot_position.x(), robot_position.y(), 0, 0, 0, yaw, rospy.Time.now(), "map")
+        ps = tf2_ros.convert(fs, PoseStamped)
 
-        self._robot.base.local_planner.setPlan(plan, p, o)
+        self._robot.base.local_planner.setPlan([ps], pc, oc)
 
     def _replan(self):
         self._replan_attempts += 1
         rospy.loginfo("Trying to get a global plan")
-        operator_position = self._last_operator._pose.p
+        operator_position = self._last_operator.pose.frame.p
         # Define end goal constraint, solely based on the (old) operator position
         self._replan_pc = PositionConstraint()
         self._replan_pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
@@ -619,7 +626,7 @@ class FollowOperator(smach.State):
 
         # Check are standing still long
         if self._standing_still_for_x_seconds(self._standing_still_timeout):
-            # Navigation stuck! One of the following possiblities
+            # Navigation stuck! One of the following possibilities
             # - Following an operator, operator is still correct, corner is cut or path is otherwise invalid:
             # (path should not have been cut off) replan with global planner and wait for the local planner to get us
             # out of here
@@ -679,6 +686,7 @@ class FollowOperator(smach.State):
             self._robot.torso.send_goal('reset', timeout=4.0)
 
         if not self._register_operator():
+            # ToDo: Why do we cancel the plan? We didn't start anything yet
             self._robot.base.local_planner.cancelCurrentPlan()
             return "no_operator"
 
@@ -687,6 +695,7 @@ class FollowOperator(smach.State):
         if self._replan_time is None:
             self._replan_time = self._time_started - rospy.Duration(self._replan_timeout)
 
+        rate = rospy.Rate(1/self._update_period)
         while not rospy.is_shutdown():
 
             if self.preempt_requested():
@@ -705,6 +714,7 @@ class FollowOperator(smach.State):
 
             # 4) Action
             if not self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout) and self._operator_distance < self._lookat_radius:
+                rospy.loginfo("Operator within self._lookat_radius")
                 self._turn_towards_operator()
             else:
                 # Only update navigation if there is something to update: operator must have moved
@@ -729,7 +739,7 @@ class FollowOperator(smach.State):
                     self._update_navigation()
                     rospy.loginfo("Updating navigation.")
 
-            rospy.sleep(self._period) # Loop at 2Hz
+            rate.sleep()
 
 
 def setup_statemachine(robot):
