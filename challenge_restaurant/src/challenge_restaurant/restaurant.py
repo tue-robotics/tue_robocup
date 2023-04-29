@@ -145,22 +145,9 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_SPEAK_2',
                                    states.human_interaction.Say(
                                        robot,
-                                       "Hi, please make sure that you speak loudly and directly into my microphone, "
-                                       "like is shown on my screen",
+                                       "Hi, please make sure that you speak loudly and directly into my microphone",
                                        block=True),
-                                   transitions={'spoken': 'SHOW_IMAGE_SPEAK_2'})
-
-            smach.StateMachine.add('SHOW_IMAGE_SPEAK_2',
-                                   states.human_interaction.ShowImage(
-                                       robot,
-                                       os.path.join(
-                                           rospkg.RosPack().get_path('challenge_restaurant'),
-                                           "images",
-                                           "speak.jpg"
-                                       ),
-                                       duration=5),
-                                   transitions={'succeeded': 'TAKE_ORDER',
-                                                'failed': 'TAKE_ORDER'})
+                                   transitions={'spoken': 'TAKE_ORDER'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
                                    states.human_interaction.Say(
