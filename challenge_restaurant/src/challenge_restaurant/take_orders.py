@@ -145,7 +145,8 @@ class ReciteOrders(smach.State):
         #     sentence = "Table 1 wants the combo {} and {}".format(self._orders["food1"],
         #                                                           self._orders["food2"])
 
-        self._robot.speech.speak(sentence)
+        self._robot.speech.speak(sentence, block=True)
+        rospy.sleep(5)
 
         if "water" in self._orders:
             water_sentence = "I am too weak to carry the water, please bring that yourself. And please make me stronger."
