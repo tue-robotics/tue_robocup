@@ -90,7 +90,7 @@ class FollowOperator(smach.State):
         self._replan_active = False
         self._last_operator = None
         self._replan_allowed = replan
-        self._replan_timeout = 15  # seconds before another replan is allowed
+        self._replan_timeout = 10  # seconds before another replan is allowed
         self._replan_time = None
         self._replan_attempts = 0
         self._max_replan_attempts = 3
