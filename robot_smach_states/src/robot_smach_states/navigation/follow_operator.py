@@ -406,11 +406,11 @@ class FollowOperator(smach.State):
                                                       self._operator_radius)
 
         o = OrientationConstraint()
-        if self._operator_id:
-            o.frame = self._operator_id
-        else:
-            o.frame = 'map'
-            o.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
+        #if self._operator_id:
+        #    o.frame = self._operator_id
+        #else:
+        o.frame = 'map'
+        o.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
