@@ -194,7 +194,7 @@ class FollowOperator(smach.State):
                     else:
                         answer = self._robot.picovoice.get_intent("yesOrNo")
 
-                except TimeoutException as e:
+                except TimeoutException:
                     self._robot.speech.speak("I did not hear you!")
                     rospy.sleep(2)
                 else:
