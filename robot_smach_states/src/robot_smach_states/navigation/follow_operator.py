@@ -459,6 +459,8 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
 
     def _recover_operator(self):
+        if not self._learn_face:
+            return False
         rospy.loginfo("Trying to recover the operator")
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
