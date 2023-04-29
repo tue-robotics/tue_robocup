@@ -162,7 +162,7 @@ class FollowOperator(smach.State):
         Also adds the operator to the breadcrumb list"""
         start_time = rospy.Time.now()
 
-        self._robot.head.look_at_standing_person()
+        self._robot.head.look_at_standing_person(distance=1.5)
 
         if self._operator_id:
             operator = self._robot.ed.get_entity(uuid=self._operator_id)
