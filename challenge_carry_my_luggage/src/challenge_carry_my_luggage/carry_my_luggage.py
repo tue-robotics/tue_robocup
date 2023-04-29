@@ -230,13 +230,13 @@ class CarryMyLuggage(StateMachine):
                 StateMachine.add(
                     "WAIT_FOR_TASK",
                     AskYesNo(self.robot),
-                    transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"}, #todo this last one can create an infitine loop
+                    transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "FOLLOW_OPERATOR"}, #todo this last one can create an infitine loop
                 )
             else:
                 StateMachine.add(
                     "WAIT_FOR_TASK",
                     AskYesNoPicoVoice(self.robot),
-                    transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "ASK_FOR_TASK"},  #ToDo this last one can create an infitine loop
+                    transitions={"yes": "HANDOVER_TO_HUMAN", "no": "FOLLOW_OPERATOR", "no_result": "FOLLOW_OPERATOR"},  #ToDo this last one can create an infitine loop
                 )
 
             StateMachine.add(
