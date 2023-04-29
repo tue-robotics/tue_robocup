@@ -331,6 +331,9 @@ class Grab(smach.StateMachine):
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
         :param retry: On True the robot will retry the grab if it fails to grasp the object
+                    Note:   Don't use the retry option if you want to grab a thin item (E.g. the edge of a bowl)
+                            because it will always trigger "cannot_determine" and the robot will try to grab it again.
+                    ToDo: Make this more robust
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed', 'object_not_grasped'])
 
