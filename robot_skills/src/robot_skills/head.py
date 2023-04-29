@@ -60,11 +60,11 @@ class Head(RobotPart):
 
         return self.look_at_point(goal, timeout=timeout)
 
-    def look_at_standing_person(self, timeout=0):
+    def look_at_standing_person(self, distance: float = 1.0, height: float = 1.6, timeout: float = 0.0):
         """
-        Gives a target at z = 1.75 at 1 m in front of the robot
+        Gives a target at z = HEIGHT at DISTANCE m in front of the robot
         """
-        goal = VectorStamped.from_xyz(1.0, 0.0, 1.6, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
+        goal = VectorStamped.from_xyz(distance, 0.0, height, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
 
         return self.look_at_point(goal, timeout=timeout)
 
