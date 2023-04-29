@@ -120,7 +120,7 @@ class EmptySpotDesignator(Designator):
 
     def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
         """
-        :return: direct distance between a point and and the place offset of the arm
+        :return: direct distance between a point and the place offset of the arm
         :rtype: double [meters]
         """
         bo = arm.base_offset
