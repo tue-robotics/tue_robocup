@@ -103,7 +103,7 @@ class EmptySpotDesignator(Designator):
         closest_candidate = min(candidates, key=lambda tup:tup.distance)
         candidates = [f for f in candidates if (f.distance - closest_candidate.distance) < self._nav_threshold]
         rospy.loginfo("2 Currently considering: {} candidates".format(len(candidates)))
-        candidates.sort(key=lambda tup: tup.edge_score, reverse=True) # sorts in place
+        candidates.sort(key=lambda tup: tup.edge_score, reverse=True)  # sorts in place
 
         for candidate in candidates:
             if self._distance_to_poi_area(candidate.frame_stamped, arm):
