@@ -103,7 +103,7 @@ class CarryMyLuggage(StateMachine):
 
             StateMachine.add(
                 "WAIT_FOR_OPERATOR",
-                WaitTime(15),
+                WaitTime(10),
                 transitions={
                     "waited": "CLOSE_GRIPPER",
                     "preempted": "CLOSE_GRIPPER"
