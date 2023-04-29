@@ -31,6 +31,7 @@ class PicoVoice(RobotPart):
         """
         if intents is None:
             intents = []
+        rospy.loginfo(f"PV get_intent: {context_url=}, {intents=}, {require_endpoint=}, {timeout=}")
         timeout = rospy.Duration.from_sec(timeout)
         goal = GetIntentGoal(context_url=context_url, intents=intents, require_endpoint=require_endpoint)
         rospy.logdebug(f"PicoVoice.get_intent: {goal=}")
@@ -47,4 +48,6 @@ class PicoVoice(RobotPart):
         if not result.is_understood:
             rospy.logwarn("PicoVoice.get_intent: Not understood")
             raise TimeoutException("PicoVoice.get_intent: Not understood")
-        return HMIResult(sentence="", semantics={slot.key: slot.value for slot in result.slots})
+        result = HMIResult(sentence="", semantics={slot.key: slot.value for slot in result.slots})
+        rospy.loginfo(f"PicoVoice.get_intent: {result=}")
+        return result
