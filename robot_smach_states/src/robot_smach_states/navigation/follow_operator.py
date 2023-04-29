@@ -219,7 +219,8 @@ class FollowOperator(smach.State):
             else:
                 operator = self._robot.ed.get_closest_laser_entity(
                     radius=1,
-                    center_point=VectorStamped(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame))
+                    center_point=VectorStamped(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame)
+                    ignore_z=True)
                 if not operator:
                     rospy.sleep(1)
 
@@ -268,7 +269,7 @@ class FollowOperator(smach.State):
         """This only happens when the operator was just registered, and never tracked"""
         rospy.loginfo("Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1")
         self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame))
+            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame), ignore_z=True)
         if self._operator:
             return True
         else:
@@ -276,7 +277,8 @@ class FollowOperator(smach.State):
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                      center_point=VectorStamped.from_xyz(
                                                                          1.5, 0, 1, rospy.Time(),
-                                                                         self._robot.base_link_frame))
+                                                                         self._robot.base_link_frame)
+                                                                     , ignore_z=True)
 
         if self._operator:
             return True
@@ -514,7 +516,8 @@ class FollowOperator(smach.State):
                 self._face_pos_pub.publish(operator_pos_ros)
 
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=operator_pos_kdl)
+                                                                             center_point=operator_pos_kdl,
+                                                                             ignore_z=True)
 
                 if recovered_operator:
                     rospy.loginfo("Found one!")
