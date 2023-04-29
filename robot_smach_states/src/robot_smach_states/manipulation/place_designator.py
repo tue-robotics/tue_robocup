@@ -79,6 +79,7 @@ class EmptySpotDesignator(Designator):
         if area:
             vectors_of_interest = self._determine_points_of_interest_with_area(place_location, area)
         else:
+            # This will place in on top of the entity, so also on top of a cabinet
             vectors_of_interest = self._determine_points_of_interest(place_frame.frame,
                                                                      z_max=place_location.shape.z_max,
                                                                      convex_hull=place_location.shape.convex_hull)
