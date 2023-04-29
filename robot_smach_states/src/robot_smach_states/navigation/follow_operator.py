@@ -192,7 +192,8 @@ class FollowOperator(smach.State):
                     if (is_sim_mode() and answer.sentence == "yes") or (not is_sim_mode() and "yes" in answer.semantics):
                         operator = self._robot.ed.get_closest_laser_entity(
                             radius=1,
-                            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame))
+                            center_point=VectorStamped.from_xyz(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame),
+                            ignore_z=True)
                         rospy.loginfo("Operator: {op}".format(op=operator))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
