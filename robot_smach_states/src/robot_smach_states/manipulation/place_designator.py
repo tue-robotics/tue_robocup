@@ -223,6 +223,7 @@ class EmptySpotDesignator(Designator):
 
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box
+        # ToDo: This is a not allways the case. So this should be changed
         top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
         return self._determine_points_of_interest(entity._pose, top_z, box.bottom_area)
 
