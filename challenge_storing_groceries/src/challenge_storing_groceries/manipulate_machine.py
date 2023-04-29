@@ -62,6 +62,18 @@ class StoreSingleItem(smach.StateMachine):
                                                              place_pose_designator,
                                                              arm),
                                    transitions={'done': 'succeeded',
+                                                'failed': 'SAY_HANDOVER'}
+                                   )
+
+            smach.StateMachine.add("SAY_HANDOVER",
+                                   states.human_interaction.Say(robot, ["I failed to place the object, "
+                                                                        "I will hand it over to you"]),
+                                   transitions={'spoken': 'HANDOVER'}
+                                   )
+
+            smach.StateMachine.add("HANDOVER",
+                                   states.manipulation.HandoverToHuman(robot, arm),
+                                   transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'}
                                    )
 
