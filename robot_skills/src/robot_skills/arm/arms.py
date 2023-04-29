@@ -167,7 +167,13 @@ class PublicArm(object):
         self._test_die(hasattr(self._arm, 'handover_detector'), "This arm does not have a handover_detector")
         return self._arm.handover_detector
 
-    def has_gripper_type(self, gripper_type: Optional[str] = None) -> bool:
+    @property
+    def gripper_position_detector(self):
+        self._test_die(hasattr(self._arm, 'gripper_position_detector'),
+                       "This arm does not have a gripper_position_detector")
+        return self._arm.gripper_position_detector
+
+    def has_gripper_type(self, gripper_type=None):
         """
         Query whether the arm has the provided specific type of gripper.
 

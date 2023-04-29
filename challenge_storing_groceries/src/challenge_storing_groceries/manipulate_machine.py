@@ -53,7 +53,8 @@ class StoreSingleItem(smach.StateMachine):
             smach.StateMachine.add("GRAB",
                                    states.manipulation.Grab(robot, item_designator, arm, room),
                                    transitions={'done': 'PLACE',
-                                                'failed': 'failed'}
+                                                'failed': 'failed',
+                                                'object_not_grasped': 'failed'}
                                    )
 
             smach.StateMachine.add("PLACE",
@@ -137,7 +138,7 @@ class StoreItems(smach.StateMachine):
                 for seg_entity in segmented_entities:
                     if seg_entity.uuid in current_blacklist:
                         continue
-                        
+
                     e = robot.ed.get_entity(seg_entity.uuid)
 
                     distance = e.distance_to_2d(hero_pose.frame.p)
