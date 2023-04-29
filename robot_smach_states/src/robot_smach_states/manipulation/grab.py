@@ -322,7 +322,7 @@ class ResetOnFailure(smach.State):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, retry: bool = False) -> None:
+    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, retry: bool = True) -> None:
         """
         Let the given robot move to an entity and grab that entity using some arm. Performs grasp detection and retries
         if it's not holding anything
