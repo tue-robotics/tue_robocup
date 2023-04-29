@@ -43,7 +43,7 @@ class EmptySpotDesignator(Designator):
         :param robot: Robot whose worldmodel to use
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param arm_designator: Designator resolving to an arm robot part, e.g. OccupiedArmDesignator
-        :param area: (optional) (Designator resolving to) area where the item should be placed
+        :param area: (optional) area where the item should be placed
         :param name: name for introspection purposes
         """
         super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
@@ -133,7 +133,7 @@ class EmptySpotDesignator(Designator):
         offset_pose = base_pose.frame * bo
         offset_pose_x = offset_pose[0]
         offset_pose_y = offset_pose[1]
-ec7c527
+
         x = frame_stamped.frame.p.x()
         y = frame_stamped.frame.p.y()
 
@@ -154,7 +154,7 @@ ec7c527
         ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
         pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.header.frame_id)
-ec7c527
+
         plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
         if plan_to_poi:
@@ -170,7 +170,7 @@ ec7c527
         marker.type = 2
         marker.header.frame_id = "map"
         marker.header.stamp = rospy.Time.now()
-        marker.pose.position.x = xec7c527
+        marker.pose.position.x = x
         marker.pose.position.y = y
         marker.pose.position.z = z
         marker.pose.orientation.w = 1
