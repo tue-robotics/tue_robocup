@@ -94,7 +94,7 @@ class CarryMyLuggage(StateMachine):
                     self.robot,
                     ["I am unable to pick up the bag, please put it in my gripper"],
                     block=True,
-                    look_at_standing_person=True,
+                    look_at_standing_person=False,
                 ),
                 transitions={
                     "spoken": "WAIT_FOR_OPERATOR",
@@ -148,7 +148,7 @@ class CarryMyLuggage(StateMachine):
                     self.robot,
                     ["Lets go to your car! I will follow you!"],
                     block=True,
-                    look_at_standing_person=True,
+                    look_at_standing_person=False,
                 ),
                 transitions={
                     "spoken": "FOLLOW_OPERATOR",
@@ -219,7 +219,7 @@ class CarryMyLuggage(StateMachine):
                     self.robot,
                     ["Are we at the car already?"],
                     block=True,
-                    look_at_standing_person=True,
+                    look_at_standing_person=False,
                 ),
                 transitions={
                     "spoken": "WAIT_FOR_TASK",
