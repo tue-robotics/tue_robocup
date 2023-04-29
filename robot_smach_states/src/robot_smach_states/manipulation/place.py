@@ -129,17 +129,21 @@ class Put(smach.State):
 
         # Place
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
-        if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
+        actual_place_pose_bl = FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
                                                        height+0.1, 0, 0, 0, rospy.Time(0),
-                                                       frame_id=self._robot.base_link_frame),
-                             timeout=10, pre_grasp=False):
+                                                       frame_id=self._robot.base_link_frame)
+        if not arm.send_goal(actual_place_pose_bl, timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
         place_entity = arm.gripper.occupied_by
         if not place_entity:
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
-            self._robot.ed.update_entity(place_entity.uuid, frame_stamped=placement_fs)
+            place_pose_map = self._robot.tf_buffer.transform(actual_place_pose_bl, "map")
+            new_entity_pose = FrameStamped(place_pose_map.frame*place_entity.pose.frame,
+                                           place_pose_bl.header.stamp,
+                                           "map")            
+            self._robot.ed.update_entity(place_entity.uuid, frame_stamped=new_entity_pose)
             arm.gripper.occupied_by = None
 
         # Open gripper
