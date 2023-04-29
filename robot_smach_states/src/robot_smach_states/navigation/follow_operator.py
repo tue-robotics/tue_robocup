@@ -100,7 +100,7 @@ class FollowOperator(smach.State):
         self._max_replan_attempts: int = 3
         self._update_period: float = update_period
 
-    def _operator_standing_still_for_x_seconds(self, timeout):
+    def _operator_standing_still_for_x_seconds(self, timeout, cartesian_limit: float = 0.15):
         """
         Check whether the operator is standing still for X seconds
 
@@ -118,7 +118,7 @@ class FollowOperator(smach.State):
             self._last_operator_fs = operator_current_fs
         else:
             # Compare the pose with the last pose and update if difference is larger than x
-            if (operator_current_fs.frame.p - self._last_operator_fs.frame.p).Norm() > 0.15:
+            if (operator_current_fs.frame.p - self._last_operator_fs.frame.p).Norm() > cartesian_limit:
                 # Update the last pose
                 self._last_operator_fs = operator_current_fs
             else:
@@ -130,12 +130,11 @@ class FollowOperator(smach.State):
 
         return False
 
-    def _standing_still_for_x_seconds(self, timeout):
+    def _standing_still_for_x_seconds(self, timeout: float, cartesian_limit: float = 0.05, angular_limit: float = 0.3):
         """
         Check whether the robot is standing still for X seconds
 
         :param timeout: how many seconds must the robot be standing still before returning True
-        :type timeout: float
         :return: bool indicating whether the robot has been standing still for longer than timeout seconds
         """
         current_frame = self._robot.base.get_location().frame
@@ -149,7 +148,7 @@ class FollowOperator(smach.State):
             last_yaw = self._last_pose_stamped.M.GetRPY()[2]  # Get the Yaw
 
             # Compare the pose with the last pose and update if difference is larger than x
-            if kdl.diff(current_frame.p, self._last_pose_stamped.p).Norm() > 0.05 or abs(current_yaw - last_yaw) > 0.3:
+            if kdl.diff(current_frame.p, self._last_pose_stamped.p).Norm() > cartesian_limit or abs(current_yaw - last_yaw) > angular_limit:
                 # Update the last pose
                 self._last_pose_stamped = current_frame
                 self._last_pose_stamped_time = rospy.Time.now()
@@ -346,7 +345,7 @@ class FollowOperator(smach.State):
                     self._last_operator = self._operator
 
                     operator_pos = PointStamped()
-                    operator_pos.header.stamp = rospy.get_rostime()
+                    operator_pos.header.stamp = rospy.Time.now()
                     operator_pos.header.frame_id = self._operator_id
                     operator_pos.point.x = 0.0
                     operator_pos.point.y = 0.0
