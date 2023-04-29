@@ -219,7 +219,7 @@ class FollowOperator(smach.State):
             else:
                 operator = self._robot.ed.get_closest_laser_entity(
                     radius=1,
-                    center_point=VectorStamped(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame)
+                    center_point=VectorStamped(1.5, 0, 1, rospy.Time(), self._robot.base_link_frame),
                     ignore_z=True)
                 if not operator:
                     rospy.sleep(1)
@@ -277,8 +277,8 @@ class FollowOperator(smach.State):
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                      center_point=VectorStamped.from_xyz(
                                                                          1.5, 0, 1, rospy.Time(),
-                                                                         self._robot.base_link_frame)
-                                                                     , ignore_z=True)
+                                                                         self._robot.base_link_frame),
+                                                                     ignore_z=True)
 
         if self._operator:
             return True
