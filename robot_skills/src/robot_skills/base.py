@@ -222,7 +222,7 @@ class GlobalPlanner(RobotPart):
         end_time = rospy.Time.now()
         plan_time = (end_time-start_time).to_sec()
 
-        self.path_length = self.computePathLength(resp.plan)
+        self.path_length = computePathLength(resp.plan)
 
         return resp.plan
 
@@ -237,16 +237,6 @@ class GlobalPlanner(RobotPart):
 
     def getCurrentPositionConstraint(self):
         return self._position_constraint
-
-    def computePathLength(self, path):
-        #rospy.logwarn("Please use the other computepathlength")
-        distance = 0.0
-        for index, pose in enumerate(path):
-            if not index == 0:
-                dx = path[index].pose.position.x - path[index-1].pose.position.x
-                dy = path[index].pose.position.y - path[index-1].pose.position.y
-                distance += math.sqrt( dx*dx + dy*dy)
-        return distance
 
 
 class Base(RobotPart):
