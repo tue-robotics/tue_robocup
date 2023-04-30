@@ -4,6 +4,7 @@ import rospy
 import copy
 from .checks import check_type
 from .core import Designator
+from .utility import value_or_resolve
 from hmi import HMIResult
 
 
@@ -53,7 +54,7 @@ class FieldOfHMIResult(Designator):
 
     def _resolve(self):
         try:
-            path = self.semantics_path.resolve() if hasattr(self.semantics_path, 'resolve') else self.semantics_path
+            path = value_or_resolve(self.semantics_path)
             semantics = self.query_result_des.resolve().semantics # type: dict, nested
             rospy.loginfo("Going to traverse path: {} into semantics: {}".format(path, semantics))
             level = copy.deepcopy(semantics)  # Make a copy
