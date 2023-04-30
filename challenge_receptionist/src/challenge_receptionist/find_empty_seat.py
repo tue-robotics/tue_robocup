@@ -71,9 +71,8 @@ class FindEmptySeat(smach.StateMachine):
         with self:
             smach.StateMachine.add('SAY_LETS_FIND_SEAT',
                                    Say(robot,
-                                       [
-                                           "Let me find a place for {name} to sit. Please be patient while I check "
-                                           "out where there's place to sit"],
+                                       ["Let me find a place for {name} to sit. Please be patient while I check "
+                                        "out where there's place to sit"],
                                        name=seat_is_for,
                                        block=False),
                                    transitions={'spoken': 'ITERATE_NEXT_SEAT'})
@@ -107,8 +106,7 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
                                    Say(robot,
-                                       ["Please sit on the {seat}, {name}. Please leave some space for any"
-                                        " potential future guests!"],
+                                       ["Please sit on the {seat}, {name}!"],
                                        name=seat_is_for,
                                        seat=ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str),
                                        block=True),
