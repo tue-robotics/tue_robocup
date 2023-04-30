@@ -462,7 +462,7 @@ class FollowOperator(smach.State):
 
             previous_point = copy.deepcopy(crumb.pose.frame.p)
 
-        # Delete the elements from the plan within the operator radius from the robot
+        # Delete the last elements from the plan within the operator radius from the operator, to keep some distance
         cutoff = int(self._operator_radius/(2.0*res))
         if len(kdl_plan) > cutoff:
             del kdl_plan[-cutoff:]
