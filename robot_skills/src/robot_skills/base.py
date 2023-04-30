@@ -3,7 +3,7 @@
 #  October '14
 #
 
-from typing import List
+from typing import List, Optional
 
 # System
 import math
@@ -186,7 +186,9 @@ class GlobalPlanner(RobotPart):
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
         self._check_plan_client = self.create_service_client("/" + robot_name + "/global_planner/check_plan_srv", CheckPlan)
 
-    def getPlan(self, position_constraint: PositionConstraint, start_pose: FrameStamped = None) -> List[PoseStamped]:
+    def getPlan(
+        self, position_constraint: PositionConstraint, start_pose: Optional[FrameStamped] = None
+    ) -> List[PoseStamped]:
         """
         Get a global plan from start(optional) to a goal constrained by position_constraint
 
