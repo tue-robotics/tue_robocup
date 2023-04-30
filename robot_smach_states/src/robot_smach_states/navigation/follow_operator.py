@@ -311,7 +311,8 @@ class FollowOperator(smach.State):
         return False
 
     def _track_operator(self):
-        """ Sets self._operator_distance if we have an operator and otherwise set self._operator_distance to the
+        """
+        Sets self._operator_distance if we have an operator and otherwise set self._operator_distance to the
         distance to the last operator
         """
         if self._operator_id:
@@ -417,7 +418,7 @@ class FollowOperator(smach.State):
         robot_position = self._robot.base.get_location().frame.p
         operator_position = self._last_operator.pose.frame.p
 
-        ''' Define end goal constraint, solely based on the (old) operator position '''
+        """Define end goal constraint, solely based on the (old) operator position"""
         pc = PositionConstraint()
         pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
                                                         self._operator_radius)
@@ -430,7 +431,7 @@ class FollowOperator(smach.State):
             oc.frame = "map"
             oc.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
-        ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
+        """Calculate global plan from robot position, through breadcrumbs, to the operator"""
         res = 0.05
         kdl_plan = []
         previous_point = robot_position
@@ -520,7 +521,7 @@ class FollowOperator(smach.State):
             raw_detections, _ = self._robot.perception.detect_faces()
             best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
 
-            rospy.loginfo("best_detection = {}".format(best_detection))
+            rospy.loginfo(f"{best_detection=}")
             if best_detection:
 
                 # rospy.loginfo("Best detection: {}".format(best_detection))
@@ -529,7 +530,7 @@ class FollowOperator(smach.State):
                 try:
                     operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
                 except Exception as e:
-                    rospy.logerr("head.project_roi failed: %s", e)
+                    rospy.logerr(f"head.project_roi failed: {e}")
                     return False
                 operator_pos_ros = tf2_ros.convert(operator_pos_kdl, PointStamped)
 
@@ -549,7 +550,7 @@ class FollowOperator(smach.State):
                     self._time_started = rospy.Time.now()
                     return True
                 else:
-                    rospy.loginfo("Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl))
+                    rospy.loginfo(f"Could not find an entity {self._lost_distance} meter near {operator_pos_kdl}")
 
         self._robot.head.close()
         self._turn_towards_operator()
@@ -614,10 +615,10 @@ class FollowOperator(smach.State):
                     return "lost_operator"
 
         # Try to recover operator if lost and reached last seen operator position
-        rospy.loginfo("Operator is at %f meters distance" % self._operator_distance)
+        rospy.loginfo(f"Operator is at {self._operator_distance:.2f} meters distance")
         # TODO: HACK! Magic number!
         if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(self._standing_still_timeout):
-            rospy.loginfo("lost operator and within lookat radius and standing still for 1 second")
+            rospy.loginfo(f"Lost operator and within lookat radius and standing still for {self._standing_still_timeout} seconds")
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 self._robot.speech.speak("I am unable to recover you")
@@ -652,17 +653,17 @@ class FollowOperator(smach.State):
         # Check if we are already there (in operator radius and operator standing still long enough)
         rospy.loginfo("Checking if done following")
         if self._operator_distance < self._operator_radius and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
-            rospy.loginfo("I'm close enough to the operator and he's been standing there for long enough")
+            rospy.loginfo(f"I'm close enough to the operator and he's been standing there for {self._operator_standing_still_timeout} seconds")
             rospy.loginfo("Checking if we pass the start timeout")
             if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout:
-                rospy.loginfo("Passed")
+                rospy.loginfo("Start timeout has passed")
                 self._operator_id_des.writeable.write(self._operator_id)
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "stopped"
             else:
-                rospy.loginfo("Not passed")
+                rospy.loginfo("Start timeout not yet passed")
         else:
-            rospy.loginfo("apparently not")
+            rospy.loginfo("Apparently not done following")
 
         # No end criteria met
         return None
