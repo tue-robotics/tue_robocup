@@ -619,14 +619,13 @@ class FollowOperator(smach.State):
         rospy.loginfo("Checking end criteria")
 
         if self._replan_active:
-            if len(self._robot.base.global_planner.getPlan(self._replan_pc)) < 10:
+            if len(self._robot.base.global_planner.getPlan(self._replan_pc)) < 10:  # ToDo: magic number
                 self._replan_active = False
                 if lost_operator and not self._recover_operator():
                     return "lost_operator"
 
         # Try to recover operator if lost and reached last seen operator position
         rospy.loginfo(f"Operator is at {self._operator_distance:.2f} meters distance")
-        # TODO: HACK! Magic number!
         if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(self._standing_still_timeout):
             rospy.loginfo(f"Lost operator and within lookat radius and standing still for {self._standing_still_timeout} seconds")
             if not self._recover_operator():
