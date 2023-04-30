@@ -56,7 +56,8 @@ class HandleSingleGuest(smach.StateMachine):
             smach.StateMachine.add('GOTO_LIVINGROOM',
                                    NavigateToWaypoint(robot,
                                                       livingroom_waypoint,
-                                                      challenge_knowledge.waypoint_livingroom['radius']),
+                                                      challenge_knowledge.waypoint_livingroom['radius'],
+                                                      speak=False),
                                    transitions={'arrived': 'INTRODUCE_GUEST',
                                                 'unreachable': 'INTRODUCE_GUEST',
                                                 'goal_not_defined': 'aborted'})
