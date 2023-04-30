@@ -602,7 +602,12 @@ class FollowOperator(smach.State):
             self._robot.base.local_planner.setPlan(ros_plan, self._replan_pc, oc)
             self._breadcrumbs = []
 
-    def _check_end_criteria(self):
+    def _check_end_criteria(self) -> Optional[str]:
+        """
+        Check we have met any end criteria to stop following the operator
+
+        :return: None if no end criteria met, otherwise a string describing the end criteria
+        """
         # Check if we still have an operator
         lost_operator = self._operator is None
 
