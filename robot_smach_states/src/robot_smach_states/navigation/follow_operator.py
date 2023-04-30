@@ -425,8 +425,7 @@ class FollowOperator(smach.State):
 
         """Define end goal constraint, solely based on the (old) operator position"""
         pc = PositionConstraint()
-        pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
-                                                        self._operator_radius)
+        pc.constraint = f"(x-{operator_position.x()})^2 + (y-{operator_position.y()})^2 < {self._operator_radius}^2"
 
         oc = OrientationConstraint()
         # ToDo: should we check if the operator ID still exists in ED, before using it?
@@ -568,7 +567,7 @@ class FollowOperator(smach.State):
         operator_position = self._last_operator.pose.frame.p
 
         pc = PositionConstraint()
-        pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(), self._operator_radius)
+        pc.constraint = f"(x-{operator_position.x()})^2 + (y-{operator_position.y()})^2 < {self._operator_radius}^2"
 
         oc = OrientationConstraint()
         if self._operator_id and self._robot.ed.get_entity(uuid=self._operator_id):
@@ -592,8 +591,9 @@ class FollowOperator(smach.State):
         operator_position = self._last_operator.pose.frame.p
         # Define end goal constraint, solely based on the (old) operator position
         self._replan_pc = PositionConstraint()
-        self._replan_pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
-                                                                     self._operator_radius)
+        self._replan_pc.constraint = (
+            f"(x-{operator_position.x()})^2 + (y-{operator_position.y()})^2 < {self._operator_radius}^2"
+        )
         ros_plan = self._robot.base.global_planner.getPlan(self._replan_pc)
         if not ros_plan or not self._robot.base.global_planner.checkPlan(ros_plan):
             rospy.loginfo("No global plan possible")
