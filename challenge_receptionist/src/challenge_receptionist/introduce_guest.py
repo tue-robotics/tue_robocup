@@ -156,7 +156,8 @@ class IntroduceGuest(smach.StateMachine):
                                    NavigateToObserve(robot,
                                                      current_old_guest,
                                                             radius=1.0,
-                                                            margin=1.0),  # Makes the robot go within 2m of current_old_guest
+                                                            margin=1.0, # Makes the robot go within 2m of current_old_guest
+                                                            speak=False),  
                                    transitions={'arrived': 'SAY_LOOK_AT_GUEST',
                                                 'unreachable': 'SAY_LOOK_AT_GUEST',
                                                 'goal_not_defined': 'SAY_LOOK_AT_GUEST'})
