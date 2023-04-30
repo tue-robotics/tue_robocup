@@ -9,7 +9,7 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToSymbolic(NavigateTo):
-    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, room: Designator = None):
+    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, room: Designator = None, reset_head=True, speak=True, reset_pose=True):
         """
         Navigation class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
 
@@ -47,8 +47,8 @@ class NavigateToRoom(NavigateToSymbolic):
         used to compute the orientation constraint. If not provided, the entity_designator_room is used.
     """
 
-    def __init__(self, robot, entity_designator_room, entity_lookat_designator=None):
+    def __init__(self, robot, entity_designator_room, entity_lookat_designator=None, reset_head=True, speak=True, reset_pose=True):
         room_area = "in"
         if not entity_lookat_designator:
             entity_lookat_designator = entity_designator_room
-        super(NavigateToRoom, self).__init__(robot, {entity_designator_room: room_area}, entity_lookat_designator)
+        super(NavigateToRoom, self).__init__(robot, {entity_designator_room: room_area}, entity_lookat_designator, reset_head=reset_head, speak=speak, reset_pose=reset_pose)
