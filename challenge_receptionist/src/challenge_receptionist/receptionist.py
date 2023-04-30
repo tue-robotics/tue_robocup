@@ -113,25 +113,13 @@ class ChallengeReceptionist(smach.StateMachine):
                                    Say(robot, ["That's all folks, my job is done, bye bye!"], block=False),
                                    transitions={'spoken': 'GO_BACK'})
 
-<<<<<<< HEAD
             smach.StateMachine.add(
                 "GO_BACK",
                 NavigateToWaypoint(
                     robot,
                     ds.EntityByIdDesignator(robot, challenge_knowledge.waypoint_door["id"]),
-                    challenge_knowledge.waypoint_door["radius"],
-                    speak=False,
+                    challenge_knowledge.waypoint_door["radius"]
                 ),
                 transitions={"arrived": "succeeded", "unreachable": "succeeded", "goal_not_defined": "succeeded"},
             )
-=======
-            smach.StateMachine.add('GO_BACK',
-                                   NavigateToWaypoint(robot,
-                                                      ds.EntityByIdDesignator(robot,
-                                                                              challenge_knowledge.waypoint_door[
-                                                                                  'id']),
-                                                      challenge_knowledge.waypoint_door['radius']),
-                                   transitions={'arrived': 'succeeded',
-                                                'unreachable': 'succeeded',
-                                                'goal_not_defined': 'succeeded'})
->>>>>>> fdf448159 (fix block locations)
+
