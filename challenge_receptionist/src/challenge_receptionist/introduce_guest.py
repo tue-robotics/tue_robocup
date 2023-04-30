@@ -119,7 +119,7 @@ class IntroduceGuest(smach.StateMachine):
 
             smach.StateMachine.add('FIND_OLD_GUESTS',
                                    FindPeopleInRoom(robot,
-                                                    room=challenge_knowledge.waypoint_livingroom['id'],
+                                                    room=challenge_knowledge.sitting_room,
                                                     found_people_designator=all_old_guests.writeable),
                                    transitions={"found": "CHECK_NUM_PEOPLE",
                                                 "not_found": "CHECK_NUM_PEOPLE"})
