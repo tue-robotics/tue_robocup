@@ -255,7 +255,7 @@ class FollowOperator(smach.State):
         just add it.
         In case a breadcrumb is 'reached', remove all breadcrumbs up to that point
         """
-        if self._operator_id:
+        if self._operator:
             if self._breadcrumbs:
                 if self._breadcrumbs[-1].distance_to_2d(self._operator.pose.frame.p) < self._breadcrumb_distance:
                     self._breadcrumbs[-1] = self._operator
