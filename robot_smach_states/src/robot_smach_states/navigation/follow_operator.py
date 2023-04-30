@@ -600,7 +600,7 @@ class FollowOperator(smach.State):
             oc = self._robot.base.local_planner.getCurrentOrientationConstraint()
             self._visualize_plan(ros_plan)
             self._robot.base.local_planner.setPlan(ros_plan, self._replan_pc, oc)
-            self._breadcrumbs = []
+            self._breadcrumbs.clear()
 
     def _check_end_criteria(self) -> Optional[str]:
         """
@@ -677,7 +677,7 @@ class FollowOperator(smach.State):
         # Reset robot and operator last pose
         self._last_robot_fs = None
         self._last_operator_fs = None
-        self._breadcrumbs = []
+        self._breadcrumbs.clear()
 
         if self._operator_id_des:
             operator_id = self._operator_id_des.resolve()
