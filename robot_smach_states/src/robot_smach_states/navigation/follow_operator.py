@@ -97,6 +97,7 @@ class FollowOperator(smach.State):
         self._last_pose_stamped_time = None
         self._last_operator_fs: Optional[FrameStamped] = None  # Used by _operator_standing_still_for_x_seconds
         self._replan_active: bool = False
+        self._replan_done_limit: int = 10  # Upper limit of points in the plan before we consider the replan done
         self._last_operator: Optional[Entity] = None
         self._replan_allowed = replan
         self._replan_timeout = 10  # seconds before another replan is allowed
@@ -619,7 +620,7 @@ class FollowOperator(smach.State):
         rospy.loginfo("Checking end criteria")
 
         if self._replan_active:
-            if len(self._robot.base.global_planner.getPlan(self._replan_pc)) < 10:  # ToDo: magic number
+            if len(self._robot.base.global_planner.getPlan(self._replan_pc)) < self._replan_done_limit:
                 self._replan_active = False
                 if lost_operator and not self._recover_operator():
                     return "lost_operator"
