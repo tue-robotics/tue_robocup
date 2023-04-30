@@ -101,7 +101,7 @@ class PointAtReception(smach.State):
 
         # Look backwards to the person
         self._robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
-                                                              frame_id=self.robot.base_link_frame))
+                                                              frame_id=self._robot.base_link_frame))
         self._robot.head.wait_for_motion_done()
 
         return 'succeeded'
