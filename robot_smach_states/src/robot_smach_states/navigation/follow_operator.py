@@ -88,9 +88,9 @@ class FollowOperator(smach.State):
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
                                              PointStamped, queue_size=10)
 
-        self._last_pose_stamped: Optional[FrameStamped] = None
+        self._last_robot_fs: Optional[FrameStamped] = None  # Used by _standing_still_for_x_seconds
         self._last_pose_stamped_time = None
-        self._last_operator_fs: Optional[FrameStamped] = None
+        self._last_operator_fs: Optional[FrameStamped] = None  # Used by _operator_standing_still_for_x_seconds
         self._replan_active: bool = False
         self._last_operator: Optional[Entity] = None
         self._replan_allowed = replan
@@ -140,17 +140,17 @@ class FollowOperator(smach.State):
         current_frame = self._robot.base.get_location().frame
         now = rospy.Time.now()
 
-        if not self._last_pose_stamped:
-            self._last_pose_stamped = current_frame
+        if not self._last_robot_fs:
+            self._last_robot_fs = current_frame
             self._last_pose_stamped_time = now
         else:
             current_yaw = current_frame.M.GetRPY()[2]  # Get the Yaw
-            last_yaw = self._last_pose_stamped.M.GetRPY()[2]  # Get the Yaw
+            last_yaw = self._last_robot_fs.M.GetRPY()[2]  # Get the Yaw
 
             # Compare the pose with the last pose and update if difference is larger than x
-            if kdl.diff(current_frame.p, self._last_pose_stamped.p).Norm() > cartesian_limit or abs(current_yaw - last_yaw) > angular_limit:
+            if kdl.diff(current_frame.p, self._last_robot_fs.p).Norm() > cartesian_limit or abs(current_yaw - last_yaw) > angular_limit:
                 # Update the last pose
-                self._last_pose_stamped = current_frame
+                self._last_robot_fs = current_frame
                 self._last_pose_stamped_time = rospy.Time.now()
             else:
                 time_passed = (now - self._last_pose_stamped_time).to_sec()
@@ -670,7 +670,7 @@ class FollowOperator(smach.State):
 
     def execute(self, userdata=None):
         # Reset robot and operator last pose
-        self._last_pose_stamped = None
+        self._last_robot_fs = None
         self._last_operator_fs = None
         self._breadcrumbs = []
 
