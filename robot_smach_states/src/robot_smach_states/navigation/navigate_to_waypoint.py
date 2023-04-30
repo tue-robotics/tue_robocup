@@ -8,7 +8,7 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToWaypoint(NavigateTo):
-    def __init__(self, robot, waypoint_designator, radius=0.15, look_at_designator=None, speak=True):
+    def __init__(self, robot, waypoint_designator, radius=0.15, look_at_designator=None, reset_head=True, speak=True, reset_pose=True):
         """
         Navigate to a waypoint in the world model
 
@@ -27,4 +27,4 @@ class NavigateToWaypoint(NavigateTo):
         else:
             constraints = [lambda: waypoint_constraint(waypoint_designator, radius, look=True)]
 
-        super(NavigateToWaypoint, self).__init__(robot, lambda: combine_constraints(constraints), speak=speak)
+        super(NavigateToWaypoint, self).__init__(robot, lambda: combine_constraints(constraints), reset_head=reset_head, speak=speak, reset_pose=reset_pose)
