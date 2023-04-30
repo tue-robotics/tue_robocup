@@ -483,7 +483,7 @@ class FollowOperator(smach.State):
         self._visualize_plan(ros_plan)
         self._robot.base.local_planner.setPlan(ros_plan, pc, oc)
 
-    def _recover_operator(self):
+    def _recover_operator(self, look_distance: float = 2.0):
         if not self._learn_face:
             return False
         rospy.loginfo("Trying to recover the operator")
@@ -494,7 +494,6 @@ class FollowOperator(smach.State):
         operator_recovery_timeout = self._lost_timeout
         start_time = rospy.Time.now()
 
-        look_distance = 2.0
         look_angles = [0.0,
                        math.pi/6,
                        math.pi/4,
