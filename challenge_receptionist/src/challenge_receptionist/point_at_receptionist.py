@@ -95,14 +95,13 @@ class PointAtReception(smach.State):
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
                                                                                        np.degrees(vel),
                                                                                        duration))
-        self._robot.base.force_drive(0, 0, vel, duration)
-
-        # self._robot.head.look_at_point(VectorStamped.from_framestamped(look_at_ent.pose))
-
         # Look backwards to the person
         self._robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
                                                               frame_id=self._robot.base_link_frame))
         self._robot.head.wait_for_motion_done()
+        self._robot.base.force_drive(0, 0, vel, duration)
+
+        # self._robot.head.look_at_point(VectorStamped.from_framestamped(look_at_ent.pose))
 
         return 'succeeded'
 
