@@ -80,13 +80,18 @@ class FollowOperator(smach.State):
         self._operator_standing_still_timeout: float = operator_standing_still_timeout
         self._operator_id_des = operator_id_des
         self._operator_distance: Optional[float] = None
-        self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
-                                             PointStamped, queue_size=10)
-        self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
-        self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker,
-                                               queue_size=10)
-        self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
-                                             PointStamped, queue_size=10)
+        self._operator_pub = rospy.Publisher(
+            f"/{robot.robot_name}/follow_operator/operator_position", PointStamped, queue_size=10
+        )
+        self._plan_marker_pub = rospy.Publisher(
+            f"/{robot.robot_name}/global_planner/visualization/markers/global_plan", Marker, queue_size=10
+        )
+        self._breadcrumb_pub = rospy.Publisher(
+            f"/{robot.robot_name}/follow_operator/breadcrumbs", Marker, queue_size=10
+        )
+        self._face_pos_pub = rospy.Publisher(
+            f"/{robot.robot_name}/follow_operator/operator_detected_face", PointStamped, queue_size=10
+        )
 
         self._last_robot_fs: Optional[FrameStamped] = None  # Used by _standing_still_for_x_seconds
         self._last_pose_stamped_time = None
