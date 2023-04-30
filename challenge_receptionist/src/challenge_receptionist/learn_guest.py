@@ -48,7 +48,8 @@ class LearnGuest(smach.StateMachine):
             smach.StateMachine.add('GOTO_DOOR',
                                    NavigateToWaypoint(robot,
                                                       door_waypoint,
-                                                      challenge_knowledge.waypoint_door['radius']),
+                                                      challenge_knowledge.waypoint_door['radius'],
+                                                      speak=False),
                                    transitions={'arrived': 'SAY_PLEASE_COME_IN',
                                                 'unreachable': 'SAY_PLEASE_COME_IN',
                                                 'goal_not_defined': 'aborted'})
