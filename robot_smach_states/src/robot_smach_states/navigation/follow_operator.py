@@ -432,7 +432,7 @@ class FollowOperator(smach.State):
             oc.look_at = tf2_ros.convert(self._last_operator.pose, PoseStamped).pose.position
 
         """Calculate global plan from robot position, through breadcrumbs, to the operator"""
-        res = 0.05
+        res = 0.05  # ToDo: magic number
         kdl_plan = []
         previous_point = robot_position
 
