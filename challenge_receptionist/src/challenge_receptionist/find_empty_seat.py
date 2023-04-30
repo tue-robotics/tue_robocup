@@ -8,9 +8,11 @@ import rospy
 from ed.entity import Entity
 
 from robot_smach_states.human_interaction import Say
+from robot_smach_states.util.designators import LockingDesignator
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.world_model import CheckVolumeEmpty
 from robot_smach_states.reset import ResetArms
+from robot_smach_states.utility import LockDesignator
 from challenge_receptionist.point_at_receptionist import PointAtReception
 import robot_smach_states.util.designators as ds
 import smach
@@ -56,7 +58,7 @@ class FindEmptySeat(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats_volumes_des = ds.VariableDesignator(seats_to_inspect)
-        seats = SeatsInRoomDesignator(robot, list(seats_to_inspect.keys()), room, "seats_in_room")
+        seats = LockingDesignator(SeatsInRoomDesignator(robot, list(seats_to_inspect.keys()), room, "seats_in_room"))
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
         seat_ent_uuid_des = ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str)
         volumes_des = ds.ValueByKeyDesignator(seats_volumes_des, seat_ent_uuid_des, resolve_type=[str],
@@ -75,7 +77,10 @@ class FindEmptySeat(smach.StateMachine):
                                         "out where there's place to sit"],
                                        name=seat_is_for,
                                        block=False),
-                                   transitions={'spoken': 'ITERATE_NEXT_SEAT'})
+                                   transitions={'spoken': 'LOCK_DESIGNATOR'})
+
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(seats),
+                                   transitions={'locked': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('ITERATE_NEXT_SEAT',
                                    IterateDesignator(seats, seat_ent_des.writeable),
