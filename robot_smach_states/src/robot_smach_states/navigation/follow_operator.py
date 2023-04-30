@@ -425,7 +425,7 @@ class FollowOperator(smach.State):
 
         oc = OrientationConstraint()
         # ToDo: should we check if the operator ID still exists in ED, before using it?
-        if self._operator_id:
+        if self._operator_id and self._robot.ed.get_entity(uuid=self._operator_id):
             oc.frame = self._operator_id
         else:
             oc.frame = "map"
@@ -566,7 +566,7 @@ class FollowOperator(smach.State):
         pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(), self._operator_radius)
 
         oc = OrientationConstraint()
-        if self._operator_id:
+        if self._operator_id and self._robot.ed.get_entity(uuid=self._operator_id):
             oc.frame = self._operator_id
         else:
             oc.frame = 'map'
