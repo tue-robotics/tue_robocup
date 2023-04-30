@@ -13,6 +13,13 @@ from robot_smach_states.util.designators.core import Designator, VariableDesigna
 __author__ = 'loy'
 
 
+def value_or_resolve(value):
+    """
+    If value is a designator, resolve it, otherwise return value
+    """
+    return value.resolve() if hasattr(value, "resolve") else value
+
+
 class LockingDesignator(Designator):
     """A designator's resolve() method may return a different object everytime.
     For some cases, this may be unwanted because a process has to be done with the same object.
