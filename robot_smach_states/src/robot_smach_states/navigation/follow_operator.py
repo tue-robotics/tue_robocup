@@ -490,10 +490,6 @@ class FollowOperator(smach.State):
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak(f"{self._operator_name}, please look at me while I am looking for you", block=False)
 
-        # Wait for the operator and find his/her face
-        operator_recovery_timeout = self._lost_timeout
-        start_time = rospy.Time.now()
-
         look_angles = [0.0,
                        math.pi/6,
                        math.pi/4,
@@ -506,8 +502,10 @@ class FollowOperator(smach.State):
                                              rospy.Time.now(), self._robot.base_link_frame)
                       for angle in look_angles]
 
+        # Wait for the operator and find his/her face
+        start_time = rospy.Time.now()
         i = 0
-        while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+        while (rospy.Time.now() - start_time).to_sec() < self._lost_timeout:
             if self.preempt_requested():
                 return False
 
