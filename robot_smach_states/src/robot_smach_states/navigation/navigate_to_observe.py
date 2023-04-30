@@ -8,7 +8,7 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToObserve(NavigateTo):
-    def __init__(self, robot, entity_designator, radius=0.7, margin=0.075):
+    def __init__(self, robot, entity_designator, radius=0.7, margin=0.075, room: Designator = None, reset_head=True, speak=True, reset_pose=True):
         """
         Navigates to a radius from an ed entity. If a convex hull is present, the distance
         to the convex hull is used. Otherwise, the distance to the pose of the entity is used
@@ -23,4 +23,8 @@ class NavigateToObserve(NavigateTo):
             lambda: look_at_constraint(entity_designator),
             lambda: radius_constraint(entity_designator, radius, margin)
         ]
-        super(NavigateToObserve, self).__init__(robot, lambda: combine_constraints(constraint_list))
+
+        if room:
+            constraint_list.append(lambda: symbolic_constraint(robot, {room: "in"}))
+
+        super(NavigateToObserve, self).__init__(robot, lambda: combine_constraints(constraint_list), reset_head=reset_head, speak=speak, reset_pose=reset_pose)
