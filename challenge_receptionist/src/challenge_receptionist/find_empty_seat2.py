@@ -7,12 +7,12 @@ from typing import List
 import rospy
 from ed.entity import Entity
 
-from pykdl_ros import VectorStamped
-
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.designator_iterator import IterateDesignator
-from robot_smach_states.world_model import CheckVolumeEmpty
+from robot_smach_states.util.designators import LockingDesignator
+from robot_smach_states.world_model import CheckSeatEmpty
 from robot_smach_states.reset import ResetArms
+from robot_smach_states.utility import LockDesignator
 from challenge_receptionist.point_at_receptionist import PointAtReception
 import robot_smach_states.util.designators as ds
 import smach
@@ -47,47 +47,6 @@ class SeatsInRoomDesignator(ds.Designator):
         return "SeatsInRoomDesignator({}, {}, {}, {})".format(self.robot, self.seat_ids, self.room, self.name)
 
 
-class PersonInSeatDesignator(ds.Designator):
-    def __init__(self, robot, seat: Entity, room: Entity=None, name=None):
-        super(PersonInSeatDesignator, self).__init__(resolve_type=[Entity], name=name)
-
-        self.robot = robot
-
-        ds.check_type(seat, Entity)
-        if room is not None:
-            ds.check_type(room, Entity)
-
-        self.room = room
-        self.seat = seat
-
-    def _resolve(self) -> Entity:
-
-        if self.room:
-            room = self.room.resolve() if hasattr(self.room, 'resolve') else self.room  # type: Entity
-            if not room:
-                rospy.logwarn("Room is None, ignoring room constraints")
-            
-        seat = self.seat.resolve() if hasattr(self.seat, 'resolve') else self.seat  # type: Entity
-        if not seat:
-            rospy.logwarn("Seat is None, so cannot find seats there")
-            return None
-        if not seat.pose:
-            rospy.logwarn("Seat does not have a pose")
-            return None
-        
-        seat_point = VectorStamped(seat.pose.frame.p, seat.pose.header.stamp, seat.pose.header.frame_id)
-        person_string="person"
-        
-        # query the people within 1m of the furniture: TODO adapt to the size of the furniture. i.e. couch/sofa
-        people: List(Entity) = self.robot.ed.get_entities(etype="person", center_point=seat_point, radius=1.0, ignore_z=True)
-
-        #TODO ignore people not within the specified room. i.e spectators
-        return people
-
-    def __repr__(self):
-        return "PersonInSeatDesignator({}, {}, {}, {})".format(self.robot, self.seat, self.room, self.name)
-
-
 class FindEmptySeat(smach.StateMachine):
     """
     Iterate over all seat-type objects and check that their 'on-top-of' volume is empty
@@ -99,7 +58,7 @@ class FindEmptySeat(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats_volumes_des = ds.VariableDesignator(seats_to_inspect)
-        seats = SeatsInRoomDesignator(robot, list(seats_to_inspect.keys()), room, "seats_in_room")
+        seats = LockingDesignator(SeatsInRoomDesignator(robot, list(seats_to_inspect.keys()), room, "seats_in_room"))
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
         seat_ent_uuid_des = ds.AttrDesignator(seat_ent_des, 'uuid', resolve_type=str)
         volumes_des = ds.ValueByKeyDesignator(seats_volumes_des, seat_ent_uuid_des, resolve_type=[str],
@@ -118,7 +77,10 @@ class FindEmptySeat(smach.StateMachine):
                                         "out where there's place to sit"],
                                        name=seat_is_for,
                                        block=False),
-                                   transitions={'spoken': 'ITERATE_NEXT_SEAT'})
+                                   transitions={'spoken': 'LOCK_DESIGNATOR'})
+
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(seats),
+                                   transitions={'locked': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('ITERATE_NEXT_SEAT',
                                    IterateDesignator(seats, seat_ent_des.writeable),
@@ -131,7 +93,7 @@ class FindEmptySeat(smach.StateMachine):
                                                 'stop_iteration': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, volume_des, 0.6, None),
+                                   CheckSeatEmpty(robot, seat_ent_des, volume_des, 0.6, None),
                                    transitions={'occupied': 'ITERATE_NEXT_VOLUME',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
@@ -193,22 +155,22 @@ if __name__ == "__main__":
     import sys
     from robot_skills import get_robot
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         print(
-            "Please provide robot_name, and seat to inspect as arguments. Eg. 'hero sofa")
+            "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar "
+            "dinnertable", )
         sys.exit(1)
 
-    from robot_smach_states.util.designators import EntityByIdDesignator
     robot_name = sys.argv[1]
-    seat = sys.argv[2]
+    room = sys.argv[2]
+    seats_to_inspect = sys.argv[3:]
 
-    
+    seats_to_inspect = {seat: ['on_top_of'] for seat in seats_to_inspect}
+
     rospy.init_node('test_find_emtpy_seat')
     robot = get_robot(robot_name)
 
-    seat_entity = EntityByIdDesignator(robot, seat) 
-    
-    people_designator = PersonInSeatDesignator(robot, seat_entity, name="people_in_seat_designator")
-    found_people = people_designator.resolve()
-
-    rospy.loginfo(f"Designator {people_designator} resolved to {found_people}")
+    sm = FindEmptySeat(robot,
+                       seats_to_inspect=seats_to_inspect,
+                       room=ds.EntityByIdDesignator(robot, room))
+    sm.execute()
