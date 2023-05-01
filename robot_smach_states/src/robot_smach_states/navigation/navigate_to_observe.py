@@ -17,6 +17,10 @@ class NavigateToObserve(NavigateTo):
         :param entity_designator: EdEntityDesignator for the object to observe
         :param radius: (float) desired distance to the pose of the entity [m]
         :param margin: (float) allowed margin w.r.t. specified radius on both sides [m]
+        :param room: (Optional) Designator to the room you want to stay in
+        :param reset_head: Whether or not the head should be used for obstacle avoidance during navigation.
+        :param speak: Whether or not the robot should speak during navigation
+        :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
         """
         check_resolve_type(entity_designator, Entity)
         constraint_list = [

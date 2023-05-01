@@ -17,6 +17,10 @@ class NavigateToSymbolic(NavigateTo):
             resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
             to compute the orientation constraint.
+        :param room: (Optional) Designator to the room you want to stay in
+        :param reset_head: Whether or not the head should be used for obstacle avoidance during navigation.
+        :param speak: Whether or not the robot should speak during navigation
+        :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
         """
         # Check that the entity_designator_area_name_map's keys all resolve to EntityInfo's
         assert(all(entity_desig.resolve_type == Entity for entity_desig in entity_designator_area_name_map.keys()))
@@ -26,7 +30,11 @@ class NavigateToSymbolic(NavigateTo):
             lambda: symbolic_constraint(robot, entity_designator_area_name_map),
             lambda: look_at_constraint(entity_lookat_designator)
         ]
-        super(NavigateToSymbolic, self).__init__(robot, lambda: combine_constraints(constraint_list))
+
+        if room:
+            constraint_list.append(lambda: symbolic_constraint(robot, {room: "in"}))
+
+        super(NavigateToSymbolic, self).__init__(robot, lambda: combine_constraints(constraint_list), reset_head=reset_head, speak=speak, reset_pose=reset_pose)
 
 
 class NavigateToRoom(NavigateToSymbolic):
@@ -37,6 +45,9 @@ class NavigateToRoom(NavigateToSymbolic):
     :param entity_designator_room: Designator to the room
     :param entity_lookat_designator: (Optional) Designator defining the entity the robot should look at. This is
         used to compute the orientation constraint. If not provided, the entity_designator_room is used.
+    :param reset_head: Whether or not the head should be used for obstacle avoidance during navigation.
+    :param speak: Whether or not the robot should speak during navigation
+    :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
     """
 
     def __init__(self, robot, entity_designator_room, entity_lookat_designator=None, reset_head=True, speak=True, reset_pose=True):
