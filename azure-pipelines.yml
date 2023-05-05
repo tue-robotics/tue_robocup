@@ -96,11 +96,29 @@ stages:
                 source ./set-branch.sh --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}
                 echo "##vso[task.setvariable variable=BRANCH]$BRANCH"
             condition: and(succeeded(), not(canceled()))
+          - task: DownloadSecureFile@1
+            name: deployKey
+            displayName: 'Download Deploy Key'
+            inputs:
+              secureFile: deploy_key
+            condition: and(succeeded(), not(canceled()))
           - task: Bash@3
             displayName: Install
+            env:
+              SSH_KNOWN_HOSTS: "github.com"
             inputs:
               targetType: inline
               script: |
+                mkdir -p "${HOME}"/.ssh
+                cp $(deployKey.secureFilePath) "${HOME}"/.ssh/ci_ssh_key
+                if [[ -n "${SSH_KNOWN_HOSTS}" ]]
+                then
+                  for host in ${SSH_KNOWN_HOSTS}
+                  do
+                    echo -e "\e[35m\e[1mssh-keyscan -t rsa -H \"${host}\" 2>&1 | tee -a ${HOME}/.ssh/known_hosts\e[0m"
+                    ssh-keyscan -t rsa -H "${host}" 2>&1 | tee -a "${HOME}"/.ssh/known_hosts
+                  done
+                fi
                 bash install-package.sh --package=${PACKAGE} --branch=${BRANCH} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="ghcr.io/tue-robotics/tue-env-ros-noetic"
             condition: and(succeeded(), not(canceled()))
           - task: Bash@3
