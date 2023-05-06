@@ -106,7 +106,7 @@ class InspectAreas(smach.StateMachine):
                                    transitions={'done': 'ITERATE_AREA'})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from robot_skills.get_robot import get_robot
     from robot_smach_states.util.designators import EntityByIdDesignator
     rospy.init_node('test_inspect_shelves')
