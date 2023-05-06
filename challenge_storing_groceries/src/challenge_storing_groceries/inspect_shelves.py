@@ -1,6 +1,3 @@
-# System
-import os
-
 # ROS
 import rospy
 import smach
@@ -14,7 +11,6 @@ from robot_smach_states.world_model import SegmentObjects
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.rise import RiseForInspect
 
-from pykdl_ros import VectorStamped
 from robot_skills.classification_result import ClassificationResult
 
 

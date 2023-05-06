@@ -1,7 +1,4 @@
-#!/usr/bin/python
-
 # ROS
-import rospy
 import smach
 
 # TU/e Robotics

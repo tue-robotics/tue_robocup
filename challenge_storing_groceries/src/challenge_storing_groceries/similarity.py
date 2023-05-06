@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import rospy
 
 from ed.entity import Entity

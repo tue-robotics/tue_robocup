@@ -1,18 +1,14 @@
-from __future__ import absolute_import
-
 # System
 import rospy
 import math
 from numpy import arange
 
 # ROS
-import PyKDL as kdl
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
 from pykdl_ros import FrameStamped
 from robot_smach_states.util.designators.ed_designators import Designator
-from robot_smach_states.util.geometry_helpers import offsetConvexHull
 
 
 class NearObjectSpotDesignator(Designator):

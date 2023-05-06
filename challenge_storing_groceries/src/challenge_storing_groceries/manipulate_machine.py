@@ -4,7 +4,6 @@ import smach
 
 # TU/e
 from ed.entity import Entity
-import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.arm.arms import GripperTypes
@@ -137,7 +136,7 @@ class StoreItems(smach.StateMachine):
                 for seg_entity in segmented_entities:
                     if seg_entity.uuid in current_blacklist:
                         continue
-                        
+
                     e = robot.ed.get_entity(seg_entity.uuid)
 
                     distance = e.distance_to_2d(hero_pose.frame.p)
