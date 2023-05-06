@@ -73,7 +73,7 @@ class StoreSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("HANDOVER",
                                    states.manipulation.HandoverToHuman(robot, arm),
-                                   transitions={'succeeded': 'succeeded',
+                                   transitions={'succeeded': 'failed',
                                                 'failed': 'failed'}
                                    )
 
