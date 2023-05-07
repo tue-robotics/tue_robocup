@@ -90,6 +90,9 @@ class GetFurnitureFromOperatorPose(State):
             if any(found_people_ids):
                 break
             rospy.sleep(0.4)
+            rospy.loginfo("Not found an operator yet")
+        else:
+            rospy.logwarn("Not found an operator at all")
             return False
         self._robot.speech.speak("Please point at a piece of furniture", block=False)
         self._show_image(timeout=1)
