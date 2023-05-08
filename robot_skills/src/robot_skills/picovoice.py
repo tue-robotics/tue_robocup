@@ -48,6 +48,6 @@ class PicoVoice(RobotPart):
         if not result.is_understood:
             rospy.logwarn("PicoVoice.get_intent: Not understood")
             raise TimeoutException("PicoVoice.get_intent: Not understood")
-        result = HMIResult(sentence="", semantics={slot.key: slot.value for slot in result.slots})
-        rospy.loginfo(f"PicoVoice.get_intent: {result=}")
-        return result
+        hmi_result = HMIResult(sentence="", semantics={slot.key: slot.value.replace(" ", "_") for slot in result.slots})
+        rospy.loginfo(f"PicoVoice.get_intent: result={hmi_result}")
+        return hmi_result
