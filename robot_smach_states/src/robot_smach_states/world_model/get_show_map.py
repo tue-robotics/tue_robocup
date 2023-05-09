@@ -11,7 +11,18 @@ from robot_smach_states.util.designators import check_type, is_writeable, Variab
 
 
 class GetMap(smach.State):
-    def __init__(self, robot, filename_des, entity_ids=None, mark_ids=None, plan_points=None):
+    def __init__(
+        self,
+        robot,
+        filename_des,
+        entity_ids=None,
+        mark_ids=None,
+        plan_points=None,
+        background: str = "white",
+        print_labels: bool = True,
+        width: int = 0,
+        height: int = 0,
+    ):
         super().__init__(outcomes=["created", "failed"])
         self.robot = robot
 
@@ -26,12 +37,27 @@ class GetMap(smach.State):
         check_type(plan_points, Vector, type(None))
         self.plan_points = plan_points
 
+        check_type(background, str)
+        self.background = background
+        check_type(print_labels, bool)
+        self.print_labels = print_labels
+        check_type(width, int)
+        self.width = width
+        check_type(height, int)
+        self.height = height
+
     def execute(self, ud=None):
         entity_ids = self.entity_ids.resolve() if hasattr(self.entity_ids, "resolve") else self.entity_ids
+        background = self.background.resolve() if hasattr(self.background, "resolve") else self.background
+        print_labels = self.print_labels.resolve() if hasattr(self.print_labels, "resolve") else self.print_labels
+        width = self.width.resolve() if hasattr(self.width, "resolve") else self.width
+        height = self.height.resolve() if hasattr(self.height, "resolve") else self.height
         if entity_ids is None:
             entity_ids = []
         for _ in range(3):
-            floor_plan = self.robot.ed.get_map(entity_ids)
+            floor_plan = self.robot.ed.get_map(
+                entity_ids, background=background, print_labels=print_labels, width=width, height=height
+            )
             if floor_plan is not None:
                 break
         else:
@@ -58,7 +84,6 @@ class GetMap(smach.State):
 
         if plan_points is not None:
             for point in plan_points:
-
                 vs_image_frame = floor_plan.map_pose.frame.Inverse() * point
 
                 px = int(vs_image_frame.x() * floor_plan.pixels_per_meter_width)
@@ -78,15 +103,36 @@ class GetMap(smach.State):
 
 
 class GetMapAndShow(smach.StateMachine):
-    def __init__(self, robot, entity_ids=None, mark_ids=None, plan_points=None, duration=30):
+    def __init__(
+        self,
+        robot,
+        entity_ids=None,
+        mark_ids=None,
+        plan_points=None,
+        background: str = "white",
+        print_labels: bool = True,
+        width: int = 0,
+        height: int = 0,
+        duration=30,
+    ):
         super().__init__(outcomes=["done", "failed"])
 
-        filename_des = VariableDesignator(resolve_type=str).writeable
+        filename_des = VariableDesignator(resolve_type=str)
 
         with self:
             smach.StateMachine.add(
                 "GET_MAP",
-                GetMap(robot, filename_des, entity_ids, mark_ids, plan_points),
+                GetMap(
+                    robot,
+                    filename_des.writeable,
+                    entity_ids,
+                    mark_ids,
+                    plan_points,
+                    background,
+                    print_labels,
+                    width,
+                    height,
+                ),
                 transitions={"created": "SHOW_MAP", "failed": "failed"},
             )
 
