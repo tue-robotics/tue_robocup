@@ -121,13 +121,12 @@ class StoreItems(smach.StateMachine):
                                                               navigation_area=knowledge.inspect_area,
                                                               fit_supporting_entity=False,
                                                               room=room),
-                                   transitions={'done': 'CONVERT_ENTITIES',
+                                   transitions={'done': 'SELECT_CLOSEST_ENTITY',
                                                 'failed': 'failed'})
 
-            @smach.cb_interface(outcomes=["converted", "no_entities"])
-            def convert(userdata=None):
-                """ convert Classificationresult to Entitiy"""
-                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
+            @smach.cb_interface(outcomes=["selected", "no_entities"])
+            def SelectClosestEntity(userdata=None):
+                """ convert Classificationresult to Entity and select the closest for grabbing"""
                 entities = []
                 distances = []
                 segmented_entities = segmented_entities_designator.resolve()
@@ -150,11 +149,11 @@ class StoreItems(smach.StateMachine):
                 writer = closest_item_designator.writeable
                 writer.write(closest_entity)
 
-                return "converted"
+                return "selected"
 
-            smach.StateMachine.add("CONVERT_ENTITIES",
-                                   smach.CBState(convert),
-                                   transitions={'converted': 'CHECK_SIMILAR_ITEM',
+            smach.StateMachine.add("SELECT_CLOSEST_ENTITY",
+                                   smach.CBState(SelectClosestEntity),
+                                   transitions={'selected': 'CHECK_SIMILAR_ITEM',
                                                 'no_entities': 'succeeded'})
 
             @smach.cb_interface(outcomes=["item_found", "no_similar_item"])
