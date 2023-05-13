@@ -52,6 +52,36 @@ class PeopleInSeatDesignator(ds.Designator):
         return "PersonInSeatDesignator({}, {}, {}, {})".format(self.robot, self.seat, self.room, self.name)
 
 
+class _CheckPeople(smach.State):
+    def __init__(self, people_des, number_of_people_des):
+        """
+        Constructor
+
+        :param people_des: designator with the detected people
+        :param number_of_people_des: designator which will result in the number of people near the entity, or None in case of state fails.
+        """
+        smach.State.__init__(self, outcomes=["empty", "occupied", "failed"])
+
+        ds.check_resolve_type(people_des, [Entity])
+        self.people_des = people_des
+        ds.check_resolve_type(number_of_people_des, int)
+        ds.is_writeable(number_of_people_des)
+        self.number_of_people_des = number_of_people_des
+
+    def execute(self, ud=None):
+        people = self.people_des.resolve()
+        if people is None or not isinstance(people, list):
+            return "failed"
+
+        number_of_people = len(people)
+        self.number_of_people_des.write(number_of_people)
+
+        if number_of_people == 0:
+            return "empty"
+        else:
+            return "occupied"
+
+
 class CheckSeatEmpty(smach.StateMachine):
     def __init__(self, robot, entity_des, number_of_people_des=None):
         """
@@ -59,16 +89,15 @@ class CheckSeatEmpty(smach.StateMachine):
 
         :param robot: robot object
         :param entity_des: EdEntityDesignator indicating the (furniture) object to check
-        :param number_of_people_des: designator which will result in the sumber of people near the entity, or None in case of state fails.
+        :param number_of_people_des: designator which will result in the number of people near the entity, or None in case of state fails.
         """
         # TODO implement logic for percent vs volume check in state machine rather than in the states themselves
         smach.StateMachine.__init__(self, outcomes=["empty", "occupied", "failed"])
 
         if number_of_people_des:
-            # TODO check if seat_is_for is writeable. i.e. of type VariableWriter
-            ds.check_type(number_of_people_des, int)
+            ds.check_resolve_type(number_of_people_des, int)
         else:
-            number_of_people_des = ds.VariableDesignator(None, resolve_type=int).writeable()
+            number_of_people_des = ds.VariableDesignator(resolve_type=int)
 
         people_in_seat_des = PeopleInSeatDesignator(robot, entity_des)
 
@@ -93,19 +122,8 @@ class CheckSeatEmpty(smach.StateMachine):
                 transitions={"done": "CHECK_EMPTY", "failed": "failed"},
             )
 
-            @smach.cb_interface(outcomes=["empty", "occupied", "failed"])
-            def check_people(userdata=None):
-                people = people_in_seat_des.resolve()
-                if isinstance(people, list) and len(people) == 0:
-                    number_of_people_des.write(0)
-                    return "empty"
-                elif people is None:
-                    return "failed"
-                number_of_people_des.write(len(people))
-                return "occupied"
-
             smach.StateMachine.add(
                 "CHECK_EMPTY",
-                smach.CBState(check_people),
+                _CheckPeople(people_in_seat_des, number_of_people_des.writeable),
                 transitions={"empty": "empty", "occupied": "occupied", "failed": "failed"},
             )
