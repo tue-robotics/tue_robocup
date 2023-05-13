@@ -12,6 +12,7 @@ from .util.designators import (
     is_writeable,
     Designator,
     LockingDesignator,
+    VariableDesignator,
     value_or_resolve,
 )
 from .util.robocup_recorder import start_robocup_recorder
@@ -297,6 +298,20 @@ class CheckTimeOut(smach.State):
 class CheckTries(smach.State):
     """
     This state will check if the number of tries is below a certain number.
+
+    >>> reset_des = VariableDesignator(False, resolve_type=bool, name="reset").writeable
+    >>> check_tries = CheckTries(max_tries=3, reset_des=reset_des)
+    >>> check_tries.execute()
+    'not_yet'
+    >>> check_tries.execute()
+    'not_yet'
+    >>> check_tries.execute()
+    'max_tries'
+    >>> check_tries.execute()
+    'max_tries'
+    >>> reset_des.write(True)
+    >>> check_tries.execute()
+    'not_yet'
     """
     def __init__(self, max_tries: Union[int, Designator], reset_des: Designator):
         smach.State.__init__(self, outcomes=["not_yet", "max_tries"])
