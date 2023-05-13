@@ -215,7 +215,6 @@ class PickUp(smach.State):
                                     )
         self.robot.ed.update_entity(uuid=grab_entity.uuid, frame_stamped=pose_in_hand)
         # Remove pose from ED as we are holding the object in the gripper
-        self.robot.ed.update_entity(uuid=grab_entity.uuid, frame_stamped=pose_in_hand)
         self.robot.ed.update_entity(uuid=grab_entity.uuid, remove_pose=True)
 
         arm.wait_for_motion_done(cancel=True)
