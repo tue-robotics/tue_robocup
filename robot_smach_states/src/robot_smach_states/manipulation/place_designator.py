@@ -43,7 +43,7 @@ class EmptySpotDesignator(Designator):
         :param robot: Robot whose worldmodel to use
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param arm_designator: Designator resolving to an arm robot part, e.g. OccupiedArmDesignator
-        :param area: (optional) area where the item should be placed
+        :param area: (optional) (Designator resolving to) area where the item should be placed
         :param name: name for introspection purposes
         """
         super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
