@@ -54,8 +54,7 @@ class NearObjectSpotDesignator(Designator):
         #open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, area), open_POIs)
 
         # filter poi's occupied by other entities
-        open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs)
-
+        open_POIs = list(filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs))
         if not open_POIs:
             rospy.logdebug("No suitable place position found")
             return None
@@ -141,7 +140,7 @@ class NearObjectSpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
-        marker.header.frame_id = selected_pose.frame_id
+        marker.header.frame_id = selected_pose.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.pose.position.x = selected_pose.frame.p.x()
         marker.pose.position.y = selected_pose.frame.p.y()
@@ -174,8 +173,7 @@ class NearObjectSpotDesignator(Designator):
         return points
 
     def __repr__(self):
-        return "NearObjectSpotDesignator(place_location_designator={}, name='{}', area='{}')"\
-                    .format(self.place_location_designator, self._name, self._area)
+        return f"NearObjectSpotDesignator(near_object_designator={self.near_entity_designator}, supporting_entity_designator={self.supporting_entity_designator} name='{self._name}')"
 
 
 if __name__ == '__main__':
