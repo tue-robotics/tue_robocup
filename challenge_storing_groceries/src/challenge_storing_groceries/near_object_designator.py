@@ -1,18 +1,14 @@
-from __future__ import absolute_import
-
 # System
 import rospy
 import math
 from numpy import arange
 
 # ROS
-import PyKDL as kdl
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
-from pykdl_ros import FrameStamped
+from pykdl_ros import FrameStamped, VectorStamped
 from robot_smach_states.util.designators.ed_designators import Designator
-from robot_smach_states.util.geometry_helpers import offsetConvexHull
 
 
 class NearObjectSpotDesignator(Designator):
@@ -58,8 +54,7 @@ class NearObjectSpotDesignator(Designator):
         #open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, area), open_POIs)
 
         # filter poi's occupied by other entities
-        open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs)
-
+        open_POIs = list(filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs))
         if not open_POIs:
             rospy.logdebug("No suitable place position found")
             return None
@@ -82,7 +77,7 @@ class NearObjectSpotDesignator(Designator):
         :param surface_entity: Entity
         :return: bool
         """
-        entities_at_poi = self.robot.ed.get_entities(center_point=poi.extractVectorStamped(),
+        entities_at_poi = self.robot.ed.get_entities(center_point=VectorStamped(poi.frame.p, poi.header.stamp, poi.header.frame_id),
                                                      radius=0.05)
         entities_at_poi = [entity for entity in entities_at_poi if entity.uuid != surface_entity.uuid]
         return not any(entities_at_poi)
@@ -145,7 +140,7 @@ class NearObjectSpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
-        marker.header.frame_id = selected_pose.frame_id
+        marker.header.frame_id = selected_pose.header.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.pose.position.x = selected_pose.frame.p.x()
         marker.pose.position.y = selected_pose.frame.p.y()
@@ -178,5 +173,24 @@ class NearObjectSpotDesignator(Designator):
         return points
 
     def __repr__(self):
-        return "NearObjectSpotDesignator(place_location_designator={}, name='{}', area='{}')"\
-                    .format(self.place_location_designator, self._name, self._area)
+        return f"NearObjectSpotDesignator(near_object_designator={self.near_entity_designator}, supporting_entity_designator={self.supporting_entity_designator} name='{self._name}')"
+
+
+if __name__ == '__main__':
+    import sys
+    from robot_skills.get_robot import get_robot
+    from robot_smach_states.util.designators import EntityByIdDesignator
+
+    if len(sys.argv) < 4:
+        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID SHELF_ID")
+        sys.exit()
+
+    rospy.init_node('test_near_object')
+
+    robot = get_robot(sys.argv[1])
+    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[2])
+    shelfDes = EntityByIdDesignator(robot, uuid=sys.argv[3])
+
+    nearObjectDes = NearObjectSpotDesignator(robot, entityDes, shelfDes)
+    place_pose = nearObjectDes.resolve()
+    rospy.loginfo(f"Designator {nearObjectDes} resolves to {place_pose}")

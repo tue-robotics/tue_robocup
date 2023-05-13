@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import rospy
 
 from ed.entity import Entity
@@ -54,6 +52,9 @@ def find_similar_entity(original, entity_list, knowledge):
         return matching_types[0]
 
     original_category = knowledge.common.get_object_category(original_type)
+    if not original_category:
+        rospy.logerr("find_similar_entity: original entity class does not belong to a category. Is your knowledge complete?")
+        return None
     matching_categories = [entity for entity in entity_list
                            if entity.etype in knowledge.common.object_names_of_category(original_category)]
     if matching_categories:

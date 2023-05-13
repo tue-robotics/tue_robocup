@@ -6,11 +6,9 @@ import math
 import rospy
 import smach
 import tf2_ros
+# noinspection PyUnresolvedReferences
 import tf2_geometry_msgs  # required for transforms
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
-
-# TU/e
-from pykdl_ros import VectorStamped
 
 # Challenge storing groceries
 from tf.transformations import euler_from_quaternion, quaternion_from_euler

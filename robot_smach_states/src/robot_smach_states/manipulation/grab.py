@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 # ROS
 import PyKDL as kdl
-from pykdl_ros import VectorStamped
+from pykdl_ros import VectorStamped, FrameStamped
 import rospy
 import smach
 import tf2_ros
@@ -186,6 +186,12 @@ class PickUp(smach.State):
 
         # Close gripper
         arm.gripper.send_goal('close')
+        # Define the pose of the object relative to the gripper (which made contact at grasp_framestamped)
+        pose_in_hand = FrameStamped(grasp_framestamped.frame.Inverse() * grab_entity.pose.frame,
+                                    grasp_framestamped.header.stamp,
+                                    "map" # all entities in ED must be defined with respect to map. We will ignore this property
+                                    )
+        grab_entity.pose = pose_in_hand
         arm.gripper.occupied_by = grab_entity
 
         # Retract
@@ -202,8 +208,14 @@ class PickUp(smach.State):
         arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
-        # Update Kinect once again to make sure the object disappears from ED
-        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.uuid)
+        # Define the pose of the object relative to the gripper (which made contact at grasp_framestamped)
+        pose_in_hand = FrameStamped(grasp_framestamped.frame.Inverse() * grab_entity.pose.frame,
+                                    grasp_framestamped.header.stamp,
+                                    "map" # all entities in ED must be defined with respect to map. We will ignore this property
+                                    )
+        self.robot.ed.update_entity(uuid=grab_entity.uuid, frame_stamped=pose_in_hand)
+        # Remove pose from ED as we are holding the object in the gripper
+        self.robot.ed.update_entity(uuid=grab_entity.uuid, remove_pose=True)
 
         arm.wait_for_motion_done(cancel=True)
 
@@ -296,26 +308,28 @@ class ResetOnFailure(smach.State):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator):
+    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, room: Designator = None):
         """
         Let the given robot move to an entity and grab that entity using some arm
 
         :param robot: Robot to use
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
-        :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
+        :param arm: Designator that resolves to the arm to use for grabbing. E.g. UnoccupiedArmDesignator
+        :param room: Designator that resolves to the room where the robot has to stay in. E.g. EntityByIdDesignator
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
         check_type(item, Entity)
         check_type(arm, PublicArm)
+        check_type(room, Entity, type(None))
 
         with self:
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item, room),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})

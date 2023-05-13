@@ -1,6 +1,3 @@
-# System
-import os
-
 # ROS
 import rospy
 import smach
@@ -14,7 +11,6 @@ from robot_smach_states.world_model import SegmentObjects
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.rise import RiseForInspect
 
-from pykdl_ros import VectorStamped
 from robot_skills.classification_result import ClassificationResult
 
 
@@ -40,7 +36,7 @@ class InspectAreas(smach.StateMachine):
     Class to navigate to a(n) (furniture) object and segment the objects on top of it.
     """
 
-    def __init__(self, robot, entityDes, objectIDsDes=None, searchAreas=None, navigation_area=None,
+    def __init__(self, robot, entityDes, objectIDsDes=None, roomDes=None, searchAreas=None, navigation_area=None,
                  knowledge=None, unknown_threshold=0.0, filter_threshold=0.0):
         """
         Constructor
@@ -48,6 +44,7 @@ class InspectAreas(smach.StateMachine):
         :param robot: robot object
         :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
         :param objectIDsDes: designator that is used to store the segmented objects
+        :param roomDes: Room for robot to stay in while inspecting
         :param searchAreas: (designator to) array of strings defining where the objects are w.r.t. the entity,
             if none is provided we will use the knowledge to decide them
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
@@ -77,12 +74,13 @@ class InspectAreas(smach.StateMachine):
         with self:
             if navigation_area:
                 smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: navigation_area},
-                                                                                 entityDes),
+                                                                                 entityDes, room=roomDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'ITERATE_AREA'})
             else:
-                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes,
+                                                                                radius=1.0, room=roomDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'ITERATE_AREA'})
@@ -102,3 +100,24 @@ class InspectAreas(smach.StateMachine):
                                                   unknown_threshold=unknown_threshold,
                                                   filter_threshold=filter_threshold),
                                    transitions={'done': 'ITERATE_AREA'})
+
+
+if __name__ == "__main__":
+    import sys
+    from robot_skills.get_robot import get_robot
+    from robot_smach_states.util.designators import EntityByIdDesignator
+
+    if len(sys.argv) < 4:
+        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID SEARCH_VOLUMES")
+        sys.exit()
+
+    rospy.init_node('test_inspect_shelves')
+
+    robot = get_robot(sys.argv[1])
+    robot.reset()
+
+    shelfDes = EntityByIdDesignator(robot, uuid=sys.argv[2])
+    searchAreasDes = VariableDesignator(sys.argv[3:])
+
+    sm = InspectAreas(robot, shelfDes, searchAreas=searchAreasDes, navigation_area="in_front_of")
+    sm.execute()

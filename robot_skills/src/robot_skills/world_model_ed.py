@@ -274,13 +274,14 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, uuid, etype=None, frame_stamped=None, flags=None, add_flags=None, remove_flags=None, action=None):
+    def update_entity(self, uuid, etype=None, frame_stamped=None, remove_pose=None, flags=None, add_flags=None, remove_flags=None, action=None):
         """
         Updates entity
 
         :param uuid: entity id
         :param etype: entity type
         :param frame_stamped: If specified, the entity is updated to be at this FrameStamped
+        :param remove_pose: If True, the pose of the entity is removed
         :param flags: (OBSOLETE, use add_flags and remove_flags): (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,  e.g., 'perception'
         :param add_flags: list of flags which will be added to the specified entity
         :param remove_flags: list of flags which will removed from the specified entity
@@ -297,7 +298,7 @@ class ED(RobotPart):
         if action:
             json_entity += ', "action": "%s"' % action
 
-        if frame_stamped:
+        if not remove_pose and frame_stamped:
             if frame_stamped.header.frame_id != "/map" and frame_stamped.header.frame_id != "map":
                 rospy.loginfo('update_entity: frame not in map, transforming')
                 frame_stamped = self.tf_buffer.transform(frame_stamped, "map")
@@ -306,6 +307,9 @@ class ED(RobotPart):
             t = frame_stamped.frame.p
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (
             t.x(), t.y(), t.z(), X, Y, Z)
+
+        if remove_pose:
+            json_entity += ', "pose": { "remove": "true" }'
 
         if flags or add_flags or remove_flags:
             json_entity += ', "flags": ['

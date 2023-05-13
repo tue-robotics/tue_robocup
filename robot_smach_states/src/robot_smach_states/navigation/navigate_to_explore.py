@@ -14,13 +14,16 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToExplore(NavigateTo):
-    def __init__(self, robot, constraint_designator, breakout_designator, radius=0.7, exclude_radius=0.3):
+    def __init__(self, robot, constraint_designator, breakout_designator, radius=0.7, exclude_radius=0.3, reset_head=True, speak=True, reset_pose=True):
         """
         :param constraint_designator a Designator that resolves to the entity to explore
         :param breakout_designator when this Designator successfully resolves, the state signals it is done.
         For example, it could resolve to an item of a class you are looking for
+        :param reset_head: Whether or not the head should be used for obstacle avoidance during navigation.
+        :param speak: Whether or not the robot should speak during navigation
+        :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
         """
-        super(NavigateToExplore, self).__init__(robot, self.generateConstraint)
+        super(NavigateToExplore, self).__init__(robot, self.generateConstraint, reset_head=reset_head, speak=speak, reset_pose=reset_pose)
 
         self.robot = robot
 
