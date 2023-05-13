@@ -338,8 +338,8 @@ class HearOptionsExtraPicoVoice(smach.State):
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
 
-        context = self.context.resolve() if hasattr(self.context, "resolve") else self.context
-        intents = self.intents.resolve() if hasattr(self.intents, "resolve") else self.intents
+        context = ds.value_or_resolve(self.context)
+        intents = ds.value_or_resolve(self.intents)
         require_endpoint = (
             self.require_endpoint.resolve() if hasattr(self.require_endpoint, "resolve") else self.require_endpoint
         )
