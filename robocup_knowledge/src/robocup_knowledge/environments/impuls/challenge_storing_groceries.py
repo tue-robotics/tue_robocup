@@ -11,8 +11,8 @@ starting_point = 'initial_pose'
 shelf = "closet"
 default_area = "shelf4"
 inspect_area = "in_front_of"
-object_shelves = ["shelf3", "shelf4", "shelf5"] #TODO unused variable?
-object_types = [obj["name"] for obj in common.objects] #TODO unused variable?
+object_shelves = ["shelf3", "shelf4", "shelf5"]  # TODO unused variable?
+object_types = [obj["name"] for obj in common.objects]  # TODO unused variable?
 
 # Grasping
 table = "dinner_table"
