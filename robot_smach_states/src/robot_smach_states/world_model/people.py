@@ -96,7 +96,7 @@ class CheckSeatEmpty(smach.StateMachine):
             @smach.cb_interface(outcomes=["empty", "occupied", "failed"])
             def check_people(userdata=None):
                 people = people_in_seat_des.resolve()
-                if people == []:
+                if isinstance(people, list) and len(people) == 0:
                     number_of_people_des.write(0)
                     return "empty"
                 elif people is None:
