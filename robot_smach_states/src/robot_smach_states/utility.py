@@ -6,7 +6,7 @@ import smach
 import std_msgs.msg
 
 # TU/e Robotics
-from .util.designators import check_type, is_writeable, Designator, LockingDesignator
+from .util.designators import check_resolve_type, check_type, is_writeable, Designator, LockingDesignator
 from .util.robocup_recorder import start_robocup_recorder
 
 
@@ -297,7 +297,7 @@ class CheckTries(smach.State):
         self.reset_des = reset_des
 
         check_type(max_tries, int)
-        check_type(reset_des, bool)
+        check_resolve_type(reset_des, bool)
         is_writeable(reset_des)
         self._counter = 0
 
