@@ -253,7 +253,7 @@ class Inspect(smach.StateMachine):
         with self:
             if navigation_area:
                 smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: navigation_area},
-                                                                                 entityDes, room=room, speak=False),
+                                                                                 entityDes, room=room),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
                                                     'arrived': 'RISE'})
