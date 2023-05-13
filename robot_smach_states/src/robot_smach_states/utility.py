@@ -226,7 +226,7 @@ class WaitTime(smach.State):
 class WaitCondition(smach.State):
     """
     Wait until a condition is satisfied, possible on a robot.
-    When the condtion is satisfied, the value that matched the condition is stored in the userdata.
+    When the condition is satisfied, the value that matched the condition is stored in the userdata.
     The callback must return that value or something that evaluates to False otherwise.
     The arguments to the callback are userdata, robot
     """
