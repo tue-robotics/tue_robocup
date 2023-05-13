@@ -75,7 +75,7 @@ class GetFurnitureFromOperatorPose(State):
             rospy.logwarn("Could not get RGB, depth or camera info")
         return image_data
 
-    def _prep_operator(self, attempts=5):
+    def _prep_operator(self, attempts=10):
         self.operator = None
         self._robot.head.reset()
         self._robot.speech.speak("Let's point, please stand in front of me!", block=False)
@@ -89,7 +89,10 @@ class GetFurnitureFromOperatorPose(State):
             success, found_people_ids = self._robot.ed.detect_people(*image_data)
             if any(found_people_ids):
                 break
-            rospy.sleep(0.4)
+            rospy.sleep(0.7)
+            rospy.loginfo("Not found an operator yet")
+        else:
+            rospy.logwarn("Not found an operator at all")
             return False
         self._robot.speech.speak("Please point at a piece of furniture", block=False)
         self._show_image(timeout=1)
