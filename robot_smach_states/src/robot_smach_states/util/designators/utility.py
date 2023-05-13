@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-from __future__ import absolute_import, print_function
+
+from typing import TypeVar, Union
 
 # ROS
 import rospy
@@ -12,8 +13,10 @@ from robot_smach_states.util.designators.core import Designator, VariableDesigna
 
 __author__ = 'loy'
 
+R = TypeVar("R")
 
-def value_or_resolve(value):
+
+def value_or_resolve(value: Union[R, Designator[R]]) -> R:
     """
     If value is a designator, resolve it, otherwise return value
     """
