@@ -7,7 +7,7 @@ from numpy import arange
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
-from pykdl_ros import FrameStamped
+from pykdl_ros import FrameStamped, VectorStamped
 from robot_smach_states.util.designators.ed_designators import Designator
 
 
@@ -78,7 +78,7 @@ class NearObjectSpotDesignator(Designator):
         :param surface_entity: Entity
         :return: bool
         """
-        entities_at_poi = self.robot.ed.get_entities(center_point=poi.extractVectorStamped(),
+        entities_at_poi = self.robot.ed.get_entities(center_point=VectorStamped(poi.frame.p, poi.header.stamp, poi.header.frame_id),
                                                      radius=0.05)
         entities_at_poi = [entity for entity in entities_at_poi if entity.uuid != surface_entity.uuid]
         return not any(entities_at_poi)
