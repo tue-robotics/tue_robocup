@@ -25,11 +25,11 @@ class PeopleInSeatDesignator(ds.Designator):
 
     def _resolve(self) -> Entity:
         if self.room:
-            room = self.room.resolve() if hasattr(self.room, 'resolve') else self.room  # type: Entity
+            room = ds.value_or_resolve(self.room)
             if not room:
                 rospy.logwarn("Room is None, ignoring room constraints")
-            
-        seat = self.seat.resolve() if hasattr(self.seat, 'resolve') else self.seat  # type: Entity
+
+        seat = ds.value_or_resolve(self.seat)
         if not seat:
             rospy.logwarn("Seat is None, so cannot find seats there")
             return None
