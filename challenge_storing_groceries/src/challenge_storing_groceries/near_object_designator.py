@@ -181,16 +181,16 @@ if __name__ == '__main__':
     from robot_skills.get_robot import get_robot
     from robot_smach_states.util.designators import EntityByIdDesignator
 
-    if len(sys.argv) < 2:
-        print(f"usage: python {sys.argv[0]} [entity ID]")
+    if len(sys.argv) < 4:
+        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID SHELF_ID")
         sys.exit()
 
-    rospy.init_node('test_inspect_shelves')
+    rospy.init_node('test_near_object')
 
-    robot = get_robot("hero")
-
-    shelfDes = EntityByIdDesignator(robot, uuid="closet")
-    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[1])
+    robot = get_robot(sys.argv[1])
+    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[2])
+    shelfDes = EntityByIdDesignator(robot, uuid=sys.argv[3])
 
     nearObjectDes = NearObjectSpotDesignator(robot, entityDes, shelfDes)
-    nearObjectDes.resolve()
+    place_pose = nearObjectDes.resolve()
+    rospy.loginfo(f"Designator {nearObjectDes} resolves to {place_pose}")

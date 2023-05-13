@@ -103,15 +103,21 @@ class InspectAreas(smach.StateMachine):
 
 
 if __name__ == "__main__":
+    import sys
     from robot_skills.get_robot import get_robot
     from robot_smach_states.util.designators import EntityByIdDesignator
+
+    if len(sys.argv) < 4:
+        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID SEARCH_VOLUMES")
+        sys.exit()
+
     rospy.init_node('test_inspect_shelves')
 
-    robot = get_robot("hero")
+    robot = get_robot(sys.argv[1])
     robot.reset()
 
-    shelfDes = EntityByIdDesignator(robot, uuid="closet")
-    searchAreasDes = VariableDesignator(["shelf3", "shelf4", "shelf5"])
+    shelfDes = EntityByIdDesignator(robot, uuid=sys.argv[2])
+    searchAreasDes = VariableDesignator(sys.argv[3:])
 
     sm = InspectAreas(robot, shelfDes, searchAreas=searchAreasDes, navigation_area="in_front_of")
     sm.execute()

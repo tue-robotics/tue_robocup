@@ -203,21 +203,26 @@ if __name__ == '__main__':
     from robot_smach_states.util.designators import EntityByIdDesignator, ArmDesignator
 
     if len(sys.argv) < 3:
-        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID [Optional: shelf ID]")
+        print(f"usage: python {sys.argv[0]} ROBOT ENTITY_ID [optional: PLACE_AREA(on_top_of)] [Optional: SHELF_ID(closet)]")
         sys.exit()
 
+    entity_id = sys.argv[2]
     place_area = "on_top_of"
     if len(sys.argv) > 3:
         place_area = sys.argv[3]
 
-    rospy.init_node('test_inspect_shelves')
+    shelf_id = "closet"
+    if len(sys.argv) > 4:
+        place_area = sys.argv[4]
+
+    rospy.init_node('test_store_single_item')
+    rospy.loginfo(f"Going to store entity {entity_id} in volume {place_area} of entity {shelf_id}")
 
     robot = get_robot(sys.argv[1])
     robot.reset_all_arms()
 
-    entityDes = EntityByIdDesignator(robot, uuid=sys.argv[2])
-
-    shelfDes = EntityByIdDesignator(robot, uuid="cabinet")
+    entityDes = EntityByIdDesignator(robot, uuid=entity_id)
+    shelfDes = EntityByIdDesignator(robot, uuid=shelf_id)
     armDes = ArmDesignator(robot)
     placePoseDes = EmptySpotDesignator(robot, shelfDes, armDes, area=place_area, name="empty_spot_designator")
 
