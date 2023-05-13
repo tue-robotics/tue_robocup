@@ -137,6 +137,9 @@ class StoreItems(smach.StateMachine):
                         continue
 
                     e = robot.ed.get_entity(seg_entity.uuid)
+                    if e is None:
+                        rospy.logwarn(f"entity: {seg_entity.uuid} segmented but not found in the worldmodel")
+                        continue
 
                     distance = e.distance_to_2d(hero_pose.frame.p)
                     entities.append(e)
