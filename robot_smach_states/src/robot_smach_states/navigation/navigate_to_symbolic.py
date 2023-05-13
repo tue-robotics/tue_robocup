@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from ed.entity import Entity
 from ..util.designators.core import Designator
 from .navigation import NavigateTo
-from .constraint_functions import combine_constraints, symbolic_constraint, look_at_constraint
+from .constraint_functions import combine_constraints, symbolic_constraint, room_constraint, look_at_constraint
 from ..util.designators import check_resolve_type
 
 
@@ -35,7 +35,7 @@ class NavigateToSymbolic(NavigateTo):
         ]
 
         if room:
-            constraint_list.append(lambda: symbolic_constraint(robot, {room: "in"}))
+            constraint_list.append(lambda: room_constraint(robot, room))
 
         super(NavigateToSymbolic, self).__init__(robot, lambda: combine_constraints(constraint_list), reset_head=reset_head, speak=speak, reset_pose=reset_pose)
 

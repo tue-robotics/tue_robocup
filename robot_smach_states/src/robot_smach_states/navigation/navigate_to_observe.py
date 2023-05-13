@@ -3,7 +3,7 @@ from __future__ import absolute_import
 # TU/e Robotics
 from ed.entity import Entity
 from .navigation import NavigateTo
-from .constraint_functions import combine_constraints, look_at_constraint, radius_constraint, symbolic_constraint
+from .constraint_functions import combine_constraints, look_at_constraint, radius_constraint, room_constraint
 from ..util.designators import check_resolve_type
 from ..util.designators.core import Designator
 
@@ -33,6 +33,6 @@ class NavigateToObserve(NavigateTo):
         ]
 
         if room:
-            constraint_list.append(lambda: symbolic_constraint(robot, {room: "in"}))
+            constraint_list.append(lambda: room_constraint(robot, room))
 
         super(NavigateToObserve, self).__init__(robot, lambda: combine_constraints(constraint_list), reset_head=reset_head, speak=speak, reset_pose=reset_pose)
