@@ -296,8 +296,8 @@ class HearOptionsExtraPicoVoice(smach.State):
         robot: Robot,
         context: Union[ds.Designator, str],
         speech_result_designator: ds.Designator,
-        intents: Optional[Union[ds.Designator, List[str]]] = None,
-        require_endpoint: Union[ds.Designator, bool] = True,
+        intents: Optional[Union[ds.Designator[List[str]], List[str]]] = None,
+        require_endpoint: Union[ds.Designator[bool], bool] = True,
         timeout: float = 10.0,
         look_at_standing_person: bool = True,
     ):
