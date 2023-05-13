@@ -321,9 +321,11 @@ class HearOptionsExtraPicoVoice(smach.State):
 
         ds.check_type(context, str)
         ds.check_resolve_type(speech_result_designator, HMIResult)
+        ds.is_writeable(speech_result_designator)
         ds.check_type(intents, [str])
         ds.check_type(require_endpoint, bool)
-        ds.is_writeable(speech_result_designator)
+        ds.check_type(timeout, float, int)
+        ds.check_type(look_at_standing_person, bool)
 
         self.context = context
         self.speech_result_designator = speech_result_designator
