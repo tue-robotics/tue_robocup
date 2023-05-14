@@ -313,7 +313,7 @@ class CheckTries(smach.State):
     >>> check_tries.execute()
     'not_yet'
     """
-    def __init__(self, max_tries: Union[int, Designator], reset_des: Designator):
+    def __init__(self, max_tries: Union[int, Designator[int]], reset_des: Designator):
         smach.State.__init__(self, outcomes=["not_yet", "max_tries"])
         self.max_tries = max_tries
         self.reset_des = reset_des
