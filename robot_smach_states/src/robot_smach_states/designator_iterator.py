@@ -23,52 +23,73 @@ class IterateDesignator(smach.State):
 
         >>> collection_des = ds.VariableDesignator(['a', 'b', 'c']).writeable
         >>> element_des = ds.VariableDesignator(resolve_type=str)
-        >>>
         >>> iterator = IterateDesignator(collection_des, element_des.writeable)
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'a'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'b'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'c'
-        >>>
-        >>> assert iterator.execute() == 'stop_iteration'
-        >>> assert element_des.resolve() == 'c'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'a'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'b'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'c'
-        >>>
-        >>> assert iterator.execute() == 'stop_iteration'
-        >>>
+
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'a'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'b'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'c'
+        >>> iterator.execute()
+        'stop_iteration'
+        >>> element_des.resolve()
+        'c'
+
+        The iterator will start from the beginning of the collection again
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'a'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'b'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'c'
+        >>> iterator.execute()
+        'stop_iteration'
+
         >>> collection_des.write(['a', 'b', 'c'])
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'a'
-        >>>
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'a'
+
         >>> collection_des.write(['d', 'e', 'f', 'g'])
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'd'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'e'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'f'
-        >>>
-        >>> assert iterator.execute() == 'next'
-        >>> assert element_des.resolve() == 'g'
-        >>>
-        >>> assert iterator.execute() == 'stop_iteration'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'd'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'e'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'f'
+        >>> iterator.execute()
+        'next'
+        >>> element_des.resolve()
+        'g'
+        >>> iterator.execute()
+        'stop_iteration'
+
+        >>> collection_des2 = ds.VariableDesignator(resolve_type=[str]).writeable
+        >>> collection_des2.resolve()  # Should resolve to None
+        >>> element_des2 = ds.VariableDesignator(resolve_type=str)
+        >>> iterator2 = IterateDesignator(collection_des2, element_des2.writeable)
+        >>> iterator2.execute()
+        'stop_iteration'
         """
         smach.State.__init__(self, outcomes=['next', 'stop_iteration'])
 
