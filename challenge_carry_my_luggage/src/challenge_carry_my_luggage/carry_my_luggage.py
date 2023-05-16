@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 import PyKDL as kdl
-import rospy
-from pykdl_ros import FrameStamped
-from ed.shape import RightPrism
-from smach import StateMachine, cb_interface, CBState
-from ed.entity import Entity
-from robocup_knowledge import load_knowledge
-from robot_smach_states.utility import Initialize, SetInitialPose
-from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
-from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, Say, GetFurnitureFromOperatorPose
-from robot_smach_states.manipulation import Grab, HandoverToHuman, HandoverFromHuman
+
 import robot_smach_states.util.designators as ds
+from ed.entity import Entity
+from ed.shape import RightPrism
+from pykdl_ros import FrameStamped
+from robocup_knowledge import load_knowledge
 from robot_skills.arm import arms
 from robot_skills.simulation.sim_mode import is_sim_mode
+from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, Say
+from robot_smach_states.manipulation import HandoverToHuman
+from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
+from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.utility import WaitTime
-
+from smach import StateMachine, cb_interface, CBState
 
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
@@ -260,7 +259,6 @@ class CarryMyLuggage(StateMachine):
 
 
 if __name__ == "__main__":
-    from challenge_carry_my_luggage.carry_my_luggage import CarryMyLuggage
     from robot_skills import get_robot
     import sys
     import rospy
