@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from typing import Union
 
 # ROS
 import rospy
@@ -6,7 +6,15 @@ import smach
 import std_msgs.msg
 
 # TU/e Robotics
-from .util.designators import check_type, is_writeable, LockingDesignator
+from .util.designators import (
+    check_resolve_type,
+    check_type,
+    is_writeable,
+    Designator,
+    LockingDesignator,
+    VariableDesignator,
+    value_or_resolve,
+)
 from .util.robocup_recorder import start_robocup_recorder
 
 
@@ -218,7 +226,7 @@ class WaitTime(smach.State):
 class WaitCondition(smach.State):
     """
     Wait until a condition is satisfied, possible on a robot.
-    When the condtion is satisfied, the value that matched the condition is stored in the userdata.
+    When the condition is satisfied, the value that matched the condition is stored in the userdata.
     The callback must return that value or something that evaluates to False otherwise.
     The arguments to the callback are userdata, robot
     """
@@ -287,6 +295,50 @@ class CheckTimeOut(smach.State):
         return "not_yet"
 
 
+class CheckTries(smach.State):
+    """
+    This state will check if the number of tries is below a certain number.
+
+    >>> reset_des = VariableDesignator(False, resolve_type=bool, name="reset").writeable
+    >>> check_tries = CheckTries(max_tries=3, reset_des=reset_des)
+    >>> check_tries.execute()
+    'not_yet'
+    >>> check_tries.execute()
+    'not_yet'
+    >>> check_tries.execute()
+    'max_tries'
+    >>> check_tries.execute()
+    'max_tries'
+    >>> reset_des.write(True)
+    >>> check_tries.execute()
+    'not_yet'
+    """
+    def __init__(self, max_tries: Union[int, Designator[int]], reset_des: Designator):
+        smach.State.__init__(self, outcomes=["not_yet", "max_tries"])
+        self.max_tries = max_tries
+        self.reset_des = reset_des
+
+        check_type(max_tries, int)
+        check_resolve_type(reset_des, bool)
+        is_writeable(reset_des)
+        self._counter = 0
+
+    def execute(self, userdata=None):
+        if self.reset_des.resolve():
+            rospy.loginfo("Resetting counter")
+            self._counter = 0
+            self.reset_des.write(False)
+
+        self._counter += 1
+
+        max_tries = value_or_resolve(self.max_tries)
+        if self._counter >= max_tries:
+            rospy.loginfo(f"Max number of tries ({max_tries}) reached")
+            return "max_tries"
+
+        return "not_yet"
+
+
 class WaitForDesignator(smach.State):
     """
     Waits for a given designator to answer. It will retry to resolve the designator a given number of times, with
@@ -345,7 +397,7 @@ class WriteDesignator(smach.State):
         Writes a value to a designator each time this state is executed. The value to be written can both
         be the value or a designator. In the latter, the resolved value is written to the designator.
 
-        :param wirte_designator: Writeable designator
+        :param write_designator: Writeable designator
         :param value: Value or designator, which resolves to the value, to be written to the designator
         """
         smach.State.__init__(self, outcomes=['written'])

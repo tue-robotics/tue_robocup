@@ -491,14 +491,14 @@ class FindPeopleInRoom(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
                                    NavigateToWaypoint(robot=robot,
-                                                      waypoint_designator=waypoint_designator, radius=0.15),
+                                                      waypoint_designator=waypoint_designator, radius=0.15, speak=False),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
                                    NavigateToRoom(robot=robot,
-                                                  entity_designator_room=room_designator),
+                                                  entity_designator_room=room_designator, speak=False),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})

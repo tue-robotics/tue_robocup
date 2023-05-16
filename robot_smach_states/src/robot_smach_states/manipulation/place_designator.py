@@ -75,13 +75,18 @@ class EmptySpotDesignator(Designator):
         place_frame = FrameStamped(frame=place_location._pose, stamp=rospy.Time.now(), frame_id="map")
 
         # points_of_interest = []
-        if self._area:
-            vectors_of_interest = self._determine_points_of_interest_with_area(place_location, self._area)
+        area = self._area.resolve() if hasattr(self._area, "resolve") else self._area
+        if area:
+            vectors_of_interest = self._determine_points_of_interest_with_area(place_location, area)
         else:
+            # This will place in on top of the entity, so also on top of a cabinet
             vectors_of_interest = self._determine_points_of_interest(place_frame.frame,
                                                                      z_max=place_location.shape.z_max,
                                                                      convex_hull=place_location.shape.convex_hull)
 
+        if not vectors_of_interest:
+            rospy.logerr("EmptySpotDesignator: No valid points of interest found")
+            return None
         assert all(isinstance(v, Candidate) for v in vectors_of_interest)
         assert all(isinstance(v.frame_stamped, FrameStamped) for v in vectors_of_interest)
 
@@ -98,7 +103,7 @@ class EmptySpotDesignator(Designator):
         closest_candidate = min(candidates, key=lambda tup:tup.distance)
         candidates = [f for f in candidates if (f.distance - closest_candidate.distance) < self._nav_threshold]
         rospy.loginfo("2 Currently considering: {} candidates".format(len(candidates)))
-        candidates.sort(key=lambda tup: tup.edge_score, reverse=True) # sorts in place
+        candidates.sort(key=lambda tup: tup.edge_score, reverse=True)  # sorts in place
 
         for candidate in candidates:
             if self._distance_to_poi_area(candidate.frame_stamped, arm):
@@ -106,7 +111,7 @@ class EmptySpotDesignator(Designator):
                 self.marker_pub.publish(MarkerArray([selection]))
                 return candidate.frame_stamped
 
-        rospy.logerr("Could not find an empty spot")
+        rospy.logerr("EmptySpotDesignator: Could not find an empty spot")
         return None
 
     def _is_poi_unoccupied(self, frame_stamped, surface_entity):
@@ -117,9 +122,12 @@ class EmptySpotDesignator(Designator):
 
     def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
         """
-        :return: direct distance between a point and and the place offset of the arm
+        :return: direct distance between a point and the place offset of the arm
         :rtype: double [meters]
         """
+        # ToDO: This base offset should be taken into account in combination with the orientation of a grasp pose.
+        #   therefore only the magnitude of the offset should be used but still in the correction direction.
+        #   Which can't be defined yet. So my current suggestion is to not use the base offset at all.
         bo = arm.base_offset
 
         offset_pose = base_pose.frame * bo
@@ -204,15 +212,18 @@ class EmptySpotDesignator(Designator):
         # We want to give it a convex hull using the designated area
 
         if area not in entity.volumes:
+            rospy.logerr(f"EmptySpotDesignator: Entity {entity.uuid} does not have a volume called {area}, available areas are {entity.volumes}")
             return []
 
         box = entity.volumes[area]
 
         if not hasattr(box, "bottom_area"):
             rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.uuid))
+            return []
 
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box
+        # ToDo: This is a not allways the case. So this should be changed
         top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
         return self._determine_points_of_interest(entity._pose, top_z, box.bottom_area)
 

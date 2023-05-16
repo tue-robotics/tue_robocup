@@ -86,8 +86,7 @@ category_locations = {
 }
 
 inspect_areas = {
-    "closet": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"],
-    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4"]
+    "closet": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 }
 
 inspect_positions = {
@@ -172,7 +171,7 @@ def get_room(location):
 
 
 def is_room(entity_id):
-    return (entity_id in rooms)
+    return entity_id in location_rooms
 
 
 def get_inspect_areas(location):

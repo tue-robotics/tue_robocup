@@ -38,6 +38,12 @@ class RobotPart(object):
         # If no such check exists, then assume it's operational unless overridden in subclass
         self._operational = True
 
+    def close(self):
+        """
+        Close the robot part
+        """
+        pass
+
     def add_part(self, partname, part):
         """
         Add a component part to the robot part. This is added to the parts dict and set as an attribute

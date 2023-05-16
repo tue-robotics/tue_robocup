@@ -3,7 +3,7 @@
 #  October '14
 #
 
-from typing import List
+from typing import List, Optional
 
 # System
 import math
@@ -186,7 +186,9 @@ class GlobalPlanner(RobotPart):
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
         self._check_plan_client = self.create_service_client("/" + robot_name + "/global_planner/check_plan_srv", CheckPlan)
 
-    def getPlan(self, position_constraint: PositionConstraint, start_pose: FrameStamped = None) -> List[PoseStamped]:
+    def getPlan(
+        self, position_constraint: PositionConstraint, start_pose: Optional[FrameStamped] = None
+    ) -> List[PoseStamped]:
         """
         Get a global plan from start(optional) to a goal constrained by position_constraint
 
@@ -220,7 +222,7 @@ class GlobalPlanner(RobotPart):
         end_time = rospy.Time.now()
         plan_time = (end_time-start_time).to_sec()
 
-        self.path_length = self.computePathLength(resp.plan)
+        self.path_length = computePathLength(resp.plan)
 
         return resp.plan
 
@@ -235,16 +237,6 @@ class GlobalPlanner(RobotPart):
 
     def getCurrentPositionConstraint(self):
         return self._position_constraint
-
-    def computePathLength(self, path):
-        #rospy.logwarn("Please use the other computepathlength")
-        distance = 0.0
-        for index, pose in enumerate(path):
-            if not index == 0:
-                dx = path[index].pose.position.x - path[index-1].pose.position.x
-                dy = path[index].pose.position.y - path[index-1].pose.position.y
-                distance += math.sqrt( dx*dx + dy*dy)
-        return distance
 
 
 class Base(RobotPart):

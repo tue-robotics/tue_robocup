@@ -20,9 +20,6 @@ class Speech(RobotPart):
         self._default_character = self.load_param('text_to_speech/character', 'default')
         self._default_emotion   = self.load_param('text_to_speech/emotion', 'neutral')
 
-    def close(self):
-        pass
-
     def speak(self, sentence, language=None, personality=None, voice=None, mood=None, block=True, replace=None):
         """
         Send a sentence to the text to speech module.

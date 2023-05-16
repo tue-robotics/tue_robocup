@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-from __future__ import absolute_import, print_function
+
+from typing import TypeVar, Union
 
 # ROS
 import rospy
@@ -11,6 +12,15 @@ import operator
 from robot_smach_states.util.designators.core import Designator, VariableDesignator
 
 __author__ = 'loy'
+
+R = TypeVar("R")
+
+
+def value_or_resolve(value: Union[R, Designator[R]]) -> R:
+    """
+    If value is a designator, resolve it, otherwise return value
+    """
+    return value.resolve() if hasattr(value, "resolve") else value
 
 
 class LockingDesignator(Designator):
@@ -169,7 +179,8 @@ class ValueByKeyDesignator(Designator):
         # ToDo: possible cases: container=None, Missing key
         container = self._container.resolve()
         if container:
-            return container[self._key]
+            key = value_or_resolve(self._key)
+            return container[key]
         else:
             return None
 

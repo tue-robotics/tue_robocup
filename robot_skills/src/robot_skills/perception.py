@@ -72,9 +72,6 @@ class Perception(RobotPart):
 
         self._robot_base_frame_id = robot_base_frame_id if robot_base_frame_id else f"{robot_name}/base_link"
 
-    def close(self):
-        pass
-
     def _image_cb(self, image):
         self._camera_cv.acquire()
         self._camera_last_image = image

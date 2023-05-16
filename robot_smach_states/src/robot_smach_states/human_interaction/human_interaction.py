@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from typing import List, Optional, Union
 
 import math
 import random
@@ -14,6 +14,7 @@ from hmi import HMIResult
 # TU/e Robotics
 from hmi import TimeoutException
 
+from robot_smach_states.utility import CheckTries, WriteDesignator
 import robot_smach_states.util.designators as ds
 # Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
@@ -286,6 +287,81 @@ class HearOptionsExtra(smach.State):
         return "no_result"
 
 
+class HearOptionsExtraPicoVoice(smach.State):
+    """
+    Listen to what the user said using the PicoVoice backend
+    """
+    def __init__(
+        self,
+        robot: Robot,
+        context: Union[ds.Designator, str],
+        speech_result_designator: ds.Designator,
+        intents: Optional[Union[ds.Designator[List[str]], List[str]]] = None,
+        require_endpoint: Union[ds.Designator[bool], bool] = True,
+        timeout: float = 10.0,
+        look_at_standing_person: bool = True,
+    ):
+        """
+        Constructor
+
+        :param robot: robot object
+        :param context: designator or value for the picovoice context to be used
+        :param speech_result_designator: result is stored in this designator
+        :param intents: designator or value whether only a limited set of intents are allowed
+        :param require_endpoint: designator or value whether the picovoice context requires an endpoint
+        :param timeout: timeout for the goal
+        :param look_at_standing_person: the robot should look at a standing person in front of the robot
+        """
+        smach.State.__init__(self, outcomes=["heard", "no_result"])
+
+        if intents is None:
+            intents = []
+
+        self.robot = robot
+
+        ds.check_type(context, str)
+        ds.check_resolve_type(speech_result_designator, HMIResult)
+        ds.is_writeable(speech_result_designator)
+        ds.check_type(intents, [str])
+        ds.check_type(require_endpoint, bool)
+        ds.check_type(timeout, float, int)
+        ds.check_type(look_at_standing_person, bool)
+
+        self.context = context
+        self.speech_result_designator = speech_result_designator
+        self.intents = intents
+        self.require_endpoint = require_endpoint
+        self.timeout = timeout
+        self.look_at_standing_person = look_at_standing_person
+
+    def execute(self, userdata=None):
+        if self.look_at_standing_person:
+            self.robot.head.look_at_standing_person()
+
+        context = ds.value_or_resolve(self.context)
+        intents = ds.value_or_resolve(self.intents)
+        require_endpoint = (
+            self.require_endpoint.resolve() if hasattr(self.require_endpoint, "resolve") else self.require_endpoint
+        )
+        try:
+            answer = self.robot.picovoice.get_intent(context, intents, require_endpoint, self.timeout)
+
+            if answer:
+                if answer.semantics:
+                    self.speech_result_designator.write(answer)
+                    return "heard"
+            else:
+                self.robot.speech.speak("Something is wrong with my ears, please take a look!")
+        except TimeoutException:
+            return "no_result"
+
+        finally:
+            if self.look_at_standing_person:
+                self.robot.head.cancel_goal()
+
+        return "no_result"
+
+
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=10, look_at_standing_person=True):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
@@ -307,6 +383,35 @@ class AskContinue(smach.StateMachine):
 class AskYesNo(HearOptions):
     def __init__(self, robot, timeout=10, look_at_standing_person=True):
         HearOptions.__init__(self, robot, ['yes', 'no'], timeout, look_at_standing_person)
+
+
+class AskYesNoPicoVoice(HearOptionsExtraPicoVoice):
+    def __init__(self, robot, timeout=10, look_at_standing_person=True):
+        self.speech_result_designator = ds.VariableDesignator(resolve_type=HMIResult)
+        super().__init__(
+            robot,
+            "yesOrNo",
+            self.speech_result_designator.writeable,
+            timeout=timeout,
+            look_at_standing_person=look_at_standing_person,
+        )
+        smach.State.__init__(self, outcomes=["yes", "no", "no_result"])
+
+    def execute(self, userdata=None):
+        result = super().execute(userdata)
+        if result == "no_result":
+            return "no_result"
+
+        hmi_result = self.speech_result_designator.resolve()
+        if not hmi_result or not hmi_result.semantics:
+            return "no_result"
+
+        if "yes" in hmi_result.semantics:
+            return "yes"
+        elif "no" in hmi_result.semantics:
+            return "no"
+        else:
+            return "no_result"
 
 
 class WaitForPersonInFront(smach.State):
@@ -441,7 +546,7 @@ class AskPersonName(smach.State):
     Ask the person's name, and try to hear one of the given names
     """
 
-    def __init__(self, robot, person_name_des, name_options, default_name='Operator', nr_tries=2):
+    def __init__(self, robot, person_name_des, name_options, default_name='operator', nr_tries=2):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'timeout'])
 
         self.robot = robot
@@ -494,6 +599,66 @@ class AskPersonName(smach.State):
                 return "timeout"
 
         return 'succeeded'
+
+
+class AskPersonNamePicoVoice(smach.StateMachine):
+    """
+    Ask the person's name, and try to hear one of the given names
+    """
+
+    def __init__(self, robot, person_name_des, default_name="operator", nr_tries=2):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        ds.is_writeable(person_name_des)
+        reset_des = ds.VariableDesignator(resolve_type=bool).writeable
+        answer = ds.VariableDesignator(resolve_type=HMIResult)
+
+        @smach.cb_interface(outcomes=["succeeded", "failed"])
+        def process_answer(_, answer_des, output_des):
+            try:
+                answer_val = answer_des.resolve()
+                rospy.logdebug(f"{answer_val=}")
+                name = answer_val.semantics["name"]
+                rospy.loginfo(f"This person's name is: '{name}'")
+                output_des.write(str(name))
+            except KeyError as e:
+                rospy.loginfo(f"KeyError resolving the name heard: {e}")
+                return "failed"
+            return "succeeded"
+
+        with self:
+            self.add(
+                "WRITE_RESET_DES_TRUE", WriteDesignator(reset_des, True), transitions={"written": "SAY"}
+            )
+            self.add(
+                "SAY",
+                Say(robot,
+                    ["What is your name?",
+                     f"I'm called {robot.robot_name}, please tell me your name.",
+                     "How do you like to be called?"],
+                    block=True,
+                    look_at_standing_person=True),
+                transitions={"spoken": "HEAR"},
+            )
+            self.add(
+                "HEAR",
+                HearOptionsExtraPicoVoice(robot, "askPersonName", answer.writeable),
+                transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
+            )
+            self.add(
+                "PROCESS_ANSWER",
+                smach.CBState(process_answer, cb_args=[answer, person_name_des]),
+                transitions={"succeeded": "succeeded", "failed": "CHECK_TRIES"},
+            )
+            self.add(
+                "CHECK_TRIES",
+                CheckTries(nr_tries, reset_des=reset_des),
+                transitions={"not_yet": "SAY", "max_tries": "WRITE_DEFAULT_NAME"},
+            )
+            self.add(
+                "WRITE_DEFAULT_NAME",
+                WriteDesignator(person_name_des, default_name), transitions={"written": "failed"}
+            )
 
 
 if __name__ == "__main__":

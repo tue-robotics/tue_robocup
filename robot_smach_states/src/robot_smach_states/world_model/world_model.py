@@ -215,6 +215,7 @@ class SegmentObjects(smach.State):
                 rospy.logerr("    Classification failed, this should not happen!")
         else:
             rospy.logwarn(">> Tried to segment but no objects found")
+            self.segmented_entity_ids_designator.write([])
 
         # Cancel the head goal
         self.robot.head.cancel_goal()

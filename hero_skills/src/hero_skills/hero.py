@@ -5,10 +5,10 @@ import math
 import rospy
 
 # TU/e Robotics
-from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, \
+from robot_skills import api, base, ebutton, head, ears, lights, perception, picovoice, robot, speech, \
     topological_planner, torso, world_model_ed
 from robot_skills.arm import arms, force_sensor, gripper, handover_detector, gripper_position_detector
-from robot_skills.simulation import is_sim_mode, SimEButton
+from robot_skills.simulation import is_sim_mode, SimEButton, SimPicoVoice
 
 
 class Hero(robot.Robot):
@@ -65,6 +65,8 @@ class Hero(robot.Robot):
         self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_buffer,
                                              lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                              lambda: self.lights.set_color_rgba_msg(lights.RESET)))
+        picovoice_class = SimPicoVoice if is_sim_mode() else picovoice.PicoVoice
+        self.add_body_part("picovoice", picovoice_class(self.robot_name, self.tf_buffer))
 
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
         self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_buffer, topic="/hero/runstop_button"))

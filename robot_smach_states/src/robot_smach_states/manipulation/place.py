@@ -162,6 +162,9 @@ class Put(smach.State):
                                                 frame_id=self._robot.base_link_frame),
                       timeout=0.0)
 
+        # Wait for arm to finish their motions
+        arm.wait_for_motion_done()
+
         # Move back
         self._robot.base.force_drive(-0.125, 0, 0, 1.5, ax=0.5)
 
@@ -210,6 +213,8 @@ class Place(smach.StateMachine):
                 place_area = place_volume.resolve()
             else:
                 raise AssertionError("Cannot place in {}".format(place_volume))
+        else:
+            place_area = None
 
         # Case 3
         if isinstance(place_pose, str):
@@ -266,14 +271,14 @@ if __name__ == "__main__":
     from robot_skills import get_robot_from_argv
     from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 
-    rospy.init_node('state_machine')
+    rospy.init_node('place_test')
 
     robot = get_robot_from_argv(index=1)
 
     robot.ed.update_entity(uuid="bla")
     place_entity = EdEntityDesignator(robot, uuid="bla")
     arm = ArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_place"],
-                                               "required_grasping_types": [arms.GripperTypes.GRASPING]})
+                                               "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
-    sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm, place_volume='on_top_of')
+    sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm.lockable(), place_volume='on_top_of')
     print(sm.execute())

@@ -1,11 +1,14 @@
-from __future__ import absolute_import
+from typing import Generic, TypeVar
 __author__ = 'loy'
 import weakref
 from .deprecation_warnings import get_caller_info
 import rospy
 
 
-class Designator(object):
+T = TypeVar("T")
+
+
+class Designator(Generic[T]):
 
     """
     A Designator defines a goal, which can be defined at runtime or at write-
@@ -40,7 +43,7 @@ class Designator(object):
         """
         super(Designator, self).__init__()
 
-        self._name = name
+        self._name: str = name
         self.__initial_value = initial_value
         if resolve_type:
             if isinstance(resolve_type, list):
@@ -116,8 +119,8 @@ class Designator(object):
         """The currently selected goal"""
         return self._name
 
-    resolve_type = property(_get_resolve_type)
-    name = property(_get_name)
+    resolve_type: T = property(_get_resolve_type)
+    name: str = property(_get_name)
 
     def __repr__(self):
         return "Designator(resolve_type={}, name={})".format(self.resolve_type, self.name)

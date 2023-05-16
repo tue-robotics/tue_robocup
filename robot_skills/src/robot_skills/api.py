@@ -7,7 +7,8 @@ from hmi_msgs.msg import QueryAction
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Empty
 
-from hmi import Client, TimeoutException
+from hmi.client import Client, TimeoutException
+from hmi.common import HMIResult
 from robot_skills.robot_part import RobotPart
 
 
@@ -33,7 +34,7 @@ class Api(RobotPart):
         self.restart_srv = self.create_service_client('/' + robot_name + '/hmi/dragonfly_speech_recognition/restart_node', Empty)
         self._image_from_ros_publisher = rospy.Publisher('/' + robot_name + '/hmi/image', CompressedImage, queue_size=1)
 
-    def query(self, description, grammar, target, timeout=10):
+    def query(self, description, grammar, target, timeout=10) -> HMIResult:
         """
         Perform a HMI query, returns a HMIResult
 
