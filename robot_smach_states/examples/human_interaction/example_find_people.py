@@ -30,4 +30,4 @@ if __name__ == "__main__":
                               #search_timeout=60,
                               look_range=(0.0, 0.0),
                               look_steps=1)
-    detect_state.execute(None)
+    detect_state.execute()
