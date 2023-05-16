@@ -86,7 +86,7 @@ category_locations = {
 }
 
 inspect_areas = {
-    "cabinet": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5", "shelf6"]
+    "closet": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 }
 
 inspect_positions = {
