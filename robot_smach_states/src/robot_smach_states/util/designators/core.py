@@ -234,6 +234,15 @@ class VariableWriter(object):
     >>> v2w.write(v2.resolve() + ['d'])
     >>> v2.resolve()
     ['a', 'b', 'c', 'd']
+
+    >>> v2w.write('a')  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    TypeError: Cannot assign a <class 'str'> to Designator(...) which has a list resolve_type: ...
+    >>> v2w.write(None)  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    TypeError: Cannot assign a <class 'NoneType'> to Designator(...) which has a list resolve_type: ...
     """
 
     instances = weakref.WeakSet()
@@ -268,6 +277,10 @@ class VariableWriter(object):
                     type(value),
                     self.variable_designator,
                     self.variable_designator.resolve_type))
+        elif isinstance(self.variable_designator.resolve_type, list) and not isinstance(value, list):
+            raise TypeError(
+                f"Cannot assign a {type(value)} to {self.variable_designator} which has a list resolve_type: {self.variable_designator.resolve_type}"
+            )
         elif isinstance(value, self.variable_designator.resolve_type):
             self.variable_designator._set_current_protected(value)
         else:
