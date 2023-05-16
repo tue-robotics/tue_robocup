@@ -18,8 +18,8 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class SayForIntroduceGuest(smach.State):
-    # ToDo: test
-    # ToDo: make sure that has person_properties
+    # TODO: test
+    # TODO: make sure that has person_properties
     def __init__(self, robot_name, entity_des, guest_drinkname_des, assume_john, previous_guest_drink_des):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot_name
@@ -119,7 +119,7 @@ class IntroduceGuest(smach.StateMachine):
 
             smach.StateMachine.add('FIND_OLD_GUESTS',
                                    FindPeopleInRoom(robot,
-                                                    room=challenge_knowledge.waypoint_livingroom['id'],
+                                                    room=challenge_knowledge.sitting_room,
                                                     found_people_designator=all_old_guests.writeable),
                                    transitions={"found": "CHECK_NUM_PEOPLE",
                                                 "not_found": "CHECK_NUM_PEOPLE"})
@@ -156,7 +156,8 @@ class IntroduceGuest(smach.StateMachine):
                                    NavigateToObserve(robot,
                                                      current_old_guest,
                                                             radius=1.0,
-                                                            margin=1.0),  # Makes the robot go within 2m of current_old_guest
+                                                            margin=1.0, # Makes the robot go within 2m of current_old_guest
+                                                            speak=False),  
                                    transitions={'arrived': 'SAY_LOOK_AT_GUEST',
                                                 'unreachable': 'SAY_LOOK_AT_GUEST',
                                                 'goal_not_defined': 'SAY_LOOK_AT_GUEST'})

@@ -33,7 +33,7 @@ class PointAtReception(smach.State):
         if look_at_designator is None:
             look_at_designator = point_at_designator
 
-        #TODO: do some type of checking for the volume?
+        # TODO: do some type of checking for the volume?
 
         # Check types or designator resolve types
         check_type(arm_designator, PublicArm)
@@ -95,10 +95,13 @@ class PointAtReception(smach.State):
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
                                                                                        np.degrees(vel),
                                                                                        duration))
+        # Look backwards to the person
+        self._robot.head.look_at_point(VectorStamped.from_xyz(-1.0, -0.1, 1.75, stamp=rospy.Time.now(),
+                                                              frame_id=self._robot.base_link_frame))
+        self._robot.head.wait_for_motion_done()
         self._robot.base.force_drive(0, 0, vel, duration)
 
-        self._robot.head.look_at_point(VectorStamped.from_framestamped(look_at_ent.pose))
-        self._robot.head.wait_for_motion_done()
+        # self._robot.head.look_at_point(VectorStamped.from_framestamped(look_at_ent.pose))
 
         return 'succeeded'
 
@@ -141,7 +144,8 @@ if __name__ == "__main__":
         rospy.init_node('test_follow_operator')
         robot = get_robot(robot_name)
         sm = PointAtReception(robot,
-                              arm_designator=UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}).lockable(),
+                              arm_designator=UnoccupiedArmDesignator(robot,
+                                                                     {'required_goals': ['point_at']}).lockable(),
                               point_at_designator=EdEntityDesignator(robot, uuid=point_at, name='point_at_des'),
                               volume=volume,
                               look_at_designator=EdEntityDesignator(robot, uuid=look_at, name='look_at_des'))
