@@ -259,7 +259,6 @@ class CarryMyLuggage(StateMachine):
 
 
 if __name__ == "__main__":
-    from challenge_carry_my_luggage.carry_my_luggage import CarryMyLuggage
     from robot_skills import get_robot
     import sys
     import rospy
