@@ -104,6 +104,12 @@ class Designator(Generic[T]):
 
         return result
 
+    def reset(self):
+        """
+        Resets the designator
+        """
+        raise NotImplementedError(f"Reset not implemented for {self.__class__.__name__}")
+
     def fail_with_type_error(self, result_type, resolve_type):
             msg = "{} resolved to a '{}' instead of expected '{}'."
             raise TypeError(msg.format(self, result_type, resolve_type))
@@ -187,6 +193,12 @@ class VariableDesignator(Designator):
                     "Assigned value does not match resolve_type for {0}. "
                     "Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
+
+    def reset(self):
+        """
+        Resets the designator
+        """
+        self._current = None
 
     def _resolve(self):
         return self._current
