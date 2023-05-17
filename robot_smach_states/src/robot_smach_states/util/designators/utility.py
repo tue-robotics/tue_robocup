@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from typing import TypeVar, Union
+from collections.abc import Callable
 
 # ROS
 import rospy
@@ -202,6 +203,9 @@ class FuncDesignator(Designator):
 
     def __init__(self, orig, func, resolve_type=None, name=None):
         super(FuncDesignator, self).__init__(resolve_type=resolve_type, name=name)
+
+        assert isinstance(func, Callable)
+
         self.orig = orig
         self.func = func
 
