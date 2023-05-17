@@ -294,7 +294,7 @@ class LockToId(Designator):
                 else:
                     return None
             else:  # If we do remember something already, recall that remembered ID:
-                return self.robot.ed.get_entity(uuid=self._locked_to_id)
+                return self.robot.ed.get_entity(uuid=self._locked_to_uuid)
         else:
             entity = self.to_be_locked.resolve()
             rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity))
