@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from typing import List
 
 # System
 from contextlib import redirect_stdout
@@ -18,7 +18,7 @@ from .checks import check_resolve_type
 __author__ = 'loy'
 
 
-class EdEntityCollectionDesignator(Designator):
+class EdEntityCollectionDesignator(Designator[List[Entity]]):
     """
     Resolves to a collection of Ed entities
 
@@ -91,7 +91,7 @@ class EdEntityCollectionDesignator(Designator):
         return None
 
 
-class EdEntityDesignator(Designator):
+class EdEntityDesignator(Designator[Entity]):
     """
     Resolves to an entity from an Ed query
     """
@@ -197,7 +197,7 @@ class EdEntityDesignator(Designator):
         return None
 
 
-class EntityByIdDesignator(Designator):
+class EntityByIdDesignator(Designator[Entity]):
     def __init__(self, robot, uuid, name=None):
         """
         Designate an entity by its ID. Resolves to the entity with that ID
@@ -221,7 +221,7 @@ class EntityByIdDesignator(Designator):
         return "EntityByIdDesignator(uuid={}, name={})".format(self.uuid, self.name)
 
 
-class ReasonedEntityDesignator(Designator):
+class ReasonedEntityDesignator(Designator[Entity]):
     def __init__(self, robot, query, name=None):
         """
         Designate an entity by its ID. Resolves to the entity with that ID
