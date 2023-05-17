@@ -188,7 +188,7 @@ class EdEntityDesignator(Designator[Entity]):
                 names = [entity.uuid for entity in entities]
 
                 if len(entities) >= 1:
-                    rospy.loginfo('choosing best entity from this list (name->weight):\n\t%s', list(zip(names, weights)))
+                    rospy.loginfo(f"choosing best entity from this list (name->weight):\n\t{list(zip(names, weights))}")
                     return min(entities, key=self.weight_function)
                 else:
                     return entities[0]
