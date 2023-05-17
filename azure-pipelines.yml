@@ -119,7 +119,7 @@ stages:
                     ssh-keyscan -t rsa -H "${host}" 2>&1 | tee -a "${HOME}"/.ssh/known_hosts
                   done
                 fi
-                bash install-package.sh --package=${PACKAGE} --branch=${BRANCH} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="ghcr.io/tue-robotics/tue-env-ros-noetic"
+                bash install-package.sh --package=${PACKAGE} --branch=${BRANCH} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="ghcr.io/tue-robotics/tue-env-ros-noetic" --ssh --ssh-key="${HOME}"/.ssh/ci_ssh_key
             condition: and(succeeded(), not(canceled()))
           - task: Bash@3
             displayName: Build
