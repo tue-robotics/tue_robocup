@@ -219,7 +219,7 @@ class VariableDesignator(Designator):
     current = property(_get_current, _set_current)
 
 
-class VariableWriter(object):
+class VariableWriter(Generic[T]):
     """When writing to a VariableDesignator you must use a writer,
         to make it explicit who changes designators so you can directly spot the changer.
     This way, the dataflow can be more accurately visualized and understood.
@@ -314,7 +314,7 @@ class VariableWriter(object):
     def _get_resolve_type(self):
         return self.variable_designator.resolve_type
 
-    resolve_type = property(_get_resolve_type)
+    resolve_type: T = property(_get_resolve_type)
 
     def resolve(self, *args, **kwargs):
         return self.variable_designator.resolve(*args, **kwargs)
