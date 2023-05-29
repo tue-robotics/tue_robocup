@@ -21,7 +21,7 @@ class PreparePlace(smach.State):
 
     def __init__(self, robot, arm):
         """
-        Drive the robot back a little and move the designated arm to place the designated item at the designated pose
+        Move the designated arm to the 'prepare_place' pose
 
         :param robot: Robot to execute state with
         :param locked arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
@@ -244,10 +244,6 @@ class Place(smach.StateMachine):
                                                     'failed': 'failed'}
                                        )
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
-                                   transitions={'succeeded': 'PREPARE_PLACE',
-                                                'failed': 'failed'})
-
-            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
                                    transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
@@ -258,6 +254,10 @@ class Place(smach.StateMachine):
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
                                                 'arrived': 'PUT'})
+            # TODO: Remove prepare place?
+            # smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
+            #                        transitions={'succeeded': 'PUT',
+            #                                     'failed': 'failed'})
 
             smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
