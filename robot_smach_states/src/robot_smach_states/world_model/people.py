@@ -8,6 +8,7 @@ from pykdl_ros import VectorStamped
 from ed.entity import Entity
 from robot_smach_states.util import designators as ds
 from robot_smach_states.human_interaction import FindPeople
+from .world_model import Inspect
 
 
 class PeopleInSeatDesignator(ds.Designator):
@@ -24,11 +25,6 @@ class PeopleInSeatDesignator(ds.Designator):
         self.seat = seat
 
     def _resolve(self) -> Entity:
-        if self.room:
-            room = ds.value_or_resolve(self.room)
-            if not room:
-                rospy.logwarn("Room is None, ignoring room constraints")
-
         seat = ds.value_or_resolve(self.seat)
         if not seat:
             rospy.logwarn("Seat is None, so cannot find seats there")
@@ -43,9 +39,13 @@ class PeopleInSeatDesignator(ds.Designator):
         people: List[Entity] = self.robot.ed.get_entities(
             etype="person", center_point=seat_point, radius=1.0, ignore_z=True
         )
+        if self.room:
+            room = ds.value_or_resolve(self.room)
+            check_entity = room.resolve()
+            people = [person for person in people if check_entity.in_volume(VectorStamped.from_framestamped(person.pose),'in')]
+        else:
+            rospy.logwarn("Room is None, ignoring room constraints")
 
-        # TODO ignore people not within the specified room. i.e spectators
-        people = [person for person in people if person.pose.frame.p]
         return people
 
     def __repr__(self):
@@ -102,7 +102,11 @@ class CheckSeatEmpty(smach.StateMachine):
         people_in_seat_des = PeopleInSeatDesignator(robot, entity_des)
 
         with self:
+
             # TODO add state to turn head towards the entity.
+            smach.StateMachine.add(
+                "LOOK_AT_SEAT",
+            )
             smach.StateMachine.add(
                 "INSPECT_SEAT",
                 FindPeople(
@@ -115,7 +119,6 @@ class CheckSeatEmpty(smach.StateMachine):
                     # strict=True,
                     # nearest=False,
                     attempts=1,
-                    # search_timeout=60,
                     look_range=(0.0, 0.0),
                     look_steps=1,
                 ),
