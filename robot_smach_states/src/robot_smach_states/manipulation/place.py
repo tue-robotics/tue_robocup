@@ -11,7 +11,7 @@ from robot_skills.arm.arms import PublicArm, GripperTypes
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
 from ..utility import LockDesignator, ResolveArm, check_arm_requirements
-from ..util.designators import check_type
+from ..util.designators import check_type, check_resolve_type
 from ..util.designators.utility import LockingDesignator
 from robot_smach_states.world_model.world_model import Inspect
 
@@ -165,8 +165,8 @@ class Place(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
-        assert(arm.resolve_type == PublicArm or type(arm) == PublicArm)
+        assert(check_resolve_type(item_to_place, Entity) or isinstance(item_to_place, Entity))
+        assert(check_resolve_type(arm, PublicArm) or isinstance(arm, PublicArm))
 
         # parse place volume
         if place_volume is not None:
