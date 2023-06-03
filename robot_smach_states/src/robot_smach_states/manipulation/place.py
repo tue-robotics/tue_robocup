@@ -165,8 +165,8 @@ class Place(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        assert(check_type(item_to_place, Entity) or isinstance(item_to_place, Entity))
-        assert(check_type(arm, PublicArm) or isinstance(arm, PublicArm))
+        check_type(item_to_place, Entity)
+        check_type(arm, PublicArm)
 
         # parse place volume
         if place_volume is not None:
