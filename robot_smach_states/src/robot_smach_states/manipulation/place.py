@@ -1,36 +1,31 @@
 from __future__ import absolute_import, print_function
 
-from typing import Optional
-
-import rospy
-
-import smach
-# TU/e Robotics
-from ed.entity import Entity
 # ROS
 from pykdl_ros import FrameStamped
+import rospy
+import smach
+
+# TU/e Robotics
+from ed.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
-from robot_skills.robot import Robot
-from robot_smach_states.world_model.world_model import Inspect
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
-from ..util.designators import check_type
-from ..util.designators.arm import ArmDesignator
-from ..util.designators.core import Designator
-from ..util.designators.utility import LockingDesignator
 from ..utility import LockDesignator, ResolveArm, check_arm_requirements
+from ..util.designators import check_type
+from ..util.designators.utility import LockingDesignator
+from robot_smach_states.world_model.world_model import Inspect
 
 
 class Put(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot: Robot, item_to_place: Entity, placement_pose: Designator, arm: ArmDesignator) -> None:
+    def __init__(self, robot, item_to_place, placement_pose, arm):
         """
-        Move the designated arm to place the designated item at the designated pose
+        Drive the robot back a little and move the designated arm to place the designated item at the designated pose
 
         :param robot: Robot to execute state with
-        :param item_to_place: Designator that resolves to the entity to place. e.g. EntityByIdDesignator
-        :param placement_pose: Designator that resolves to the pose to place at. e.g. an EmptySpotDesignator
+        :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
+        :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param locked arm: Locked arm designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
             ArmHoldingEntityDesignator
         """
@@ -47,7 +42,7 @@ class Put(smach.State):
         self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
-    def execute(self, userdata=None) -> str:
+    def execute(self, userdata=None):
 
         item_to_place = self._item_to_place_designator.resolve()
         if not item_to_place:
@@ -111,7 +106,7 @@ class Put(smach.State):
             place_pose_map = self._robot.tf_buffer.transform(actual_place_pose_bl, "map")
             new_entity_pose = FrameStamped(place_pose_map.frame*place_entity.pose.frame,
                                            place_pose_bl.header.stamp,
-                                           "map")
+                                           "map")            
             self._robot.ed.update_entity(place_entity.uuid, frame_stamped=new_entity_pose)
             arm.gripper.occupied_by = None
 
@@ -149,8 +144,7 @@ class Put(smach.State):
 
 class Place(smach.StateMachine):
 
-    def __init__(self, robot: Robot, item_to_place: Entity, place_pose: Designator, arm: ArmDesignator,
-                 place_volume: Optional[str] = None) -> None:
+    def __init__(self, robot, item_to_place, place_pose, arm, place_volume=None, update_supporting_entity=False):
         """
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
         item there
@@ -165,12 +159,15 @@ class Place(smach.StateMachine):
             ArmHoldingEntityDesignator
         :param place_volume: (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
             'shelf3'
+        :param update_supporting_entity: (optional) bool to indicate whether the supporting entity should be updated.
+            This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
         assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
         assert(arm.resolve_type == PublicArm or type(arm) == PublicArm)
+        #assert(place_volume.resolve_type == str or (type(place_volume) == str))
 
         # parse place volume
         if place_volume is not None:
