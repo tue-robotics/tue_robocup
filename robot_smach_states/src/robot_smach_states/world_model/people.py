@@ -1,3 +1,6 @@
+# System
+import time
+
 from typing import List
 
 import rospy
@@ -8,20 +11,50 @@ from pykdl_ros import VectorStamped
 from ed.entity import Entity
 from robot_smach_states.util import designators as ds
 from robot_smach_states.human_interaction import FindPeople
-from .world_model import Inspect
+from .world_model import look_at_segmentation_area
+
+
+class LookAtEntity(smach.State):
+    """ Look at an entity. This assumes the robot is already in front of the object """
+
+    def __init__(self, robot, entity, volume=None):
+        """ Constructor
+
+        :param robot: robot object
+        :param entity: Ed Entity indicating the entity to look at
+        :param volume: Volume string indicating the specific volume to look at (e.g., 'on_top_of')
+        """
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        ds.check_type(entity, Entity)
+        self.entity = ds.value_or_resolve(entity)
+        if volume is not None:
+            ds.check_type(volume, Entity)
+            self.volume = ds.value_or_resolve(volume)
+
+    def execute(self):
+        """ Looks at the entity and updates its pose using the update kinect service """
+        if self.volume:
+            look_at_segmentation_area(self.robot, self.entity, self.volume)
+        else:
+            look_at_segmentation_area(self.robot, self.entity)
+        # This is needed because the head is not entirely still when the look_at_point function finishes
+        time.sleep(0.5)
+        # Return
+        return "done"
 
 
 class PeopleInSeatDesignator(ds.Designator):
-    def __init__(self, robot, seat: Entity, room: Entity = None, name=None):
+    def __init__(self, robot, seat: Entity, volume: Entity = None, name=None):
         super(PeopleInSeatDesignator, self).__init__(resolve_type=[Entity], name=name)
 
         self.robot = robot
 
         ds.check_type(seat, Entity)
-        if room is not None:
-            ds.check_type(room, Entity)
+        if volume is not None:
+            ds.check_type(volume, Entity)
 
-        self.room = room
+        self.volume = volume
         self.seat = seat
 
     def _resolve(self) -> Entity:
@@ -39,16 +72,17 @@ class PeopleInSeatDesignator(ds.Designator):
         people: List[Entity] = self.robot.ed.get_entities(
             etype="person", center_point=seat_point, radius=1.0, ignore_z=True
         )
-        if self.room:
-            room = ds.value_or_resolve(self.room)
-            if not room:
-                rospy.logwarn("Room is None, ignoring room constraints")
+        if self.volume:
+            volume = ds.value_or_resolve(self.volume)
+            if not volume:
+                rospy.logwarn("Volume is None, ignoring volume constraints")
                 return people
-            people = [person for person in people if room.in_volume(VectorStamped.from_framestamped(person.pose),'in')]
+            people = [person for person in people if
+                      volume.in_volume(VectorStamped.from_framestamped(person.pose), 'in')]
             return people
 
     def __repr__(self):
-        return "PersonInSeatDesignator({}, {}, {}, {})".format(self.robot, self.seat, self.room, self.name)
+        return "PersonInSeatDesignator({}, {}, {}, {})".format(self.robot, self.seat, self.volume, self.name)
 
 
 class _CheckPeople(smach.State):
@@ -82,12 +116,13 @@ class _CheckPeople(smach.State):
 
 
 class CheckSeatEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, number_of_people_des=None):
+    def __init__(self, robot, seat_ent_des, volume_des, number_of_people_des=None):
         """
         Constructor
 
         :param robot: robot object
-        :param entity_des: EdEntityDesignator indicating the (furniture) object to check
+        :param seat_ent_des: EdEntityDesignator indicating the (furniture) object to check
+        :param volume_des: EdEntityDesignator indicating the (room) location to constraint the search
         :param number_of_people_des: designator which will result in the number of people near the entity, or None in case of state fails.
         """
         # TODO implement logic for percent vs volume check in state machine rather than in the states themselves
@@ -98,22 +133,22 @@ class CheckSeatEmpty(smach.StateMachine):
         else:
             number_of_people_des = ds.VariableDesignator(resolve_type=int)
 
-        people_in_seat_des = PeopleInSeatDesignator(robot, entity_des)
+        people_in_seat_des = PeopleInSeatDesignator(robot, seat_ent_des, volume_des)
 
         with self:
-
-            # TODO add state to turn head towards the entity.
             smach.StateMachine.add(
                 "LOOK_AT_SEAT",
+                LookAtEntity(robot=robot, entity=seat_ent_des, volume=volume_des),
+                transitions={"done": "INSPECT_SEAT"}
             )
             smach.StateMachine.add(
                 "INSPECT_SEAT",
                 FindPeople(
                     robot=robot,
-                    # properties=None,
-                    # query_entity_designator=None,
-                    # found_people_designator=None,
-                    # look_distance=10.0,
+                    properties=None,
+                    query_entity_designator=volume_des,
+                    found_people_designator=people_in_seat_des,
+                    look_distance=1.0,
                     # speak=False,
                     # strict=True,
                     # nearest=False,
