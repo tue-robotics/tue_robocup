@@ -167,7 +167,6 @@ class Place(smach.StateMachine):
         # Check types or designator resolve types
         assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
         assert(arm.resolve_type == PublicArm or type(arm) == PublicArm)
-        #assert(place_volume.resolve_type == str or (type(place_volume) == str))
 
         # parse place volume
         if place_volume is not None:
