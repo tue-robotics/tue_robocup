@@ -41,12 +41,11 @@ class PeopleInSeatDesignator(ds.Designator):
         )
         if self.room:
             room = ds.value_or_resolve(self.room)
-            check_entity = room.resolve()
-            people = [person for person in people if check_entity.in_volume(VectorStamped.from_framestamped(person.pose),'in')]
-        else:
-            rospy.logwarn("Room is None, ignoring room constraints")
-
-        return people
+            if not room:
+                rospy.logwarn("Room is None, ignoring room constraints")
+                return people
+            people = [person for person in people if room.in_volume(VectorStamped.from_framestamped(person.pose),'in')]
+            return people
 
     def __repr__(self):
         return "PersonInSeatDesignator({}, {}, {}, {})".format(self.robot, self.seat, self.room, self.name)
