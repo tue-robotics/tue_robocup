@@ -16,42 +16,6 @@ from ..util.designators.utility import LockingDesignator
 from robot_smach_states.world_model.world_model import Inspect
 
 
-class PreparePlace(smach.State):
-    REQUIRED_ARM_PROPERTIES = {"required_trajectories": ["prepare_place"], }
-
-    def __init__(self, robot, arm):
-        """
-        Drive the robot back a little and move the designated arm to place the designated item at the designated pose
-
-        :param robot: Robot to execute state with
-        :param locked arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-        ArmHoldingEntityDesignator
-        """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-
-        # Check types or designator resolve types
-        check_type(arm, PublicArm)
-
-        # Assign member variables
-        self._robot = robot
-        self._arm_designator = arm
-
-    def execute(self, userdata=None):
-
-        arm = self._arm_designator.resolve()
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
-
-        # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_place', timeout=0)
-        arm.wait_for_motion_done()
-
-        return 'succeeded'
-
-# ----------------------------------------------------------------------------------------------------
-
-
 class Put(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
@@ -201,9 +165,8 @@ class Place(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
-        assert(arm.resolve_type == PublicArm or type(arm) == PublicArm)
-        #assert(place_volume.resolve_type == str or (type(place_volume) == str))
+        check_type(item_to_place, Entity)
+        check_type(arm, PublicArm)
 
         # parse place volume
         if place_volume is not None:
@@ -244,10 +207,6 @@ class Place(smach.StateMachine):
                                                     'failed': 'failed'}
                                        )
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
-                                   transitions={'succeeded': 'PREPARE_PLACE',
-                                                'failed': 'failed'})
-
-            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
                                    transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
