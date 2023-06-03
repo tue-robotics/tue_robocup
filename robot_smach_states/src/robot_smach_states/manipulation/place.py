@@ -16,42 +16,6 @@ from ..util.designators.utility import LockingDesignator
 from robot_smach_states.world_model.world_model import Inspect
 
 
-class PreparePlace(smach.State):
-    REQUIRED_ARM_PROPERTIES = {"required_trajectories": ["prepare_place"], }
-
-    def __init__(self, robot, arm):
-        """
-        Move the designated arm to the 'prepare_place' pose
-
-        :param robot: Robot to execute state with
-        :param locked arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-        ArmHoldingEntityDesignator
-        """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-
-        # Check types or designator resolve types
-        check_type(arm, PublicArm)
-
-        # Assign member variables
-        self._robot = robot
-        self._arm_designator = arm
-
-    def execute(self, userdata=None):
-
-        arm = self._arm_designator.resolve()
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
-
-        # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_place', timeout=0)
-        arm.wait_for_motion_done()
-
-        return 'succeeded'
-
-# ----------------------------------------------------------------------------------------------------
-
-
 class Put(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
@@ -254,10 +218,6 @@ class Place(smach.StateMachine):
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
                                                 'arrived': 'PUT'})
-            # TODO: Remove prepare place?
-            # smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
-            #                        transitions={'succeeded': 'PUT',
-            #                                     'failed': 'failed'})
 
             smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
