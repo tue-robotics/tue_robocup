@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from typing import Union, Optional
 
 # ROS
 from pykdl_ros import FrameStamped
@@ -8,18 +9,20 @@ import smach
 # TU/e Robotics
 from ed.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
+from robot_skills.robot import Robot
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
 from ..utility import LockDesignator, ResolveArm, check_arm_requirements
 from ..util.designators import check_type
 from ..util.designators.utility import LockingDesignator
 from robot_smach_states.world_model.world_model import Inspect
+from ..util.designators.core import Designator
 
 
 class Put(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot, item_to_place, placement_pose, arm):
+    def __init__(self, robot: Robot, item_to_place: Entity, placement_pose: FrameStamped, arm: PublicArm) -> None:
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
 
@@ -75,7 +78,7 @@ class Put(smach.State):
 
         # Pre place
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height+0.15, 0, 0, 0, rospy.Time(0),
+                                                       height + 0.15, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10,
                              pre_grasp=True):
@@ -84,7 +87,7 @@ class Put(smach.State):
 
             rospy.loginfo("Retrying preplace")
             if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                           height+0.15, 0, 0, 0, rospy.Time(0),
+                                                           height + 0.15, 0, 0, 0, rospy.Time(0),
                                                            frame_id=self._robot.base_link_frame),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
@@ -94,8 +97,8 @@ class Put(smach.State):
         # Place
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
         actual_place_pose_bl = FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height+0.1, 0, 0, 0, rospy.Time(0),
-                                                       frame_id=self._robot.base_link_frame)
+                                                         height + 0.1, 0, 0, 0, rospy.Time(0),
+                                                         frame_id=self._robot.base_link_frame)
         if not arm.send_goal(actual_place_pose_bl, timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
@@ -104,9 +107,9 @@ class Put(smach.State):
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
             place_pose_map = self._robot.tf_buffer.transform(actual_place_pose_bl, "map")
-            new_entity_pose = FrameStamped(place_pose_map.frame*place_entity.pose.frame,
+            new_entity_pose = FrameStamped(place_pose_map.frame * place_entity.pose.frame,
                                            place_pose_bl.header.stamp,
-                                           "map")            
+                                           "map")
             self._robot.ed.update_entity(place_entity.uuid, frame_stamped=new_entity_pose)
             arm.gripper.occupied_by = None
 
@@ -144,7 +147,8 @@ class Put(smach.State):
 
 class Place(smach.StateMachine):
 
-    def __init__(self, robot, item_to_place, place_pose, arm, place_volume=None, update_supporting_entity=False):
+    def __init__(self, robot: Robot, item_to_place: Entity, place_pose: Union[str, FrameStamped, Entity],
+                 arm: PublicArm, place_volume: Optional[str]) -> None:
         """
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
         item there
@@ -159,8 +163,6 @@ class Place(smach.StateMachine):
             ArmHoldingEntityDesignator
         :param place_volume: (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
             'shelf3'
-        :param update_supporting_entity: (optional) bool to indicate whether the supporting entity should be updated.
-            This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -239,5 +241,6 @@ if __name__ == "__main__":
     arm = ArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_place"],
                                                "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
-    sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm.lockable(), place_volume='on_top_of')
+    sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm.lockable(),
+               place_volume='on_top_of')
     print(sm.execute())
