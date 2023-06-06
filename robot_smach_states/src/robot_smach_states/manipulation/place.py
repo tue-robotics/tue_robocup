@@ -147,7 +147,7 @@ class Put(smach.State):
 
 class Place(smach.StateMachine):
 
-    def __init__(self, robot: Robot, item_to_place: Designator, place_pose: Union[Designator, str], arm: Designator,
+    def __init__(self, robot: Robot, item_to_place: Designator[Entity], place_pose: Union[Designator[str], Designator[Entity], str], arm: Designator[PublicArm],
                  place_volume: Optional[str] = None) -> None:
         """
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
