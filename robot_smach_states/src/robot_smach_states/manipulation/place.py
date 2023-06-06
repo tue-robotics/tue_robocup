@@ -22,7 +22,7 @@ from ..util.designators.core import Designator
 class Put(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot: Robot, item_to_place: Designator, placement_pose: Designator, arm: Designator) -> None:
+    def __init__(self, robot: Robot, item_to_place: Designator[Entity], placement_pose: Designator[FrameStamped], arm: Designator[PublicArm]) -> None:
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
 
