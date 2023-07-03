@@ -414,13 +414,32 @@ class FollowOperator(smach.State):
 
         self._plan_marker_pub.publish(line_strip)
 
+    def _look_at_operator(self):
+        """
+        Let the robot look at the operator
+        """
+        # ToDo: the looking angle of the head might need to be limited because of obstacle avoidance
+        self._robot.head.cancel_goal()
+
+        goal_pose = None
+
+        if self._operator_id:
+            if operator := self._robot.ed.get_entity(uuid=self._operator_id):
+                goal_pose = operator.pose
+
+        if goal_pose is None:
+            goal_pose = self._last_operator.pose
+
+        goal = VectorStamped.from_framestamped(goal_pose)
+        goal.vector.z(1.3)
+
+        self._robot.head.look_at_point(goal)
+
     def _update_navigation(self):
         """
         Set the navigation plan to match the breadcrumbs collected into self._breadcrumbs.
         This list has all the Entity's of where the operator has been
         """
-        self._robot.head.cancel_goal()
-
         robot_position = self._robot.base.get_location().frame.p
         operator_position = self._last_operator.pose.frame.p
 
@@ -724,6 +743,7 @@ class FollowOperator(smach.State):
                 rospy.loginfo("Operator within self._lookat_radius")
                 self._turn_towards_operator()
             else:
+                self._look_at_operator()
                 # Only update navigation if there is something to update: operator must have moved
                 if self._replan_allowed:
                     # If replanned: if recently replanned, only update navigation if not standing still for too long
