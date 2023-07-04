@@ -116,7 +116,7 @@ def get_room(location):
 
 
 def is_room(entity_id):
-    return (entity_id in rooms)
+    return entity_id in location_rooms
 
 
 def get_inspect_areas(location):
