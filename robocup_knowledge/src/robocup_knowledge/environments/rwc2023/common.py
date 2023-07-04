@@ -1,8 +1,11 @@
 from __future__ import print_function
 
-female_names = ["amelia", "angel", "ava", "charlie", "charlotte", "hunter", "max", "mia", "olivia", "parker", "sam"]
-male_names = ["angel", "charlie", "hunter", "jack", "max", "noah", "oliver", "parker", "sam", "thomas", "william"]
-names = female_names + male_names
+female_names = ["adel", "angel", "axel", "charlie", "jane", "jules", "morgan", "paris", "robin", "simone"]
+male_names = ["adel", "angel", "axel", "charlie", "john", "jules", "morgan", "paris", "robin", "simone"]
+names = set(female_names)
+names.update(set(male_names))
+names = sorted(list(names))
+
 
 locations = [
     {"name": "house_plant", "room": "living_room", "manipulation": False},
