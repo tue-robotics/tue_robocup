@@ -6,34 +6,31 @@ names = set(female_names)
 names.update(set(male_names))
 names = sorted(list(names))
 
-
 locations = [
-    {"name": "house_plant", "room": "living_room", "manipulation": False},
-    {"name": "coat_rack", "room": "living_room", "manipulation": False},
-    {"name": "sofa", "room": "living_room", "manipulation": False},
-    {"name": "couch_table", "room": "living_room", "manipulation": True},
-    {"name": "tv", "room": "living_room", "manipulation": False},
-    {"name": "side_table", "room": "living_room", "manipulation": True},
-    {"name": "book_shelf", "room": "living_room", "manipulation": True},
-    {"name": "kitchen_shelf", "room": "kitchen", "manipulation": True},
-    {"name": "pantry", "room": "kitchen", "manipulation": True},
-    {"name": "dinner_table", "room": "kitchen", "manipulation": True},
-    {"name": "kitchen_bin", "room": "kitchen", "manipulation": True},
-    {"name": "fridge", "room": "kitchen", "manipulation": True},
-    {"name": "washing_machine", "room": "kitchen", "manipulation": True},
-    {"name": "sink", "room": "kitchen", "manipulation": False},
-    {"name": "small_shelf", "room": "bedroom", "manipulation": True},
-    {"name": "cupboard", "room": "bedroom", "manipulation": True},
-    {"name": "big_shelf", "room": "bedroom", "manipulation": True},
     {"name": "bed", "room": "bedroom", "manipulation": False},
-    {"name": "desk", "room": "office", "manipulation": True},
-    {"name": "show_rack", "room": "office", "manipulation": False},
-    {"name": "bin", "room": "office", "manipulation": False},
-    {"name": "office_shelf", "room": "office", "manipulation": True},
+    {"name": "bedside_table", "room": "bedroom", "manipulation": True},
+    {"name": "shelf", "room": "bedroom", "manipulation": True},
+    {"name": "trashbin", "room": "kitchen", "manipulation": False},
+    {"name": "dishwasher", "room": "kitchen", "manipulation": True},
+    {"name": "potted_plant", "room": "kitchen", "manipulation": False},
+    {"name": "kitchen_table", "room": "kitchen", "manipulation": True},
+    {"name": "pantry", "room": "kitchen", "manipulation": True},
+    {"name": "refrigerator", "room": "kitchen", "manipulation": True},
+    {"name": "sink", "room": "kitchen", "manipulation": True},
+    {"name": "cabinet", "room": "study", "manipulation": True},
+    {"name": "coatrack", "room": "study", "manipulation": False},
+    {"name": "desk", "room": "study", "manipulation": True},
+    {"name": "armchair", "room": "study", "manipulation": False},
+    {"name": "waste_basket", "room": "study", "manipulation": False},
+    {"name": "tv_stand", "room": "living_room", "manipulation": True},
+    {"name": "storage_rack", "room": "living_room", "manipulation": True},
+    {"name": "lamp", "room": "living_room", "manipulation": False},
+    {"name": "side_tables", "room": "living_room", "manipulation": True},
+    {"name": "sofa", "room": "living_room", "manipulation": True},
+    {"name": "bookshelf", "room": "living_room", "manipulation": True},
 ]
 
 location_rooms = list(set([o["room"] for o in locations]))
-rooms = location_rooms
 location_names = list(set([o["name"] for o in locations]))
 manipulation_locations = list(set([o["name"] for o in locations if o["manipulation"]]))
 
