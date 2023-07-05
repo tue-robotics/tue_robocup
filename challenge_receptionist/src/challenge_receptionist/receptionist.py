@@ -119,7 +119,8 @@ class ChallengeReceptionist(smach.StateMachine):
                 NavigateToWaypoint(
                     robot,
                     ds.EntityByIdDesignator(robot, challenge_knowledge.waypoint_door["id"]),
-                    challenge_knowledge.waypoint_door["radius"]
+                    challenge_knowledge.waypoint_door["radius"],
+                    speak=False
                 ),
                 transitions={"arrived": "succeeded", "unreachable": "succeeded", "goal_not_defined": "succeeded"},
             )
