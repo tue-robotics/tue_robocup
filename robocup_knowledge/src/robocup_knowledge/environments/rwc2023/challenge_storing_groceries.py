@@ -13,5 +13,5 @@ default_area = "shelf3"
 inspect_area = "in_front_of"
 
 # Grasping
-table = "storing_groceries_table"
+table = "side_tables"
 room = "kitchen"
