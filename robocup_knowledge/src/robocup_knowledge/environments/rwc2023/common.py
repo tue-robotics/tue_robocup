@@ -146,25 +146,17 @@ def get_inspect_position(location, area=""):
         return "in_front_of"
 
 
-def is_pick_location(location):
+def is_manipulation_location(location):
     for loc in locations:
-        if loc["name"] == location and loc["manipulation"] == "yes":
+        if loc["name"] == location and loc["manipulation"] == True:
             return True
     return False
 
 
-def is_place_location(location):
-    for loc in locations:
-        if loc["name"] == location and (loc["manipulation"] == "yes" or loc["manipulation"] == "only_putting"):
-            return True
-    return False
-
-
-def get_locations(room=None, pick_location=None, place_location=None):
+def get_locations(room=None, manipulation_location=None):
     return [loc["name"] for loc in locations
                 if (room == None or loc["room"] == room) and \
-                   (pick_location == None or pick_location == is_pick_location(loc["name"])) and \
-                   (place_location == None or place_location == is_place_location(loc["name"]))]
+                   (manipulation_location == None or manipulation_location == is_manipulation_location(loc["name"]))]
 
 
 def is_known_object(obj):
