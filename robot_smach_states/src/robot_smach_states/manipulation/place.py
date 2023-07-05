@@ -12,7 +12,7 @@ from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.robot import Robot
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
-from ..utility import LockDesignator, ResolveArm, check_arm_requirements
+from ..utility import LockDesignator, ResolveArm, UnlockDesignator, check_arm_requirements
 from ..util.designators import check_type
 from ..util.designators.utility import LockingDesignator
 from robot_smach_states.world_model.world_model import Inspect
@@ -212,7 +212,7 @@ class Place(smach.StateMachine):
                                    transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator, False),
                                    transitions={'locked': 'NAVIGATE_TO_PLACE'})
 
             smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
@@ -221,8 +221,14 @@ class Place(smach.StateMachine):
                                                 'arrived': 'PUT'})
 
             smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
-                                   transitions={'succeeded': 'done',
-                                                'failed': 'failed'})
+                                   transitions={'succeeded': 'UNLOCK_DESIGNATOR_SUCCESS',
+                                                'failed': 'UNLOCK_DESIGNATOR_FAILED'})
+
+            smach.StateMachine.add('UNLOCK_DESIGNATOR_SUCCESS', UnlockDesignator(locking_place_designator, False),
+                                   transitions={'unlocked': 'done'})
+
+            smach.StateMachine.add('UNLOCK_DESIGNATOR_FAILED', UnlockDesignator(locking_place_designator, False),
+                                   transitions={'unlocked': 'failed'})
 
             check_arm_requirements(self, robot)
 
