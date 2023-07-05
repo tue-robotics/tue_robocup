@@ -14,11 +14,23 @@ from tf_conversions import toMsg
 
 REQUIRED_ITEMS = ["spoon", "bowl", "milk_carton", "cereal_box"]
 
+# pose of the breakfast on the table
+BREAKFAST_POSE = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.2, 0, 0.76))
+
+# vectors of the items with respect to the breakfast frame
 ITEM_VECTOR_DICT = {
     "spoon": PyKDL.Vector(0.0, -0.15, 0),
     "bowl": PyKDL.Vector(0.0, 0.0, 0),
     "milk_carton": PyKDL.Vector(-0.05, 0.15, 0),
     "cereal_box": PyKDL.Vector(-0.05, -0.2, 0),
+}
+
+# frame indicating the pose of the hand with respect to the vector in ITEM_VECTOR_DICT
+ITEM_OFFSET_DICT = {
+    "spoon": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
+    "bowl": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
+    "milk_carton": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
+    "cereal_box": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
 }
 
 COLOR_DICT = {
@@ -66,6 +78,19 @@ def item_vector_to_item_frame(item_vector):
     )
 
     return item_frame
+
+
+def get_item_place_pose(item_name):
+    item_vector = ITEM_VECTOR_DICT[item_name]
+
+    item_frame = BREAKFAST_POSE
+    item_frame.p = BREAKFAST_POSE * item_vector
+
+    item_place_offset = ITEM_OFFSET_DICT[item_name]
+    item_place_pose = item_frame * item_place_offset
+    rospy.loginfo(f"Placing at frame {item_frame} with place pose {item_place_pose}")
+
+    return item_place_pose
 
 
 def item_frame_to_pose(item_frame, frame_id):
