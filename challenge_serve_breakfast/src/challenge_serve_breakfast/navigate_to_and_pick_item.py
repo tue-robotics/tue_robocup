@@ -31,7 +31,7 @@ class PickItem(StateMachine):
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
+            arm._send_joint_trajectory([position_array], timeout=0.0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -52,7 +52,7 @@ class PickItem(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _rotate(_):
-            arm.gripper.send_goal("close", timeout=0.)
+            arm.gripper.send_goal("close", timeout=0.0)
             robot.head.look_up()
             vyaw = 0.5
             robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
