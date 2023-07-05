@@ -126,7 +126,9 @@ class StoreItems(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["selected", "no_entities"])
             def SelectClosestEntity(userdata=None):
-                """ convert Classificationresult to Entity and select the closest for grabbing"""
+                """
+                Convert ClassificationResult to Entity and select the closest for grabbing
+                """
                 entities = []
                 distances = []
                 segmented_entities = segmented_entities_designator.resolve()
