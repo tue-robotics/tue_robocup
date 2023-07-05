@@ -13,5 +13,5 @@ default_area = "shelf3"
 inspect_area = "in_front_of"
 
 # Grasping
-table = "side_table"
+table = "storing_groceries_table"
 room = common.get_room(table)
