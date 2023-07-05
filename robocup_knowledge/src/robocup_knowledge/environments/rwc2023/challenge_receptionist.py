@@ -2,9 +2,9 @@ from robocup_knowledge import knowledge_loader
 
 common = knowledge_loader.load_knowledge("common")
 
-operator_name = "charlie"
+operator_name = "john"
 
-operator_drink = "iced_tea"
+operator_drink = "milk"
 
 starting_point = "initial_pose_receptionist"
 
