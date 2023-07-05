@@ -54,7 +54,7 @@ POUR_OFFSET_Y = 0.15
 
 
 def item_vector_to_item_frame(item_vector):
-    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, -math.pi / 2), PyKDL.Vector(-0.05, 0.75, 0))
+    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.75, 0, 0))
 
     item_placement_vector = item_vector
     item_frame = frame
