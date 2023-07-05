@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
@@ -59,7 +57,7 @@ grammar += '\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]'
 for obj in common.object_names:
     grammar += "\nNAMED_OBJECT[{'type': '%s'}] -> %s" % (obj, obj)
 
-for loc in common.get_locations(pick_location=True, place_location=True):
+for loc in common.get_locations(manipulation_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATION[{"id": "%s"}] -> MANIPULATION_PP the %s' % (loc, loc)
 
 for cat in common.object_categories:
