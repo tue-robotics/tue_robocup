@@ -22,7 +22,7 @@ challenge_knowledge = load_knowledge('challenge_storing_groceries')
 def setup_statemachine(robot):
     state_machine = smach.StateMachine(outcomes=['Done', 'Failed', 'Aborted'])
 
-    skip_door = rospy.get_param("~skip_door", True)
+    skip_door = rospy.get_param("~skip_door", False)
     skip_inspect = rospy.get_param("~skip inspect", True)
     shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
     tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
