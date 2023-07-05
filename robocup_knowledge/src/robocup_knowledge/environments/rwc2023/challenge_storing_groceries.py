@@ -5,7 +5,7 @@ from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
 # General
-starting_point = 'initial_pose'
+starting_point = 'exit_1'
 
 # Detection
 shelf = "pantry"
