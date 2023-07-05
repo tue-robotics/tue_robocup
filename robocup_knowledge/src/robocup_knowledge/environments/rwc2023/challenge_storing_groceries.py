@@ -14,4 +14,4 @@ inspect_area = "in_front_of"
 
 # Grasping
 table = "storing_groceries_table"
-room = common.get_room(table)
+room = "kitchen"
