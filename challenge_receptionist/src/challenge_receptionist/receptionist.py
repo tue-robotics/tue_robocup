@@ -27,6 +27,10 @@ class HandleSingleGuest(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
 
         door_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_door['id'])
+
+        sofa_des = ds.EntityByIdDesignator(robot, uuid="sofa")  # ToDo: Make it so that it looks at the center
+                                                                # of the sitting area
+
         livingroom_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])
 
         guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
@@ -57,6 +61,7 @@ class HandleSingleGuest(smach.StateMachine):
                                    NavigateToWaypoint(robot,
                                                       livingroom_waypoint,
                                                       challenge_knowledge.waypoint_livingroom['radius'],
+                                                      look_at_designator=sofa_des,
                                                       speak=False),
                                    transitions={'arrived': 'INTRODUCE_GUEST',
                                                 'unreachable': 'INTRODUCE_GUEST',
