@@ -117,7 +117,7 @@ class EmptySpotDesignator(Designator):
     def _is_poi_unoccupied(self, frame_stamped: FrameStamped, surface_entity: Entity, volume_id: Optional[str] = None):
         entities_at_poi = self.robot.ed.get_entities(center_point=VectorStamped.from_framestamped(frame_stamped),
                                                      radius=self._spacing,
-                                                     ignore_z=True)
+                                                     ignore_z=bool(volume_id))
         entities_at_poi = [entity for entity in entities_at_poi if entity.uuid != surface_entity.uuid]
         if volume_id:
             entities_at_poi = surface_entity.entities_in_volume(entities_at_poi, volume_id=volume_id)
