@@ -164,7 +164,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             )
 
 @cb_interface(outcomes=["done"])
-def _publish_item_poses(marker_array_pub, items):
+def _publish_item_poses(user_data, marker_array_pub, items):
     """
     Publishes item poses as a visualization marker array
 
