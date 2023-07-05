@@ -129,7 +129,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             )
             StateMachine.add(
                 "NAVIGATE_TO_TABLE_CLOSE",
-                NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
+                NavigateToSymbolic(robot, {table: table_close_navigation_area}, table, speak=False),
                 transitions={
                     "arrived": "PLACE_ITEM_ON_TABLE",
                     "unreachable": "SAY_PICK_AWAY_THE_CHAIR",
