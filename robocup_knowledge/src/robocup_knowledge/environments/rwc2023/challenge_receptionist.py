@@ -6,6 +6,12 @@ operator_name = "john"
 
 operator_drink = "milk"
 
+default_guest_1_name = "adel"
+default_guest_1_drink = "cola"
+
+default_guest_2_name = "morgan"
+default_guest_2_drink = "orange_juice"
+
 starting_point = "initial_pose_receptionist"
 
 waypoint_door = {'id': 'entrance', 'radius': 0.5}
