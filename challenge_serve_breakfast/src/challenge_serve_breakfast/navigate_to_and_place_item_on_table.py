@@ -11,8 +11,10 @@ import sys
 import rospy
 import visualization_msgs.msg
 from geometry_msgs.msg import PoseStamped, Vector3
+from pykdl_ros import FrameStamped
 
 from challenge_serve_breakfast.tuning import (
+    get_item_place_pose,
     JOINTS_PRE_PRE_PLACE,
     JOINTS_PRE_PLACE_HORIZONTAL,
     JOINTS_PRE_PLACE_VERTICAL,
@@ -40,9 +42,8 @@ class PlaceItemOnTable(StateMachine):
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
 
-        def send_joint_goal(position_array, wait_for_motion_done=True):
-            # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=0.0)
+        def send_goal(pose_goal, wait_for_motion_done=True):
+            arm.send_goal(pose_goal, timeout=0.0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -50,7 +51,7 @@ class PlaceItemOnTable(StateMachine):
             arm.gripper.send_goal(open_close_string)
 
         @cb_interface(outcomes=["done"], input_keys=["item_picked"])
-        def _pre_place(user_data):
+        def _place(user_data):
             item_name = user_data["item_picked"]
             rospy.loginfo(f"Preplacing {item_name}...")
 
@@ -59,57 +60,52 @@ class PlaceItemOnTable(StateMachine):
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
-            send_joint_goal(JOINTS_PRE_PRE_PLACE)
+            item_place_pose = get_item_place_pose(user_data["item_picked"])
+            place_fs = FrameStamped(item_place_pose, rospy.Time(0), table_id)
 
-            if item_name in ["milk_carton", "cereal_box"]:
-                send_joint_goal(JOINTS_PRE_PLACE_HORIZONTAL)
-            else:
-                send_joint_goal(JOINTS_PRE_PLACE_VERTICAL)
+            pre_place_fs = place_fs
+            pre_place_fs.frame.p.z(place_fs.frame.p.z() + 0.1)
 
-            return "done"
+            post_place_fs = place_fs
+            post_place_fs.frame.p.z(place_fs.frame.p.z() + 0.2)
 
-        @cb_interface(outcomes=["done"], input_keys=["item_picked"])
-        def _align_with_table(user_data):
-            item_placement_vector = ITEM_VECTOR_DICT[user_data["item_picked"]]
-            item_frame = item_vector_to_item_frame(item_placement_vector)
-
-            goal_pose = item_frame_to_pose(item_frame, table_id)
-            rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
+            rospy.loginfo("Pre Placing...")
+            send_goal(pre_place_fs)
             robot.head.look_down()
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
-            return "done"
-
-        @cb_interface(outcomes=["done"], input_keys=["item_picked"])
-        def _place_and_retract(user_data):
-            rospy.loginfo("Placing...")
-            item_name = user_data["item_picked"]
-            if item_name in ["milk_carton"]:
-                send_joint_goal(JOINTS_PLACE_HORIZONTAL_MILK)
-            elif item_name in ["milk_carton", "cereal_box"]:
-                send_joint_goal(JOINTS_PLACE_HORIZONTAL)
-            else:
-                send_joint_goal(JOINTS_PLACE_VERTICAL)
-
-            rospy.loginfo("Dropping...")
-            send_gripper_goal("open")
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
+            rospy.loginfo("Placing...")
+            send_goal(place_fs)
+            send_gripper_goal("open")
+
             if item_name != "cereal_box":
-                rospy.loginfo("Retract...")
-                send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
+                rospy.loginfo("Retracting...")
+                send_goal(post_place_fs)
                 robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
                 send_gripper_goal("close", wait_for_motion_done=False)
                 arm.send_joint_goal("carrying_pose")
+
+            #if item_name in ["milk_carton", "cereal_box"]:
+            #    send_joint_goal(JOINTS_PRE_PLACE_HORIZONTAL)
+            #else:
+            #    send_joint_goal(JOINTS_PRE_PLACE_VERTICAL)
+
+            #rospy.loginfo("Placing...")
+            #item_name = user_data["item_picked"]
+            #if item_name in ["milk_carton"]:
+            #    send_joint_goal(JOINTS_PLACE_HORIZONTAL_MILK)
+            #elif item_name in ["milk_carton", "cereal_box"]:
+            #    send_joint_goal(JOINTS_PLACE_HORIZONTAL)
+            #else:
+            #    send_joint_goal(JOINTS_PLACE_VERTICAL)
 
             robot.head.reset()
 
             return "done"
 
         with self:
-            self.add_auto("PRE_PLACE", CBState(_pre_place), ["done"])
-            self.add_auto("ALIGN_WITH_TABLE", CBState(_align_with_table), ["done"])
-            self.add("PLACE_AND_RETRACT", CBState(_place_and_retract), transitions={"done": "succeeded"})
+            self.add("PLACE", CBState(_place), {"done": "succeeded"})
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
