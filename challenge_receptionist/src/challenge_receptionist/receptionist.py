@@ -51,7 +51,7 @@ class HandleSingleGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
                                    Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. "
-                                               "Please stay behind me while we look for the operator."],
+                                               f"Please stay behind me while we look for the operator {challenge_knowledge.operator_name}."],
                                        name=guest_name_des, drink=guest_drinkname_des,
                                        block=True,
                                        look_at_standing_person=True),
