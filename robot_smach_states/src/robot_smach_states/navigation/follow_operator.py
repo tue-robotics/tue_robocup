@@ -175,7 +175,7 @@ class FollowOperator(smach.State):
         """
         start_time = rospy.Time.now()
 
-        self._robot.head.look_at_standing_person(distance=1.5)
+        self._robot.head.look_at_standing_person(distance=1.5, height=1.3)
 
         if self._operator_id:
             # Can still result in None if the operator is not in ED
@@ -218,7 +218,7 @@ class FollowOperator(smach.State):
                                                          block=True)
                                 self._robot.speech.speak("Just in case...",
                                                          block=False)
-                                self._robot.head.look_at_standing_person()
+                                self._robot.head.look_at_standing_person(distance=1.5, height=1.3)
                                 learn_person_start_time = rospy.Time.now()
                                 learn_person_timeout = 10.0  # TODO: Parameterize
                                 num_detections = 0
@@ -506,7 +506,7 @@ class FollowOperator(smach.State):
         if not self._learn_face:
             return False
         rospy.loginfo("Trying to recover the operator")
-        self._robot.head.look_at_standing_person()
+        self._robot.head.look_at_standing_person(distance=1.5, height=1.3)
         self._robot.speech.speak(f"{self._operator_name}, please look at me while I am looking for you", block=False)
 
         look_angles = [0.0,
