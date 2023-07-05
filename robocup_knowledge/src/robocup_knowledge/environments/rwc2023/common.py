@@ -110,7 +110,7 @@ inspect_positions = {
 }
 
 drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
-for drink in [obj["name"] for obj in objects if obj["category"] == "drink"]:
+for drink in [obj["name"] for obj in objects if obj["category"] == "drinks"]:
     drink_spec += "OPTIONS['{drink}'] -> {drink}\n".format(drink=drink)
 
 
