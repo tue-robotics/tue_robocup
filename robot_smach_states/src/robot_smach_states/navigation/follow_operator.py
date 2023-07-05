@@ -511,12 +511,13 @@ class FollowOperator(smach.State):
 
         look_angles = [0.0,
                        math.pi/6,
-                       math.pi/4,
-                       math.pi/2.3,
-                       0.0,
                        -math.pi/6,
+                       math.pi/4,
                        -math.pi/4,
-                       -math.pi/2.3]
+                       math.pi/2.3,
+                       -math.pi/2.3,
+                       0.0,
+                       ]
         head_goals = [VectorStamped.from_xyz(look_distance*math.cos(angle), look_distance*math.sin(angle), 1.7,
                                              rospy.Time.now(), self._robot.base_link_frame)
                       for angle in look_angles]
