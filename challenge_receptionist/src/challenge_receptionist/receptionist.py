@@ -99,14 +99,14 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'error': 'HANDLE_GUEST_1'})
 
             smach.StateMachine.add('HANDLE_GUEST_1',
-                                   HandleSingleGuest(robot, assume_john=True, default_name='Ava',
-                                                     default_drink=HMIResult('coke', {'drink': 'coke'})),
+                                   HandleSingleGuest(robot, assume_john=True, default_name=challenge_knowledge.default_guest_1_name,
+                                                     default_drink=HMIResult(challenge_knowledge.default_guest_1_drink, {'drink': challenge_knowledge.default_guest_1_drink})),
                                    transitions={'succeeded': 'HANDLE_GUEST_2',
                                                 'aborted': 'HANDLE_GUEST_2'})
 
             smach.StateMachine.add('HANDLE_GUEST_2',
-                                   HandleSingleGuest(robot, assume_john=False, default_name='Max',
-                                                     default_drink=HMIResult('water', {'drink': 'water'})),
+                                   HandleSingleGuest(robot, assume_john=False, default_name=challenge_knowledge.default_guest_2_name,
+                                                     default_drink=HMIResult(challenge_knowledge.default_guest_2_drink, {'drink': challenge_knowledge.default_guest_2_drink})),
                                    transitions={'succeeded': 'SAY_DONE',
                                                 'aborted': 'SAY_DONE'})
 
@@ -124,4 +124,3 @@ class ChallengeReceptionist(smach.StateMachine):
                 ),
                 transitions={"arrived": "succeeded", "unreachable": "succeeded", "goal_not_defined": "succeeded"},
             )
-
