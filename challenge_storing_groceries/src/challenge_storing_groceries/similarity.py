@@ -42,7 +42,7 @@ def find_similar_entity(original, entity_list, knowledge):
     :return: EdEntity of a similar
     """
 
-    if not entity_list: # List is empty
+    if not entity_list:  # List is empty
         return None
 
     original_type = original.etype
