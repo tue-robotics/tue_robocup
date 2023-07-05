@@ -138,32 +138,44 @@ class OpenDoor(smach.State):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
-        goal_pose.pose.position.x = 0.5
-        goal_pose.pose.position.y = 0.15
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.1))
+        goal_pose.pose.position.x = 0.50
+        goal_pose.pose.position.y = 0.27
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
+
+    def _move_arm_in_cabinet2(self):
+        goal_pose = PoseStamped()
+        goal_pose.header.stamp = rospy.Time.now()
+        goal_pose.header.frame_id = self.cabinet.uuid
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.1))
+        goal_pose.pose.position.x = 0.50
+        goal_pose.pose.position.y = 0.17
+        self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
+
+
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi + 0.3))
-        goal_pose.pose.position.x = 0.5
-        goal_pose.pose.position.y = 0.15
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi + 0.15))
+        goal_pose.pose.position.x = 0.55
+        goal_pose.pose.position.y = 0.17
         self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
 
     def _drive_to_open_cabinet2(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi + 0.1))
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi + 0.5))
         goal_pose.pose.position.x = 0.8
-        goal_pose.pose.position.y = 0.15
+        goal_pose.pose.position.y = 0.17
         self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
 
     def execute(self, userdata=None):
         self._align_with_cabinet()
         self._move_arm_to_open_cabinet_position()
         self._move_arm_in_cabinet()
+        self._move_arm_in_cabinet2()
         self._drive_to_open_cabinet()
         self._drive_to_open_cabinet2()
         self.arm.reset()
