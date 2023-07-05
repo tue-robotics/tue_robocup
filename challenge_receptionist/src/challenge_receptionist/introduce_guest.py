@@ -1,7 +1,10 @@
 import rospy
+
+import numpy as np
+
 from ed.entity import Entity
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.find_people_in_room import FindPeopleInRoom
+from robot_smach_states.human_interaction.find_people_in_room import FindPeople
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.navigation.navigation import ForceDrive
@@ -102,6 +105,8 @@ class IntroduceGuest(smach.StateMachine):
         previous_guest_drink_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink')
         previous_guest_name_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_name')
 
+        room_designator = ds.EntityByIdDesignator(robot=robot, uuid=challenge_knowledge.sitting_room)
+
 
         # For each person:
         #   0. Go to the person (old guest)
@@ -117,12 +122,14 @@ class IntroduceGuest(smach.StateMachine):
             #                                 block=True),
             #                        transitions={'spoken': 'FIND_OLD_GUESTS'})
 
-            smach.StateMachine.add('FIND_OLD_GUESTS',
-                                   FindPeopleInRoom(robot,
-                                                    room=challenge_knowledge.sitting_room,
-                                                    found_people_designator=all_old_guests.writeable),
+            smach.StateMachine.add("FIND_OLD_GUESTS",
+                                   FindPeople(robot=robot,
+                                              query_entity_designator=room_designator,
+                                              found_people_designator=all_old_guests.writeable,
+                                              speak=True),
                                    transitions={"found": "CHECK_NUM_PEOPLE",
-                                                "not_found": "CHECK_NUM_PEOPLE"})
+                                                "failed": "CHECK_NUM_PEOPLE"})
+
 
             @cb_interface(outcomes=["incorrect", "correct", "continue"])
             def check_num_people(ud=None):
