@@ -44,6 +44,8 @@ class Put(smach.State):
         self._item_to_place_designator = item_to_place
         self._placement_pose_designator = placement_pose
         self._arm_designator = arm
+        self._offset = 0.1
+        self._pregrasp_extra_offset = 0.05
 
     def execute(self, userdata=None):
 
@@ -78,7 +80,7 @@ class Put(smach.State):
 
         # Pre place
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height + 0.15, 0, 0, 0, rospy.Time(0),
+                                                       height + self._offset + self._pregrasp_extra_offset, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10,
                              pre_grasp=True):
@@ -87,7 +89,7 @@ class Put(smach.State):
 
             rospy.loginfo("Retrying preplace")
             if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                           height + 0.15, 0, 0, 0, rospy.Time(0),
+                                                           height + self._offset + self._pregrasp_extra_offset, 0, 0, 0, rospy.Time(0),
                                                            frame_id=self._robot.base_link_frame),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
@@ -97,7 +99,7 @@ class Put(smach.State):
         # Place
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
         actual_place_pose_bl = FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                         height + 0.1, 0, 0, 0, rospy.Time(0),
+                                                         height + self._offset, 0, 0, 0, rospy.Time(0),
                                                          frame_id=self._robot.base_link_frame)
         if not arm.send_goal(actual_place_pose_bl, timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
@@ -123,7 +125,7 @@ class Put(smach.State):
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
         arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x() - 0.1,
                                                 place_pose_bl.frame.p.y(),
-                                                place_pose_bl.frame.p.z() + 0.15,
+                                                place_pose_bl.frame.p.z() + self._offset + self._pregrasp_extra_offset,
                                                 0, 0, 0,
                                                 rospy.Time(0),
                                                 frame_id=self._robot.base_link_frame),
