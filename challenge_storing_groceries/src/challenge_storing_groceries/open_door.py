@@ -132,6 +132,7 @@ class OpenDoor(smach.State):
         self.arm._arm._send_joint_trajectory([[0.0, 0.0, -1.572, -1.572, 0.0]])
         self.arm._arm._send_joint_trajectory([[0.0, 0.0, 1.572, -1.572, 0.0]])
         self.arm._arm._send_joint_trajectory([[0.0, -1.572, 1.572, -1.572, 0.0]])
+        self.arm.gripper.send_goal("close")
 
     def _move_arm_in_cabinet(self):
         goal_pose = PoseStamped()
