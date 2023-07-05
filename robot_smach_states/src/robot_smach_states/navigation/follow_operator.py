@@ -744,7 +744,6 @@ class FollowOperator(smach.State):
                 rospy.loginfo("Operator within self._lookat_radius")
                 self._turn_towards_operator()
             else:
-                self._look_at_operator()
                 # Only update navigation if there is something to update: operator must have moved
                 if self._replan_allowed:
                     # If replanned: if recently replanned, only update navigation if not standing still for too long
@@ -756,15 +755,19 @@ class FollowOperator(smach.State):
                             rospy.loginfo("and this plan is still active, so I'll give the global planner a chance")
                         else:
                             rospy.loginfo("but we reached that goal at some point, so we can safely update navigation")
+                            self._look_at_operator()
                             self._update_navigation()
                     else:
                         rospy.loginfo("We never replanned so far, so we can safely update navigation")
+                        self._look_at_operator()
                         self._update_navigation()
                     # else:
                     #     rospy.loginfo("Updating navigation")
+                    #     self._look_at_operator()
                     #     self._update_navigation()
                 else:
                     self._update_navigation()
+                    self._look_at_operator()
                     rospy.loginfo("Updating navigation.")
 
             rate.sleep()
