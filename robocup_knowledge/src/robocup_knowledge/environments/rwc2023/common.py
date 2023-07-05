@@ -80,13 +80,13 @@ object_names = list(set([o["name"] for o in objects]))
 object_categories = list(set([o["category"] for o in objects]))
 
 category_locations = {
-    "cleaning_supplies": {"desk": "on_top_of"},
-    "drinks": {"desk": "on_top_of"},
-    "food": {"desk": "on_top_of"},
+    "cleaning_supplies": {"shelf": "on_top_of"},
+    "drinks": {"cabinet": "on_top_of"},
+    "food": {"pantry": "on_top_of"},
     "fruits": {"desk": "on_top_of"},
-    "toys": {"desk": "on_top_of"},
-    "snacks": {"desk": "on_top_of"},
-    "dishes": {"desk": "on_top_of"},
+    "toys": {"bookshelf": "on_top_of"},
+    "snacks": {"side_tables": "on_top_of"},
+    "dishes": {"kitchen_table": "on_top_of"},
 }
 
 inspect_areas = {
