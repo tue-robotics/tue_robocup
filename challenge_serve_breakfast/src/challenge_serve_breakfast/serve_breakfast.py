@@ -9,9 +9,10 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.world_model import UpdateEntityPose
 from robot_smach_states.utility import WaitTime
 from smach import State, StateMachine
-from .navigate_to_and_pick_item import NavigateToAndPickItem
+from .navigate_to_and_pick_item import NavigateToAndPickItem, NavigateToSymbolic
 from .navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
 from .pick_pour_place_cereal import PickPourPlaceCereal
 from .tuning import REQUIRED_ITEMS
@@ -56,6 +57,8 @@ def setup_statemachine(robot):
     place_id = "kitchen_table"
     place_area_id = "in_front_of"
     exit_id = "starting_pose"
+    table_des = EdEntityDesignator(robot=robot, uuid=place_id)
+    table_place_des = EdEntityDesignator(robot=robot, uuid=place_id)
 
     with state_machine:
         # Intro
@@ -63,9 +66,20 @@ def setup_statemachine(robot):
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
             StartChallengeRobust(robot, "initial_pose"),
-            transitions={"Done": "SAY_START", "Aborted": "done", "Failed": "SAY_START"},
+            transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "done", "Failed": "NAVIGATE_TO_TABLE"},
         )
-
+        # Main loop
+        # StateMachine.add(
+        #     "NAVIGATE_TO_TABLE",
+        #     NavigateToSymbolic(robot=robot, entity_designator_area_name_map={table_place_des: place_area_id},
+        #                         entity_lookat_designator=place_id, speak=True),
+        #         transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "done", "goal_not_defined": "done"},
+        # #    )
+        #StateMachine.add(
+        #    "UPDATE_TABLE_POSE",
+        #    UpdateEntityPose(robot=robot, entity_designator=table_des),
+        #    ransitions={"done": "SAY_START"},
+        #)
         StateMachine.add(
             "SAY_START",
             Say(
@@ -76,9 +90,6 @@ def setup_statemachine(robot):
             ),
             transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
         )
-
-        # Main loop
-
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM",
             NavigateToAndPickItem(robot, pick_id, pick_area_id),
