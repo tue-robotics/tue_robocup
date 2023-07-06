@@ -147,7 +147,7 @@ class RotateToEntity(smach.State):
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
 
         duration = abs(rotate_base / self._max_vel)  # duration of rotation, in s
-        vel = self._maxvel * np.sign(rotate_base)
+        vel = self._max_vel * np.sign(rotate_base)
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
                                                                                        np.degrees(vel),
                                                                                        duration))
