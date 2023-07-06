@@ -206,7 +206,7 @@ class PickUp(smach.State):
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.uuid]):
             rospy.logerr('Failed retract')
         arm.wait_for_motion_done()
-        self.robot.base.force_drive(-0.125, 0, 0, 2.0)
+        self.robot.base.force_drive(-0.2, 0, 0, 2.0)
 
         # Define the pose of the object relative to the gripper (which made contact at grasp_framestamped)
         pose_in_hand = FrameStamped(grasp_framestamped.frame.Inverse() * grab_entity.pose.frame,
@@ -217,10 +217,10 @@ class PickUp(smach.State):
         # Remove pose from ED as we are holding the object in the gripper
         self.robot.ed.update_entity(uuid=grab_entity.uuid, remove_pose=True)
 
-        arm.wait_for_motion_done(cancel=True)
-
         # Carrying pose
         arm.send_joint_goal('carrying_pose', timeout=0.0)
+
+        arm.wait_for_motion_done(cancel=True)
 
         result = 'succeeded'
         if self._check_occupancy and hasattr(arm.gripper, 'grasp_sensor'):
