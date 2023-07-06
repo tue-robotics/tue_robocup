@@ -34,7 +34,7 @@ class OpenDishwasher(StateMachine):
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
+            arm._send_joint_trajectory([position_array], timeout=0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -47,7 +47,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             robot.head.look_down()
             robot.speech.speak("Looking for the handle", block=False)
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             return "done"
 
         @cb_interface(outcomes=["done"])
@@ -62,7 +62,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             robot.head.look_down()
             robot.speech.speak("Grabbing the handle", block=False)
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             return "done"
 
         @cb_interface(outcomes=["done"])
@@ -99,7 +99,7 @@ class NavigateToAndOpenDishwasher(StateMachine):
         dishwasher = EdEntityDesignator(robot=robot, uuid=DISHWASHER_ID)
 
         @cb_interface(outcomes=["done"])
-        def _publish_item_poses():
+        def _publish_item_poses(userdata):
             """
             Publishes item poses as a visualization marker array
             """
