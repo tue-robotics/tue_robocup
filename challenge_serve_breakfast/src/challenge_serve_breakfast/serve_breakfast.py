@@ -65,7 +65,7 @@ def setup_statemachine(robot):
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
             StartChallengeRobust(robot, "initial_pose"),
-            transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "done", "Failed": "NAVIGATE_TO_TABLE"},
+            transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "GOODBYE", "Failed": "NAVIGATE_TO_TABLE"},
         )
         #Main loop
         StateMachine.add(
@@ -96,7 +96,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM_FAILED", WaitTime(robot, 2),
-            transitions={"waited": "NAVIGATE_AND_PICK_ITEM", "preempted": "done"}
+            transitions={"waited": "NAVIGATE_AND_PICK_ITEM", "preempted": "GOODBYE"}
         )
 
         StateMachine.add(
@@ -106,7 +106,7 @@ def setup_statemachine(robot):
         )
 
         StateMachine.add(
-            "WAIT", WaitTime(robot, 2), transitions={"waited": "CHECK_IF_WE_HAVE_IT_ALL", "preempted": "done"}
+            "WAIT", WaitTime(robot, 2), transitions={"waited": "CHECK_IF_WE_HAVE_IT_ALL", "preempted": "GOODBYE"}
         )
 
         StateMachine.add(
