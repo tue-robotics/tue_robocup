@@ -18,10 +18,16 @@ from challenge_clean_the_table.knowledge import (
     OPEN_DISHWASHER_VECTOR_OPEN1,
     OPEN_DISHWASHER_VECTOR_OPEN2,
     OPEN_DISHWASHER_VECTOR_OPEN3,
+    OPEN_DISHWASHER_VECTOR_OPEN4,
+    OPEN_DISHWASHER_VECTOR_OPEN5,
+    OPEN_DISHWASHER_VECTOR_OPEN6,
     JOINTS_OPEN_DISHWASHER,
     JOINTS_OPEN_DISHWASHER1,
     JOINTS_OPEN_DISHWASHER2,
     JOINTS_OPEN_DISHWASHER3,
+    JOINTS_OPEN_DISHWASHER4,
+    JOINTS_OPEN_DISHWASHER5,
+    JOINTS_OPEN_DISHWASHER6,
 )
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_frame_to_pose
 from robot_skills import get_robot
@@ -93,6 +99,20 @@ class OpenDishwasher(StateMachine):
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             send_joint_goal(JOINTS_OPEN_DISHWASHER3)
             send_gripper_goal("open")
+
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN4)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER4)
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN5)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER5)
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN6)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER6)
+
             robot.speech.speak("Hopefully the dishwasher is now open. Thanks guys.", block=False)
             return "done"
 
