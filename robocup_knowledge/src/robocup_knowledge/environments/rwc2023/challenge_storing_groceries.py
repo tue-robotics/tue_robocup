@@ -11,6 +11,7 @@ starting_point = 'initial_pose'
 shelf = "pantry"
 default_area = "shelf3"
 inspect_area = "in_front_of"
+place_areas = ["shelf2", "shelf3"]
 
 # Grasping
 table = "side_tables"
