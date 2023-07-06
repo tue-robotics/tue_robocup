@@ -41,9 +41,9 @@ def place(userdata, designator, robot):
 
 
 @cb_interface(outcomes=["done"])
-def kill_global_planner(userdata):
-    os.system(f"cp -f /home/amigo/ros/noetic/system/src/hero_bringup/parameters/navigation/global_costmap_gmapping2.yaml /home/amigo/ros/noetic/system/src/hero_bringup/parameters/navigation/global_costmap_gmapping.yaml")
-    os.system(f"rosnode kill /hero/global_planner")
+def kill_global_planner(userdata, robot):
+    rospy.set_param(f"/{robot.robot_name}/global_planner/global_costmap/track_unknown_space", True)
+    os.system(f"rosnode kill /{robot.robot_name}/global_planner")
     rospy.sleep(3.0)
     return "done"
 
@@ -276,7 +276,7 @@ class CarryMyLuggage(StateMachine):
 
             StateMachine.add(
                 "KILL_GLOBAL_PLANNER",
-                CBState(kill_global_planner),
+                CBState(kill_global_planner, cb_args=[self.robot]),
                 transitions={"done": "NAVIGATE_TO_ARENA"},
             )
 
