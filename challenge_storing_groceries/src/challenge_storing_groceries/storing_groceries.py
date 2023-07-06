@@ -45,8 +45,13 @@ def setup_statemachine(robot):
         # open the door of the cabinet
         smach.StateMachine.add("OPEN_DOOR",
                                OpenDoorMachine(robot, shelfDes),
-                               transitions={'succeeded': 'NAV_TO_START',
+                               transitions={'succeeded': 'SAY_CLOSE_DOOR',
                                             'failed': 'SAY_UNABLE_TO_OPEN_DOOR'})
+
+        smach.StateMachine.add("SAY_CLOSE_DOOR",
+                               states.human_interaction.Say(robot, "I might close the door later,"
+                                                                   "do not be shocked by it"),
+                               transitions={'spoken': 'NAV_TO_START'})
 
         smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
                                states.human_interaction.Say(robot, "I am unable to open the shelf door, "
