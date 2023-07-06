@@ -28,7 +28,7 @@ COLOR_DICT = {
     "cereal_box": ColorRGBA(1, 1, 0, 1),
 }
 
-PICK_ROTATION = 2.
+PICK_ROTATION = 1.2
 
 JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
 
