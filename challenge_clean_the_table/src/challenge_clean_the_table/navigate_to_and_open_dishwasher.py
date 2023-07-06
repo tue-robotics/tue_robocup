@@ -15,8 +15,13 @@ from challenge_clean_the_table.knowledge import (
     DISHWASHER_ID,
     DISHWASHER_AREA_ID,
     OPEN_DISHWASHER_VECTOR,
-    OPEN_DISHWASHER_VECTOR_OPEN,
+    OPEN_DISHWASHER_VECTOR_OPEN1,
+    OPEN_DISHWASHER_VECTOR_OPEN2,
+    OPEN_DISHWASHER_VECTOR_OPEN3,
     JOINTS_OPEN_DISHWASHER,
+    JOINTS_OPEN_DISHWASHER1,
+    JOINTS_OPEN_DISHWASHER2,
+    JOINTS_OPEN_DISHWASHER3,
 )
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_frame_to_pose
 from robot_skills import get_robot
@@ -43,7 +48,7 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _align_pre(_):
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN)
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN3)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             robot.head.look_down()
             robot.speech.speak("Looking for the handle", block=False)
@@ -75,10 +80,19 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _open(_):
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN)
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN1)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
-            arm.send_joint_goal("carrying_pose", timeout=0.0)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER1)
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN2)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER2)
+            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN3)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER3)
+            send_gripper_goal("open")
             robot.speech.speak("Hopefully the dishwasher is now open. Thanks guys.", block=False)
             return "done"
 
