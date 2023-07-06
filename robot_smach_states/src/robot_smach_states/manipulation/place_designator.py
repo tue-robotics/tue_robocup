@@ -100,6 +100,9 @@ class EmptySpotDesignator(Designator):
 
         rospy.loginfo("1 Currently considering: {} candidates".format(len(candidates)))
         # We don't care about small differences
+        if not candidates:
+            rospy.logerr("EmptySpotDesignator: No valid candidates found")
+            return None
         closest_candidate = min(candidates, key=lambda tup:tup.distance)
         candidates = [f for f in candidates if (f.distance - closest_candidate.distance) < self._nav_threshold]
         rospy.loginfo("2 Currently considering: {} candidates".format(len(candidates)))
