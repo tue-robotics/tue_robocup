@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import PyKDL as kdl
 
 import robot_smach_states.util.designators as ds
@@ -14,6 +15,8 @@ from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint, Na
 from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
+
+import rospy
 
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
@@ -34,6 +37,14 @@ def place(userdata, designator, robot):
     )
     item = Entity(entity_id, "bag", pose.header.frame_id, pose.frame, shape, None, None, rospy.Time.now())
     designator.write(item)
+    return "done"
+
+
+@cb_interface(outcomes=["done"])
+def kill_global_planner(userdata):
+    os.system(f"cp -f /home/amigo/ros/noetic/system/src/hero_bringup/parameters/navigation/global_costmap_gmapping2.yaml /home/amigo/ros/noetic/system/src/hero_bringup/parameters/navigation/global_costmap_gmapping.yaml")
+    os.system(f"rosnode kill /hero/global_planner")
+    rospy.sleep(3.0)
     return "done"
 
 
@@ -248,8 +259,8 @@ class CarryMyLuggage(StateMachine):
                 "HANDOVER_TO_HUMAN",
                 HandoverToHuman(self.robot, self.arm_designator),
                 transitions={
-                    "succeeded": "NAVIGATE_TO_ARENA",
-                    "failed": "NAVIGATE_TO_ARENA",  # todo change this?
+                    "succeeded": "KILL_GLOBAL_PLANNER",
+                    "failed": "KILL_GLOBAL_PLANNER",  # todo change this?
                 },
             )
 
@@ -262,6 +273,12 @@ class CarryMyLuggage(StateMachine):
             #         "goal_not_defined": "Done",  # todo change this?
             #     },
             # )
+
+            StateMachine.add(
+                "KILL_GLOBAL_PLANNER",
+                CBState(kill_global_planner),
+                transitions={"done": "NAVIGATE_TO_ARENA"},
+            )
 
             StateMachine.add(
                 "NAVIGATE_TO_ARENA",
