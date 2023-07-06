@@ -100,17 +100,19 @@ class PickItem(StateMachine):
             self.add("ROTATE", CBState(_rotate), transitions={"done": "HANDOVER_POSE"})
             self.add("HANDOVER_POSE", CBState(_handover_pose), transitions={"done": "ASK_USER"})
             self.add("ASK_USER", CBState(_ask_user),
-                     transitions={"succeeded": "CHECK_PICK_SUCCESSFUL", "failed": "failed"})
-            self.add("CHECK_PICK_SUCCESSFUL",
-                     ActiveGraspDetector(robot, armdes),
-                     transitions={'true': "CARRYING_POSE",
-                                  'false': "SAY_SOMETHING_WENT_WRONG",
-                                  'failed': "failed",
-                                  'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
-                     )
-            self.add("SAY_SOMETHING_WENT_WRONG", Say(robot, "Oops, it seems I missed it. Lets try again"),
-                     transitions={"spoken": "ASK_USER2"})
-            self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
+                     transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
+
+            # self.add("CHECK_PICK_SUCCESSFUL",
+            #          ActiveGraspDetector(robot, armdes),
+            #          transitions={'true': "CARRYING_POSE",
+            #                       'false': "SAY_SOMETHING_WENT_WRONG",
+            #                       'failed': "failed",
+            #                       'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
+            #          )
+
+            # self.add("SAY_SOMETHING_WENT_WRONG", Say(robot, "Oops, it seems I missed it. Lets try again"),
+            #          transitions={"spoken": "ASK_USER2"})
+            # self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
             self.add("CARRYING_POSE", CBState(_carrying_pose), transitions={"done": "succeeded"})
 
 
