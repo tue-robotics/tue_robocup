@@ -39,7 +39,7 @@ class PlaceItemInDishwasherRack(StateMachine):
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
+            arm._send_joint_trajectory([position_array], timeout=0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -68,7 +68,7 @@ class PlaceItemInDishwasherRack(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, PLACE_ID)
             rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
             robot.head.look_down()
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             return "done"
 
         @cb_interface(outcomes=["done"], input_keys=["item_picked"])
@@ -143,7 +143,7 @@ class NavigateToAndPlaceItemInDishwasherRack(StateMachine):
 
 
 @cb_interface(outcomes=["done"])
-def _publish_item_poses(marker_array_pub, items):
+def _publish_item_poses(userdata, marker_array_pub, items):
     """
     Publishes item poses as a visualization marker array
 
