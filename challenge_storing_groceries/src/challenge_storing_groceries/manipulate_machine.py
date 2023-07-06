@@ -111,7 +111,8 @@ class StoreItems(smach.StateMachine):
                                                  "required_goals": ["carrying_pose", "handover_to_human"],
                                                  "required_gripper_types": [GripperTypes.GRASPING]},
                                          name="empty_arm_designator").lockable()
-        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=knowledge.default_area,
+        random_area_designator = ds.RandomDesignator(knowledge.place_areas, resolve_type=str, name="random_area_designator")
+        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=random_area_designator,
                                                         name="empty_spot_designator")
 
         with self:
