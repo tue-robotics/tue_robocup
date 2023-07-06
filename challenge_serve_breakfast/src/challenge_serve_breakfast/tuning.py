@@ -27,10 +27,10 @@ ITEM_VECTOR_DICT = {
 
 # frame indicating the pose of the hand with respect to the vector in ITEM_VECTOR_DICT
 ITEM_OFFSET_DICT = {
-    "spoon": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
-    "bowl": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
-    "milk_carton": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
-    "cereal_box": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.0)),
+    "spoon": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0.5*math.pi, 0), PyKDL.Vector(0.0, 0.0, 0.1)),
+    "bowl": PyKDL.Frame(PyKDL.Rotation.RPY(0.5*math.pi, 0.25*math.pi, 0.0), PyKDL.Vector(-0.08, 0.0, 0.07)),
+    "milk_carton": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.07)),
+    "cereal_box": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.07)),
 }
 
 COLOR_DICT = {
@@ -66,7 +66,7 @@ POUR_OFFSET_Y = 0.15
 
 
 def item_vector_to_item_frame(item_vector):
-    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.7, 0, 0))
+    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.2, 0, 0.76))
 
     item_placement_vector = item_vector
     item_frame = frame
