@@ -80,6 +80,8 @@ class StoreSingleItem(smach.StateMachine):
                                                 'failed': 'failed'}
                                    )
 
+            states.utility.check_arm_requirements(self, robot)
+
 
 class StoreItems(smach.StateMachine):
     """
