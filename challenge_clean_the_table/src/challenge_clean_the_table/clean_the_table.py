@@ -62,7 +62,14 @@ def setup_statemachine(robot):
         StateMachine.add(
             "SAY_START",
             Say(robot, f"Lets cleanup the table baby!", block=False),
-            transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
+            transitions={"spoken": "NAVIGATE_TO_AND_OPEN_DISHWASHER"},
+        )
+
+        # First open the dishwasher
+        StateMachine.add(
+            "NAVIGATE_TO_AND_OPEN_DISHWASHER",
+            NavigateToAndOpenDishwasher(robot),
+            transitions={"succeeded": "NAVIGATE_AND_PICK_ITEM", "failed": "done"},
         )
 
         # Main loop
@@ -70,7 +77,7 @@ def setup_statemachine(robot):
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM",
             NavigateToAndPickItem(robot),
-            transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
+            transitions={"succeeded": "PLACE_ITEM_IN_DISHWASHER", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
         )
 
         StateMachine.add(
@@ -80,7 +87,7 @@ def setup_statemachine(robot):
         )
 
         StateMachine.add(
-            "PLACE_ITEM_ON_TABLE",
+            "PLACE_ITEM_IN_DISHWASHER",
             NavigateToAndPlaceItemInDishwasherRack(robot),
             transitions={"succeeded": "CHECK_IF_WE_HAVE_IT_ALL", "failed": "WAIT"},
         )
@@ -92,17 +99,10 @@ def setup_statemachine(robot):
         StateMachine.add(
             "CHECK_IF_WE_HAVE_IT_ALL",
             CheckIfWeHaveItAll(robot),
-            transitions={"we_have_it_all": "NAVIGATE_TO_AND_OPEN_DISHWASHER", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
+            transitions={"we_have_it_all": "SAY_END_CHALLENGE", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
         )
 
         # Outro
-
-        StateMachine.add(
-            "NAVIGATE_TO_AND_OPEN_DISHWASHER",
-            NavigateToAndOpenDishwasher(robot),
-            transitions={"succeeded": "SAY_END_CHALLENGE", "failed": "done"},
-        )
-
         StateMachine.add(
             "SAY_END_CHALLENGE",
             Say(robot, "That was all folks, good luck with that Bowl!"),
