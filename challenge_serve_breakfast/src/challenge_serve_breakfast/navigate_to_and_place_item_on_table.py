@@ -63,10 +63,10 @@ class PlaceItemOnTable(StateMachine):
             item_place_pose = get_item_place_pose(user_data["item_picked"])
             place_fs = FrameStamped(item_place_pose, rospy.Time(0), table_id)
 
-            pre_place_fs = place_fs
+            pre_place_fs = copy.deepcopy(place_fs)
             pre_place_fs.frame.p.z(place_fs.frame.p.z() + 0.1)
 
-            post_place_fs = place_fs
+            post_place_fs = copy.deepcopy(place_fs)
             post_place_fs.frame.p.z(place_fs.frame.p.z() + 0.2)
 
             rospy.loginfo("Pre Placing...")
