@@ -123,8 +123,7 @@ class NavigateToAndPickItem(StateMachine):
         with self:
             StateMachine.add(
                 "NAVIGATE_TO_PICK_SPOT",
-                NavigateToSymbolic(robot=robot, entity_designator_area_name_map={pick_spot: pick_spot_navigation_area},
-                                   entity_lookat_designator=pick_spot, speak=False),
+                NavigateToSymbolic(robot, {pick_spot: pick_spot_navigation_area},pick_spot, speak=False),
                 transitions={"arrived": "PICK_ITEM", "unreachable": "failed", "goal_not_defined": "failed"},
             )
 

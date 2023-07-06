@@ -58,7 +58,6 @@ def setup_statemachine(robot):
     place_area_id = "in_front_of"
     exit_id = "starting_pose"
     table_des = EdEntityDesignator(robot=robot, uuid=place_id)
-    table_place_des = EdEntityDesignator(robot=robot, uuid=place_id)
 
     with state_machine:
         # Intro
@@ -66,20 +65,19 @@ def setup_statemachine(robot):
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
             StartChallengeRobust(robot, "initial_pose"),
-            transitions={"Done": "SAY_START", "Aborted": "done", "Failed": "SAY_START"},
+            transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "done", "Failed": "NAVIGATE_TO_TABLE"},
         )
-        # Main loop
-        # StateMachine.add(
-        #     "NAVIGATE_TO_TABLE",
-        #     NavigateToSymbolic(robot=robot, entity_designator_area_name_map={table_place_des: place_area_id},
-        #                         entity_lookat_designator=place_id, speak=True),
-        #         transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "done", "goal_not_defined": "done"},
-        # #    )
-        #StateMachine.add(
-        #    "UPDATE_TABLE_POSE",
-        #    UpdateEntityPose(robot=robot, entity_designator=table_des),
-        #    ransitions={"done": "SAY_START"},
-        #)
+        #Main loop
+        StateMachine.add(
+            "NAVIGATE_TO_TABLE",
+            NavigateToSymbolic(robot, {table_des:place_area_id}, table_des, speak=True),
+                transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "done", "goal_not_defined": "done"},
+            )
+        StateMachine.add(
+            "UPDATE_TABLE_POSE",
+            UpdateEntityPose(robot=robot, entity_designator=table_des),
+            transitions={"done": "SAY_START"},
+        )
         StateMachine.add(
             "SAY_START",
             Say(
