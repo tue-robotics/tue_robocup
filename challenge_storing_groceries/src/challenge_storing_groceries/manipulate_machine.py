@@ -61,8 +61,12 @@ class StoreSingleItem(smach.StateMachine):
                                                              place_pose_designator,
                                                              arm),
                                    transitions={'done': 'succeeded',
-                                                'failed': 'SAY_HANDOVER'}
+                                                'failed': 'LOOK_AT_ROOM_CENTER'}
                                    )
+
+            smach.StateMachine.add("LOOK_AT_ROOM_CENTER", states.perception.RotateToEntity(robot, room),
+                                   transitions={'succeeded': 'SAY_HANDOVER',
+                                                'failed': 'SAY_HANDOVER'})
 
             smach.StateMachine.add("SAY_HANDOVER",
                                    states.human_interaction.Say(robot, ["I failed to place the object, "
