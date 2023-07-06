@@ -71,7 +71,7 @@ def setup_statemachine(robot):
         StateMachine.add(
             "NAVIGATE_TO_TABLE",
             NavigateToSymbolic(robot, {table_des:place_area_id}, table_des, speak=True),
-                transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "done", "goal_not_defined": "done"},
+                transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "GOODBYE", "goal_not_defined": "GOODBYE"},
             )
         StateMachine.add(
             "UPDATE_TABLE_POSE",
