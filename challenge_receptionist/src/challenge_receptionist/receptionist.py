@@ -18,7 +18,7 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class HandleSingleGuest(smach.StateMachine):
-    def __init__(self, robot, assume_john, default_name, default_drink):
+    def __init__(self, robot, assume_john, default_name, default_drink, previous_guest_name_des, previous_guest_drink_des):
         """
 
         :param robot:
@@ -37,6 +37,7 @@ class HandleSingleGuest(smach.StateMachine):
         guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')
         guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
         guest_drinkname_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
+
 
         with self:
             smach.StateMachine.add('LEARN_GUEST',
@@ -72,6 +73,8 @@ class HandleSingleGuest(smach.StateMachine):
                                                   guest_entity_des,
                                                   guest_name_des,
                                                   guest_drinkname_des,
+                                                  previous_guest_name_des,
+                                                  previous_guest_drink_des,
                                                   assume_john=assume_john),
                                    transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
                                                 'abort': 'FIND_SEAT_FOR_GUEST'})
@@ -91,7 +94,8 @@ class ChallengeReceptionist(smach.StateMachine):
 
         runs = ds.Designator([0, 1])
         run = ds.VariableDesignator(resolve_type=int)
-
+        previous_guest_drink_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink')
+        previous_guest_name_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_name')
         with self:
             smach.StateMachine.add('RESET',
                                    ResetArmsTorsoHead(robot),
@@ -105,13 +109,17 @@ class ChallengeReceptionist(smach.StateMachine):
 
             smach.StateMachine.add('HANDLE_GUEST_1',
                                    HandleSingleGuest(robot, assume_john=True, default_name=challenge_knowledge.default_guest_1_name,
-                                                     default_drink=HMIResult(challenge_knowledge.default_guest_1_drink, {'drink': challenge_knowledge.default_guest_1_drink})),
+                                                     default_drink=HMIResult(challenge_knowledge.default_guest_1_drink, {'drink': challenge_knowledge.default_guest_1_drink}),
+                                                     previous_guest_name_des=previous_guest_name_des, previous_guest_drink_des=previous_guest_drink_des
+                                                     ),
                                    transitions={'succeeded': 'HANDLE_GUEST_2',
                                                 'aborted': 'HANDLE_GUEST_2'})
 
             smach.StateMachine.add('HANDLE_GUEST_2',
                                    HandleSingleGuest(robot, assume_john=False, default_name=challenge_knowledge.default_guest_2_name,
-                                                     default_drink=HMIResult(challenge_knowledge.default_guest_2_drink, {'drink': challenge_knowledge.default_guest_2_drink})),
+                                                     default_drink=HMIResult(challenge_knowledge.default_guest_2_drink, {'drink': challenge_knowledge.default_guest_2_drink}),
+                                                        previous_guest_name_des=previous_guest_name_des, previous_guest_drink_des=previous_guest_drink_des
+                                                     ),
                                    transitions={'succeeded': 'SAY_DONE',
                                                 'aborted': 'SAY_DONE'})
 
