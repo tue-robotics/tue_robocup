@@ -64,7 +64,7 @@ class StoreSingleItem(smach.StateMachine):
                                                 'failed': 'LOOK_AT_ROOM_CENTER'}
                                    )
 
-            smach.StateMachine.add("LOOK_AT_ROOM_CENTER", states.perception.RotateToEntity(robot, room),
+            smach.StateMachine.add("LOOK_AT_ROOM_CENTER", states.perception.RotateToEntity(robot, room, 0.75),
                                    transitions={'succeeded': 'SAY_HANDOVER',
                                                 'failed': 'SAY_HANDOVER'})
 
