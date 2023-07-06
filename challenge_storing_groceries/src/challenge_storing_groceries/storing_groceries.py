@@ -23,7 +23,7 @@ def setup_statemachine(robot):
     state_machine = smach.StateMachine(outcomes=['Done', 'Failed', 'Aborted'])
 
     skip_door = rospy.get_param("~skip_door", False)
-    skip_inspect = rospy.get_param("~skip inspect", True)
+    skip_inspect = rospy.get_param("~skip inspect", False)
     shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
     tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
     objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
