@@ -76,8 +76,19 @@ def setup_statemachine(robot):
         StateMachine.add(
             "UPDATE_TABLE_POSE",
             UpdateEntityPose(robot=robot, entity_designator=table_des),
-            transitions={"done": "SAY_START"},
+            transitions={"done": "SAY_OPERATOR_WHERE_TO_STAND"},
         )
+
+        StateMachine.add(
+            "SAY_OPERATOR_WHERE_TO_STAND",
+            Say(
+                robot,
+                "Operator, please stand at the RIGHT of the dishwasher",
+                block=False,
+            ),
+            transitions={"spoken": "SAY_START"},
+        )
+
         StateMachine.add(
             "SAY_START",
             Say(
