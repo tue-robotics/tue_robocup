@@ -66,7 +66,7 @@ def setup_statemachine(robot):
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
             StartChallengeRobust(robot, "initial_pose"),
-            transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "done", "Failed": "NAVIGATE_TO_TABLE"},
+            transitions={"Done": "SAY_START", "Aborted": "done", "Failed": "SAY_START"},
         )
         # Main loop
         # StateMachine.add(
