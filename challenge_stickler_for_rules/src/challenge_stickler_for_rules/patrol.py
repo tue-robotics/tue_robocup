@@ -7,7 +7,6 @@ from __future__ import absolute_import
 import rospy
 import smach
 
-from robot_skills.robot import Robot
 from ed.entity import Entity
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
@@ -16,12 +15,9 @@ from robot_smach_states.designator_iterator import IterateDesignator
 import robot_smach_states.util.designators as ds
 from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
-challenge_knowledge = load_knowledge('challenge_stickler_for_the_rules')
-
 from robot_smach_states.human_interaction.find_people_in_room import FindPeople
 
-# Robot skills
-from robot_smach_states.util.designators import EdEntityDesignator
+challenge_knowledge = load_knowledge('challenge_stickler_for_the_rules')
 
 
 class CheckPeopleInForbiddenRoom(smach.StateMachine):
@@ -40,7 +36,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
             def check_forbidden_room():
                 return "yes" if room_des.uuid == challenge_knowledge.forbidden_room else "no"
 
-            smach.StateMachine.add("CHACK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
+            smach.StateMachine.add("CHECK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
                                    transitions={"yes": "NAVIGATE_TO_CHECK",
                                                 "no": "done"})
             smach.StateMachine.add(
@@ -65,7 +61,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
 
             smach.StateMachine.add('GOTO_PERSON',
                                    NavigateToObserve(robot, violating_person, radius=1.0,
-                                                     margin=1.0,  # Makes the robot go within 1m of current_old_guest
+                                                     margin=1.0,
                                                      speak=False),
                                    transitions={'arrived': 'SAY_BEHAVE',
                                                 'unreachable': 'SAY_BEHAVE',
