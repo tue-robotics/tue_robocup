@@ -90,7 +90,7 @@ class FindPeople(smach.State):
 
         self._search_timeout = search_timeout
 
-        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+        self._look_angles = np.flip(np.linspace(look_range[0], look_range[1], look_steps))
 
         if found_people_designator:
             ds.is_writeable(found_people_designator)
@@ -102,6 +102,7 @@ class FindPeople(smach.State):
         self._query_entity_designator = query_entity_designator
 
     def execute(self, userdata=None):
+        self._look_angles = np.flip(self._look_angles)
         person_label = None
 
         if self._properties:
