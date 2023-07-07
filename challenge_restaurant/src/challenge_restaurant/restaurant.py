@@ -11,6 +11,7 @@ import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 import smach
 from challenge_restaurant.ask_take_order import AskTakeTheOrder, AskTakeTheOrderPicoVoice
+from challenge_restaurant.get_customer_image import GetCustomerImage
 from challenge_restaurant.store_waypoint import StoreWaypoint
 from challenge_restaurant.take_orders import TakeOrder, ReciteOrders, ClearOrders
 from ed.entity import Entity
@@ -39,6 +40,8 @@ class Restaurant(smach.StateMachine):
         customer_id = 'current_customer'
         customer_designator = states.util.designators.VariableDesignator(resolve_type=Entity, name=customer_id)
         orders = []
+
+        image_designator = ds.VariableDesignator(resolve_type=str, name="image")
 
         if not is_sim_mode():
             reset_tries_des = ds.VariableDesignator(resolve_type=bool, initial_value=False).writeable
@@ -105,7 +108,20 @@ class Restaurant(smach.StateMachine):
                                    states.human_interaction.Say(
                                        robot, 'I have seen a waving person, should I take the order? '
                                               'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
-                                   transitions={"spoken": 'WAIT_FOR_START'})
+                                   transitions={"spoken": 'GET_CUSTOMER_IMAGE'})
+
+            smach.StateMachine.add('GET_CUSTOMER_IMAGE',
+                                   GetCustomerImage(robot, customer_designator, image_designator.writeable),
+                                   transitions={'succeeded': 'SHOW_CUSTOMER',
+                                                'failed': 'WAIT_FOR_START'})
+
+            smach.StateMachine.add('SHOW_CUSTOMER',
+                                   states.human_interaction.ShowImage(
+                                       robot,
+                                       image_designator,
+                                       duration=30),
+                                   transitions={'succeeded': 'WAIT_FOR_START',
+                                                'failed': 'WAIT_FOR_START'})
 
             if is_sim_mode():
                 smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
