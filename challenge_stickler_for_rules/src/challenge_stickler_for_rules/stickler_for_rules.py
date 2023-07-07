@@ -30,7 +30,7 @@ class SticklerForRules(smach.StateMachine):
                 "SAY_START",
                 Say(
                     robot,
-                    "You all better stick to the rules. I am coming.",
+                    "Party police! Party police!. I'm coming.",
                     block=False,
                 ),
                 transitions={"spoken": "GO_TO_WAYPOINT_1"},
@@ -44,15 +44,23 @@ class SticklerForRules(smach.StateMachine):
 
             smach.StateMachine.add('GO_TO_WAYPOINT_2',
                                    Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
-                                   transitions={'done':"GO_TO_WAYPOINT_2"})
+                                   transitions={'done':"GO_TO_WAYPOINT_3"})
 
             smach.StateMachine.add('GO_TO_WAYPOINT_3',
                                    Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2])),
-                                   transitions={'done':"GO_TO_WAYPOINT_2"})
+                                   transitions={'done':"GO_TO_WAYPOINT_4"})
 
             smach.StateMachine.add('GO_TO_WAYPOINT_4',
                                    Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3])),
-                                   transitions={'done':"GO_TO_WAYPOINT_2"})
+                                   transitions={'done':"GO_TO_WAYPOINT_3_REVERSED"})
+
+            smach.StateMachine.add('GO_TO_WAYPOINT_3_REVERSED',
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2])),
+                                   transitions={'done': "GO_TO_WAYPOINT_2_REVERSED"})
+
+            smach.StateMachine.add('GO_TO_WAYPOINT_2_REVERSED',
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
+                                   transitions={'done': "GO_TO_WAYPOINT_1"})
 
             # Outro
             smach.StateMachine.add(
