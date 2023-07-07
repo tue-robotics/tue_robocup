@@ -192,7 +192,7 @@ class OpenDishwasher(StateMachine):
             self.add("PRE_GRASP", CBState(_pre_grasp), transitions={"done": "ALIGN_HANDLE"})
             self.add("ALIGN_HANDLE", CBState(_align_handle), transitions={"done": "GRAB_HANDLE"})
             self.add("GRAB_HANDLE", CBState(_grab_handle), transitions={"done": "OPEN"})
-            self.add("OPEN", CBState(_open), transitions={"done": "PULL_RACK_PREPARE"})
+            self.add("OPEN", CBState(_open), transitions={"done": "SAY_DOOR_CORRECT"})
             self.add("SAY_DOOR_CORRECT",
                      Say(robot, "Did I open the door fully, Yes or No?"),
                      transitions={"spoken": "YES_OR_NO_DOOR"})
@@ -214,7 +214,7 @@ class OpenDishwasher(StateMachine):
                      transitions={"continue": "PULL_RACK", "no_response": "PULL_RACK"})
 
             self.add("PULL_RACK_PREPARE", CBState(_pull_rack_prepare), transitions={"done": "PULL_RACK"})
-            self.add("PULL_RACK", CBState(_pull_rack), transitions={"done": "succeeded"})
+            self.add("PULL_RACK", CBState(_pull_rack), transitions={"done": "SAY_RACK_CORRECT"})
 
             self.add("SAY_RACK_CORRECT", Say(robot, "Did I pull the rack fully, Yes or No?"),
                      transitions={"spoken": "YES_OR_NO_RACK"})
