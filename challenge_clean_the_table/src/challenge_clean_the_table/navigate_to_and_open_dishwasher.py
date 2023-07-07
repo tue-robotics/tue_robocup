@@ -35,6 +35,7 @@ from challenge_clean_the_table.knowledge import (
     JOINTS_OPEN_DISHWASHER6,
     JOINTS_PULL_RACK_PREPARE,
     JOINTS_PULL_RACK_DOWN,
+    JOINTS_RETRACT,
 )
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_vector_to_item_frame_2d, item_frame_to_pose
 from robot_skills import get_robot
@@ -187,6 +188,14 @@ class OpenDishwasher(StateMachine):
 
             return "done"
 
+        @cb_interface(outcomes=["done"])
+        def _drive_back(_):
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.25, 0.25, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal([0, 0, 0, 0, 0])
+            return "done"
+
         with self:
             self.add("ALIGN_PRE", CBState(_align_pre), transitions={"done": "PRE_GRASP"})
             self.add("PRE_GRASP", CBState(_pre_grasp), transitions={"done": "ALIGN_HANDLE"})
@@ -199,13 +208,15 @@ class OpenDishwasher(StateMachine):
             if is_sim_mode():
                 self.add("YES_OR_NO_DOOR", AskYesNo(robot),
                          transitions={"yes": "PULL_RACK_PREPARE",
-                                      "no": "ASK_TO_OPEN_DOOR_CORRECTLY",
-                                      "no_result": "ASK_TO_OPEN_DOOR_CORRECTLY"})
+                                      "no": "DRIVE_BACK_DOOR",
+                                      "no_result": "DRIVE_BACK_DOOR"})
             else:
                 self.add("YES_OR_NO_DOOR", AskYesNoPicoVoice(robot),
                          transitions={"yes": "PULL_RACK_PREPARE",
-                                      "no": "ASK_TO_OPEN_DOOR_CORRECTLY",
-                                      "no_result": "ASK_TO_OPEN_DOOR_CORRECTLY"})
+                                      "no": "DRIVE_BACK_DOOR",
+                                      "no_result": "DRIVE_BACK_DOOR"})
+
+            self.add("DRIVE_BACK_DOOR", CBState(_drive_back), transitions={"done": "ASK_TO_OPEN_DOOR_CORRECTLY"})
             self.add("ASK_TO_OPEN_DOOR_CORRECTLY",
                      Say(robot, "Please open the door fully and let me know when I should continue"),
                      transitions={"spoken": "DOOR_CONTINUE"})
