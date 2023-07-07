@@ -39,7 +39,7 @@ class CheckIfWeHaveItAll(State):
 
         if missing_items:
             self.robot.speech.speak(f"So far we have: {' '.join(self.items_picked)}", block=False)
-            self.robot.speech.speak(f"Still missing the {missing_items}", block=False)
+            self.robot.speech.speak(f"Still missing the {' '.join(missing_items)}", block=False)
         else:
             self.robot.speech.speak("We have everything now", block=False)
 
