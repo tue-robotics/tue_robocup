@@ -19,6 +19,7 @@ from challenge_clean_the_table.knowledge import (
     ITEMS,
     PLACE_ID,
     PLACE_AREA_ID,
+    JOINTS_PRE_PRE_PRE_PLACE,
     JOINTS_PRE_PRE_PLACE,
     ITEMS_PLATE,
     JOINTS_PLACE_MUG_BOWL,
@@ -55,6 +56,8 @@ class PlaceItemInDishwasherRack(StateMachine):
 
             robot.head.look_up()
             robot.head.wait_for_motion_done()
+
+            send_joint_goal(JOINTS_PRE_PRE_PRE_PLACE)
 
             send_joint_goal(JOINTS_PRE_PRE_PLACE)
 
