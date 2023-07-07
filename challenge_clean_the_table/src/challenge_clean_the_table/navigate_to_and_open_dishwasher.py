@@ -15,6 +15,7 @@ from challenge_clean_the_table.knowledge import (
     DISHWASHER_ID,
     DISHWASHER_AREA_ID,
     OPEN_DISHWASHER_VECTOR,
+    OPEN_DISHWASHER_VECTOR_AWAY,
     OPEN_DISHWASHER_VECTOR_OPEN1,
     OPEN_DISHWASHER_VECTOR_OPEN2,
     OPEN_DISHWASHER_VECTOR_OPEN3,
@@ -35,7 +36,7 @@ from challenge_clean_the_table.knowledge import (
     JOINTS_OPEN_DISHWASHER6,
     JOINTS_PULL_RACK_PREPARE,
     JOINTS_PULL_RACK_DOWN,
-    JOINTS_RETRACT,
+    JOINTS_RESET,
 )
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_vector_to_item_frame_2d, item_frame_to_pose
 from robot_skills import get_robot
@@ -190,10 +191,10 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _drive_back(_):
-            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR)
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_AWAY)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.25, 0.25, 0.3, 0.02, 0.1)).execute()
-            send_joint_goal([0, 0, 0, 0, 0])
+            send_joint_goal(JOINTS_RESET)
             return "done"
 
         with self:
@@ -222,7 +223,7 @@ class OpenDishwasher(StateMachine):
                      transitions={"spoken": "DOOR_CONTINUE"})
 
             self.add("DOOR_CONTINUE", AskContinue(robot, timeout=20),
-                     transitions={"continue": "PULL_RACK", "no_response": "PULL_RACK"})
+                     transitions={"continue": "PULL_RACK_PREPARE", "no_response": "PULL_RACK_PREPARE"})
 
             self.add("PULL_RACK_PREPARE", CBState(_pull_rack_prepare), transitions={"done": "PULL_RACK"})
             self.add("PULL_RACK", CBState(_pull_rack), transitions={"done": "SAY_RACK_CORRECT"})
