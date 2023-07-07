@@ -12,7 +12,7 @@ ITEM_VECTOR_DICT = {
     "fork": PyKDL.Vector(-1.13, -0.325, 0),
     "spoon": PyKDL.Vector(-1.13, -0.325, 0),
     "mug": PyKDL.Vector(-1.16, -0.325, 0),
-    "plate": PyKDL.Vector(-1.16, -0.155, 0),
+    "plate": PyKDL.Vector(-1.26, -0.255, 0),
     "bowl": PyKDL.Vector(-1.13, -0.155, 0),
 }
 
