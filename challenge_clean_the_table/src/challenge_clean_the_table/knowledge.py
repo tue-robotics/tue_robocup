@@ -8,12 +8,12 @@ ITEMS_CUTLERY = ["knife", "spoon", "fork"]
 ITEMS = ITEMS_CUTLERY + ITEMS_MUG_BOWL + ITEMS_PLATE
 
 ITEM_VECTOR_DICT = {
-    "knife": PyKDL.Vector(-0.63, -0.325, 0),
-    "fork": PyKDL.Vector(-0.63, -0.325, 0),
-    "spoon": PyKDL.Vector(-0.63, -0.325, 0),
-    "mug": PyKDL.Vector(-0.46, -0.325, 0),
-    "plate": PyKDL.Vector(-0.46, -0.155, 0),
-    "bowl": PyKDL.Vector(-0.63, -0.155, 0),
+    "knife": PyKDL.Vector(-1.13, -0.325, 0),
+    "fork": PyKDL.Vector(-1.13, -0.325, 0),
+    "spoon": PyKDL.Vector(-1.13, -0.325, 0),
+    "mug": PyKDL.Vector(-1.16, -0.325, 0),
+    "plate": PyKDL.Vector(-1.16, -0.155, 0),
+    "bowl": PyKDL.Vector(-1.13, -0.155, 0),
 }
 
 ITEM_COLOR_DICT = {
@@ -61,18 +61,18 @@ EXIT_ID = "starting_pose"
 
 PICK_ROTATION = 2.0
 
-JOINTS_HANDOVER = [0, -0.3, 0, 0.3, 1.57]
+JOINTS_HANDOVER = [0, -0.3, 0, 0.3, 1.572]
 
-JOINTS_PRE_PRE_PLACE = [0.69, 0, 0, -0.7, 0]
+JOINTS_PRE_PRE_PLACE = [0.6, -1.572, 0, -1.572, 0]
 
-JOINTS_PRE_PLACE = [0.8, -1.57, 0, -1.57, 0]
+JOINTS_PRE_PLACE = [0.6, -1.572, 0, -1.572, 0]
 
-LAST_JOINTS_PLACE = [-1.57, 0, -1.57, 0]
-JOINTS_PLACE_PLATE = [0.62] + LAST_JOINTS_PLACE
-JOINTS_PLACE_MUG_BOWL = [0.47] + LAST_JOINTS_PLACE
-JOINTS_PLACE_CUTLERY = [0.62] + LAST_JOINTS_PLACE
+LAST_JOINTS_PLACE = [-1.572, 0, -1.572, 0]
+JOINTS_PLACE_PLATE = [0.32] + LAST_JOINTS_PLACE
+JOINTS_PLACE_MUG_BOWL = [0.17] + LAST_JOINTS_PLACE
+JOINTS_PLACE_CUTLERY = [0.32] + LAST_JOINTS_PLACE
 
-JOINTS_RETRACT = [0.7, 0, 0, -1.57, 0]
+JOINTS_RETRACT = [0.7, 0, 0, -1.572, 0]
 
 JOINTS_OPEN_DISHWASHER = [0.37, -1.572, 0, 0.65, 1.572]
 JOINTS_OPEN_DISHWASHER1 = [0.35, -1.572, 0, 0.65, 1.572]
