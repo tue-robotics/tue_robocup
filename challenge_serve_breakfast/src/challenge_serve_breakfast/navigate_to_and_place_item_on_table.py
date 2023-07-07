@@ -84,9 +84,9 @@ class PlaceItemOnTable(StateMachine):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
             if item_name in ["milk_carton"]:
-                send_joint_goal(JOINTS_PLACE_HORIZONTAL_MILK)
-            elif item_name in ["milk_carton", "cereal_box"]:
                 send_joint_goal(JOINTS_PLACE_HORIZONTAL)
+            elif item_name in ["cereal_box"]:
+                send_joint_goal(JOINTS_PLACE_HORIZONTAL_MILK)
             else:
                 send_joint_goal(JOINTS_PLACE_VERTICAL)
 

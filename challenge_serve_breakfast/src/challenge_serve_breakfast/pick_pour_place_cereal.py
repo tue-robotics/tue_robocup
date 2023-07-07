@@ -53,7 +53,9 @@ class PickPourPlaceCereal(StateMachine):
         @cb_interface(outcomes=["done"])
         def _pour(_):
             robot.speech.speak("Hope this goes well", block=False)
+            arm = robot.get_arm()._arm
             send_joint_goal(JOINTS_PRE_POUR)
+            arm.wait_for_motion_done()
             send_joint_goal(JOINTS_POUR)
             send_joint_goal(JOINTS_PRE_POUR)
             send_joint_goal(JOINTS_POST_PICK)
