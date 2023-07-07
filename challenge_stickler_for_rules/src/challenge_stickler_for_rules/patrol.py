@@ -50,6 +50,12 @@ class ExecutePlanPatrol(smach.State):
             elif status == "blocked":
                 return "blocked"
 
+            # TODO look around and detect people.
+
+            # TODO check if detected people are violating rules.
+
+            # TODO if people have violated rules add a transition/outcome to deal with it.
+
             rate.sleep()
 
 
