@@ -52,7 +52,7 @@ PICK_ID = "kitchen_table"
 PICK_AREA_ID = "in_front_of"
 
 PLACE_ID = "dishwasher"
-PLACE_AREA_ID = "in_front_of"
+PLACE_AREA_ID = "in_front_of2"
 
 DISHWASHER_ID = "dishwasher"
 DISHWASHER_AREA_ID = "in_front_of"
