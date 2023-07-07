@@ -73,7 +73,6 @@ def setup_statemachine(robot):
         )
 
         # Main loop
-
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM",
             NavigateToAndPickItem(robot),

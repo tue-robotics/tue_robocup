@@ -21,6 +21,10 @@ from challenge_clean_the_table.knowledge import (
     OPEN_DISHWASHER_VECTOR_OPEN4,
     OPEN_DISHWASHER_VECTOR_OPEN5,
     OPEN_DISHWASHER_VECTOR_OPEN6,
+    PULL_DISHWASHER_RACK_PREPARE,
+    PULL_DISHWASHER_RACK_PREPARE_START,
+    PULL_DISHWASHER_RACK_OUT1,
+    PULL_DISHWASHER_RACK_OUT2,
     JOINTS_OPEN_DISHWASHER,
     JOINTS_OPEN_DISHWASHER1,
     JOINTS_OPEN_DISHWASHER2,
@@ -28,9 +32,13 @@ from challenge_clean_the_table.knowledge import (
     JOINTS_OPEN_DISHWASHER4,
     JOINTS_OPEN_DISHWASHER5,
     JOINTS_OPEN_DISHWASHER6,
+    JOINTS_PULL_RACK_PREPARE,
+    JOINTS_PULL_RACK_DOWN,
 )
-from challenge_clean_the_table.util import item_vector_to_item_frame, item_frame_to_pose
+from challenge_clean_the_table.util import item_vector_to_item_frame, item_vector_to_item_frame_2d, item_frame_to_pose
 from robot_skills import get_robot
+from robot_skills.simulation.sim_mode import is_sim_mode
+from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, AskContinue, Say
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlToPose, ControlParameters
 from robot_smach_states.util.designators import EdEntityDesignator
@@ -86,34 +94,90 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _open(_):
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN1)
+            robot.speech.speak("Pulling the door open", block=False)
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN1)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             send_joint_goal(JOINTS_OPEN_DISHWASHER1)
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN2)
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN2)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             send_joint_goal(JOINTS_OPEN_DISHWASHER2)
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN3)
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN3)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
             send_joint_goal(JOINTS_OPEN_DISHWASHER3)
             send_gripper_goal("open")
 
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN4)
+            # Drive away from the dishwasher
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN4)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            # Straight arm
             send_joint_goal(JOINTS_OPEN_DISHWASHER4)
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN5)
+
+            # Move above door
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN5)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            # Lower arm
+            robot.speech.speak("Pushing the door down", block=False)
             send_joint_goal(JOINTS_OPEN_DISHWASHER5)
-            item_frame = item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR_OPEN6)
+
+            # Drive a bit away
+            item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN6)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            # Lower arm fully
             send_joint_goal(JOINTS_OPEN_DISHWASHER6)
+            rospy.sleep(0.5)
+
+            # Increase height of arm again
+            send_joint_goal(JOINTS_PULL_RACK_PREPARE)
 
             robot.speech.speak("Hopefully the dishwasher is now open. Thanks guys.", block=False)
+            return "done"
+
+        @cb_interface(outcomes=["done"])
+        def _pull_rack_prepare(_):
+            # Prepare above door
+            send_joint_goal(JOINTS_PULL_RACK_PREPARE)
+
+
+            # item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN6)
+            # goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            # ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            # Move to the side
+            item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_PREPARE)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            # Move closer at the side of the dishwasher
+            item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_PREPARE_START)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            return "done"
+
+        @cb_interface(outcomes=["done"])
+        def _pull_rack(_):
+            # Move arm in
+            item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_OUT1)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
+            # Move down
+            send_joint_goal(JOINTS_PULL_RACK_DOWN)
+
+            # Pull out
+            item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_OUT2)
+            goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+
             return "done"
 
         with self:
@@ -121,7 +185,48 @@ class OpenDishwasher(StateMachine):
             self.add("PRE_GRASP", CBState(_pre_grasp), transitions={"done": "ALIGN_HANDLE"})
             self.add("ALIGN_HANDLE", CBState(_align_handle), transitions={"done": "GRAB_HANDLE"})
             self.add("GRAB_HANDLE", CBState(_grab_handle), transitions={"done": "OPEN"})
-            self.add("OPEN", CBState(_open), transitions={"done": "succeeded"})
+            self.add("OPEN", CBState(_open), transitions={"done": "PULL_RACK_PREPARE"})
+            self.add("SAY_DOOR_CORRECT",
+                     Say(robot, "Did I open the door fully, Yes or No?"),
+                     transitions={"spoken": "YES_OR_NO_DOOR"})
+            if is_sim_mode():
+                self.add("YES_OR_NO_DOOR", AskYesNo(robot),
+                         transitions={"yes": "PULL_RACK_PREPARE",
+                                      "no": "ASK_TO_OPEN_DOOR_CORRECTLY",
+                                      "no_result": "ASK_TO_OPEN_DOOR_CORRECTLY"})
+            else:
+                self.add("YES_OR_NO_DOOR", AskYesNoPicoVoice(robot),
+                         transitions={"yes": "PULL_RACK_PREPARE",
+                                      "no": "ASK_TO_OPEN_DOOR_CORRECTLY",
+                                      "no_result": "ASK_TO_OPEN_DOOR_CORRECTLY"})
+            self.add("ASK_TO_OPEN_DOOR_CORRECTLY",
+                     Say(robot, "Please open the door fully and let me know when I should continue"),
+                     transitions={"spoken": "DOOR_CONTINUE"})
+
+            self.add("DOOR_CONTINUE", AskContinue(robot, timeout=20),
+                     transitions={"continue": "PULL_RACK", "no_response": "PULL_RACK"})
+
+            self.add("PULL_RACK_PREPARE", CBState(_pull_rack_prepare), transitions={"done": "PULL_RACK"})
+            self.add("PULL_RACK", CBState(_pull_rack), transitions={"done": "succeeded"})
+
+            self.add("SAY_RACK_CORRECT", Say(robot, "Did I pull the rack fully, Yes or No?"),
+                     transitions={"spoken": "YES_OR_NO_RACK"})
+            if is_sim_mode():
+                self.add("YES_OR_NO_RACK", AskYesNo(robot),
+                         transitions={"yes": "succeeded",
+                                      "no": "ASK_TO_OPEN_DOOR_CORRECTLY",
+                                      "no_result": "ASK_TO_OPEN_DOOR_CORRECTLY"})
+            else:
+                self.add("YES_OR_NO_RACK", AskYesNoPicoVoice(robot),
+                         transitions={"yes": "PULL_RACK_PREPARE",
+                                      "no": "ASK_TO_PULL_RACK_CORRECTLY",
+                                      "no_result": "ASK_TO_PULL_RACK_CORRECTLY"})
+            self.add("ASK_TO_PULL_RACK_CORRECTLY",
+                     Say(robot, "Please pull out the rack fully and let me know when I should continue"),
+                     transitions={"spoken": "RACK_CONTINUE"})
+
+            self.add("RACK_CONTINUE", AskContinue(robot, timeout=20),
+                     transitions={"continue": "succeeded", "no_response": "succeeded"})
 
 
 class NavigateToAndOpenDishwasher(StateMachine):
@@ -178,4 +283,5 @@ if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndOpenDishwasher(robot_instance).execute()
+    sm = NavigateToAndOpenDishwasher(robot_instance)
+    sm.execute()
