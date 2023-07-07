@@ -10,7 +10,7 @@ locations = [
     {"name": "bed", "room": "bedroom", "manipulation": False},
     {"name": "bedside_table", "room": "bedroom", "manipulation": True},
     {"name": "shelf", "room": "bedroom", "manipulation": True},
-    {"name": "trashbin", "room": "kitchen", "manipulation": False},
+    {"name": "trash_bin", "room": "kitchen", "manipulation": False},
     {"name": "dishwasher", "room": "kitchen", "manipulation": True},
     {"name": "potted_plant", "room": "kitchen", "manipulation": False},
     {"name": "kitchen_table", "room": "kitchen", "manipulation": True},
