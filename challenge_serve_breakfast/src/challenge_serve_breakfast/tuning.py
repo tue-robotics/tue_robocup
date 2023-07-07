@@ -18,7 +18,7 @@ ITEM_VECTOR_DICT = {
     "spoon": PyKDL.Vector(0.0, -0.15, 0),
     "bowl": PyKDL.Vector(0.0, 0.0, 0),
     "milk_carton": PyKDL.Vector(-0.05, 0.15, 0),
-    "cereal_box": PyKDL.Vector(-0.05, -0.2, -0.1),
+    "cereal_box": PyKDL.Vector(-0.05, -0.2, 0),
 }
 
 COLOR_DICT = {
