@@ -35,7 +35,7 @@ class SticklerForRules(smach.StateMachine):
             )
 
             # Main loop
-            # TODO make a proper loop over waypoints
+            # TODO make a proper loop over waypoints (AFTER ROBOCUP)
             smach.StateMachine.add('GO_TO_WAYPOINT_1',
                                    PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0]),
                                                 speak=False),
