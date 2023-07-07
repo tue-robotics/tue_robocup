@@ -34,6 +34,8 @@ class GetCustomerImage(smach.State):
         self._robot.head.wait_for_motion_done()
         rgb, _, _ = self._robot.perception.get_rgb_depth_caminfo()
         rgb_cv = self._bridge.imgmsg_to_cv2(rgb, "bgr8")
+        rgb_cv = rgb_cv[240-100:240+100, 320-100:320+100, :]  # TooD: make dynamic
+
         os.makedirs(os.path.expanduser(os.path.join("/tmp", "restaurant")), exist_ok=True)
         filename = os.path.expanduser(
             os.path.join("/tmp", "restaurant", f"face-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.png")
