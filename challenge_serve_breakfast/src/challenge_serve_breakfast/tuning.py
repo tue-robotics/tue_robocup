@@ -18,7 +18,7 @@ ITEM_VECTOR_DICT = {
     "spoon": PyKDL.Vector(0.0, -0.15, 0),
     "bowl": PyKDL.Vector(0.0, 0.0, 0),
     "milk_carton": PyKDL.Vector(-0.05, 0.15, 0),
-    "cereal_box": PyKDL.Vector(0.0, -0.3, 0),
+    "cereal_box": PyKDL.Vector(-0.05, -0.2, 0),
 }
 
 COLOR_DICT = {
@@ -28,7 +28,7 @@ COLOR_DICT = {
     "cereal_box": ColorRGBA(1, 1, 0, 1),
 }
 
-PICK_ROTATION = 1.2
+PICK_ROTATION = 0
 
 JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
 
@@ -49,8 +49,8 @@ JOINTS_PRE_POUR = [0.5, -1.2, -1.5, 0, 0]
 
 JOINTS_POUR = [0.5, -1.2, -2.5, 0, 0]
 
-POUR_OFFSET_X = 0.03
-POUR_OFFSET_Y = 0.15
+POUR_OFFSET_X = -0.15
+POUR_OFFSET_Y = 0.2
 
 
 def item_vector_to_item_frame(item_vector):

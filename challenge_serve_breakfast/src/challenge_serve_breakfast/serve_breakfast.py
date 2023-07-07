@@ -71,8 +71,9 @@ def setup_statemachine(robot):
         StateMachine.add(
             "NAVIGATE_TO_TABLE",
             NavigateToSymbolic(robot, {table_des:place_area_id}, table_des, speak=True),
-                transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "GOODBYE", "goal_not_defined": "GOODBYE"},
+            transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "GOODBYE", "goal_not_defined": "GOODBYE"},
             )
+
         StateMachine.add(
             "UPDATE_TABLE_POSE",
             UpdateEntityPose(robot=robot, entity_designator=table_des),
@@ -93,7 +94,6 @@ def setup_statemachine(robot):
             "SAY_START",
             Say(
                 robot,
-                #f"Lets serve some breakfast baby! If there are any chairs near the {place_id}, please remove them",
                 "Lets serve some breakfast baby! I will be asking for some fast handovers.",
                 block=False,
             ),
