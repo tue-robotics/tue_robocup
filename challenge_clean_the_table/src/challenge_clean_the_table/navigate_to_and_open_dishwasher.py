@@ -25,6 +25,7 @@ from challenge_clean_the_table.knowledge import (
     PULL_DISHWASHER_RACK_PREPARE_START,
     PULL_DISHWASHER_RACK_OUT1,
     PULL_DISHWASHER_RACK_OUT2,
+    JOINTS_OPEN_DISHWASHER_PRE,
     JOINTS_OPEN_DISHWASHER,
     JOINTS_OPEN_DISHWASHER1,
     JOINTS_OPEN_DISHWASHER2,
@@ -72,7 +73,7 @@ class OpenDishwasher(StateMachine):
         @cb_interface(outcomes=["done"])
         def _pre_grasp(_):
             send_gripper_goal("open")
-            send_joint_goal(JOINTS_OPEN_DISHWASHER)
+            send_joint_goal(JOINTS_OPEN_DISHWASHER_PRE)
             return "done"
 
         @cb_interface(outcomes=["done"])
@@ -82,6 +83,7 @@ class OpenDishwasher(StateMachine):
             robot.head.look_down()
             robot.speech.speak("Grabbing the handle", block=False)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            send_joint_goal(JOINTS_OPEN_DISHWASHER)
             return "done"
 
         @cb_interface(outcomes=["done"])
@@ -170,13 +172,18 @@ class OpenDishwasher(StateMachine):
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
 
+            send_gripper_goal("close", max_torque=0.2)
+
             # Move down
             send_joint_goal(JOINTS_PULL_RACK_DOWN)
+            rospy.sleep(0.5)
 
             # Pull out
             item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_OUT2)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.25, 0.25, 0.3, 0.02, 0.1)).execute()
+
+            send_gripper_goal("open")
 
             return "done"
 
