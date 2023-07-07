@@ -4,9 +4,9 @@
 import smach
 
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.navigation import NavigateToRoom
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
+from .patrol import PatrolToRoom
 
 
 class SticklerForRules(smach.StateMachine):
@@ -37,32 +37,36 @@ class SticklerForRules(smach.StateMachine):
             # Main loop
             # TODO make a proper loop over waypoints
             smach.StateMachine.add('GO_TO_WAYPOINT_1',
-                                   NavigateToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0]),
-                                                  speak=False),
+                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0]),
+                                                speak=False),
                                    transitions={'arrived': 'GO_TO_WAYPOINT_2',
                                                 'unreachable': 'GO_TO_WAYPOINT_2',
-                                                'goal_not_defined': 'GOODBYE'})
+                                                'goal_not_defined': 'GOODBYE',
+                                                'preempted': 'Aborted'})
 
             smach.StateMachine.add('GO_TO_WAYPOINT_2',
-                                   NavigateToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1]),
-                                                  speak=False),
+                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1]),
+                                                speak=False),
                                    transitions={'arrived': 'GO_TO_WAYPOINT_3',
                                                 'unreachable': 'GO_TO_WAYPOINT_3',
-                                                'goal_not_defined': 'GOODBYE'})
+                                                'goal_not_defined': 'GOODBYE',
+                                                'preempted': 'Aborted'})
 
             smach.StateMachine.add('GO_TO_WAYPOINT_3',
-                                   NavigateToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2]),
-                                                  speak=False),
+                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2]),
+                                                speak=False),
                                    transitions={'arrived': 'GO_TO_WAYPOINT_4',
                                                 'unreachable': 'GO_TO_WAYPOINT_4',
-                                                'goal_not_defined': 'GOODBYE'})
+                                                'goal_not_defined': 'GOODBYE',
+                                                'preempted': 'Aborted'})
 
             smach.StateMachine.add('GO_TO_WAYPOINT_4',
-                                   NavigateToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3]),
-                                                  speak=False),
+                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3]),
+                                                speak=False),
                                    transitions={'arrived': 'GO_TO_WAYPOINT_1',
                                                 'unreachable': 'GO_TO_WAYPOINT_1',
-                                                'goal_not_defined': 'GOODBYE'})
+                                                'goal_not_defined': 'GOODBYE',
+                                                'preempted': 'Aborted'})
 
             # Outro
             smach.StateMachine.add(
