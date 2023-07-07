@@ -176,7 +176,7 @@ class OpenDishwasher(StateMachine):
             # Pull out
             item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_OUT2)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute()
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.25, 0.25, 0.3, 0.02, 0.1)).execute()
 
             return "done"
 
