@@ -33,7 +33,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
 
         with self:
             @cb_interface(outcomes=["yes", "no"])
-            def check_forbidden_room():
+            def check_forbidden_room(userdata=None):
                 return "yes" if room_des.uuid == challenge_knowledge.forbidden_room else "no"
 
             smach.StateMachine.add("CHECK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
