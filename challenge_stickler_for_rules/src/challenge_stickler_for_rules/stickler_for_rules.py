@@ -39,51 +39,26 @@ class SticklerForRules(smach.StateMachine):
             # Main loop
             # TODO make a proper loop over waypoints (AFTER ROBOCUP)
             smach.StateMachine.add('GO_TO_LIVING_ROOM',
-                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0]),
-                                                speak=False),
-                                   transitions={'arrived': 'GO_TO_KITCHEN',
-                                                'unreachable': 'GO_TO_KITCHEN',
-                                                'goal_not_defined': 'GOODBYE',
-                                                'preempted': 'Aborted'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0])),
+                                   transitions={'done': 'GO_TO_KITCHEN'})
 
             smach.StateMachine.add('GO_TO_KITCHEN',
-                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1]),
-                                                speak=False),
-                                   transitions={'arrived': 'GO_TO_BEDROOM',
-                                                'unreachable': 'GO_TO_BEDROOM',
-                                                'goal_not_defined': 'GOODBYE',
-                                                'preempted': 'Aborted'})
-
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
+                                   transitions={'done': 'GO_TO_BEDROOM'})
             smach.StateMachine.add('GO_TO_BEDROOM',
-                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2]),
-                                                speak=False),
-                                   transitions={'arrived': 'GO_TO_KITCHEN_AGAIN',
-                                                'unreachable': 'GO_TO_KITCHEN_AGAIN',
-                                                'goal_not_defined': 'GOODBYE',
-                                                'preempted': 'Aborted'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2])),
+                                   transitions={'done': 'GO_TO_KITCHEN_AGAIN'})
 
             smach.StateMachine.add('GO_TO_KITCHEN_AGAIN',
-                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1]),
-                                                speak=False),
-                                   transitions={'arrived': 'GO_TO_LIVING_ROOM_AGAIN',
-                                                'unreachable': 'GO_TO_LIVING_ROOM_AGAIN',
-                                                'goal_not_defined': 'GOODBYE',
-                                                'preempted': 'Aborted'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
+                                   transitions={'done': 'GO_TO_LIVING_ROOM_AGAIN'})
 
             smach.StateMachine.add('GO_TO_LIVING_ROOM_AGAIN',
-                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0]),
-                                                speak=False),
-                                   transitions={'arrived': 'GO_TO_STUDY',
-                                                'unreachable': 'GO_TO_STUDY',
-                                                'goal_not_defined': 'GOODBYE',
-                                                'preempted': 'Aborted'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0])),
+                                   transitions={'done': 'GO_TO_STUDY'})
             smach.StateMachine.add('GO_TO_STUDY',
-                                   PatrolToRoom(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3]),
-                                                speak=False),
-                                   transitions={'arrived': 'GO_TO_LIVING_ROOM',
-                                                'unreachable': 'GO_TO_LIVING_ROOM',
-                                                'goal_not_defined': 'GOODBYE',
-                                                'preempted': 'Aborted'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3])),
+                                   transitions={'done': 'GO_TO_LIVING_ROOM'})
             # Outro
             smach.StateMachine.add(
                 "GOODBYE",
