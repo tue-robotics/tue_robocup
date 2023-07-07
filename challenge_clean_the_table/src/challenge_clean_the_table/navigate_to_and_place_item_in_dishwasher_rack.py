@@ -166,7 +166,7 @@ def _publish_item_poses(userdata, marker_array_pub, items):
         marker_msg.type = visualization_msgs.msg.Marker.SPHERE
         marker_msg.action = 0
         marker_msg.pose = posestamped.pose
-        marker_msg.pose.position.z += 1.0
+        marker_msg.pose.position.z = 1.0
         marker_msg.scale = Vector3(0.05, 0.05, 0.05)
         marker_msg.color = ITEM_COLOR_DICT[k]
         array_msg.markers.append(marker_msg)
