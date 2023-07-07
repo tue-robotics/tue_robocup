@@ -33,6 +33,8 @@ class GetCustomerImage(smach.State):
         self._robot.head.look_at_point(head_pose)
         self._robot.head.wait_for_motion_done()
         rgb, _, _ = self._robot.perception.get_rgb_depth_caminfo()
+        if rgb is None:
+            return "failed"
         rgb_cv = self._bridge.imgmsg_to_cv2(rgb, "bgr8")
         rgb_cv = rgb_cv[240-100:240+100, 320-100:320+100, :]  # TooD: make dynamic
 
