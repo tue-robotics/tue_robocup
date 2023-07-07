@@ -12,7 +12,9 @@ from ed.entity import Entity
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say
+from robot_smach_states.designator_iterator import IterateDesignator
 import robot_smach_states.util.designators as ds
+from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_stickler_for_the_rules')
 
@@ -26,38 +28,52 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
     def __init__(self, robot_name, room_des):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
-        self.robot = robot_name
-        self.room = room_des
-        self.violating_person = ds.VariableDesignator(resolve_type=[Entity], name='violating_person')
-        self.forbidden_room_waypoint = ds.EntityByIdDesignator(self.robot,
-                                                               uuid=challenge_knowledge.forbidden_room_waypoint)
+        robot = robot_name
+        room = room_des
+        found_people = ds.VariableDesignator(resolve_type=[Entity], name='found_people')
+        violating_person = ds.VariableDesignator(resolve_type=Entity, name='violating_person')
+        forbidden_room_waypoint = ds.EntityByIdDesignator(robot,
+                                                          uuid=challenge_knowledge.forbidden_room_waypoint)
 
         with self:
+            @cb_interface(outcomes=["yes", "no"])
+            def check_forbidden_room():
+                return "yes" if room_des.uuid == challenge_knowledge.forbidden_room else "no"
+
+            smach.StateMachine.add("CHACK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
+                                   transitions={"yes": "NAVIGATE_TO_CHECK",
+                                                "no": "done"})
             smach.StateMachine.add(
                 "NAVIGATE_TO_CHECK",
-                NavigateToWaypoint(self.robot, self.forbidden_room_waypoint),
+                NavigateToWaypoint(robot, forbidden_room_waypoint),
                 transitions={"arrived": "FIND_PEOPLE", "unreachable": "done",
                              "goal_not_defined": "done"},
             )
             smach.StateMachine.add(
                 "FIND_PEOPLE",
-                FindPeople(robot=self.robot,
-                           query_entity_designator=self.room,
-                           found_people_designator=self.violating_person.writeable,
+                FindPeople(robot=robot,
+                           query_entity_designator=room,
+                           found_people_designator=found_people.writeable,
                            speak=True),
-                transitions={"found": "NAVIGATE_TO_CHECK", "failed": "done"})
+                transitions={"found": "ITERATE_PEOPLE", "failed": "done"})
+
+            smach.StateMachine.add('ITERATE_PEOPLE',
+                                   IterateDesignator(found_people,
+                                                     violating_person.writeable),
+                                   transitions={'next': 'GOTO_PERSON',
+                                                'stop_iteration': 'done'})
 
             smach.StateMachine.add('GOTO_PERSON',
-                                   NavigateToObserve(self.robot, self.violating_person, radius=1.0,
+                                   NavigateToObserve(robot, violating_person, radius=1.0,
                                                      margin=1.0,  # Makes the robot go within 1m of current_old_guest
                                                      speak=False),
                                    transitions={'arrived': 'SAY_BEHAVE',
                                                 'unreachable': 'SAY_BEHAVE',
                                                 'goal_not_defined': 'SAY_BEHAVE'})
             smach.StateMachine.add("SAY_BEHAVE",
-                                   Say(self.robot,
+                                   Say(robot,
                                        "Unfortunately, the party is not in this room,"
-                                       "please leave the room.", block=False,),
+                                       "please leave the room.", block=True),
                                    transitions={"spoken": "NAVIGATE_TO_CHECK"})
 
 
