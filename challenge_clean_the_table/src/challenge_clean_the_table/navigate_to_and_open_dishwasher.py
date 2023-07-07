@@ -140,14 +140,13 @@ class OpenDishwasher(StateMachine):
             # Increase height of arm again
             send_joint_goal(JOINTS_PULL_RACK_PREPARE)
 
-            robot.speech.speak("Hopefully the dishwasher is now open. Thanks guys.", block=False)
+            robot.speech.speak("Hopefully the dishwasher is now open.", block=False)
             return "done"
 
         @cb_interface(outcomes=["done"])
         def _pull_rack_prepare(_):
             # Prepare above door
             send_joint_goal(JOINTS_PULL_RACK_PREPARE)
-
 
             # item_frame = item_vector_to_item_frame_2d(OPEN_DISHWASHER_VECTOR_OPEN6)
             # goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
@@ -167,6 +166,7 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _pull_rack(_):
+            robot.speech.speak("Pulling the rack", block=False)
             # Move arm in
             item_frame = item_vector_to_item_frame_2d(PULL_DISHWASHER_RACK_OUT1)
             goal_pose = item_frame_to_pose(item_frame, DISHWASHER_ID)
