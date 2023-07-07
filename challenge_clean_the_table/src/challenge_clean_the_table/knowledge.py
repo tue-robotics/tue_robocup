@@ -8,10 +8,10 @@ ITEMS_CUTLERY = ["knife", "spoon", "fork"]
 ITEMS = ITEMS_CUTLERY + ITEMS_MUG_BOWL + ITEMS_PLATE
 
 ITEM_VECTOR_DICT = {
-    "knife": PyKDL.Vector(-1.16, 0.15, 0),
-    "fork": PyKDL.Vector(-1.16, 0.18, 0),
-    "spoon": PyKDL.Vector(-1.16, 0.21, 0),
-    "mug": PyKDL.Vector(-1.16, 0.25, 0),
+    "knife": PyKDL.Vector(-1.16, 0.04, 0),
+    "fork": PyKDL.Vector(-1.16, 0.07, 0),
+    "spoon": PyKDL.Vector(-1.16, 0.10, 0),
+    "mug": PyKDL.Vector(-1.16, 0.15, 0),
     "plate": PyKDL.Vector(-1.16, -0.27, 0),
     "bowl": PyKDL.Vector(-1.16, -0.1, 0),
 }
@@ -72,7 +72,7 @@ JOINTS_PRE_PLACE = [0.6, -1.572, 0, -1.572, 0]
 LAST_JOINTS_PLACE = [-1.572, 0, -1.572, 0]
 JOINTS_PLACE_PLATE = [0.40] + LAST_JOINTS_PLACE
 JOINTS_PLACE_MUG_BOWL = [0.31] + LAST_JOINTS_PLACE
-JOINTS_PLACE_CUTLERY = [0.35] + LAST_JOINTS_PLACE
+JOINTS_PLACE_CUTLERY = [0.30] + LAST_JOINTS_PLACE
 
 JOINTS_RETRACT = [0.7, 0, 0, -1.572, 0]
 

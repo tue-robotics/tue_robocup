@@ -257,7 +257,7 @@ class NavigateToAndOpenDishwasher(StateMachine):
             marker_msg.type = visualization_msgs.msg.Marker.SPHERE
             marker_msg.action = 0
             marker_msg.pose = item_frame_to_pose(item_vector_to_item_frame(OPEN_DISHWASHER_VECTOR), DISHWASHER_ID).pose
-            marker_msg.pose.position.z += 1.0
+            marker_msg.pose.position.z = 0.5
             marker_msg.scale = Vector3(0.05, 0.05, 0.05)
             marker_msg.color = ColorRGBA(0.2, 1.0, 0.2, 1)
             array_msg.markers.append(marker_msg)
