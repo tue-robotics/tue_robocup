@@ -5,26 +5,18 @@ from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
 order_grammar = """
-O[P] -> ORDER[P] | can i have a ORDER[P] | i would like ORDER[P] | can i get ORDER[P] | could i have ORDER[P] | may i get ORDER[P] | bring me ORDER[P]
-ORDER[OO] -> COMBO[OO] | BEVERAGE[OO]
-BEVERAGE[{"beverage": B}] -> BEV[B]
-BEVERAGE[{"beverage": B}] -> DET BEV[B]
-COMBO[{"food1": F1, "food2": F2}] -> FOOD[F1] and FOOD[F2] | FOOD[F1] with FOOD[F2]
-COMBO[{"food1": F1, "food2": F2}] -> DET FOOD[F1] and FOOD[F2] | DET FOOD[F1] with FOOD[F2]
-COMBO[{"food1": F1, "food2": F2}] -> FOOD[F1] and DET FOOD[F2] | FOOD[F1] with DET FOOD[F2]
-COMBO[{"food1": F1, "food2": F2}] -> DET FOOD[F1] and DET FOOD[F2] | DET FOOD[F1] with DET FOOD[F2]
-DET -> a | an
+O[P] -> ORDER[P]
+ORDER[OO] -> ITEM1[OO] | ITEM2[OO] | ITEM3[OO]
+ITEM1[{"item1": F1}] -> ITEM[F1]
+ITEM2[{"item1": F1, "item2": F2}] -> ITEM[F1] and ITEM[F2]
+ITEM3[{"item1": F1, "item2": F2, "item3": F3}] -> ITEM[F1] ITEM[F2] and ITEM[F3]
 """
 
-# COMBO[{"food1": F1, "food2": F2}] -> DET FOOD[F1] and DET FOOD[F2] | DET FOOD[F1] with DET FOOD[F2]
-# BEVERAGE[{"beverage": B}] -> DET BEV[B]
-
-# Add drinks
+# Create grammar
 for d in common.objects:
-    if d["category"] == "drinks":
-        order_grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
-    elif d["category"] in ["foods", "fruits", "snacks"]:
-        order_grammar += "\nFOOD['{}'] -> {}".format(d["name"], d["name"].replace('_', ' '))
+    if d["category"] in ["drinks", "foods", "fruits", "snacks"]:
+        name = d["name"]
+        order_grammar += f"\nITEM['{name}'] -> {name}"
 
 if __name__ == "__main__":
     import rospy
