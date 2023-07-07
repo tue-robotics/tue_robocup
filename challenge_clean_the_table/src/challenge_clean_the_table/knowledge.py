@@ -8,12 +8,12 @@ ITEMS_CUTLERY = ["knife", "spoon", "fork"]
 ITEMS = ITEMS_CUTLERY + ITEMS_MUG_BOWL + ITEMS_PLATE
 
 ITEM_VECTOR_DICT = {
-    "knife": PyKDL.Vector(-1.1, 0.0, 0),
-    "fork": PyKDL.Vector(-1.1, 0.0, 0),
-    "spoon": PyKDL.Vector(-1.1, 0.0, 0),
-    "mug": PyKDL.Vector(-1.1, 0.15, 0),
-    "plate": PyKDL.Vector(-1.1, -0.27, 0),
-    "bowl": PyKDL.Vector(-1.1, -0.1, 0),
+    "knife": PyKDL.Vector(-1.12, 0.0, 0),
+    "fork": PyKDL.Vector(-1.12, 0.0, 0),
+    "spoon": PyKDL.Vector(-1.12, 0.0, 0),
+    "mug": PyKDL.Vector(-1.12, 0.15, 0),
+    "plate": PyKDL.Vector(-1.12, -0.27, 0),
+    "bowl": PyKDL.Vector(-1.12, -0.1, 0),
 }
 
 ITEM_COLOR_DICT = {
