@@ -11,8 +11,9 @@ import rospy
 from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER, PICK_ROTATION
 from robot_skills import get_robot
 from robot_skills.arm.arms import GripperTypes
+# ROS
+from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 from smach import StateMachine, cb_interface, CBState
@@ -57,9 +58,11 @@ class PickItem(StateMachine):
         @cb_interface(outcomes=["done"])
         def _rotate(_):
             arm.gripper.send_goal("close", timeout=0.0)
-            robot.head.look_up()
-            vyaw = 0.5
-            robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
+
+            # Loot to the operator
+            robot.head.look_at_point(VectorStamped.from_xyz(0.2, -0.2, 1.75, stamp=rospy.Time.now(),
+                                                            frame_id=robot.base_link_frame))
+            robot.head.wait_for_motion_done()
             return "done"
 
         @cb_interface(outcomes=["done"])
