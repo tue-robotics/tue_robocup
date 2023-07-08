@@ -13,6 +13,7 @@ from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity
 import robot_smach_states.util.designators as ds
 from robot_smach_states.perception import RotateToEntity
+from robot_smach_states.utility import WaitTime
 from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction.find_people_in_room import FindFirstPerson
@@ -33,7 +34,9 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
             smach.StateMachine.add(
                 "NAVIGATE_TO_CHECK",
                 NavigateToWaypoint(robot, forbidden_room_waypoint, speak=False),
-                transitions={"arrived": "FIND_PEOPLE", "unreachable": "FIND_PEOPLE", "goal_not_defined": "FIND_PEOPLE"},
+                transitions={"arrived": "FIND_PEOPLE",
+                             "unreachable": "FIND_PEOPLE",
+                             "goal_not_defined": "FIND_PEOPLE"},
             )
             smach.StateMachine.add(
                 "FIND_PEOPLE",
@@ -42,7 +45,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                     query_entity_designator=room,
                     found_person_designator=violating_person.writeable,
                     speak=True),
-                transitions={"found": "LOOKAT_PERSON", "failed": "LOOKAT_PERSON"}
+                transitions={"found": "LOOKAT_PERSON", "failed": "done"}
 
             )
             smach.StateMachine.add(
@@ -53,8 +56,47 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
 
             smach.StateMachine.add(
                 "SAY_BEHAVE",
-                Say(robot, "Unfortunately, the party is not in this room, please leave the room.", block=True),
-                transitions={"spoken": "NAVIGATE_TO_CHECK"},
+                Say(robot, "You are breaking the forbidden room house rule, "
+                           "I'll leave you 10 seconds to leave this room",
+                    block=True),
+                transitions={"spoken": "WAIT"},
+            )
+
+            smach.StateMachine.add(
+                "WAIT",
+                WaitTime(robot, waittime=10),  # Wait 10s
+                transitions={"waited": "NAVIGATE_TO_CHECK_VERIFICATION",
+                             "preempted": "NAVIGATE_TO_CHECK_VERIFICATION"},
+            )
+
+            smach.StateMachine.add(
+                "NAVIGATE_TO_CHECK_VERIFICATION",
+                NavigateToWaypoint(robot, forbidden_room_waypoint, speak=False),
+                transitions={"arrived": "VERIFY_PEOPLE",
+                             "unreachable": "VERIFY_PEOPLE",
+                             "goal_not_defined": "VERIFY_PEOPLE"},
+            )
+            smach.StateMachine.add(
+                "VERIFY_PEOPLE",
+                FindFirstPerson(
+                    robot=robot,
+                    query_entity_designator=room,
+                    found_person_designator=violating_person.writeable,
+                    speak=True),
+                transitions={"found": "LOOKAT_PERSON", "failed": "done"}
+            )
+
+            smach.StateMachine.add(
+                "LOOKAT_PERSON_AGAIN",
+                RotateToEntity(robot, violating_person),
+                transitions={"succeeded": "SAY_BEHAVE", "failed": "SAY_VERIFY_DONE"}
+            )
+
+            smach.StateMachine.add(
+                "SAY_VERIFY_DONE",
+                Say(robot, "I have seen that the person left the room, thank you for following the rule.",
+                    block=False),
+                transitions={"spoken": "WAIT"},
             )
 
 
@@ -70,8 +112,7 @@ class CheckForDrinks(smach.StateMachine):
         room = room_des
         found_people = ds.VariableDesignator(resolve_type=Entity, name='found_people')
         caller_designator = ds.EdEntityDesignator(robot=robot, uuid=ds.value_or_resolve(found_people),
-                                                  name="caller_des",
-                                                  )
+                                                  name="caller_des")
 
         with self:
             smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
