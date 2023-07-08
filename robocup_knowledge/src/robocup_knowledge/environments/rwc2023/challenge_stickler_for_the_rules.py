@@ -5,9 +5,9 @@ from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
 # General
-starting_point = 'initial_pose'
+starting_point = 'stickler_for_rules_starting_point'
 waypoint_ids = ["living_room", "kitchen", "bedroom", "study"]
 
 # Detection
-forbidden_room = "living_room"
+forbidden_room = "bedroom"
 forbidden_room_waypoint = "forbidden_room_waypoint"
