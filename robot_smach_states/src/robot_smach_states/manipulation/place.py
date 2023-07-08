@@ -68,7 +68,8 @@ class Put(smach.State):
         rospy.loginfo("Placing")
 
         # placement_pose is a PyKDL.Frame
-        place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
+        place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame,
+                                                        timeout=rospy.Duration(1.0))
 
         # Wait for arm to finish their motions
         arm.wait_for_motion_done()
@@ -97,7 +98,7 @@ class Put(smach.State):
                 return 'failed'
 
         # Place
-        place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
+        place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
         actual_place_pose_bl = FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
                                                          height + self._offset, 0, 0, 0, rospy.Time(0),
                                                          frame_id=self._robot.base_link_frame)
@@ -108,7 +109,7 @@ class Put(smach.State):
         if not place_entity:
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
-            place_pose_map = self._robot.tf_buffer.transform(actual_place_pose_bl, "map")
+            place_pose_map = self._robot.tf_buffer.transform(actual_place_pose_bl, "map", timeout=rospy.Duration(1.0))
             new_entity_pose = FrameStamped(place_pose_map.frame * place_entity.pose.frame,
                                            place_pose_bl.header.stamp,
                                            "map")
@@ -122,7 +123,7 @@ class Put(smach.State):
         arm.gripper.occupied_by = None
 
         # Retract
-        place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame)
+        place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
         arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x() - 0.1,
                                                 place_pose_bl.frame.p.y(),
                                                 place_pose_bl.frame.p.z() + self._offset + self._pregrasp_extra_offset,
