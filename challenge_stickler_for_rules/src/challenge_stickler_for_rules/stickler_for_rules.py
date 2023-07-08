@@ -4,8 +4,9 @@
 import smach
 
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
+from robot_smach_states.utility import SetInitialPose
+from robot_smach_states.reset import ResetArmsTorsoHead
 from .patrol import Patrol
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_stickler_for_the_rules')
@@ -19,20 +20,17 @@ class SticklerForRules(smach.StateMachine):
 
         with self:
             # Intro
+            smach.StateMachine.add('RESET',
+                                   ResetArmsTorsoHead(robot),
+                                   transitions={'done': 'SET_INITIAL_POSE'})
 
+            smach.StateMachine.add('SET_INITIAL_POSE',
+                                   SetInitialPose(robot, challenge_knowledge.starting_point),
+                                   transitions={'done': 'SAY_START',
+                                                "preempted": 'SAY_START',
+                                                'error': 'SAY_START'})
             smach.StateMachine.add(
-                "START_CHALLENGE_ROBUST",
-                StartChallengeRobust(robot, "initial_pose"),
-                transitions={"Done": "SAY_START", "Aborted": "Aborted", "Failed": "SAY_START"},
-            )
-
-            smach.StateMachine.add(
-                "SAY_START",
-                Say(
-                    robot,
-                    "Party police! Party police!. I'm coming.",
-                    block=False,
-                ),
+                "SAY_START", Say(robot, "Party police! Party police!. I'm coming.", block=False),
                 transitions={"spoken": "GO_TO_LIVING_ROOM"},
             )
 

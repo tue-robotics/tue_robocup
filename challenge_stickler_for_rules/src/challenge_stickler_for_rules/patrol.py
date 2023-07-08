@@ -13,6 +13,7 @@ from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.designator_iterator import IterateDesignator
 import robot_smach_states.util.designators as ds
+from robot_smach_states.perception import LookAtEntity
 from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction.find_people_in_room import FindPeople
@@ -56,13 +57,11 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
             smach.StateMachine.add('ITERATE_PEOPLE',
                                    IterateDesignator(found_people,
                                                      violating_person.writeable),
-                                   transitions={'next': 'GOTO_PERSON',
+                                   transitions={'next': 'LOOKAT_PERSON',
                                                 'stop_iteration': 'done'})
 
-            smach.StateMachine.add('GOTO_PERSON',
-                                   NavigateToObserve(robot, violating_person, radius=1.0,
-                                                     margin=1.0,
-                                                     speak=False),
+            smach.StateMachine.add('LOOKAT_PERSON',
+                                   LookAtEntity(robot, violating_person),
                                    transitions={'arrived': 'SAY_BEHAVE',
                                                 'unreachable': 'SAY_BEHAVE',
                                                 'goal_not_defined': 'SAY_BEHAVE'})
