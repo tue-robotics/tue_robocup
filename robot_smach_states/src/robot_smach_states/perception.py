@@ -8,6 +8,7 @@ import numpy as np
 from pykdl_ros import VectorStamped
 import rospy
 import smach
+from tf2_ros import TransformException
 
 # TU/e Robotics
 from ed.entity import Entity
@@ -138,7 +139,13 @@ class RotateToEntity(smach.State):
         vs = VectorStamped.from_xyz(0, 0, 0, entity.last_update_time, frame_id=entity.uuid)
         rospy.loginfo(f'Rotate to "{entity.uuid}": {vs}')
 
-        vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame)
+        # Transform to base_link frame
+        try:
+            vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
+        except TransformException as e:
+            rospy.logerr(f'Could not transform {vs} to {self._robot.base_link_frame}: {e}')
+            return 'failed'
+
         # tan(angle) = dy / dx
         # angle = arctan(dy / dx)
         # Arm to position in a safe way
