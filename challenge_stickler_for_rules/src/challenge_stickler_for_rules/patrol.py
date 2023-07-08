@@ -144,7 +144,7 @@ class CheckForDrinks(smach.StateMachine):
             smach.StateMachine.add("DETECT_WAVING_PERSON",
                                    SetPoseFirstFoundPersonToEntity(robot=robot,
                                                                    properties={'tags': ['LWave', 'RWave']},
-                                                                   strict=True,
+                                                                   strict=False,
                                                                    dst_entity_designator=found_person.writeable,
                                                                    query_entity_designator=room,
                                                                    search_timeout=15),
