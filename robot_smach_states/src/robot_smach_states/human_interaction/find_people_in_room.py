@@ -181,7 +181,7 @@ class FindPeople(smach.State):
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
-                    result_people = [p for p in found_people if query_entity.in_volume(VectorStamped.from_framestamped(p.pose), 'in')]
+                    result_people = [p for p in found_people if query_entity.in_volume(VectorStamped.from_framestamped(p.pose), 'in', padding=-0.15)]
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
                     # If people not in query_entity then try if query_entity in people
@@ -189,7 +189,7 @@ class FindPeople(smach.State):
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = [x for x in found_people if x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in')]
+                            result_people = [x for x in found_people if x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in', padding=-0.05)]
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
