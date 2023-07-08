@@ -123,14 +123,14 @@ class CheckForDrinks(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
-                                   SetPoseFirstFoundPersonToEntity(robot=robot,
-                                                                   properties={'tags': ['LHolding', 'RHolding']},
-                                                                   strict=False,
-                                                                   reverse=True,
-                                                                   dst_entity_designator=found_person.writeable,
-                                                                   query_entity_designator=room,
-                                                                   search_timeout=30),
-                                   transitions={"done": "SAY_I_HAVE_SEEN",
+                                   FindFirstPerson(robot=robot,
+                                                   properties={'tags': ['LHolding', 'RHolding']},
+                                                   strict=False,
+                                                   reverse=True,
+                                                   found_person_designator=found_person.writeable,
+                                                   query_entity_designator=room,
+                                                   search_timeout=30),
+                                   transitions={"found": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
             # Detect fallback - detect waving people
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS_FAILED",
@@ -148,13 +148,13 @@ class CheckForDrinks(smach.StateMachine):
                                        block=True),
                                    transitions={"spoken": "DETECT_WAVING_PERSON"})
             smach.StateMachine.add("DETECT_WAVING_PERSON",
-                                   SetPoseFirstFoundPersonToEntity(robot=robot,
-                                                                   properties={'tags': ['LWave', 'RWave']},
-                                                                   strict=False,
-                                                                   dst_entity_designator=found_person.writeable,
-                                                                   query_entity_designator=room,
-                                                                   search_timeout=15),
-                                   transitions={"done": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
+                                   FindFirstPerson(robot=robot,
+                                                   properties={'tags': ['LWave', 'RWave']},
+                                                   strict=False,
+                                                   found_person_designator=found_person.writeable,
+                                                   query_entity_designator=room,
+                                                   search_timeout=15),
+                                   transitions={"found": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
                                    Say(robot=robot,
                                        sentence="Found person who does not have a drink. I will be there shortly!",
