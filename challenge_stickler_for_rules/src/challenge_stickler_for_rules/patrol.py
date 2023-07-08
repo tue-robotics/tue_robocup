@@ -46,7 +46,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                     robot=robot,
                     query_entity_designator=room,
                     found_person_designator=violating_person.writeable,
-                    speak=True),
+                    speak=True,
+                    search_timeout=30),
                 transitions={"found": "LOOKAT_PERSON", "failed": "done"}
 
             )
