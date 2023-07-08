@@ -56,7 +56,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 NavigateToObserve(robot,
                                   violating_person,
                                   room=room,
-                                  radius=1),
+                                  radius=1.0,
+                                  margin=0.2),
                 transitions={"arrived": "SAY_BEHAVE",
                              "unreachable": "SAY_BEHAVE",
                              "goal_not_defined": "SAY_BEHAVE"}
