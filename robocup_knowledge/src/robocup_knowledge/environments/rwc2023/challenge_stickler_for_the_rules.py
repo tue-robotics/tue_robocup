@@ -11,3 +11,5 @@ waypoint_ids = ["living_room", "kitchen", "bedroom", "study"]
 # Detection
 forbidden_room = "bedroom"
 forbidden_room_waypoint = "forbidden_room_waypoint"
+
+drinks_entity_id = "cabinet"
