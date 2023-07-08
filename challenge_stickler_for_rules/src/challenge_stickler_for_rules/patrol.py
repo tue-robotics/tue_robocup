@@ -124,8 +124,9 @@ class CheckForDrinks(smach.StateMachine):
         with self:
             smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
                                    SetPoseFirstFoundPersonToEntity(robot=robot,
-                                                                   properties={'tags': ['LNotHolding', 'RNotHolding']},
-                                                                   strict=True,
+                                                                   properties={'tags': ['LHolding', 'RHolding']},
+                                                                   strict=False,
+                                                                   reverse=True,
                                                                    dst_entity_designator=found_person.writeable,
                                                                    query_entity_designator=room,
                                                                    search_timeout=30),
