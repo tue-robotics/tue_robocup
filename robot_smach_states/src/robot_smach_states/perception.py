@@ -34,8 +34,8 @@ class LookAtEntity(smach.State):
 
     def execute(self, userdata=None):
 
-        entity = self._entity.resolve() if hasattr(self._entity, 'resolve') else self._entity
-        height = self._height.resolve() if hasattr(self._height, 'resolve') else self._height
+        entity = ds.value_or_resolve(self._entity)
+        height = ds.value_or_resolve(self._height)
 
         if not entity:
             rospy.logerr(
