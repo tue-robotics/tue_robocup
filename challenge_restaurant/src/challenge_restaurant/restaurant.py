@@ -80,7 +80,7 @@ class Restaurant(smach.StateMachine):
                                        look_range=(-np.pi / 4, np.pi / 4),
                                        look_steps=4,
                                        search_timeout=600),  # 10 minutes
-                                   transitions={'found': 'SAY_I_HAVE_SEEN',
+                                   transitions={'found': 'GET_CUSTOMER_IMAGE',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
             #
             # smach.StateMachine.add('SAY_SPEAK',
@@ -108,20 +108,20 @@ class Restaurant(smach.StateMachine):
                                    states.human_interaction.Say(
                                        robot, 'I have seen a waving person, should I take the order? '
                                               'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
-                                   transitions={"spoken": 'GET_CUSTOMER_IMAGE'})
+                                   transitions={"spoken": 'WAIT_FOR_START'})
 
             smach.StateMachine.add('GET_CUSTOMER_IMAGE',
                                    GetCustomerImage(robot, customer_designator, image_designator.writeable),
                                    transitions={'succeeded': 'SHOW_CUSTOMER',
-                                                'failed': 'WAIT_FOR_START'})
+                                                'failed': 'SAY_I_HAVE_SEEN'})
 
             smach.StateMachine.add('SHOW_CUSTOMER',
                                    states.human_interaction.ShowImage(
                                        robot,
                                        image_designator,
                                        duration=30),
-                                   transitions={'succeeded': 'WAIT_FOR_START',
-                                                'failed': 'WAIT_FOR_START'})
+                                   transitions={'succeeded': 'SAY_I_HAVE_SEEN',
+                                                'failed': 'SAY_I_HAVE_SEEN'})
 
             if is_sim_mode():
                 smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
