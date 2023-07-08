@@ -99,7 +99,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 "SAY_VERIFY_DONE",
                 Say(robot, "I have seen that the person left the room, thank you for following the rule.",
                     block=False),
-                transitions={"spoken": "WAIT"},
+                transitions={"spoken": "done"},
             )
 
 
