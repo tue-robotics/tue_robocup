@@ -8,9 +8,10 @@ import rospy
 import smach
 
 from ed.entity import Entity
-from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
+from robot_skills.simulation import is_sim_mode
+from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic, GuideToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
-from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity
+from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity, GiveDirections, AskYesNo, AskYesNoPicoVoice
 import robot_smach_states.util.designators as ds
 from robot_smach_states.perception import RotateToEntity
 from robot_smach_states.utility import WaitTime
@@ -19,6 +20,7 @@ from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction.find_people_in_room import FindFirstPerson
 
 challenge_knowledge = load_knowledge("challenge_stickler_for_the_rules")
+drinks_entity_id = "cabinet"  # ToDo: get from knowledge
 
 
 class CheckPeopleInForbiddenRoom(smach.StateMachine):
@@ -110,44 +112,111 @@ class CheckForDrinks(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["done"])
         robot = robot_name
         room = room_des
-        found_people = ds.VariableDesignator(resolve_type=Entity, name='found_people')
-        caller_designator = ds.EdEntityDesignator(robot=robot, uuid=ds.value_or_resolve(found_people),
-                                                  name="caller_des")
+        found_person = ds.VariableDesignator(resolve_type=Entity, name='found_people')
+        drinks_loc_des = ds.EntityByIdDesignator(robot, uuid=drinks_entity_id)
 
         with self:
             smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
                                    SetPoseFirstFoundPersonToEntity(robot=robot,
                                                                    properties={'tags': ['LNotHolding', 'RNotHolding']},
                                                                    strict=True,
-                                                                   dst_entity_designator=found_people,
+                                                                   dst_entity_designator=found_person.writeable,
                                                                    query_entity_designator=room),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
             # Detect fallback - detect waving people
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS_FAILED",
                                    Say(robot=robot,
-                                       sentence="Could not detect people without drinks",
+                                       sentence="Could not detect people without a drink",
                                        look_at_standing_person=True,
                                        block=True),
                                    transitions={"spoken": "ASK_FOR_WAVING"})
             smach.StateMachine.add("ASK_FOR_WAVING",
                                    Say(robot=robot,
-                                       sentence="Please raise your arm completely and wave, if you want me to bring you something",
+                                       sentence="Hi Guests, It is mandatory to have a drink. "
+                                                "Please raise your arm completely and wave, "
+                                                "if you do not have a drink yet.",
                                        look_at_standing_person=True,
                                        block=True),
-                                   transitions={"spoken": "done"}) #ToDO: Yet to implement Fallback of finding waving person
+                                   transitions={"spoken": "DETECT_WAVING_PERSON"})
+            smach.StateMachine.add("DETECT_WAVING_PERSON",
+                                   SetPoseFirstFoundPersonToEntity(robot=robot,
+                                                                   properties={'tags': ['LWave', 'RWave']},
+                                                                   strict=True,
+                                                                   dst_entity_designator=found_person.writeable,
+                                                                   query_entity_designator=room),
+                                   transitions={"done": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
                                    Say(robot=robot,
-                                       sentence="Found person who might want to place an order. I will be there shortly!",
+                                       sentence="Found person who does not have a drink. I will be there shortly!",
                                        look_at_standing_person=True,
                                        block=True),
                                    transitions={"spoken": "NAVIGATE_TO_PERSON"})
+            smach.StateMachine.add("SAY_WAVING_FAILED",
+                                   Say(robot=robot,
+                                       sentence="Could not detect a waving person, I will continue my task",
+                                       look_at_standing_person=False,
+                                       block=False),
+                                   transitions={"spoken": "done"})
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
-                                   NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                   NavigateToObserve(robot=robot, entity_designator=found_person,
                                                      radius=1),
-                                   transitions={"arrived": "done",
-                                                "unreachable": "done",
-                                                "goal_not_defined": "done"})
+                                   transitions={"arrived": "SAY_BREAKING_RULE",
+                                                "unreachable": "SAY_NOT_REACHABLE",
+                                                "goal_not_defined": "SAY_NOT_REACHABLE"})
+            smach.StateMachine.add("SAY_NOT_REACHABLE",
+                                   Say(robot=robot,
+                                       sentence="I cannot reach the guest, I will continue my task",
+                                       look_at_standing_person=False,
+                                       block=False),
+                                   transitions={"spoken": "done"})
+            smach.StateMachine.add("SAY_BREAKING_RULE",
+                                   Say(robot, "You are breaking the 'mandatory hydration' rule", look_at_standing_person=True, block=True),
+                                   transitions={"spoken": "SAY_GET_DRINK"})
+            smach.StateMachine.add("SAY_GET_DRINK",
+                                   Say(robot, f"You need to get a drink from the {drinks_entity_id}, I will tell you how to get there", look_at_standing_person=False,
+                                       block=True),
+                                   transitions={"spoken": "GIVE_DIRECTIONS"})
+            smach.StateMachine.add("GIVE_DIRECTIONS",
+                                   GiveDirections(robot, drinks_loc_des),
+                                   transitions={"succeeded": "NEED_GUIDANCE",
+                                                "failed": "NEED_GUIDANCE"})
+            smach.StateMachine.add("NEED_GUIDANCE",
+                                   Say(robot, "Do you need guidance to get there? Yes or No",
+                                       look_at_standing_person=True, block=True),
+                                   transitions={"spoken": "done"})
+            if is_sim_mode():
+                smach.StateMachine.add("ASK_YES_NO",
+                                       AskYesNo(robot),
+                                       transitions={"yes": "GUIDE_TO_DRINKS",
+                                                    "no": "done",
+                                                    "no_result": "done"})
+            else:
+                smach.StateMachine.add("ASK_YES_NO",
+                                       AskYesNoPicoVoice(robot),
+                                       transitions={"yes": "GUIDE_TO_DRINKS",
+                                                    "no": "done",
+                                                    "no_result": "done"})
+
+            smach.StateMachine.add("GUIDE_TO_DRINKS",
+                                   GuideToSymbolic(robot, {drinks_loc_des: "in_front_of"}, drinks_loc_des),
+                                   transitions={"arrived": "SAY_TAKE_DRINK",
+                                                "unreachable": "SAY_NAV_FAILED",
+                                                "goal_not_defined": "SAY_NAV_FAILED",
+                                                "lost_operator": "SAY_LOST_OPERATOR",
+                                                "preempted": "done"})
+
+            smach.StateMachine.add("SAY_TAKE_DRINK",
+                                   Say(robot, f"Dear guest, Take a drink from the {drinks_entity_id}", look_at_standing_person=True, block=True),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("SAY_NAV_FAILED",
+                                   Say(robot, "I cannot reach the drinks, I will continue my task", look_at_standing_person=False, block=True),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("SAY_LOST_OPERATOR",
+                                   Say(robot, "I lost the guest, I will continue my task", look_at_standing_person=False, block=True),
+                                   transitions={"spoken": "done"})
 
 
 class Patrol(smach.StateMachine):
