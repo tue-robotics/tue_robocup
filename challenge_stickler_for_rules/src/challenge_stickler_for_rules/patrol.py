@@ -86,7 +86,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                     query_entity_designator=room,
                     found_person_designator=violating_person.writeable,
                     speak=True),
-                transitions={"found": "LOOKAT_PERSON", "failed": "done"}
+                transitions={"found": "LOOKAT_PERSON", "failed": "SAY_VERIFY_DONE"}
             )
 
             smach.StateMachine.add(
