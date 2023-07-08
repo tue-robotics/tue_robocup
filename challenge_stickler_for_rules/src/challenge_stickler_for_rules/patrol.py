@@ -13,14 +13,12 @@ from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity, GiveDirections, AskYesNo, AskYesNoPicoVoice
 import robot_smach_states.util.designators as ds
-from robot_smach_states.perception import RotateToEntity
 from robot_smach_states.utility import WaitTime
 from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction.find_people_in_room import FindFirstPerson
 
 challenge_knowledge = load_knowledge("challenge_stickler_for_the_rules")
-drinks_entity_id = "cabinet"  # ToDo: get from knowledge
 
 
 class CheckPeopleInForbiddenRoom(smach.StateMachine):
@@ -35,69 +33,74 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
         with self:
             smach.StateMachine.add(
                 "NAVIGATE_TO_CHECK",
-                NavigateToWaypoint(robot, forbidden_room_waypoint, speak=False),
+                NavigateToWaypoint(robot,
+                                   forbidden_room_waypoint,
+                                   speak=False),
                 transitions={"arrived": "FIND_PEOPLE",
                              "unreachable": "FIND_PEOPLE",
-                             "goal_not_defined": "FIND_PEOPLE"},
+                             "goal_not_defined": "FIND_PEOPLE"}
             )
+
             smach.StateMachine.add(
                 "FIND_PEOPLE",
-                FindFirstPerson(
-                    robot=robot,
-                    query_entity_designator=room,
-                    found_person_designator=violating_person.writeable,
-                    speak=True,
-                    search_timeout=30),
-                transitions={"found": "LOOKAT_PERSON", "failed": "done"}
-
+                FindFirstPerson(robot=robot,
+                                query_entity_designator=room,
+                                found_person_designator=violating_person.writeable,
+                                speak=True,
+                                search_timeout=30),
+                transitions={"found": "GOTO_PERSON", "failed": "done"}
             )
+
             smach.StateMachine.add(
-                "LOOKAT_PERSON",
-                RotateToEntity(robot, violating_person),
-                transitions={"succeeded": "SAY_BEHAVE", "failed": "SAY_BEHAVE"}
+                "GOTO_PERSON",
+                NavigateToObserve(robot,
+                                  violating_person,
+                                  room=room,
+                                  radius=1),
+                transitions={"arrived": "SAY_BEHAVE",
+                             "unreachable": "SAY_BEHAVE",
+                             "goal_not_defined": "SAY_BEHAVE"}
             )
 
             smach.StateMachine.add(
                 "SAY_BEHAVE",
-                Say(robot, "You are breaking the forbidden room house rule, "
-                           "I'll leave you 10 seconds to leave this room",
+                Say(robot,
+                    "You are breaking the forbidden room house rule. I'll leave you 10 seconds to leave this room",
                     block=True),
                 transitions={"spoken": "WAIT"},
             )
 
             smach.StateMachine.add(
                 "WAIT",
-                WaitTime(robot, waittime=10),  # Wait 10s
+                WaitTime(robot,
+                         waittime=10),  # Wait 10s
                 transitions={"waited": "NAVIGATE_TO_CHECK_VERIFICATION",
                              "preempted": "NAVIGATE_TO_CHECK_VERIFICATION"},
             )
 
             smach.StateMachine.add(
                 "NAVIGATE_TO_CHECK_VERIFICATION",
-                NavigateToWaypoint(robot, forbidden_room_waypoint, speak=False),
+                NavigateToWaypoint(robot,
+                                   forbidden_room_waypoint,
+                                   speak=False),
                 transitions={"arrived": "VERIFY_PEOPLE",
                              "unreachable": "VERIFY_PEOPLE",
                              "goal_not_defined": "VERIFY_PEOPLE"},
             )
             smach.StateMachine.add(
                 "VERIFY_PEOPLE",
-                FindFirstPerson(
-                    robot=robot,
-                    query_entity_designator=room,
-                    found_person_designator=violating_person.writeable,
-                    speak=True),
-                transitions={"found": "LOOKAT_PERSON", "failed": "SAY_VERIFY_DONE"}
-            )
-
-            smach.StateMachine.add(
-                "LOOKAT_PERSON_AGAIN",
-                RotateToEntity(robot, violating_person),
-                transitions={"succeeded": "SAY_BEHAVE", "failed": "SAY_VERIFY_DONE"}
+                FindFirstPerson(robot=robot,
+                                query_entity_designator=room,
+                                found_person_designator=violating_person.writeable,
+                                speak=True),
+                transitions={"found": "GOTO_PERSON",
+                             "failed": "SAY_VERIFY_DONE"}
             )
 
             smach.StateMachine.add(
                 "SAY_VERIFY_DONE",
-                Say(robot, "I have seen that the person left the room, thank you for following the rule.",
+                Say(robot,
+                    "There's no one left anymore in the forbidden room.",
                     block=False),
                 transitions={"spoken": "done"},
             )
@@ -113,6 +116,7 @@ class CheckForDrinks(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["done"])
         robot = robot_name
         room = room_des
+        drinks_entity_id = challenge_knowledge.drinks_entity_id
         found_person = ds.VariableDesignator(resolve_type=Entity, name='found_people')
         drinks_loc_des = ds.EntityByIdDesignator(robot, uuid=drinks_entity_id)
 
