@@ -39,7 +39,7 @@ class FindPeople(smach.State):
 
     def __init__(self, robot, properties=None, query_entity_designator=None,
                  found_people_designator=None, look_distance=10.0, speak=False,
-                 strict=True, nearest=False, attempts=1, search_timeout=60,
+                 strict=True, reverse=False, nearest=False, attempts=1, search_timeout=60,
                  look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """
         Initialization method
@@ -85,6 +85,7 @@ class FindPeople(smach.State):
         self._look_distance = look_distance
         self._speak = speak
         self._strict = strict
+        self._reverse = reverse
         self._nearest = nearest
         self._attempts = attempts
 
@@ -173,7 +174,11 @@ class FindPeople(smach.State):
 
             if self._properties:
                 for k, v in self._properties.items():
-                    found_people = [x for x in found_people if self._check_person_property(x, k, v)]
+                    found_people_temp = [x for x in found_people if self._check_person_property(x, k, v)]
+                    if self._reverse:
+                        found_people = list(set(found_people) - set(found_people_temp))
+                    else:
+                        found_people = found_people_temp
                     rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
             result_people = []
@@ -258,6 +263,7 @@ class FindFirstPerson(smach.StateMachine):
                  look_distance=10.0,
                  speak=False,
                  strict=True,
+                 reverse=False,
                  nearest=False,
                  attempts=1,
                  search_timeout=60,
@@ -314,6 +320,7 @@ class FindFirstPerson(smach.StateMachine):
                          look_distance=look_distance,
                          speak=speak,
                          strict=strict,
+                         reverse=reverse,
                          nearest=nearest,
                          attempts=attempts,
                          search_timeout=search_timeout,
@@ -346,6 +353,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                  look_distance=10.0,
                  speak=False,
                  strict=True,
+                 reverse=False,
                  nearest=False,
                  attempts=1,
                  search_timeout=60,
@@ -404,6 +412,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                          look_distance=look_distance,
                          speak=speak,
                          strict=strict,
+                         reverse=reverse,
                          nearest=nearest,
                          attempts=attempts,
                          search_timeout=search_timeout,
