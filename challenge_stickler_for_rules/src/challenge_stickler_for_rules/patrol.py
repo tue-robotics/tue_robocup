@@ -42,7 +42,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                     query_entity_designator=room,
                     found_person_designator=violating_person.writeable,
                     speak=True),
-                transitions={"succeeded": "LOOKAT_PERSON", "failed": "LOOKAT_PERSON"}
+                transitions={"found": "LOOKAT_PERSON", "failed": "LOOKAT_PERSON"}
 
             )
             smach.StateMachine.add(
@@ -72,39 +72,41 @@ class CheckForDrinks(smach.StateMachine):
         caller_designator = ds.EdEntityDesignator(robot=robot, uuid=ds.value_or_resolve(found_people),
                                                   name="caller_des",
                                                   )
-        smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
-                               SetPoseFirstFoundPersonToEntity(robot=robot,
-                                                               properties={'tags': ['LNotHolding', 'RNotHolding']},
-                                                               strict=True,
-                                                               dst_entity_designator=found_people,
-                                                               query_entity_designator=room),
-                               transitions={"done": "SAY_I_HAVE_SEEN",
-                                            "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
-        # Detect fallback - detect waving people
-        smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS_FAILED",
-                               Say(robot=robot,
-                                   sentence="Could not detect people without drinks",
-                                   look_at_standing_person=True,
-                                   block=True),
-                               transitions={"spoken": "ASK_FOR_WAVING"})
-        smach.StateMachine.add("ASK_FOR_WAVING",
-                               Say(robot=robot,
-                                   sentence="Please raise your arm completely and wave, if you want me to bring you something",
-                                   look_at_standing_person=True,
-                                   block=True),
-                               transitions={"spoken": "done"}) #ToDO: Yet to implement Fallback of finding waving person
-        smach.StateMachine.add("SAY_I_HAVE_SEEN",
-                               Say(robot=robot,
-                                   sentence="Found person who might want to place an order. I will be there shortly!",
-                                   look_at_standing_person=True,
-                                   block=True),
-                               transitions={"spoken": "NAVIGATE_TO_PERSON"})
-        smach.StateMachine.add("NAVIGATE_TO_PERSON",
-                               NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                 radius=1),
-                               transitions={"arrived": "done",
-                                            "unreachable": "done",
-                                            "goal_not_defined": "SAY_PEOPLE_WITHOUT_DRINKS"})
+
+        with self:
+            smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
+                                   SetPoseFirstFoundPersonToEntity(robot=robot,
+                                                                   properties={'tags': ['LNotHolding', 'RNotHolding']},
+                                                                   strict=True,
+                                                                   dst_entity_designator=found_people,
+                                                                   query_entity_designator=room),
+                                   transitions={"done": "SAY_I_HAVE_SEEN",
+                                                "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
+            # Detect fallback - detect waving people
+            smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS_FAILED",
+                                   Say(robot=robot,
+                                       sentence="Could not detect people without drinks",
+                                       look_at_standing_person=True,
+                                       block=True),
+                                   transitions={"spoken": "ASK_FOR_WAVING"})
+            smach.StateMachine.add("ASK_FOR_WAVING",
+                                   Say(robot=robot,
+                                       sentence="Please raise your arm completely and wave, if you want me to bring you something",
+                                       look_at_standing_person=True,
+                                       block=True),
+                                   transitions={"spoken": "done"}) #ToDO: Yet to implement Fallback of finding waving person
+            smach.StateMachine.add("SAY_I_HAVE_SEEN",
+                                   Say(robot=robot,
+                                       sentence="Found person who might want to place an order. I will be there shortly!",
+                                       look_at_standing_person=True,
+                                       block=True),
+                                   transitions={"spoken": "NAVIGATE_TO_PERSON"})
+            smach.StateMachine.add("NAVIGATE_TO_PERSON",
+                                   NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                                     radius=1),
+                                   transitions={"arrived": "done",
+                                                "unreachable": "done",
+                                                "goal_not_defined": "done"})
 
 
 class Patrol(smach.StateMachine):
