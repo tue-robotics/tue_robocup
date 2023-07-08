@@ -122,7 +122,8 @@ class CheckForDrinks(smach.StateMachine):
                                                                    properties={'tags': ['LNotHolding', 'RNotHolding']},
                                                                    strict=True,
                                                                    dst_entity_designator=found_person.writeable,
-                                                                   query_entity_designator=room),
+                                                                   query_entity_designator=room,
+                                                                   search_timeout=30),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
             # Detect fallback - detect waving people
@@ -145,7 +146,8 @@ class CheckForDrinks(smach.StateMachine):
                                                                    properties={'tags': ['LWave', 'RWave']},
                                                                    strict=True,
                                                                    dst_entity_designator=found_person.writeable,
-                                                                   query_entity_designator=room),
+                                                                   query_entity_designator=room,
+                                                                   search_timeout=15),
                                    transitions={"done": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
                                    Say(robot=robot,
