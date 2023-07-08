@@ -11,12 +11,11 @@ from ed.entity import Entity
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity
-from robot_smach_states.designator_iterator import IterateDesignator
 import robot_smach_states.util.designators as ds
-from robot_smach_states.perception import LookAtEntity
+from robot_smach_states.perception import RotateToEntity
 from smach import cb_interface, CBState
 from robocup_knowledge import load_knowledge
-from robot_smach_states.human_interaction.find_people_in_room import FindPeople
+from robot_smach_states.human_interaction.find_people_in_room import FindFirstPerson
 
 challenge_knowledge = load_knowledge("challenge_stickler_for_the_rules")
 
@@ -27,42 +26,37 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
 
         robot = robot_name
         room = room_des
-        found_people = ds.VariableDesignator(resolve_type=[Entity], name="found_people")
         violating_person = ds.VariableDesignator(resolve_type=Entity, name="violating_person")
         forbidden_room_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.forbidden_room_waypoint)
 
         with self:
             smach.StateMachine.add(
                 "NAVIGATE_TO_CHECK",
-                NavigateToWaypoint(robot, forbidden_room_waypoint),
-                transitions={"arrived": "FIND_PEOPLE", "unreachable": "done", "goal_not_defined": "done"},
+                NavigateToWaypoint(robot, forbidden_room_waypoint, speak=False),
+                transitions={"arrived": "FIND_PEOPLE", "unreachable": "FIND_PEOPLE", "goal_not_defined": "FIND_PEOPLE"},
             )
             smach.StateMachine.add(
                 "FIND_PEOPLE",
-                FindPeople(
+                FindFirstPerson(
                     robot=robot,
                     query_entity_designator=room,
-                    found_people_designator=found_people.writeable,
-                    speak=True,
-                ),
-                transitions={"found": "ITERATE_PEOPLE", "failed": "done"},
-            )
-            smach.StateMachine.add(
-                "ITERATE_PEOPLE",
-                IterateDesignator(found_people, violating_person.writeable),
-                transitions={"next": "LOOKAT_PERSON", "stop_iteration": "done"},
+                    found_person_designator=violating_person.writeable,
+                    speak=True),
+                transitions={"succeeded": "LOOKAT_PERSON", "failed": "LOOKAT_PERSON"}
+
             )
             smach.StateMachine.add(
                 "LOOKAT_PERSON",
-                LookAtEntity(robot, violating_person),
-                transitions={"succeeded": "SAY_BEHAVE", "failed": "ITERATE_PEOPLE"},
+                RotateToEntity(robot, violating_person),
+                transitions={"succeeded": "SAY_BEHAVE", "failed": "SAY_BEHAVE"}
             )
 
             smach.StateMachine.add(
                 "SAY_BEHAVE",
-                Say(robot, "Unfortunately, the party is not in this room," "please leave the room.", block=True),
+                Say(robot, "Unfortunately, the party is not in this room, please leave the room.", block=True),
                 transitions={"spoken": "NAVIGATE_TO_CHECK"},
             )
+
 
 class CheckForDrinks(smach.StateMachine):
     """
@@ -112,6 +106,7 @@ class CheckForDrinks(smach.StateMachine):
                                             "unreachable": "done",
                                             "goal_not_defined": "SAY_PEOPLE_WITHOUT_DRINKS"})
 
+
 class Patrol(smach.StateMachine):
     def __init__(self, robot, room_des):
         """
@@ -134,7 +129,7 @@ class Patrol(smach.StateMachine):
             )
 
             @cb_interface(outcomes=["yes", "no"])
-            def check_forbidden_room(user_data):
+            def check_forbidden_room(userdata=None):
                 return "yes" if room_des.uuid == challenge_knowledge.forbidden_room else "no"
 
             smach.StateMachine.add("CHECK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
