@@ -240,7 +240,7 @@ class RandomDesignator(Designator):
     Return a random value from a given iterable
 
     For example:
-    >>> d = RandomDesignator([1,2,3])
+    >>> d = RandomDesignator([1,2,3], resolve_type=int)
     >>> d.resolve() in [1,2,3]
     True
     """
