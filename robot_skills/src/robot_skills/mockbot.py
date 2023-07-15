@@ -13,7 +13,7 @@ import geometry_msgs
 import mock
 import rospy
 import six
-import std_msgs.msg
+from std_msgs.msg import String
 import tf_conversions
 import tf2_ros
 # TU/e Robotics
@@ -509,9 +509,9 @@ if __name__ == "__main__":
         return loc.x, loc.y, rot3[0]
 
     def hear(text):
-        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)
+        pub = rospy.Publisher('/pocketsphinx/output', String, queue_size=10)
         rospy.logdebug("Telling Mockbot '{0}'".format(text))
-        pub.publish(std_msgs.msg.String(text))
+        pub.publish(String(text))
 
     def save_sentence(sentence):
         """
