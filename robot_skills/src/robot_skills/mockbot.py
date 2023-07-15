@@ -15,6 +15,7 @@ import rospy
 import six
 import std_msgs.msg
 import tf_conversions
+import tf2_ros
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
@@ -389,9 +390,13 @@ class MockedTfBuffer(mock.MagicMock):
         return True
 
     @staticmethod
-    def transform(point_stamped, frame_id):
+    def transform(point_stamped, frame_id, timeout=rospy.Duration(0.0), new_type=None):
         point_stamped.header.frame_id = frame_id
-        return point_stamped
+
+        if not new_type:
+            return point_stamped
+
+        return tf2_ros.convert(point_stamped, new_type)
 
 
 class Mockbot(robot.Robot):
