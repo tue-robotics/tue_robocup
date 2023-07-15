@@ -186,7 +186,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_WAVING_2',
                                    states.human_interaction.Say(
                                        robot,
-                                       "Mr. Barman, i'm waiting for an order please make sure that the people wave "
+                                       "Mr. Barman, I'm waiting for an order please make sure that the people wave "
                                        "slowly and put their arm up high. Like is shown "
                                        "on my screen", block=True),
                                    transitions={'spoken': 'SHOW_IMAGE_2'})
