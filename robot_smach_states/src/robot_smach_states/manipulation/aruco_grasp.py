@@ -6,6 +6,7 @@ from pykdl_ros import VectorStamped, FrameStamped
 import rospy
 import smach
 import tf2_ros
+from geometry_msgs.msg import Twist
 
 # TU/e Robotics
 from robot_skills.robot import Robot
@@ -80,19 +81,48 @@ class ArucoGrasp(smach.State):
             return "failed"
 
         grasp_succeeded=False
+        rate = rospy.Rate(10) # loop rate in hz
         while not grasp_succeeded:
             # control loop
 
             #TODO get aruco pose wrt wrist
 
-            #TODO base command
-            #TODO arm pose command
+            # example base command
+            v = Twist()
+            v.linear.x = 0 # forward
+            v.linear.y = 0 # linear left
+            v.angular.z = 0 # rotation speed to the left
+            self._cmd_vel.publish(v) # send command to the robot
+
+            self.robot.base.force_drive()
+
+            # example arm pose command
+            move_arm = False
+            if (move_arm):
+                pose_goal = FrameStamped(self.frame_from_xyzrpy(0.5, # x distance to the robot
+                                                                 0.08, # y distance off center from the robot (fixed if rpy=0)
+                                                                 0.7, # z height of the gripper
+                                                                 0, 0, 0), # Roll pitch yaw. 0,0,0 for a horizontal gripper.
+                                        rospy.Time.now(), #timestamp when this pose was created
+                                        "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                        )
+                arm.send_goal(pose_goal) # send the command to the robot.
+                arm.wait_for_motion_done() # wait until the motion is complete
+                continue # dont wait for the rest of the loop.
             #TODO get base-gripper transform
 
             # check if done
             grasp_succeeded = True
 
+            rate.sleep()
+
         return "succeeded"
+
+    def frame_from_xyzrpy(x, y, z, roll, pitch, yaw):
+        """
+        Helper function to create a kdl frame based on an x,y,z position and a RPY rotation
+        """
+        return kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x, y, z))
 
 
 class ResetOnFailure(smach.State):
