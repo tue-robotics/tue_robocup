@@ -15,7 +15,7 @@ from robot_skills.arm.arms import GripperTypes
 from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic
-from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
+from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 
 item_img_dict = {
@@ -32,7 +32,6 @@ class PickItem(StateMachine):
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
         picked_items = []
-        armdes = ArmDesignator(robot, {"required_gripper_types": [GripperTypes.GRASPING]})
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
@@ -105,17 +104,6 @@ class PickItem(StateMachine):
             self.add("ASK_USER", CBState(_ask_user),
                      transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
 
-            # self.add("CHECK_PICK_SUCCESSFUL",
-            #          ActiveGraspDetector(robot, armdes),
-            #          transitions={'true': "CARRYING_POSE",
-            #                       'false': "SAY_SOMETHING_WENT_WRONG",
-            #                       'failed': "failed",
-            #                       'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
-            #          )
-
-            # self.add("SAY_SOMETHING_WENT_WRONG", Say(robot, "Oops, it seems I missed it. Lets try again"),
-            #          transitions={"spoken": "ASK_USER2"})
-            # self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
             self.add("CARRYING_POSE", CBState(_carrying_pose), transitions={"done": "succeeded"})
 
 
