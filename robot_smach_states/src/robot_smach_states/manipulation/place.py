@@ -44,8 +44,8 @@ class Put(smach.State):
         self._item_to_place_designator = item_to_place
         self._placement_pose_designator = placement_pose
         self._arm_designator = arm
-        self._offset = 0.1
-        self._pregrasp_extra_offset = 0.05
+        self._center_height = 0.1 # height offset w.r.t. place_pose 
+        self._preplace_offset = 0.05 # height offset for preplace (in addition to center_height)
 
     def execute(self, userdata=None):
 
@@ -81,7 +81,7 @@ class Put(smach.State):
 
         # Pre place
         if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                       height + self._offset + self._pregrasp_extra_offset, 0, 0, 0, rospy.Time(0),
+                                                       height + self._offset + self._preplace_offset, 0, 0, 0, rospy.Time(0),
                                                        frame_id=self._robot.base_link_frame),
                              timeout=10,
                              pre_grasp=True):
@@ -90,7 +90,7 @@ class Put(smach.State):
 
             rospy.loginfo("Retrying preplace")
             if not arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(),
-                                                           height + self._offset + self._pregrasp_extra_offset, 0, 0, 0, rospy.Time(0),
+                                                           height + self._offset + self._preplace_offset, 0, 0, 0, rospy.Time(0),
                                                            frame_id=self._robot.base_link_frame),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
@@ -126,7 +126,7 @@ class Put(smach.State):
         place_pose_bl = self._robot.tf_buffer.transform(placement_fs, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
         arm.send_goal(FrameStamped.from_xyz_rpy(place_pose_bl.frame.p.x() - 0.1,
                                                 place_pose_bl.frame.p.y(),
-                                                place_pose_bl.frame.p.z() + self._offset + self._pregrasp_extra_offset,
+                                                place_pose_bl.frame.p.z() + self._offset + self._preplace_offset,
                                                 0, 0, 0,
                                                 rospy.Time(0),
                                                 frame_id=self._robot.base_link_frame),
