@@ -273,7 +273,7 @@ if __name__ == "__main__":
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(2)  # wait for tf cache to be filled
 
-    rospy.loginfo("Testing the 'get_room' method")
+    # rospy.loginfo("Testing the 'get_room' method")
     # _test_rooms(robot)
 
     rospy.loginfo("Starting giving directions to {}".format(furniture_id))
