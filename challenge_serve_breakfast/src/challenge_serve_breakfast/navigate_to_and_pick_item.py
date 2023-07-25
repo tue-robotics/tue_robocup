@@ -112,6 +112,9 @@ class PickItem(StateMachine):
                                   'failed': "failed",
                                   'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
                      )
+            self.add("SAY_SOMETHING_WENT_WRONG", Say(robot, "Oops, it seems I missed it. Lets try again"),
+                     transitions={"spoken": "ASK_USER2"})
+            self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
             self.add("CARRYING_POSE", CBState(_carrying_pose), transitions={"done": "succeeded"})
 
 
