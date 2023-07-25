@@ -42,7 +42,7 @@ class PlaceItemOnTable(StateMachine):
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
+            arm._send_joint_trajectory([position_array], timeout=0.0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -83,10 +83,8 @@ class PlaceItemOnTable(StateMachine):
         def _place_and_retract(user_data):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
-            if item_name in ["milk_carton"]:
+            if item_name in ["milk_carton", "cereal_box"]:
                 send_joint_goal(JOINTS_PLACE_HORIZONTAL_MILK)
-            elif item_name in ["milk_carton", "cereal_box"]:
-                send_joint_goal(JOINTS_PLACE_HORIZONTAL)
             else:
                 send_joint_goal(JOINTS_PLACE_VERTICAL)
 
@@ -129,7 +127,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             )
             StateMachine.add(
                 "NAVIGATE_TO_TABLE_CLOSE",
-                NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
+                NavigateToSymbolic(robot, {table: table_close_navigation_area}, table, speak=False),
                 transitions={
                     "arrived": "PLACE_ITEM_ON_TABLE",
                     "unreachable": "SAY_PICK_AWAY_THE_CHAIR",
@@ -164,7 +162,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             )
 
 @cb_interface(outcomes=["done"])
-def _publish_item_poses(marker_array_pub, items):
+def _publish_item_poses(user_data, marker_array_pub, items):
     """
     Publishes item poses as a visualization marker array
 
@@ -184,7 +182,7 @@ def _publish_item_poses(marker_array_pub, items):
         marker_msg.type = visualization_msgs.msg.Marker.SPHERE
         marker_msg.action = 0
         marker_msg.pose = posestamped.pose
-        marker_msg.pose.position.z += 1.0
+        marker_msg.pose.position.z = 1.0
         marker_msg.scale = Vector3(0.05, 0.05, 0.05)
         marker_msg.color = COLOR_DICT[k]
         array_msg.markers.append(marker_msg)

@@ -25,7 +25,7 @@ class PickPourPlaceCereal(StateMachine):
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
+            arm._send_joint_trajectory([position_array], timeout=0.0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -54,6 +54,7 @@ class PickPourPlaceCereal(StateMachine):
         def _pour(_):
             robot.speech.speak("Hope this goes well", block=False)
             send_joint_goal(JOINTS_PRE_POUR)
+            rospy.sleep(0.5)
             send_joint_goal(JOINTS_POUR)
             send_joint_goal(JOINTS_PRE_POUR)
             send_joint_goal(JOINTS_POST_PICK)

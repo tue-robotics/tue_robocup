@@ -9,9 +9,10 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.world_model import UpdateEntityPose
 from robot_smach_states.utility import WaitTime
 from smach import State, StateMachine
-from .navigate_to_and_pick_item import NavigateToAndPickItem
+from .navigate_to_and_pick_item import NavigateToAndPickItem, NavigateToSymbolic
 from .navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
 from .pick_pour_place_cereal import PickPourPlaceCereal
 from .tuning import REQUIRED_ITEMS
@@ -51,11 +52,12 @@ class CheckIfWeHaveItAll(State):
 def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
-    pick_id = "dinner_table"
+    pick_id = "closet"
     pick_area_id = "in_front_of"
     place_id = "dinner_table"
     place_area_id = "in_front_of"
     exit_id = "starting_pose"
+    table_des = EdEntityDesignator(robot=robot, uuid=place_id)
 
     with state_machine:
         # Intro
@@ -63,22 +65,40 @@ def setup_statemachine(robot):
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
             StartChallengeRobust(robot, "initial_pose"),
-            transitions={"Done": "SAY_START", "Aborted": "done", "Failed": "SAY_START"},
+            transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "GOODBYE", "Failed": "NAVIGATE_TO_TABLE"},
+        )
+        #Main loop
+        StateMachine.add(
+            "NAVIGATE_TO_TABLE",
+            NavigateToSymbolic(robot, {table_des:place_area_id}, table_des, speak=True),
+            transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "SAY_OPERATOR_WHERE_TO_STAND", "goal_not_defined": "SAY_OPERATOR_WHERE_TO_STAND"},
+            )
+
+        StateMachine.add(
+            "UPDATE_TABLE_POSE",
+            UpdateEntityPose(robot=robot, entity_designator=table_des),
+            transitions={"done": "SAY_OPERATOR_WHERE_TO_STAND"},
+        )
+
+        StateMachine.add(
+            "SAY_OPERATOR_WHERE_TO_STAND",
+            Say(
+                robot,
+                "Operator, please stand at the RIGHT of the dishwasher",
+                block=False,
+            ),
+            transitions={"spoken": "SAY_START"},
         )
 
         StateMachine.add(
             "SAY_START",
             Say(
                 robot,
-                #f"Lets serve some breakfast baby! If there are any chairs near the {place_id}, please remove them",
                 "Lets serve some breakfast baby! I will be asking for some fast handovers.",
                 block=False,
             ),
             transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
         )
-
-        # Main loop
-
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM",
             NavigateToAndPickItem(robot, pick_id, pick_area_id),
@@ -87,7 +107,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM_FAILED", WaitTime(robot, 2),
-            transitions={"waited": "NAVIGATE_AND_PICK_ITEM", "preempted": "done"}
+            transitions={"waited": "NAVIGATE_AND_PICK_ITEM", "preempted": "GOODBYE"}
         )
 
         StateMachine.add(
@@ -97,7 +117,7 @@ def setup_statemachine(robot):
         )
 
         StateMachine.add(
-            "WAIT", WaitTime(robot, 2), transitions={"waited": "CHECK_IF_WE_HAVE_IT_ALL", "preempted": "done"}
+            "WAIT", WaitTime(robot, 2), transitions={"waited": "CHECK_IF_WE_HAVE_IT_ALL", "preempted": "GOODBYE"}
         )
 
         StateMachine.add(

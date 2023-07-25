@@ -15,10 +15,10 @@ from tf_conversions import toMsg
 REQUIRED_ITEMS = ["spoon", "bowl", "milk_carton", "cereal_box"]
 
 ITEM_VECTOR_DICT = {
-    "spoon": PyKDL.Vector(0.03, -0.15, 0),
-    "bowl": PyKDL.Vector(0.1, -0.04, 0),
-    "milk_carton": PyKDL.Vector(-0.1, 0.3, 0),
-    "cereal_box": PyKDL.Vector(-0.1, -0.3, 0),
+    "spoon": PyKDL.Vector(0.0, -0.15, 0),
+    "bowl": PyKDL.Vector(0.0, 0.0, 0),
+    "milk_carton": PyKDL.Vector(-0.05, 0.15, 0),
+    "cereal_box": PyKDL.Vector(-0.05, -0.2, 0),
 }
 
 COLOR_DICT = {
@@ -28,7 +28,7 @@ COLOR_DICT = {
     "cereal_box": ColorRGBA(1, 1, 0, 1),
 }
 
-PICK_ROTATION = 2.
+PICK_ROTATION = 0
 
 JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
 
@@ -45,16 +45,16 @@ JOINTS_RETRACT = [0.7, 0, 0, -1.57, 0]
 
 JOINTS_POST_PICK = [0.7, -1.2, 0, 0, 0]
 
-JOINTS_PRE_POUR = [0.5, -1.2, -1.5, 0, 0]
+JOINTS_PRE_POUR = [0.35, -1.2, 0, 0, 0]
 
-JOINTS_POUR = [0.5, -1.2, -2.5, 0, 0]
+JOINTS_POUR = [0.4, -1.2, -2.5, 0, 0]
 
-POUR_OFFSET_X = 0.03
+POUR_OFFSET_X = -0.15
 POUR_OFFSET_Y = 0.15
 
 
 def item_vector_to_item_frame(item_vector):
-    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, -math.pi / 2), PyKDL.Vector(-0.05, 0.75, 0))
+    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.7, 0, 0))
 
     item_placement_vector = item_vector
     item_frame = frame
