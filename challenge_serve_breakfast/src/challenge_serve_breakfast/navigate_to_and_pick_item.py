@@ -80,8 +80,6 @@ class PickItem(StateMachine):
 
             item_name = leftover_items[0]
 
-            picked_items.append(item_name)
-
             robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
             show_image("challenge_serve_breakfast", item_img_dict[item_name])
 
@@ -100,6 +98,11 @@ class PickItem(StateMachine):
             robot.speech.speak("Thanks for that!", block=False)
             return "done"
 
+        @cb_interface(outcomes=["done"], input_keys=["item_picked"])
+        def _remember_item(user_data):
+            picked_items.append(user_data["item_picked"])
+            return "done"
+
         with self:
             self.add("ROTATE", CBState(_rotate), transitions={"done": "HANDOVER_POSE"})
             self.add("HANDOVER_POSE", CBState(_handover_pose), transitions={"done": "ASK_USER"})
@@ -107,14 +110,15 @@ class PickItem(StateMachine):
                      transitions={"succeeded": "CHECK_PICK_SUCCESSFUL", "failed": "failed"})
             self.add("CHECK_PICK_SUCCESSFUL",
                      ActiveGraspDetector(robot, armdes),
-                     transitions={'true': "CARRYING_POSE",
+                     transitions={'true': "ADD_ITEM_TO_LIST",
                                   'false': "SAY_SOMETHING_WENT_WRONG",
                                   'failed': "failed",
                                   'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
                      )
             self.add("SAY_SOMETHING_WENT_WRONG", Say(robot, "Oops, it seems I missed it. Lets try again"),
                      transitions={"spoken": "ASK_USER2"})
-            self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "CARRYING_POSE", "failed": "failed"})
+            self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "ADD_ITEM_TO_LIST", "failed": "failed"})
+            self.add("ADD_ITEM_TO_LIST", CBState(_remember_item), transitions={"done": "CARRYING_POSE"})
             self.add("CARRYING_POSE", CBState(_carrying_pose), transitions={"done": "succeeded"})
 
 
