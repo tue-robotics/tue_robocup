@@ -59,7 +59,7 @@ class PickItem(StateMachine):
         def _rotate(_):
             arm.gripper.send_goal("close", timeout=0.0)
 
-            # Loot to the operator
+            # Look to the operator
             robot.head.look_at_point(VectorStamped.from_xyz(0.2, -0.2, 1.75, stamp=rospy.Time.now(),
                                                             frame_id=robot.base_link_frame))
             robot.head.wait_for_motion_done()
