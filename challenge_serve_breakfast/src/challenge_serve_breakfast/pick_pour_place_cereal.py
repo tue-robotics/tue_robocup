@@ -84,10 +84,15 @@ class PickPourPlaceCereal(StateMachine):
             arm.send_joint_goal("carrying_pose")
             return "done"
 
+        @cb_interface(outcomes=["done"], output_keys=["item_picked"])
+        def _set_userdata(user_data):
+            user_data["item_picked"] = "cereal_box"
+            return "done"
 
         with self:
             self.add("PICK", CBState(_pick), transitions={"done": "POUR"})
-            self.add("POUR", CBState(_pour), transitions={"done": "PLACE"})
+            self.add("POUR", CBState(_pour), transitions={"done": "SET_USERDATA"})
+            self.add("SET_USERDATA", CBState(_set_userdata), transitions={"done": "PLACE"})
             self.add("PLACE", PlaceItemOnTable(robot, table_id), transitions={"succeeded": "succeeded",
                                                                               "failed": "succeeded"})
 
