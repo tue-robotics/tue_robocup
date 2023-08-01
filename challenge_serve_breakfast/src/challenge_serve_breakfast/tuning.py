@@ -69,7 +69,7 @@ def item_vector_to_item_frame(item_vector):
 def get_item_place_pose(item_name):
     item_vector = ITEM_VECTOR_DICT[item_name]
 
-    item_frame = BREAKFAST_POSE
+    item_frame = copy.deepcopy(BREAKFAST_POSE)
     item_frame.p = BREAKFAST_POSE * item_vector
 
     item_place_offset = ITEM_OFFSET_DICT[item_name]
@@ -81,7 +81,7 @@ def get_item_place_pose(item_name):
 def get_item_pour_poses(item_name):
     item_vector = ITEM_VECTOR_DICT[item_name]
 
-    item_frame = BREAKFAST_POSE
+    item_frame = copy.deepcopy(BREAKFAST_POSE)
     item_frame.p = BREAKFAST_POSE * item_vector
 
     item_pour_offsets = POUR_OFFSET_DICT[item_name]
