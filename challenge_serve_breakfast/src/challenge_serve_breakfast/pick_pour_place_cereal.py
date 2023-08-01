@@ -4,16 +4,33 @@
 #
 # \author Rein Appeldoorn
 
+import copy
 import os
 
 import PyKDL
 import rospy
+from pykdl_ros import FrameStamped
 
-from challenge_serve_breakfast.tuning import JOINTS_POST_PICK, ITEM_VECTOR_DICT, item_vector_to_item_frame, \
-    item_frame_to_pose, POUR_OFFSET_Y, JOINTS_PRE_POUR, JOINTS_POUR, JOINTS_PLACE_HORIZONTAL, JOINTS_RETRACT, \
+from challenge_serve_breakfast.tuning import (
+    get_item_place_pose,
+    get_item_pour_poses,
+    JOINTS_POST_PICK,
+    JOINTS_PRE_PRE_PLACE,
+    JOINTS_PRE_PLACE_HORIZONTAL,
+    JOINTS_PRE_PLACE_VERTICAL,
+    ITEM_VECTOR_DICT,
+    item_vector_to_item_frame,
+    item_frame_to_pose,
+    JOINTS_PLACE_HORIZONTAL,
+    JOINTS_PLACE_HORIZONTAL_MILK,
+    JOINTS_PLACE_VERTICAL,
+    JOINTS_RETRACT,
+    COLOR_DICT, REQUIRED_ITEMS,
+    POUR_OFFSET_Y, JOINTS_PRE_POUR, JOINTS_POUR, JOINTS_PLACE_HORIZONTAL, JOINTS_RETRACT, \
     POUR_OFFSET_X
+)
+from challenge_serve_breakfast.navigate_to_and_place_item_on_table import PlaceItemOnTable
 from robot_skills import get_robot
-from robot_smach_states.navigation.control_to_pose import ControlToPose, ControlParameters
 from smach import StateMachine, cb_interface, CBState
 
 
@@ -32,6 +49,11 @@ class PickPourPlaceCereal(StateMachine):
         def send_gripper_goal(open_close_string, max_torque=0.1, wait_for_motion_done=True):
             arm.gripper.send_goal(open_close_string, max_torque=max_torque)
 
+        def send_goal(pose_goal, wait_for_motion_done=True):
+            arm.send_goal(pose_goal, timeout=0.0)
+            if wait_for_motion_done:
+                arm.wait_for_motion_done()
+
         @cb_interface(outcomes=["done"])
         def _pick(_):
             robot.speech.speak("Lets grab some cereal", block=False)
@@ -39,64 +61,35 @@ class PickPourPlaceCereal(StateMachine):
             send_joint_goal(JOINTS_POST_PICK)
             return "done"
 
-        @cb_interface(outcomes=["done"])
-        def _align_pour(_):
-            item_placement_vector = ITEM_VECTOR_DICT["cereal_box"] + PyKDL.Vector(POUR_OFFSET_X, POUR_OFFSET_Y, 0)
-            item_frame = item_vector_to_item_frame(item_placement_vector)
-
-            goal_pose = item_frame_to_pose(item_frame, table_id)
-            rospy.loginfo("Moving to pouring pose at {}".format(goal_pose))
-            robot.head.look_down()
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
-            return "done"
 
         @cb_interface(outcomes=["done"])
         def _pour(_):
-            robot.speech.speak("Hope this goes well", block=False)
-            send_joint_goal(JOINTS_PRE_POUR)
-            rospy.sleep(0.5)
-            send_joint_goal(JOINTS_POUR)
-            send_joint_goal(JOINTS_PRE_POUR)
-            send_joint_goal(JOINTS_POST_PICK)
-            return "done"
+            pour_target = "bowl"
+            item_name = "cereal"
+            rospy.loginfo(f"pouring in {pour_target}...")
 
-        @cb_interface(outcomes=["done"])
-        def _align_place(_):
-            robot.speech.speak("Awesome", block=False)
-            item_placement_vector = ITEM_VECTOR_DICT["cereal_box"]
-            item_frame = item_vector_to_item_frame(item_placement_vector)
+            robot.speech.speak(f"I am going to pour the {item_name}", block=False)
 
-            goal_pose = item_frame_to_pose(item_frame, table_id)
-            rospy.loginfo("Moving to place pose at {}".format(goal_pose))
-            robot.head.look_down()
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
-            return "done"
-
-        @cb_interface(outcomes=["done"])
-        def _place(_):
-            robot.speech.speak("Putting back the cereal", block=False)
-            rospy.loginfo("Placing...")
-            send_joint_goal(JOINTS_PLACE_HORIZONTAL)
-            send_gripper_goal("open")
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
-            rospy.loginfo("Retract...")
-            send_joint_goal(JOINTS_RETRACT, wait_for_motion_done=False)
-            robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
-            send_gripper_goal("close", wait_for_motion_done=False)
-            arm.send_joint_goal("carrying_pose")
-
+            item_pour_poses = get_item_pour_poses(pour_target)
+            for pose in item_pour_poses:
+                goal_fs = FrameStamped(pose, rospy.Time(0), table_id)
+                rospy.loginfo("Pouring...")
+                send_goal(goal_fs)
             robot.head.reset()
-
+            rospy.loginfo("Retracting...")
+            robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
+            arm.send_joint_goal("carrying_pose")
             return "done"
 
+
         with self:
-            self.add("PICK", CBState(_pick), transitions={"done": "ALIGN_POUR"})
-            self.add("ALIGN_POUR", CBState(_align_pour), transitions={"done": "POUR"})
-            self.add("POUR", CBState(_pour), transitions={"done": "ALIGN_PLACE"})
-            self.add("ALIGN_PLACE", CBState(_align_place), transitions={"done": "PLACE"})
-            self.add("PLACE", CBState(_place), transitions={"done": "succeeded"})
+            self.add("PICK", CBState(_pick), transitions={"done": "POUR"})
+            self.add("POUR", CBState(_pour), transitions={"done": "PLACE"})
+            self.add("PLACE", PlaceItemOnTable(robot, table_id), transitions={"succeeded": "succeeded",
+                                                                              "failed": "succeeded"})
 
 
 if __name__ == "__main__":

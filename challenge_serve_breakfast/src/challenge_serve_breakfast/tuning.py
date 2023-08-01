@@ -34,6 +34,11 @@ ITEM_OFFSET_DICT = {
     "cereal_box": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.07)),
 }
 
+POUR_OFFSET_DICT = {
+    "bowl": [PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, -0.07, 0.20)),
+             PyKDL.Frame(PyKDL.Rotation.RPY(0.5*math.pi, 0, 0), PyKDL.Vector(0.0, -0.07, 0.20))]
+}
+
 COLOR_DICT = {
     "spoon": ColorRGBA(1, 0, 1, 1),
     "bowl": ColorRGBA(0, 1, 1, 1),
@@ -92,6 +97,18 @@ def get_item_place_pose(item_name):
     rospy.loginfo(f"Placing at frame {item_frame} with place pose {item_place_pose}")
 
     return item_place_pose
+
+def get_item_pour_poses(item_name):
+    item_vector = ITEM_VECTOR_DICT[item_name]
+
+    item_frame = BREAKFAST_POSE
+    item_frame.p = BREAKFAST_POSE * item_vector
+
+    item_pour_offsets = POUR_OFFSET_DICT[item_name]
+    item_pour_poses = []
+    for offset in item_pour_offsets:
+        item_pour_poses.append(item_frame * offset)
+    return item_pour_poses
 
 
 def item_frame_to_pose(item_frame, frame_id):
