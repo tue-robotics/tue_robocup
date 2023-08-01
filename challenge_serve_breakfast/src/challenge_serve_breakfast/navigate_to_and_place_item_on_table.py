@@ -37,10 +37,11 @@ from smach import StateMachine, cb_interface, CBState
 
 
 class PlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id):
+    def __init__(self, robot, table_id, retract = True):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
+        self.retract = retract
 
         def send_goal(pose_goal, wait_for_motion_done=True):
             arm.send_goal(pose_goal, timeout=0.0)
@@ -79,7 +80,7 @@ class PlaceItemOnTable(StateMachine):
             send_goal(place_fs)
             send_gripper_goal("open")
 
-            if item_name != "cereal_box":
+            if item_name != "cereal_box" or self.retract:
                 rospy.loginfo("Retracting...")
                 send_goal(post_place_fs)
                 robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
@@ -155,7 +156,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
 
             StateMachine.add(
                 "PLACE_ITEM_ON_TABLE",
-                PlaceItemOnTable(robot, table_id),
+                PlaceItemOnTable(robot, table_id, retract=False),
                 transitions={"succeeded": "succeeded", "failed": "failed"},
             )
 
