@@ -142,7 +142,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "NAVIGATE_TO_EXIT",
-            NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid=exit_id)),
+            NavigateToWaypoint(robot, EdEntityDesignator(robot, uuid=exit_id), speak=False),
             transitions={
                 "arrived": "GOODBYE",
                 "unreachable": "GOODBYE",
