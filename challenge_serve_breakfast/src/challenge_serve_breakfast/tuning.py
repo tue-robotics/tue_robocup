@@ -4,6 +4,7 @@
 #
 # \author Rein Appeldoorn
 
+import copy
 import math
 
 import PyKDL
@@ -66,7 +67,7 @@ POUR_OFFSET_Y = 0.15
 
 
 def item_vector_to_item_frame(item_vector):
-    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.2, 0, 0.76))
+    frame = copy.deepcopy(BREAKFAST_POSE)
 
     item_placement_vector = item_vector
     item_frame = frame
