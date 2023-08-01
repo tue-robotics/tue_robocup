@@ -36,7 +36,8 @@ ITEM_OFFSET_DICT = {
 
 POUR_OFFSET_DICT = {
     "bowl": [PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, -0.07, 0.20)),
-             PyKDL.Frame(PyKDL.Rotation.RPY(0.5*math.pi, 0, 0), PyKDL.Vector(0.0, -0.07, 0.20))]
+             PyKDL.Frame(PyKDL.Rotation.RPY(-0.5*math.pi, 0, 0), PyKDL.Vector(0.0, -0.07, 0.20)),
+             PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, -0.07, 0.20))]
 }
 
 COLOR_DICT = {
