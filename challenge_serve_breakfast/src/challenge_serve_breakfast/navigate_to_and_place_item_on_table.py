@@ -15,17 +15,11 @@ from pykdl_ros import FrameStamped
 
 from challenge_serve_breakfast.tuning import (
     get_item_place_pose,
-    JOINTS_PRE_PRE_PLACE,
-    JOINTS_PRE_PLACE_HORIZONTAL,
-    JOINTS_PRE_PLACE_VERTICAL,
     ITEM_VECTOR_DICT,
     item_vector_to_item_frame,
     item_frame_to_pose,
-    JOINTS_PLACE_HORIZONTAL,
-    JOINTS_PLACE_HORIZONTAL_MILK,
-    JOINTS_PLACE_VERTICAL,
-    JOINTS_RETRACT,
-    COLOR_DICT, REQUIRED_ITEMS,
+    COLOR_DICT,
+    REQUIRED_ITEMS,
 )
 from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say

@@ -4,30 +4,14 @@
 #
 # \author Rein Appeldoorn
 
-import copy
 import os
 
-import PyKDL
 import rospy
 from pykdl_ros import FrameStamped
 
 from challenge_serve_breakfast.tuning import (
-    get_item_place_pose,
     get_item_pour_poses,
     JOINTS_POST_PICK,
-    JOINTS_PRE_PRE_PLACE,
-    JOINTS_PRE_PLACE_HORIZONTAL,
-    JOINTS_PRE_PLACE_VERTICAL,
-    ITEM_VECTOR_DICT,
-    item_vector_to_item_frame,
-    item_frame_to_pose,
-    JOINTS_PLACE_HORIZONTAL,
-    JOINTS_PLACE_HORIZONTAL_MILK,
-    JOINTS_PLACE_VERTICAL,
-    JOINTS_RETRACT,
-    COLOR_DICT, REQUIRED_ITEMS,
-    POUR_OFFSET_Y, JOINTS_PRE_POUR, JOINTS_POUR, JOINTS_PLACE_HORIZONTAL, JOINTS_RETRACT, \
-    POUR_OFFSET_X
 )
 from challenge_serve_breakfast.navigate_to_and_place_item_on_table import PlaceItemOnTable
 from robot_skills import get_robot

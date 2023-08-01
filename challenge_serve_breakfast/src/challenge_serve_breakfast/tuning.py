@@ -47,30 +47,9 @@ COLOR_DICT = {
     "cereal_box": ColorRGBA(1, 1, 0, 1),
 }
 
-PICK_ROTATION = 0
-
 JOINTS_HANDOVER = [0.4, -0.2, 0.0, -1.37, 0]
 
-JOINTS_PRE_PRE_PLACE = [0.69, 0, 0, -0.7, 0]
-
-JOINTS_PRE_PLACE_HORIZONTAL = [0.8, -1.2, 0, 0, 0]
-JOINTS_PLACE_HORIZONTAL = [0.65, -1.75, 0, 0, 0]
-JOINTS_PLACE_HORIZONTAL_MILK = [0.55, -1.75, 0, 0, 0]
-
-JOINTS_PRE_PLACE_VERTICAL = [0.8, -1.2, 0, -1.57, 0]
-JOINTS_PLACE_VERTICAL = [0.65, -1.57, 0, -1.57, 0]
-
-JOINTS_RETRACT = [0.7, 0, 0, -1.57, 0]
-
 JOINTS_POST_PICK = [0.7, -1.2, 0, 0, 0]
-
-JOINTS_PRE_POUR = [0.35, -1.2, 0, 0, 0]
-
-JOINTS_POUR = [0.4, -1.2, -2.5, 0, 0]
-
-POUR_OFFSET_X = -0.15
-POUR_OFFSET_Y = 0.15
-
 
 def item_vector_to_item_frame(item_vector):
     frame = copy.deepcopy(BREAKFAST_POSE)
