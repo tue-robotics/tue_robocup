@@ -82,6 +82,12 @@ class ArucoGrasp(smach.State):
 
         grasp_succeeded=False
         rate = rospy.Rate(10) # loop rate in hz
+
+        base_to_gripper = self.frame_from_xyzrpy(0.5, # x distance to the robot
+                                                0.08, # y distance off center from the robot (fixed if rpy=0)
+                                                0.7, # z height of the gripper
+                                                0, 0, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
+        move_arm = True
         while not grasp_succeeded:
             # control loop
 
@@ -92,32 +98,30 @@ class ArucoGrasp(smach.State):
             v.linear.x = 0 # forward
             v.linear.y = 0 # linear left
             v.angular.z = 0 # rotation speed to the left
-            self._cmd_vel.publish(v) # send command to the robot
-
-            self.robot.base.force_drive()
+            self.robot.base._cmd_vel.publish(v) # send command to the robot
 
             # example arm pose command
-            move_arm = False
             if (move_arm):
-                pose_goal = FrameStamped(self.frame_from_xyzrpy(0.5, # x distance to the robot
-                                                                 0.08, # y distance off center from the robot (fixed if rpy=0)
-                                                                 0.7, # z height of the gripper
-                                                                 0, 0, 0), # Roll pitch yaw. 0,0,0 for a horizontal gripper.
+                pose_goal = FrameStamped(base_to_gripper,
                                         rospy.Time.now(), #timestamp when this pose was created
                                         "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
                                         )
                 arm.send_goal(pose_goal) # send the command to the robot.
                 arm.wait_for_motion_done() # wait until the motion is complete
+                move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
             #TODO get base-gripper transform
 
             # check if done
-            grasp_succeeded = True
+            if False: # check if the grasp has succeeded
+             grasp_succeeded = True
 
+            rospy.loginfo(f"print a message to show we are still running.")
             rate.sleep()
 
         return "succeeded"
 
+    @staticmethod
     def frame_from_xyzrpy(x, y, z, roll, pitch, yaw):
         """
         Helper function to create a kdl frame based on an x,y,z position and a RPY rotation
@@ -178,11 +182,16 @@ class ArucoGrab(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('PREPARE_GRASP', PrepareGrasp(robot, arm, item),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
+                                   transitions={'unreachable': 'RESET_FAILURE',
+                                                'goal_not_defined': 'RESET_FAILURE',
+                                                'arrived': 'PREPARE_GRASP'})
+
+            smach.StateMachine.add('PREPARE_GRASP', PrepareGrasp(robot, arm),
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', ArucoGrasp(robot, arm, item),
+            smach.StateMachine.add('GRAB', ArucoGrasp(robot, arm),
                                    transitions={'succeeded': 'done',
                                                 'marker_lost':'RESET_FAILURE',
                                                 'failed': 'RESET_FAILURE'})
