@@ -62,8 +62,6 @@ class ArucoGrasp(smach.State):
 
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to grasp with
-        :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
-        :param check_occupancy: Indicates whether to check if gripper is occupied
         """
         smach.State.__init__(self, outcomes=['succeeded', 'marker_lost','failed'])
 
