@@ -215,7 +215,7 @@ class Place(smach.StateMachine):
                                    transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator, False),
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
                                    transitions={'locked': 'NAVIGATE_TO_PLACE'})
 
             smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
@@ -227,10 +227,10 @@ class Place(smach.StateMachine):
                                    transitions={'succeeded': 'UNLOCK_DESIGNATOR_SUCCESS',
                                                 'failed': 'UNLOCK_DESIGNATOR_FAILED'})
 
-            smach.StateMachine.add('UNLOCK_DESIGNATOR_SUCCESS', UnlockDesignator(locking_place_designator, False),
+            smach.StateMachine.add('UNLOCK_DESIGNATOR_SUCCESS', UnlockDesignator(locking_place_designator),
                                    transitions={'unlocked': 'done'})
 
-            smach.StateMachine.add('UNLOCK_DESIGNATOR_FAILED', UnlockDesignator(locking_place_designator, False),
+            smach.StateMachine.add('UNLOCK_DESIGNATOR_FAILED', UnlockDesignator(locking_place_designator),
                                    transitions={'unlocked': 'failed'})
 
             check_arm_requirements(self, robot)
