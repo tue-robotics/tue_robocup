@@ -86,6 +86,9 @@ class LockingDesignator(Designator):
         self._current = None
         self._locked = False
 
+    def current(self):
+        return self._current
+
     def _resolve(self):
         if self._locked:
             if self._current is None:
