@@ -82,27 +82,6 @@ class Restaurant(smach.StateMachine):
                                        search_timeout=600),  # 10 minutes
                                    transitions={'found': 'GET_CUSTOMER_IMAGE',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
-            #
-            # smach.StateMachine.add('SAY_SPEAK',
-            #                        states.human_interaction.Say(
-            #                            robot,
-            #                            "Please make sure that you speak loudly and directly into my microphone "
-            #                            "AND SPEAK AFTER THE PING. Like is shown "
-            #                            "on my screen", block=True),
-            #                        transitions={'spoken': 'SHOW_IMAGE_SPEAK'})
-            #
-            # smach.StateMachine.add('SHOW_IMAGE_SPEAK',
-            #                        states.human_interaction.ShowImageState(
-            #                            robot,
-            #                            os.path.join(
-            #                                rospkg.RosPack().get_path('challenge_restaurant'),
-            #                                "images",
-            #                                "speak.jpg"
-            #                            ),
-            #                            seconds=5),
-            #                        transitions={'succeeded': 'SAY_I_HAVE_SEEN',
-            #                                     'failed': 'SAY_I_HAVE_SEEN'})
-
             # Asking for confirmation
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
                                    states.human_interaction.Say(
