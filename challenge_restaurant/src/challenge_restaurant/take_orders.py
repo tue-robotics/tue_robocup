@@ -13,6 +13,7 @@ import smach
 # TU/e Robotics
 from ed.entity import Entity
 from hmi import TimeoutException
+from robot_skills.simulation.sim_mode import is_sim_mode
 from robocup_knowledge import knowledge_loader
 import robot_smach_states.util.designators as ds
 
@@ -39,16 +40,26 @@ class TakeOrder(smach.State):
         ds.check_type(entity_designator, Entity)
         self._entity_designator = entity_designator
         self._orders = orders
-        self._max_tries = 5
+        self.number_of_tries = 0
+        self._max_tries = 2
 
     def _confirm(self):
         try:
             speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
                                                                                           "T[False] -> no", target="T")
+
         except TimeoutException:
             return False
 
         return speech_result.semantics
+
+    def _confirm_picovoice(self):
+        try:
+            speech_result = self._robot.picovoice.get_intent(context_url="yesOrNo")
+        except TimeoutException:
+            return False
+
+        return "yes" in speech_result.semantics
 
     def execute(self, userdata=None):
         person = self._entity_designator.resolve()
@@ -66,20 +77,21 @@ class TakeOrder(smach.State):
             rospy.loginfo('nr_tries: %d', nr_tries)
 
             self._robot.speech.speak("What would you like to order?")
+            self._robot.speech.speak("Please speak fast without breaks.")
             count = 0
             while not rospy.is_shutdown():
                 count += 1
 
                 try:
-                    speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                          grammar=knowledge.order_grammar, target="O")
+                    if is_sim_mode():
+                        speech_result = self._robot.hmi.query(description="Can I please take your order",
+                                                              grammar=knowledge.order_grammar, target="O")
+                    else:
+                        speech_result = self._robot.picovoice.get_intent(context_url="restaurant")
                     break
                 except TimeoutException:
-                    if count < 5:
-                        self._robot.speech.speak(random.choice(["I'm sorry, can you repeat",
-                                                                "Please repeat your order, I didn't hear you",
-                                                                "I didn't get your order, can you repeat it",
-                                                                "Please speak up, as I didn't hear your order"]))
+                    if count < 3:
+                        self._robot.speech.speak("Please speak even louder and directly into my microphone")
                     else:
                         self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
                         self._robot.head.cancel_goal()
@@ -92,9 +104,9 @@ class TakeOrder(smach.State):
             except:
                 continue
 
-            if self._confirm():
+            if (is_sim_mode() and self._confirm()) or (not is_sim_mode() and self._confirm_picovoice()):
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
-                for item in speech_result.semantics:
+                for item in speech_result.semantics.values():
                     self._orders.append(item)
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
@@ -133,7 +145,12 @@ class ReciteOrders(smach.State):
         #     sentence = "Table 1 wants the combo {} and {}".format(self._orders["food1"],
         #                                                           self._orders["food2"])
 
-        self._robot.speech.speak(sentence)
+        self._robot.speech.speak(sentence, block=True)
+        rospy.sleep(5)
+
+        if "red_wine" in self._orders or "red wine" in self._orders or "orange_juice" in self._orders or "orange juice" in self._orders:
+            water_sentence = "I am too weak to carry the red wine or orange juicy, please bring that yourself. And please make me stronger."
+            self._robot.speech.speak(water_sentence)
 
         self._robot.head.cancel_goal()
 
@@ -186,4 +203,3 @@ if __name__ == '__main__':
     sm.execute()
 
     rospy.loginfo("Orders {}".format(orders))
-
