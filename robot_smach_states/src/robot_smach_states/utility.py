@@ -374,8 +374,8 @@ class LockDesignator(smach.State):
 
     def execute(self, userdata=None):
         self.locking_designator.lock()
-        rospy.loginfo("locking_designator {1} is now locked to {0}".format(
-            str(self.locking_designator.resolve())[:10], self.locking_designator))
+        rospy.loginfo(f"locking_designator {self.locking_designator} is now locked to "
+                      f"{str(self.locking_designator.current())[:10]}")
         return 'locked'
 
 
@@ -385,8 +385,8 @@ class UnlockDesignator(smach.State):
         self.locking_designator = locking_designator
 
     def execute(self, userdata=None):
-        rospy.loginfo("locking_designator {1} is going to unlock from {0}".format(
-            str(self.locking_designator.resolve())[:10], self.locking_designator))
+        rospy.loginfo(f"locking_designator {self.locking_designator} is going to unlock from "
+                      f"{str(self.locking_designator.current())[:10]}")
         self.locking_designator.unlock()
         return 'unlocked'
 

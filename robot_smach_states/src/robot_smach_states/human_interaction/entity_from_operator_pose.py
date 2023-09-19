@@ -41,7 +41,7 @@ class GetFurnitureFromOperatorPose(State):
                                       stamp=rospy.Time.now() - rospy.Duration.from_sec(0.5)
                                       ),
                         pose=self.operator.pointing_pose
-                    ), "map")
+                    ), "map", timeout=rospy.Duration(1.0))
                     result = self._robot.ed.ray_trace(map_pose)  # type: RayTraceResponse
                 except Exception as e:
                     rospy.logerr("Could not get ray trace from closest person: {}".format(e))

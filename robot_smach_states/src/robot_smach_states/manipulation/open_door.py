@@ -173,7 +173,7 @@ class NavigateToHandle(NavigateTo):
         angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
         radius = 0.75*math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
-        handle_point_map = self._robot.tf_buffer.transform(handle_point, "map")
+        handle_point_map = self._robot.tf_buffer.transform(handle_point, "map", timeout=rospy.Duration(1.0))
         x = handle_point_map.point.x
         y = handle_point_map.point.y
 
@@ -241,7 +241,7 @@ class UpdateHandleLocation(smach.State):
             z = numpy.average([result.handle_edge_point1.point.z, result.handle_edge_point2.point.z])
             handle_loc = VectorStamped.from_xyz(x, y, z, rospy.Time.now(), result.handle_edge_point1.header.frame_id)
             # This should update the door entity (probs via the designator)
-            door.handle_pose = self._robot.tf_buffer.transform(handle_loc, "map")
+            door.handle_pose = self._robot.tf_buffer.transform(handle_loc, "map", timeout=rospy.Duration(1.0))
 
             return "succeeded"
         else:
@@ -276,7 +276,7 @@ class GraspHandle(smach.State):
                                                      handle_point.vector),
                                            rospy.Time.now(),
                                            frame_id=handle_point.header.frame_id)
-        goal_bl = self._robot.tf_buffer.transform(handle_framestamped, self._robot.base_link_frame)
+        goal_bl = self._robot.tf_buffer.transform(handle_framestamped, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
 
         # Move to in front of handle, this is heavily tuned so not robust!
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.08)
@@ -377,15 +377,17 @@ class PushDoorOpen(smach.State):
 
         next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(0.1, 0.05, 0.0)),
                                               rospy.Time.now(), "hand_palm_link")
-        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
+        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
 
         arm_goal_res = arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()
         if arm_goal_res:
             arm.send_gripper_goal('open')
 
-            door_frame_robot0 = self._robot.tf_buffer.transform(door.frame_points[0], self._robot.base_link_frame)
-            door_frame_robot1 = self._robot.tf_buffer.transform(door.frame_points[1], self._robot.base_link_frame)
+            door_frame_robot0 = self._robot.tf_buffer.transform(door.frame_points[0], self._robot.base_link_frame,
+                                                                timeout=rospy.Duration(1.0))
+            door_frame_robot1 = self._robot.tf_buffer.transform(door.frame_points[1], self._robot.base_link_frame,
+                                                                timeout=rospy.Duration(1.0))
             x1 = door_frame_robot0.vector.x()
             y1 = door_frame_robot0.vector.y()
             x2 = door_frame_robot1.vector.x()
@@ -424,7 +426,8 @@ class PullDoorOpen(smach.State):
         next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(-0.05, 0.0, 0.15)),
                                               rospy.Time.now(),
                                               "hand_palm_link")
-        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
+        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame,
+                                                  timeout=rospy.Duration(1.0))
 
         arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()
@@ -432,7 +435,8 @@ class PullDoorOpen(smach.State):
         next_pose_framestamped = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0.0, 1.0, 0.0), kdl.Vector(0.1, 0.0, 0.0)),
                                               rospy.Time.now(),
                                               "hand_palm_link")
-        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame)
+        goal_bl = self._robot.tf_buffer.transform(next_pose_framestamped, self._robot.base_link_frame,
+                                                  timeout=rospy.Duration(1.0))
 
         arm.send_goal(goal_bl, timeout=0.0)
         arm.wait_for_motion_done()

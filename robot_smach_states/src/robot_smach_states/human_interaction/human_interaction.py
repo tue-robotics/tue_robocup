@@ -635,7 +635,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
                 Say(robot,
                     ["What is your name?",
                      f"I'm called {robot.robot_name}, please tell me your name.",
-                     "How do you like to be called?"],
+                     f"I'm called {robot.robot_name}, how about you?"],
                     block=True,
                     look_at_standing_person=True),
                 transitions={"spoken": "HEAR"},

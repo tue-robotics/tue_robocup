@@ -8,6 +8,7 @@ import numpy as np
 from pykdl_ros import VectorStamped
 import rospy
 import smach
+from tf2_ros import TransformException
 
 # TU/e Robotics
 from ed.entity import Entity
@@ -34,8 +35,8 @@ class LookAtEntity(smach.State):
 
     def execute(self, userdata=None):
 
-        entity = self._entity.resolve() if hasattr(self._entity, 'resolve') else self._entity
-        height = self._height.resolve() if hasattr(self._height, 'resolve') else self._height
+        entity = ds.value_or_resolve(self._entity)
+        height = ds.value_or_resolve(self._height)
 
         if not entity:
             rospy.logerr(
@@ -138,7 +139,13 @@ class RotateToEntity(smach.State):
         vs = VectorStamped.from_xyz(0, 0, 0, entity.last_update_time, frame_id=entity.uuid)
         rospy.loginfo(f'Rotate to "{entity.uuid}": {vs}')
 
-        vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame)
+        # Transform to base_link frame
+        try:
+            vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
+        except TransformException as e:
+            rospy.logerr(f'Could not transform {vs} to {self._robot.base_link_frame}: {e}')
+            return 'failed'
+
         # tan(angle) = dy / dx
         # angle = arctan(dy / dx)
         # Arm to position in a safe way
@@ -147,7 +154,7 @@ class RotateToEntity(smach.State):
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
 
         duration = abs(rotate_base / self._max_vel)  # duration of rotation, in s
-        vel = self._maxvel * np.sign(rotate_base)
+        vel = self._max_vel * np.sign(rotate_base)
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
                                                                                        np.degrees(vel),
                                                                                        duration))

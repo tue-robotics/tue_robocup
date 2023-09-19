@@ -61,7 +61,7 @@ class PointAt(smach.State):
             return "failed"
         # TODO: make arm point at some pose
         vs = VectorStamped.from_framestamped(point_at_ent.pose)
-        vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame)
+        vector_in_bs = self._robot.tf_buffer.transform(vs, self._robot.base_link_frame, timeout=rospy.Duration(1.0))
         # tan(angle) = dy / dx
         # angle = arctan(dy / dx)
         # Arm to position in a safe way

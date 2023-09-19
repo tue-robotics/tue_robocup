@@ -1,15 +1,17 @@
 #! /usr/bin/env python
 
-from typing import TypeVar, Union
+from typing import Iterable, TypeVar, Union
 
 # ROS
 import rospy
 
 # System
 import operator
+import random
 
 # TU/e Robotics
 from robot_smach_states.util.designators.core import Designator, VariableDesignator
+from robot_smach_states.util.designators.checks import check_type
 
 __author__ = 'loy'
 
@@ -83,6 +85,9 @@ class LockingDesignator(Designator):
     def unlock(self):
         self._current = None
         self._locked = False
+
+    def current(self):
+        return self._current
 
     def _resolve(self):
         if self._locked:
@@ -231,6 +236,26 @@ class DeferToRuntime(Designator):
 
     def _resolve(self):
         return self.func()
+
+
+class RandomDesignator(Designator):
+    """
+    Return a random value from a given iterable
+
+    For example:
+    >>> d = RandomDesignator([1,2,3], resolve_type=int)
+    >>> d.resolve() in [1,2,3]
+    True
+    """
+
+    def __init__(self, orig: Iterable, resolve_type=None, name=None):
+        super(RandomDesignator, self).__init__(resolve_type=resolve_type, name=name)
+        check_type(orig, [resolve_type])
+        self.orig = orig
+
+    def _resolve(self):
+        orig = value_or_resolve(self.orig)
+        return random.choice(orig)
 
 
 if __name__ == "__main__":

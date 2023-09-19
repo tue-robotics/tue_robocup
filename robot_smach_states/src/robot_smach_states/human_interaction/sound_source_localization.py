@@ -30,7 +30,7 @@ class SSLLookatAndRotate(smach.State):
                 stamp=rospy.Time.now(),
                 frame_id=self._robot.base_link_frame
             )
-            lookat_vector = self._robot.tf_buffer.Transform(lookat_vector, "map")
+            lookat_vector = self._robot.tf_buffer.Transform(lookat_vector, "map", timeout=rospy.Duration(1.0))
 
             self._robot.head.look_at_point(lookat_vector, pan_vel=2.0)
 

@@ -175,7 +175,7 @@ class FollowOperator(smach.State):
         """
         start_time = rospy.Time.now()
 
-        self._robot.head.look_at_standing_person(distance=1.5)
+        self._robot.head.look_at_standing_person(distance=1.5, height=1.3)
 
         if self._operator_id:
             # Can still result in None if the operator is not in ED
@@ -218,7 +218,7 @@ class FollowOperator(smach.State):
                                                          block=True)
                                 self._robot.speech.speak("Just in case...",
                                                          block=False)
-                                self._robot.head.look_at_standing_person()
+                                self._robot.head.look_at_standing_person(distance=1.5, height=1.3)
                                 learn_person_start_time = rospy.Time.now()
                                 learn_person_timeout = 10.0  # TODO: Parameterize
                                 num_detections = 0
@@ -414,13 +414,32 @@ class FollowOperator(smach.State):
 
         self._plan_marker_pub.publish(line_strip)
 
+    def _look_at_operator(self):
+        """
+        Let the robot look at the operator
+        """
+        # ToDo: the looking angle of the head might need to be limited because of obstacle avoidance
+        self._robot.head.cancel_goal()
+
+        goal_pose = None
+
+        if self._operator_id:
+            if operator := self._robot.ed.get_entity(uuid=self._operator_id):
+                goal_pose = operator.pose
+
+        if goal_pose is None:
+            goal_pose = self._last_operator.pose
+
+        goal = VectorStamped.from_framestamped(goal_pose)
+        goal.vector.z(1.3)
+
+        self._robot.head.look_at_point(goal)
+
     def _update_navigation(self):
         """
         Set the navigation plan to match the breadcrumbs collected into self._breadcrumbs.
         This list has all the Entity's of where the operator has been
         """
-        self._robot.head.cancel_goal()
-
         robot_position = self._robot.base.get_location().frame.p
         operator_position = self._last_operator.pose.frame.p
 
@@ -487,18 +506,19 @@ class FollowOperator(smach.State):
         if not self._learn_face:
             return False
         rospy.loginfo("Trying to recover the operator")
-        self._robot.head.look_at_standing_person()
+        self._robot.head.look_at_standing_person(distance=1.5, height=1.3)
         self._robot.speech.speak(f"{self._operator_name}, please look at me while I am looking for you", block=False)
 
         look_angles = [0.0,
                        math.pi/6,
-                       math.pi/4,
-                       math.pi/2.3,
-                       0.0,
                        -math.pi/6,
+                       math.pi/4,
                        -math.pi/4,
-                       -math.pi/2.3]
-        head_goals = [VectorStamped.from_xyz(look_distance*math.cos(angle), look_distance*math.sin(angle), 1.7,
+                       math.pi/2.3,
+                       -math.pi/2.3,
+                       0.0,
+                       ]
+        head_goals = [VectorStamped.from_xyz(look_distance*math.cos(angle), look_distance*math.sin(angle), 1.5,
                                              rospy.Time.now(), self._robot.base_link_frame)
                       for angle in look_angles]
 
@@ -735,15 +755,19 @@ class FollowOperator(smach.State):
                             rospy.loginfo("and this plan is still active, so I'll give the global planner a chance")
                         else:
                             rospy.loginfo("but we reached that goal at some point, so we can safely update navigation")
+                            self._look_at_operator()
                             self._update_navigation()
                     else:
                         rospy.loginfo("We never replanned so far, so we can safely update navigation")
+                        self._look_at_operator()
                         self._update_navigation()
                     # else:
                     #     rospy.loginfo("Updating navigation")
+                    #     self._look_at_operator()
                     #     self._update_navigation()
                 else:
                     self._update_navigation()
+                    self._look_at_operator()
                     rospy.loginfo("Updating navigation.")
 
             rate.sleep()

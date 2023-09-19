@@ -39,7 +39,7 @@ class FindPeople(smach.State):
 
     def __init__(self, robot, properties=None, query_entity_designator=None,
                  found_people_designator=None, look_distance=10.0, speak=False,
-                 strict=True, nearest=False, attempts=1, search_timeout=60,
+                 strict=True, reverse=False, nearest=False, attempts=1, search_timeout=60,
                  look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """
         Initialization method
@@ -85,12 +85,13 @@ class FindPeople(smach.State):
         self._look_distance = look_distance
         self._speak = speak
         self._strict = strict
+        self._reverse = reverse
         self._nearest = nearest
         self._attempts = attempts
 
         self._search_timeout = search_timeout
 
-        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+        self._look_angles = np.flip(np.linspace(look_range[0], look_range[1], look_steps))
 
         if found_people_designator:
             ds.is_writeable(found_people_designator)
@@ -102,6 +103,7 @@ class FindPeople(smach.State):
         self._query_entity_designator = query_entity_designator
 
     def execute(self, userdata=None):
+        self._look_angles = np.flip(self._look_angles)
         person_label = None
 
         if self._properties:
@@ -127,7 +129,7 @@ class FindPeople(smach.State):
 
         head_goals = [VectorStamped.from_xyz(x=self._look_distance * math.cos(angle),
                                              y=self._look_distance * math.sin(angle),
-                                             z=1.5,
+                                             z=1.7,
                                              stamp=start_time,
                                              frame_id=self._robot.base_link_frame)
                       for angle in self._look_angles]
@@ -172,7 +174,11 @@ class FindPeople(smach.State):
 
             if self._properties:
                 for k, v in self._properties.items():
-                    found_people = [x for x in found_people if self._check_person_property(x, k, v)]
+                    found_people_temp = [x for x in found_people if self._check_person_property(x, k, v)]
+                    if self._reverse:
+                        found_people = list(set(found_people) - set(found_people_temp))
+                    else:
+                        found_people = found_people_temp
                     rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
             result_people = []
@@ -180,7 +186,7 @@ class FindPeople(smach.State):
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
                 if query_entity:
-                    result_people = [p for p in found_people if query_entity.in_volume(VectorStamped.from_framestamped(p.pose), 'in')]
+                    result_people = [p for p in found_people if query_entity.in_volume(VectorStamped.from_framestamped(p.pose), 'in', padding=-0.15)]
                     rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
                     # If people not in query_entity then try if query_entity in people
@@ -188,7 +194,7 @@ class FindPeople(smach.State):
                         # This is for a future feature when object recognition
                         # becomes more advanced
                         try:
-                            result_people = [x for x in found_people if x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in')]
+                            result_people = [x for x in found_people if x.in_volume(VectorStamped.from_framestamped(query_entity.pose), 'in', padding=-0.05)]
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.uuid))
 
@@ -257,6 +263,7 @@ class FindFirstPerson(smach.StateMachine):
                  look_distance=10.0,
                  speak=False,
                  strict=True,
+                 reverse=False,
                  nearest=False,
                  attempts=1,
                  search_timeout=60,
@@ -313,6 +320,7 @@ class FindFirstPerson(smach.StateMachine):
                          look_distance=look_distance,
                          speak=speak,
                          strict=strict,
+                         reverse=reverse,
                          nearest=nearest,
                          attempts=attempts,
                          search_timeout=search_timeout,
@@ -345,6 +353,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                  look_distance=10.0,
                  speak=False,
                  strict=True,
+                 reverse=False,
                  nearest=False,
                  attempts=1,
                  search_timeout=60,
@@ -403,6 +412,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                          look_distance=look_distance,
                          speak=speak,
                          strict=strict,
+                         reverse=reverse,
                          nearest=nearest,
                          attempts=attempts,
                          search_timeout=search_timeout,
