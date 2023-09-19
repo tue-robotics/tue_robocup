@@ -37,3 +37,7 @@ include_directories(
 add_executable(get_normal_score_node src/get_normal_score_node.cpp)
 target_link_libraries(get_normal_score_node ${catkin_LIBRARIES})
 add_dependencies(get_normal_score_node ${PROJECT_NAME}_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+if (CATKIN_ENABLE_TESTING)
+  catkin_add_nosetests(test)
+endif()
