@@ -227,6 +227,7 @@ class Place(smach.StateMachine):
                                    transitions={'succeeded': 'UNLOCK_DESIGNATOR_SUCCESS',
                                                 'failed': 'UNLOCK_DESIGNATOR_FAILED'})
 
+            # This is needed to be able to reuse the same instance of this state machine
             smach.StateMachine.add('UNLOCK_DESIGNATOR_SUCCESS', UnlockDesignator(locking_place_designator),
                                    transitions={'unlocked': 'done'})
 
