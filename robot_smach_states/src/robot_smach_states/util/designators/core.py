@@ -104,6 +104,12 @@ class Designator(Generic[T]):
 
         return result
 
+    def reset(self):
+        """
+        Resets the designator
+        """
+        raise NotImplementedError(f"Reset not implemented for {self.__class__.__name__}")
+
     def fail_with_type_error(self, result_type, resolve_type):
             msg = "{} resolved to a '{}' instead of expected '{}'."
             raise TypeError(msg.format(self, result_type, resolve_type))
@@ -188,6 +194,12 @@ class VariableDesignator(Designator):
                     "Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
 
+    def reset(self):
+        """
+        Resets the designator
+        """
+        self._current = None
+
     def _resolve(self):
         return self._current
 
@@ -207,7 +219,7 @@ class VariableDesignator(Designator):
     current = property(_get_current, _set_current)
 
 
-class VariableWriter(object):
+class VariableWriter(Generic[T]):
     """When writing to a VariableDesignator you must use a writer,
         to make it explicit who changes designators so you can directly spot the changer.
     This way, the dataflow can be more accurately visualized and understood.
@@ -302,7 +314,7 @@ class VariableWriter(object):
     def _get_resolve_type(self):
         return self.variable_designator.resolve_type
 
-    resolve_type = property(_get_resolve_type)
+    resolve_type: T = property(_get_resolve_type)
 
     def resolve(self, *args, **kwargs):
         return self.variable_designator.resolve(*args, **kwargs)

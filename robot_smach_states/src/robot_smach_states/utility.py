@@ -339,6 +339,18 @@ class CheckTries(smach.State):
         return "not_yet"
 
 
+class RateSleep(smach.State):
+    def __init__(self, rate: float):
+        smach.State.__init__(self, outcomes=["slept"])
+
+        check_type(rate, float, int)
+        self.rate = rospy.Rate(rate)
+
+    def execute(self, ud=None):
+        self.rate.sleep()
+        return "slept"
+
+
 class WaitForDesignator(smach.State):
     """
     Waits for a given designator to answer. It will retry to resolve the designator a given number of times, with

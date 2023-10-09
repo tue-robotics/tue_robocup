@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from typing import TypeVar, Union
+from collections.abc import Callable
 
 # ROS
 import rospy
@@ -30,7 +31,7 @@ class LockingDesignator(Designator):
     A LockingDesignator will resolve to the same object after a call to .lock() and
     will only resolve to a different value after an unlock() call.
 
-    >>> varying = VariableDesignator(0, int).writeable #To be able to write to a designator, it must be writeable!
+    >>> varying = VariableDesignator(0, int).writeable  # To be able to write to a designator, it must be writeable!
     >>> locking = LockingDesignator(varying)
     >>> assert(varying.resolve() == 0)
     >>> assert(locking.resolve() == 0)
@@ -84,6 +85,9 @@ class LockingDesignator(Designator):
         self._current = None
         self._locked = False
 
+    def reset(self):
+        self.to_be_locked.reset()
+
     def _resolve(self):
         if self._locked:
             if self._current is None:
@@ -92,7 +96,7 @@ class LockingDesignator(Designator):
             return self._current
         else:
             self._current = self.to_be_locked.resolve()
-            rospy.loginfo("LockingDesignator '{0}' resolved to {1}, but is *not locked* to it".format(self.name, str(self._current)[:30]))
+            rospy.loginfo(f"LockingDesignator '{self.name}' resolved to {str(self._current)[:30]}, but is *not locked* to it")
             return self._current
 
     def __repr__(self):
@@ -199,6 +203,9 @@ class FuncDesignator(Designator):
 
     def __init__(self, orig, func, resolve_type=None, name=None):
         super(FuncDesignator, self).__init__(resolve_type=resolve_type, name=name)
+
+        assert isinstance(func, Callable)
+
         self.orig = orig
         self.func = func
 
