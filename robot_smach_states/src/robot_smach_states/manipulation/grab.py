@@ -14,7 +14,10 @@ from robot_skills.arm.arms import PublicArm, GripperTypes
 from ..utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
+
+from ..manipulation.active_grasp_detector import ActiveGraspDetector
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
+from ..human_interaction.human_interaction import Say
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
 
@@ -341,6 +344,17 @@ class Grab(smach.StateMachine):
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add("CHECK_PICK_SUCCESSFUL",
+                                  ActiveGraspDetector(robot, arm),
+                                  transitions={'true': "done",
+                                              'false': "SAY_MISSED_GRASP",
+                                              'failed': "RESET_FAILURE",
+                                              'cannot_determine': "SAY_MISSED_GRASP"}
+                                  )
+
+            smach.Statemachine.add("SAY_MISSED_GRASP", Say(robot, "Oops, it seems I missed it. Lets try again"),
+                     transitions={"spoken": "RESET_FAILURE"})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
