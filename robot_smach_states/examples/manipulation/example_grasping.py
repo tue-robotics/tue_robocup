@@ -1,5 +1,6 @@
 # System
 import argparse
+import logging
 
 # ROS
 import PyKDL as kdl
@@ -24,7 +25,12 @@ if __name__ == "__main__":
     parser.add_argument("y", type=float, help="y-coordinate (in map) of the imaginary object")
     parser.add_argument("z", type=float, help="z-coordinate (in map) of the imaginary object")
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
+    parser.add_argument( '-log',
+                     '--loglevel',
+                     default='warning',
+                     help='Provide logging level. Example --loglevel debug, default=warning' )
     args = parser.parse_args()
+    logging.basicConfig( level=args.loglevel.upper() )
 
     rospy.init_node("test_grasping")
 
