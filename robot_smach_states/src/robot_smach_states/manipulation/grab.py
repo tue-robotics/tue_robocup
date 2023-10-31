@@ -353,7 +353,7 @@ class Grab(smach.StateMachine):
                                               'cannot_determine': "SAY_MISSED_GRASP"}
                                   )
 
-            smach.StateMachine.add("SAY_MISSED_GRASP", Say(robot, "Oops, it seems I missed it. Lets try again"),
+            smach.StateMachine.add("SAY_MISSED_GRASP", Say(robot, "Oops, it seems I missed it."),
                      transitions={"spoken": "RESET_FAILURE"})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
