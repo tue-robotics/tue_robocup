@@ -14,6 +14,7 @@ import rospy
 from pykdl_ros import FrameStamped
 from action_server import Client as ActionClient
 
+
 import hmi
 from robocup_knowledge import load_knowledge
 from robot_skills.get_robot import get_robot
@@ -21,7 +22,7 @@ from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_smach_states.utility import WaitForTrigger
-
+from robot_skills.simulation.sim_mode import is_sim_mode
 
 def task_result_to_report(task_result):
     output = ""
@@ -75,7 +76,6 @@ def main():
     # Start
 
     if not skip and not restart:
-
         # Wait for door, enter arena
         s = StartChallengeRobust(robot, knowledge.initial_pose)
         s.execute()
@@ -111,6 +111,11 @@ def main():
         timeout_count = 0
 
         while True:
+            rospy.logdebug("THE GRAMMAR: {}".format(knowledge.grammar))
+            rospy.logdebug("THE TARGET: {}".format(knowledge.grammar_target))
+            robot.head.look_at_standing_person()
+
+            robot.speech.speak(user_instruction, block=True)
             rospy.loginfo("Waiting for trigger")
             trigger.execute()
 
@@ -121,15 +126,15 @@ def main():
             robot.ed.update_entity(uuid=location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(), "map"),
                                    etype="waypoint")
 
-            robot.head.look_at_standing_person()
 
-            robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
             while True:
                 try:
                     sentence, semantics = robot.hmi.query(description="",
                                                           grammar=knowledge.grammar,
                                                           target=knowledge.grammar_target)
+
+
                     timeout_count = 0
                     break
                 except hmi.TimeoutException:
@@ -144,8 +149,16 @@ def main():
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
+
+            rospy.logdebug("THE SENTENCE: {}".format(sentence))
+            rospy.logdebug("THE SEMANTICS: {}".format(semantics))
             try:
-                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                if is_sim_mode():
+                    answer = robot.hmi.query('', 'T -> yes | no', 'T')
+                else:
+                    answer = robot.picovoice.get_intent("yesOrNo")
+
+                if (is_sim_mode() and answer.sentence == "no") or (not is_sim_mode() and "no" in answer.semantics):
                     robot.speech.speak('Sorry')
                     continue
             except hmi.TimeoutException:
