@@ -14,7 +14,6 @@ import rospy
 from pykdl_ros import FrameStamped
 from action_server import Client as ActionClient
 
-
 import hmi
 from robocup_knowledge import load_knowledge
 from robot_skills.get_robot import get_robot
@@ -23,6 +22,7 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_smach_states.utility import WaitForTrigger
 from robot_skills.simulation.sim_mode import is_sim_mode
+
 
 def task_result_to_report(task_result):
     output = ""
@@ -71,7 +71,6 @@ def main():
     user_instruction = "What can I do for you?"
     report = ""
 
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Start
 
@@ -85,7 +84,6 @@ def main():
 
     if restart:
         robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
-
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -111,8 +109,6 @@ def main():
         timeout_count = 0
 
         while True:
-            rospy.logdebug("THE GRAMMAR: {}".format(knowledge.grammar))
-            rospy.logdebug("THE TARGET: {}".format(knowledge.grammar_target))
             robot.head.look_at_standing_person()
 
             robot.speech.speak(user_instruction, block=True)
@@ -126,14 +122,12 @@ def main():
             robot.ed.update_entity(uuid=location_id, frame_stamped=FrameStamped(base_pose, rospy.Time.now(), "map"),
                                    etype="waypoint")
 
-
             # Listen for the new task
             while True:
                 try:
                     sentence, semantics = robot.hmi.query(description="",
                                                           grammar=knowledge.grammar,
                                                           target=knowledge.grammar_target)
-
 
                     timeout_count = 0
                     break
@@ -150,8 +144,8 @@ def main():
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
 
-            rospy.logdebug("THE SENTENCE: {}".format(sentence))
-            rospy.logdebug("THE SEMANTICS: {}".format(semantics))
+            rospy.loginfo("THE SENTENCE: {}".format(sentence))
+            rospy.loginfo("THE SEMANTICS: {}".format(semantics))
             try:
                 if is_sim_mode():
                     answer = robot.hmi.query('', 'T -> yes | no', 'T')
