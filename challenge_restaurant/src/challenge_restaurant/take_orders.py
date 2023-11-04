@@ -76,7 +76,7 @@ class TakeOrder(smach.State):
             nr_tries += 1
             rospy.loginfo('nr_tries: %d', nr_tries)
 
-            self._robot.speech.speak("What would you like to order?")
+            self._robot.speech.speak("What would you like to drink?")
             self._robot.speech.speak("Please speak fast without breaks.")
             count = 0
             while not rospy.is_shutdown():
@@ -87,7 +87,7 @@ class TakeOrder(smach.State):
                         speech_result = self._robot.hmi.query(description="Can I please take your order",
                                                               grammar=knowledge.order_grammar, target="O")
                     else:
-                        speech_result = self._robot.picovoice.get_intent(context_url="restaurant")
+                        speech_result = self._robot.picovoice.get_intent(context_url="drinks")
                     break
                 except TimeoutException:
                     if count < 3:
@@ -109,7 +109,7 @@ class TakeOrder(smach.State):
                 for item in speech_result.semantics.values():
                     self._orders.append(item)
                 self._robot.head.cancel_goal()
-                self._robot.speech.speak("Ok, I will get your order", block=False)
+                self._robot.speech.speak("Ok, I will get it right away", block=False)
                 return "succeeded"
 
         self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
@@ -133,11 +133,11 @@ class ReciteOrders(smach.State):
 
     def execute(self, userdata=None):
         self._robot.head.look_up()
-        self._robot.speech.speak("Mr. Barman I have some orders.")
+        self._robot.speech.speak("I'm here to pick up a drink.")
 
         order_string = " and a ".join(self._orders)
 
-        sentence = "Table 1 would like to have a {}".format(order_string)
+        sentence = "I would like to have a {}".format(order_string)
 
         # if "beverage" in self._orders:
         #     sentence = "Table 1 would like to have {}".format(self._orders["beverage"])

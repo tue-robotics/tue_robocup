@@ -16,6 +16,7 @@ from challenge_restaurant.store_waypoint import StoreWaypoint
 from challenge_restaurant.take_orders import TakeOrder, ReciteOrders, ClearOrders
 from ed.entity import Entity
 
+
 V_TH = 0.5
 
 
@@ -50,7 +51,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_WAVING',
                                    states.human_interaction.Say(
                                        robot,
-                                       "Mr. Barman, please make sure that the people wave "
+                                       "Please make sure that the people wave "
                                        "slowly and put their arm up high. Like is shown "
                                        "on my screen", block=True),
                                    transitions={'spoken': 'SHOW_IMAGE'})
@@ -85,8 +86,7 @@ class Restaurant(smach.StateMachine):
             # Asking for confirmation
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
                                    states.human_interaction.Say(
-                                       robot, 'I have seen a waving person, should I take the order? '
-                                              'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
+                                       robot, 'I have seen a waving person, should I go there? '),
                                    transitions={"spoken": 'WAIT_FOR_START'})
 
             smach.StateMachine.add('GET_CUSTOMER_IMAGE',
@@ -112,9 +112,9 @@ class Restaurant(smach.StateMachine):
                                        WriteDesignator(reset_tries_des, True),
                                        transitions={'written': 'ASK_TAKE_ORDER'})
 
-                smach.StateMachine.add('ASK_TAKE_ORDER', AskTakeTheOrderPicoVoice(robot),
+                smach.StateMachine.add('ASK_TAKE_ORDER', states.human_interaction.AskYesNoPicoVoice(robot),
                                        transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
-                                                    'wait': 'SAY_WAVING_2',
+                                                    'no': 'SAY_WAVING_2',
                                                     'no_result': 'MAX_TRIES'})
                 smach.StateMachine.add('MAX_TRIES',
                                        CheckTries(max_tries=3, reset_des=reset_tries_des),
@@ -165,7 +165,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_WAVING_2',
                                    states.human_interaction.Say(
                                        robot,
-                                       "Mr. Barman, I'm waiting for an order please make sure that the people wave "
+                                       "I'm waiting, please make sure that the people wave "
                                        "slowly and put their arm up high. Like is shown "
                                        "on my screen", block=True),
                                    transitions={'spoken': 'SHOW_IMAGE_2'})
@@ -220,8 +220,8 @@ class Restaurant(smach.StateMachine):
                                    transitions={'succeeded': 'SAY_CANNOT_GRASP'})
 
             smach.StateMachine.add('SAY_CANNOT_GRASP',
-                                   states.human_interaction.Say(robot, "I am unable to grasp my own order, "
-                                                                       "could you please put it in my basket"),
+                                   states.human_interaction.Say(robot, " Could you please put the drink my basket"),
+
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
