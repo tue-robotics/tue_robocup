@@ -32,7 +32,7 @@ class AskTakeTheOrder(smach.State):
 
 
 class AskTakeTheOrderPicoVoice(HearOptionsExtraPicoVoice):
-    def __init__(self, robot, timeout=10, look_at_standing_person=True):
+    def __init__(self, robot, timeout=20, look_at_standing_person=True):
         self.speech_result_designator = ds.VariableDesignator(resolve_type=HMIResult)
         super().__init__(
             robot,
