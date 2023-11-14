@@ -36,7 +36,7 @@ class AskTakeTheOrderPicoVoice(HearOptionsExtraPicoVoice):
         self.speech_result_designator = ds.VariableDesignator(resolve_type=HMIResult)
         super().__init__(
             robot,
-            "restaurantTakeTheOrder",
+            "yesOrNo",
             self.speech_result_designator.writeable,
             timeout=timeout,
             look_at_standing_person=look_at_standing_person,

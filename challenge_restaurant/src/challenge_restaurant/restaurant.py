@@ -112,9 +112,9 @@ class Restaurant(smach.StateMachine):
                                        WriteDesignator(reset_tries_des, True),
                                        transitions={'written': 'ASK_TAKE_ORDER'})
 
-                smach.StateMachine.add('ASK_TAKE_ORDER', states.human_interaction.AskYesNoPicoVoice(robot),
+                smach.StateMachine.add('ASK_TAKE_ORDER', AskTakeTheOrderPicoVoice(robot),
                                        transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
-                                                    'no': 'SAY_WAVING_2',
+                                                    'wait': 'SAY_WAVING_2',
                                                     'no_result': 'MAX_TRIES'})
                 smach.StateMachine.add('MAX_TRIES',
                                        CheckTries(max_tries=3, reset_des=reset_tries_des),
