@@ -3,6 +3,10 @@ import functools
 import math
 import typing
 from threading import Condition, Event
+import os
+from datetime import datetime
+
+import cv2
 
 # ROS
 import message_filters
@@ -153,6 +157,7 @@ class Perception(RobotPart):
         return r
 
     def learn_person(self, name='operator'):
+
         HEIGHT_TRESHOLD = 88
         WIDTH_TRESHOLD = 88
         try:
@@ -180,6 +185,19 @@ class Perception(RobotPart):
         except Exception as e:
             rospy.logerr("Can't learn a person: {}".format(e))
             return False
+
+        rgb_cv = self._bridge.imgmsg_to_cv2(image, "bgr8")
+        rgb_cv = rgb_cv[240 - 100:240 + 100, 320 - 100:320 + 100, :]  # ToDo: check if this is ok
+
+        os.makedirs(os.path.expanduser(os.path.join("/tmp", "restaurant")), exist_ok=True)
+        filename = os.path.expanduser(
+            os.path.join("/tmp", "restaurant", f"face-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.png")
+        )   #Todo: check what do to with "restaurant"
+
+        if not cv2.imwrite(filename, rgb_cv):
+            return False
+
+        self._robot.hmi.show_image(filename)
 
         return True
 
