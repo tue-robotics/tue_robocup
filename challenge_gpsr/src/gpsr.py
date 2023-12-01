@@ -224,15 +224,9 @@ def main():
     skip        = rospy.get_param('~skip', False)
     restart     = rospy.get_param('~restart', False)
     robot_name  = rospy.get_param('~robot_name')
-    no_of_tasks = rospy.get_param('~number_of_tasks', 0)
+    no_of_tasks = rospy.get_param('~number_of_tasks', 999)
     test        = rospy.get_param('~test_mode', False)
-    eegpsr      = rospy.get_param('~eegpsr', False)
-    time_limit  = rospy.get_param('~time_limit', 0)
-    if no_of_tasks == 0:
-        no_of_tasks = 999
-
-    if time_limit == 0:
-        time_limit = 999
+    time_limit  = rospy.get_param('~time_limit', 999)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
@@ -246,14 +240,9 @@ def main():
         rospy.loginfo("[GPSR] running in test mode")
     rospy.loginfo("[GPSR] time_limit = {}".format(time_limit))
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     robot = get_robot(robot_name)
-
-    if eegpsr:
-        knowledge = load_knowledge('challenge_eegpsr')
-    else:
-        knowledge = load_knowledge('challenge_gpsr')
+    knowledge = load_knowledge('challenge_gpsr')
 
     conversation_engine = ConversationEngineWithHmi(robot, knowledge.grammar, knowledge.grammar_target, knowledge)
     conversation_engine.test = test
