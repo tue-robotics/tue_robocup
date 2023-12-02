@@ -68,6 +68,11 @@ class Head(RobotPart):
 
         return self.look_at_point(goal, timeout=timeout)
 
+    def look_right_down(self, timeout=0):
+        goal = VectorStamped.from_xyz(0, -0.5, 0.75, stamp=rospy.Time.now(), frame_id=f"{self.robot_name}/base_link")
+
+        return self.look_at_point(goal, timeout=timeout)
+
     # -- Functionality --
 
     def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=0.8, timeout=0):
