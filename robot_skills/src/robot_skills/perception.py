@@ -199,7 +199,7 @@ class Perception(RobotPart):
         if not cv2.imwrite(filename, rgb_cv):
             return False
 
-        self._robot.hmi.show_image(filename)
+        self.hmi.show_image(filename)
 
         return True
 
