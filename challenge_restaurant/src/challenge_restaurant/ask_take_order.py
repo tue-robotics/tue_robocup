@@ -52,9 +52,9 @@ class AskTakeTheOrderPicoVoice(HearOptionsExtraPicoVoice):
         if not hmi_result or not hmi_result.semantics:
             return "no_result"
 
-        if "take_the_order" in hmi_result.semantics:
+        if "yes" in hmi_result.semantics:
             return "yes"
-        elif "wait" in hmi_result.semantics:
+        elif "no" in hmi_result.semantics:
             return "wait"
         else:
             return "no_result"
