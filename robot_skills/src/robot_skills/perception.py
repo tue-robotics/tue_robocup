@@ -5,6 +5,7 @@ import typing
 from threading import Condition, Event
 import os
 from datetime import datetime
+from cv_bridge import CvBridge
 
 import cv2
 
@@ -186,7 +187,8 @@ class Perception(RobotPart):
             rospy.logerr("Can't learn a person: {}".format(e))
             return False
 
-        rgb_cv = self._bridge.imgmsg_to_cv2(image, "bgr8")
+        bridge = CvBridge()
+        rgb_cv = bridge.imgmsg_to_cv2(image, "bgr8")
         rgb_cv = rgb_cv[240 - 100:240 + 100, 320 - 100:320 + 100, :]  # ToDo: check if this is ok
 
         os.makedirs(os.path.expanduser(os.path.join("/tmp", "restaurant")), exist_ok=True)
