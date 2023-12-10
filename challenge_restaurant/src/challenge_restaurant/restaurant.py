@@ -225,7 +225,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
-                                   states.utility.WaitTime(robot=robot, waittime=15.0),
+                                   states.utility.WaitTime(robot=robot, waittime=10.0),
                                    transitions={'waited': 'BRING_OBJECTS',
                                                 'preempted': 'STOP'})
 
@@ -259,7 +259,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
-                                   states.utility.WaitTime(robot=robot, waittime=15.0),
+                                   states.utility.WaitTime(robot=robot, waittime=10.0),
                                    transitions={'waited': 'RETURN_TO_START',
                                                 'preempted': 'STOP'})
 
