@@ -8,10 +8,15 @@ import os
 import rospkg
 import rospy
 
-from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER, PICK_ROTATION
+from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER
 from robot_skills import get_robot
+from robot_skills.arm.arms import GripperTypes
+# ROS
+from pykdl_ros import VectorStamped
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
 from robot_smach_states.navigation import NavigateToSymbolic
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 from smach import StateMachine, cb_interface, CBState
 
 item_img_dict = {
@@ -28,10 +33,11 @@ class PickItem(StateMachine):
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
         picked_items = []
+        armdes = ArmDesignator(robot, {"required_gripper_types": [GripperTypes.GRASPING]})
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             # noinspection PyProtectedMember
-            arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
+            arm._send_joint_trajectory([position_array], timeout=0.0)
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
@@ -52,10 +58,17 @@ class PickItem(StateMachine):
 
         @cb_interface(outcomes=["done"])
         def _rotate(_):
-            arm.gripper.send_goal("close", timeout=0.)
-            robot.head.look_up()
-            vyaw = 0.5
-            robot.base.force_drive(0, 0, vyaw, PICK_ROTATION / vyaw)
+            arm.gripper.send_goal("close", timeout=0.0)
+
+            # Look to the operator
+            robot.head.look_at_point(VectorStamped.from_xyz(0.2, -0.2, 1.75, stamp=rospy.Time.now(),
+                                                            frame_id=robot.base_link_frame))
+            robot.head.wait_for_motion_done()
+            return "done"
+
+        @cb_interface(outcomes=["done"])
+        def _handover_pose(user_data):
+            send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
             return "done"
 
         @cb_interface(outcomes=["succeeded", "failed"], output_keys=["item_picked"])
@@ -67,29 +80,46 @@ class PickItem(StateMachine):
 
             item_name = leftover_items[0]
 
-            send_joint_goal(JOINTS_HANDOVER, wait_for_motion_done=False)
-
-            picked_items.append(item_name)
-
             robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
             show_image("challenge_serve_breakfast", item_img_dict[item_name])
 
             send_gripper_goal("open")
-            rospy.sleep(10.0)
-            robot.speech.speak("Thanks for that!", block=False)
+            rospy.sleep(7.0)
             send_gripper_goal("close", max_torque=0.6)
             robot.head.reset()
 
             # Set output data
             user_data["item_picked"] = item_name
-
-            arm.send_joint_goal("carrying_pose", timeout=0.)
-
             return "succeeded"
 
+        @cb_interface(outcomes=["done"])
+        def _carrying_pose(user_data):
+            arm.send_joint_goal("carrying_pose", timeout=0.)
+            robot.speech.speak("Thanks for that!", block=False)
+            return "done"
+
+        @cb_interface(outcomes=["done"], input_keys=["item_picked"])
+        def _remember_item(user_data):
+            picked_items.append(user_data["item_picked"])
+            return "done"
+
         with self:
-            self.add("ROTATE", CBState(_rotate), transitions={"done": "ASK_USER"})
-            self.add("ASK_USER", CBState(_ask_user), transitions={"succeeded": "succeeded", "failed": "failed"})
+            self.add("ROTATE", CBState(_rotate), transitions={"done": "HANDOVER_POSE"})
+            self.add("HANDOVER_POSE", CBState(_handover_pose), transitions={"done": "ASK_USER"})
+            self.add("ASK_USER", CBState(_ask_user),
+                     transitions={"succeeded": "CHECK_PICK_SUCCESSFUL", "failed": "failed"})
+            self.add("CHECK_PICK_SUCCESSFUL",
+                     ActiveGraspDetector(robot, armdes),
+                     transitions={'true': "ADD_ITEM_TO_LIST",
+                                  'false': "SAY_SOMETHING_WENT_WRONG",
+                                  'failed': "failed",
+                                  'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
+                     )
+            self.add("SAY_SOMETHING_WENT_WRONG", Say(robot, "Oops, it seems I missed it. Lets try again"),
+                     transitions={"spoken": "ASK_USER2"})
+            self.add("ASK_USER2", CBState(_ask_user), transitions={"succeeded": "ADD_ITEM_TO_LIST", "failed": "failed"})
+            self.add("ADD_ITEM_TO_LIST", CBState(_remember_item), transitions={"done": "CARRYING_POSE"})
+            self.add("CARRYING_POSE", CBState(_carrying_pose), transitions={"done": "succeeded"})
 
 
 class NavigateToAndPickItem(StateMachine):
@@ -101,7 +131,7 @@ class NavigateToAndPickItem(StateMachine):
         with self:
             StateMachine.add(
                 "NAVIGATE_TO_PICK_SPOT",
-                NavigateToSymbolic(robot, {pick_spot: pick_spot_navigation_area}, pick_spot),
+                NavigateToSymbolic(robot, {pick_spot: pick_spot_navigation_area},pick_spot, speak=False),
                 transitions={"arrived": "PICK_ITEM", "unreachable": "failed", "goal_not_defined": "failed"},
             )
 
