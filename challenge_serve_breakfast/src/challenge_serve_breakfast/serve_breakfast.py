@@ -51,9 +51,9 @@ class CheckIfWeHaveItAll(State):
 def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
-    pick_id = "kitchen_table"
+    pick_id = "dinner_table"
     pick_area_id = "in_front_of"
-    place_id = "kitchen_table"
+    place_id = "dinner_table"
     place_area_id = "in_front_of"
     exit_id = "starting_pose"
 

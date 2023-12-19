@@ -112,4 +112,4 @@ if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
     robot_instance.reset()
-    NavigateToAndPickItem(robot_instance, "kitchen_table", "in_front_of").execute()
+    NavigateToAndPickItem(robot_instance, "dinner_table", "in_front_of").execute()
