@@ -91,6 +91,9 @@ class TopGrasp(smach.State):
 
             #TODO get grasp pose wrt wrist
 
+            #TODO force sensor does not provide a good interface for this.
+            arm._arm.force_sensor.wait_for_edge_up(1.0)  # wait 1 second for a force detection
+
             # example base command
             v = Twist()
             v.linear.x = 0 # forward
