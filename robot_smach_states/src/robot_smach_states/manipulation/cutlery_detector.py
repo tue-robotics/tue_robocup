@@ -15,7 +15,7 @@ class YoloSegmentor:
         self.active = False
 
         self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
-        self.subscriber = rospy.Subscriber('/hero/head_rgbd_sensor/rgb/image_raw', Image, self.callback)
+        self.subscriber = rospy.Subscriber('/hero/hand_camera/image_raw', Image, self.callback)
 
     def start(self):
         self.active = True
