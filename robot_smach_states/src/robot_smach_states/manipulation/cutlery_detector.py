@@ -11,7 +11,7 @@ class YoloSegmentor:
         model_path = "~/MEGA/developers/Donal/yolov8x-seg.pt"
         device = "cuda"
         self.model = YOLO(model_path).to(device)
-        self.class_ids = [60]  # table class defined with index 60 (person = 0)
+        self.class_ids = [42, 43, 44]  # See the COCO dataset for class id to label info (table=60, person = 0)
         self.active = False
 
         self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
