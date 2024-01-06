@@ -52,7 +52,7 @@ class PrepareGrasp(smach.State):
         return 'succeeded'
 
 
-class ArucoGrasp(smach.State):
+class TopGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_goals": ["carrying_pose"], }
 
@@ -63,7 +63,7 @@ class ArucoGrasp(smach.State):
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to grasp with
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'marker_lost','failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Assign member variables
         self.robot = robot
@@ -89,7 +89,7 @@ class ArucoGrasp(smach.State):
         while not grasp_succeeded:
             # control loop
 
-            #TODO get aruco pose wrt wrist
+            #TODO get grasp pose wrt wrist
 
             # example base command
             v = Twist()
@@ -101,6 +101,7 @@ class ArucoGrasp(smach.State):
             # example arm pose command
             if (move_arm):
                 pose_goal = FrameStamped(base_to_gripper,
+                                        rospy.Time.now(), #timestamp when this pose was created
                                         rospy.Time.now(), #timestamp when this pose was created
                                         "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
                                         )
@@ -161,7 +162,7 @@ class ResetOnFailure(smach.State):
         return 'done'
 
 
-class ArucoGrab(smach.StateMachine):
+class TopGrab(smach.StateMachine):
     def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator):
         """
         Let the given robot move to an entity and grab that entity using some arm
@@ -189,7 +190,7 @@ class ArucoGrab(smach.StateMachine):
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', ArucoGrasp(robot, arm),
+            smach.StateMachine.add('GRAB', TopGrasp(robot, arm),
                                    transitions={'succeeded': 'done',
                                                 'marker_lost':'RESET_FAILURE',
                                                 'failed': 'RESET_FAILURE'})

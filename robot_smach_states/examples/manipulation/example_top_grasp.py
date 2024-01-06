@@ -13,20 +13,20 @@ from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
-from robot_smach_states.manipulation.aruco_grasp import ArucoGrab
+from robot_smach_states.manipulation.top_grasp import TopGrab
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Put an imaginary object in the world model and grasp it using the "
-                                                 "'ArucoGrab' smach state")
+                                                 "'topgrasp' smach state")
     parser.add_argument("x", type=float, help="x-coordinate (in map) of the imaginary object")
     parser.add_argument("y", type=float, help="y-coordinate (in map) of the imaginary object")
     parser.add_argument("z", type=float, help="z-coordinate (in map) of the imaginary object")
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     args = parser.parse_args()
 
-    rospy.init_node("test_aruco_grasping")
+    rospy.init_node("test_top_grasping")
 
     robot = get_robot(args.robot)
 
@@ -42,5 +42,5 @@ if __name__ == "__main__":
 
     arm = ds.UnoccupiedArmDesignator(robot).lockable()
 
-    grab_state = ArucoGrab(robot, item, arm)
+    grab_state = TopGrab(robot, item, arm)
     grab_state.execute()
