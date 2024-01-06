@@ -157,7 +157,7 @@ class Perception(RobotPart):
             rospy.logerr("Can't detect faces: {}".format(e))
         return r
 
-    def learn_person(self, name='operator'):
+    def learn_person(self, name='operator', robot=None):
 
         HEIGHT_TRESHOLD = 88
         WIDTH_TRESHOLD = 88
@@ -187,19 +187,19 @@ class Perception(RobotPart):
             rospy.logerr("Can't learn a person: {}".format(e))
             return False
 
-        bridge = CvBridge()
-        rgb_cv = bridge.imgmsg_to_cv2(image, "bgr8")
-        rgb_cv = rgb_cv[240 - 100:240 + 100, 320 - 100:320 + 100, :]  # ToDo: check if this is ok
+        if robot:
+            bridge = CvBridge()
+            rgb_cv = bridge.imgmsg_to_cv2(image, "bgr8")
 
-        os.makedirs(os.path.expanduser(os.path.join("/tmp", "restaurant")), exist_ok=True)
-        filename = os.path.expanduser(
-            os.path.join("/tmp", "restaurant", f"face-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.png")
-        )   #Todo: check what do to with "restaurant"
+            os.makedirs(os.path.expanduser(os.path.join("/tmp", "learn_person")), exist_ok=True)
+            filename = os.path.expanduser(
+                os.path.join("/tmp", "learn_person", f"face-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.png")
+            )
 
-        if not cv2.imwrite(filename, rgb_cv):
-            return False
+            if not cv2.imwrite(filename, rgb_cv):
+                return False
 
-        self.hmi.show_image(filename)
+            robot.hmi.show_image(filename, 10)
 
         return True
 

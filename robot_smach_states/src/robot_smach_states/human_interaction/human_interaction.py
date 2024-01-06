@@ -489,7 +489,7 @@ class LearnPerson(smach.State):
 
         # Learn the face (try for a maximum of nr_tries times
         for i in range(self._nr_tries):
-            if self._robot.perception.learn_person(name=person_name):
+            if self._robot.perception.learn_person(name=person_name, robot=self._robot):
                 self._robot.head.reset()
                 return "succeeded"
 
