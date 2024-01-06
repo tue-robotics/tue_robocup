@@ -190,6 +190,11 @@ class Perception(RobotPart):
         if robot:
             bridge = CvBridge()
             rgb_cv = bridge.imgmsg_to_cv2(image, "bgr8")
+            y_start = int(recognition.roi.y_offset)
+            y_end = int(recognition.roi.y_offset + recognition.roi.height)
+            x_start = int(recognition.roi.x_offset)
+            x_end = int(recognition.roi.x_offset + recognition.roi.width)
+            rgb_cv = rgb_cv[y_start:y_end, x_start:x_end, :]
 
             os.makedirs(os.path.expanduser(os.path.join("/tmp", "learn_person")), exist_ok=True)
             filename = os.path.expanduser(
