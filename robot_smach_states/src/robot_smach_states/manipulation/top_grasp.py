@@ -18,6 +18,9 @@ from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
 
+from robot_smach_states.manipulation.cutlery_detector import YoloSegmentor
+from robot_skills.util.exceptions import TimeOutException
+
 
 class PrepareGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
@@ -72,6 +75,8 @@ class TopGrasp(smach.State):
         assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
+        self.yolo_segmentor = YoloSegmentor()
+
     def execute(self, userdata=None) -> str:
         arm = self.arm_designator.resolve()
         if not arm:
@@ -85,6 +90,9 @@ class TopGrasp(smach.State):
                                                 0.08, # y distance off center from the robot (fixed if rpy=0)
                                                 0.7, # z height of the gripper
                                                 0, 0, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
+        # start segmentation
+        self.yolo_segmentor.start()
+
         move_arm = True
         while not grasp_succeeded:
             # control loop
@@ -92,7 +100,11 @@ class TopGrasp(smach.State):
             #TODO get grasp pose wrt wrist
 
             #TODO force sensor does not provide a good interface for this.
-            arm._arm.force_sensor.wait_for_edge_up(1.0)  # wait 1 second for a force detection
+            try:
+                arm._arm.force_sensor.wait_for_edge_up(1.0)  # wait 1 second for a force detection
+            except TimeOutException:
+                rospy.loginfo("No edge up detected within timeout")
+                pass
 
             # example base command
             v = Twist()
@@ -119,6 +131,8 @@ class TopGrasp(smach.State):
 
             rospy.loginfo(f"print a message to show we are still running.")
             rate.sleep()
+        # stop segmentation to preserve computation power
+        self.yolo_segmentor.stop()
 
         return "succeeded"
 
