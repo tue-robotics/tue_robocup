@@ -10,11 +10,11 @@ import rospy
 
 from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER
 from robot_skills import get_robot
-from robot_skills.arm.arms import GripperTypes
 # ROS
 from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
+
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 from smach import StateMachine, cb_interface, CBState

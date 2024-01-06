@@ -18,7 +18,7 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class HandleSingleGuest(smach.StateMachine):
-    def __init__(self, robot, assume_john, default_name, default_drink):
+    def __init__(self, robot, assume_john, default_name, default_drink, previous_guest_name_des, previous_guest_drink_des):
         """
 
         :param robot:
@@ -27,12 +27,17 @@ class HandleSingleGuest(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
 
         door_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_door['id'])
+
+        sofa_des = ds.EntityByIdDesignator(robot, uuid="couch_short")  # ToDo: Make it so that it looks at the center
+                                                                # of the sitting area
+
         livingroom_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])
 
         guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
         guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')
         guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
         guest_drinkname_des = ds.FieldOfHMIResult(guest_drink_des, semantics_path='drink', name='guest_drinkname')
+
 
         with self:
             smach.StateMachine.add('LEARN_GUEST',
@@ -47,7 +52,7 @@ class HandleSingleGuest(smach.StateMachine):
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
                                    Say(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. "
-                                               "Please stay behind me while we look for the operator."],
+                                               f"Please stay behind me while we look for the operator {challenge_knowledge.operator_name}."],
                                        name=guest_name_des, drink=guest_drinkname_des,
                                        block=True,
                                        look_at_standing_person=True),
@@ -57,6 +62,7 @@ class HandleSingleGuest(smach.StateMachine):
                                    NavigateToWaypoint(robot,
                                                       livingroom_waypoint,
                                                       challenge_knowledge.waypoint_livingroom['radius'],
+                                                      look_at_designator=sofa_des,
                                                       speak=False),
                                    transitions={'arrived': 'INTRODUCE_GUEST',
                                                 'unreachable': 'INTRODUCE_GUEST',
@@ -67,6 +73,8 @@ class HandleSingleGuest(smach.StateMachine):
                                                   guest_entity_des,
                                                   guest_name_des,
                                                   guest_drinkname_des,
+                                                  previous_guest_name_des,
+                                                  previous_guest_drink_des,
                                                   assume_john=assume_john),
                                    transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
                                                 'abort': 'FIND_SEAT_FOR_GUEST'})
@@ -86,7 +94,8 @@ class ChallengeReceptionist(smach.StateMachine):
 
         runs = ds.Designator([0, 1])
         run = ds.VariableDesignator(resolve_type=int)
-
+        previous_guest_drink_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink')
+        previous_guest_name_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_name')
         with self:
             smach.StateMachine.add('RESET',
                                    ResetArmsTorsoHead(robot),
@@ -99,14 +108,18 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'error': 'HANDLE_GUEST_1'})
 
             smach.StateMachine.add('HANDLE_GUEST_1',
-                                   HandleSingleGuest(robot, assume_john=True, default_name='Ava',
-                                                     default_drink=HMIResult('coke', {'drink': 'coke'})),
+                                   HandleSingleGuest(robot, assume_john=True, default_name=challenge_knowledge.default_guest_1_name,
+                                                     default_drink=HMIResult(challenge_knowledge.default_guest_1_drink, {'drink': challenge_knowledge.default_guest_1_drink}),
+                                                     previous_guest_name_des=previous_guest_name_des, previous_guest_drink_des=previous_guest_drink_des
+                                                     ),
                                    transitions={'succeeded': 'HANDLE_GUEST_2',
                                                 'aborted': 'HANDLE_GUEST_2'})
 
             smach.StateMachine.add('HANDLE_GUEST_2',
-                                   HandleSingleGuest(robot, assume_john=False, default_name='Max',
-                                                     default_drink=HMIResult('water', {'drink': 'water'})),
+                                   HandleSingleGuest(robot, assume_john=False, default_name=challenge_knowledge.default_guest_2_name,
+                                                     default_drink=HMIResult(challenge_knowledge.default_guest_2_drink, {'drink': challenge_knowledge.default_guest_2_drink}),
+                                                        previous_guest_name_des=previous_guest_name_des, previous_guest_drink_des=previous_guest_drink_des
+                                                     ),
                                    transitions={'succeeded': 'SAY_DONE',
                                                 'aborted': 'SAY_DONE'})
 
@@ -119,8 +132,8 @@ class ChallengeReceptionist(smach.StateMachine):
                 NavigateToWaypoint(
                     robot,
                     ds.EntityByIdDesignator(robot, challenge_knowledge.waypoint_door["id"]),
-                    challenge_knowledge.waypoint_door["radius"]
+                    challenge_knowledge.waypoint_door["radius"],
+                    speak=False
                 ),
                 transitions={"arrived": "succeeded", "unreachable": "succeeded", "goal_not_defined": "succeeded"},
             )
-
