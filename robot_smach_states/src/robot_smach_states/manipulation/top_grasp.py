@@ -102,7 +102,6 @@ class TopGrasp(smach.State):
             if (move_arm):
                 pose_goal = FrameStamped(base_to_gripper,
                                         rospy.Time.now(), #timestamp when this pose was created
-                                        rospy.Time.now(), #timestamp when this pose was created
                                         "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
                                         )
                 arm.send_goal(pose_goal) # send the command to the robot.
@@ -192,7 +191,6 @@ class TopGrab(smach.StateMachine):
 
             smach.StateMachine.add('GRAB', TopGrasp(robot, arm),
                                    transitions={'succeeded': 'done',
-                                                'marker_lost':'RESET_FAILURE',
                                                 'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
