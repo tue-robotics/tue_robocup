@@ -20,10 +20,10 @@ BREAKFAST_POSE = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.7
 
 # vectors of the items with respect to the breakfast frame
 ITEM_VECTOR_DICT = {
-    "spoon": PyKDL.Vector(0.0, -0.1, 0),
+    "spoon": PyKDL.Vector(0.0, -0.15, 0),
     "bowl": PyKDL.Vector(0.0, 0.0, 0),
-    "milk_carton": PyKDL.Vector(0.0, 0.15, 0),
-    "cereal_box": PyKDL.Vector(0.0, -0.2, 0),
+    "milk_carton": PyKDL.Vector(-0.05, 0.15, 0),
+    "cereal_box": PyKDL.Vector(0.0, -0.3, 0),
 }
 
 # frame indicating the pose of the hand with respect to the vector in ITEM_VECTOR_DICT
