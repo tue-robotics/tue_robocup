@@ -39,13 +39,13 @@ class YoloSegmentor:
         return table_mask
 
     def callback(self, data):
-        rospy.loginfo("got message")
+        #rospy.loginfo("got message")
         if not self.active:
             return
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        rospy.loginfo("converted message")
+        #rospy.loginfo("converted message")
 
         classes, segmentations = self.detect(self.model, cv_image)
         table_segment = self.extract_table_segment(cv_image, classes, segmentations)
