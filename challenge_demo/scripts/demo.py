@@ -22,7 +22,7 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_smach_states.utility import WaitForTrigger
 from robot_skills.simulation.sim_mode import is_sim_mode
-
+from .create_semantics_picovoice_demo import create_semantics
 
 def task_result_to_report(task_result):
     output = ""
@@ -125,10 +125,13 @@ def main():
             # Listen for the new task
             while True:
                 try:
-                    sentence, semantics = robot.hmi.query(description="",
+                    if is_sim_mode():
+                        sentence, semantics = robot.hmi.query(description="",
                                                           grammar=knowledge.grammar,
                                                           target=knowledge.grammar_target)
-
+                    else:
+                        sentence, semantics = robot.picovoice.get_intent("demo")
+                        semantics = create_semantics(semantics)
                     timeout_count = 0
                     break
                 except hmi.TimeoutException:
