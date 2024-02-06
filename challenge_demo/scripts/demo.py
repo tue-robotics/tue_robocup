@@ -22,7 +22,7 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_smach_states.utility import WaitForTrigger
 from robot_skills.simulation.sim_mode import is_sim_mode
-from .create_semantics_picovoice_demo import create_semantics
+from create_semantics_picovoice_demo import create_semantics
 
 def task_result_to_report(task_result):
     output = ""
@@ -130,7 +130,7 @@ def main():
                                                           grammar=knowledge.grammar,
                                                           target=knowledge.grammar_target)
                     else:
-                        sentence, semantics = robot.picovoice.get_intent("demo")
+                        sentence, semantics = robot.picovoice.get_intent("demo", demo=True)
                         semantics = create_semantics(semantics)
                     timeout_count = 0
                     break

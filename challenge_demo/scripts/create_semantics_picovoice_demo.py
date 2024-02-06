@@ -14,37 +14,74 @@ say_dict = {
 
 def create_semantics(result):
 
-    action = result.get("intent", {})
-    slots_dict = result.get("slots", {})
-
-    semantics = {
-        "action": action
+    actions_dict = {
+        "actions": []
     }
 
-    if action in ["inspect", "place", "hand-over", "navigate-to", "find"]:
-        for key, value in slots_dict.items():
+    if result["action"] in ["inspect", "place", "hand-over", "navigate-to", "find"]:
+        for key, value in result.items():
             value = value.replace(" one", "1")
             value = value.replace(" two", "2")
             value = value.replace(" ", "_")
             if key.endswith("location") or key == "entity":
-                semantics[key] = {"id": value}
+                result[key] = {"id": value}
             if key == "object":
-                semantics[key] = {"type": value} if not value == "someone" else {"type": "person"}
+                result[key] = {"type": value} if not value == "someone" else {"type": "person"}
                 if value == "waiving_person":
-                    semantics[key] = {"type": "person", "tags": ["LWave", "Rwave"]}
+                    result[key] = {"type": "person", "tags": ["LWave", "Rwave"]}
             if value == "me":
-                semantics[key] = {"id": "operator"}
+                result[key] = {"id": "operator"}
 
-    elif action == "demo-presentation":
-        for key, value in slots_dict.items():
-            if key == "language":
-                semantics[key] = "nl" if value == "dutch" else "en"
+    elif result["action"] == "demo-presentation":
+        result["language"] = "nl" if result["language"] == "dutch" else "en"
 
-    elif action == "say":
-        for key, value in slots_dict.items():
+    elif result["action"] == "say":
+        for key, value in result.items():
             if value in say_dict:
-                semantics[key] = say_dict[value]
+                result[key] = say_dict[value]
 
-    return semantics
+    actions_dict["actions"].append(result)
 
+    return actions_dict
+
+
+action_handlers = {
+    "inspect": lambda result: {"action": "inspect", "entity": {"id": result.get("entity", None)}},
+
+    "place": lambda result: {
+        "action": "place",
+        "source-location": {"id": result.get("source-location", None).replace(" one", "1").replace(" two", "2")},
+        "target-location": {"id": result.get("target-location", None).replace(" one", "1").replace(" two", "2")},
+        "object": {"type": result.get("object", None).replace(" ", "_")}
+    },
+
+    "hand-over": lambda result: {
+        "action": "hand-over",
+        "source-location": {"id": result.get("source-location", None).replace(" one", "1").replace(" two", "2")},
+        "target-location": {"id": "operator"},
+        "object": {"type": result.get("object", None)}
+    },
+
+    "navigate-to": lambda result: {"action": "navigate-to",
+                                   "target-location": {"id": result.get("target-location", None)}},
+
+    "find": lambda result: {"action": "find", "object": {
+        "type": result.get("object", None) if not result["object"] == "someone" else "person"},
+                            "location": {"id": result.get("source-location", None)}},
+
+    "demo-presentation": lambda result: {"action": "demo-presentation",
+                                         "language": "nl" if result["language"] == "dutch" else "en"},
+
+    "say": lambda result: {"action": "say", "sentence": say_dict.get(result["sentence"], result["sentence"])}
+}
+
+
+def create_semantics_generic(result):
+    action = result["action"]
+
+    if action in action_handlers:
+        action_dict = action_handlers[action](result)
+        return {"actions": [action_dict]}
+    else:
+        return {"actions": []}
 
