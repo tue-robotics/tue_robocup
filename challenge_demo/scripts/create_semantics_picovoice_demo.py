@@ -66,7 +66,7 @@ action_handlers = {
                                    "target-location": {"id": result.get("target-location", None)}},
 
     "find": lambda result: {"action": "find", "object": {
-        "type": result.get("object", None) if not result["object"] == "someone" else "person"},
+        "type": result.get("object", None) if not result["object"] == "someone" else "person", "tags": result.get("tags", None)},
                             "location": {"id": result.get("source-location", None)}},
 
     "demo-presentation": lambda result: {"action": "demo-presentation",
@@ -84,4 +84,3 @@ def create_semantics_generic(result):
         return {"actions": [action_dict]}
     else:
         return {"actions": []}
-
