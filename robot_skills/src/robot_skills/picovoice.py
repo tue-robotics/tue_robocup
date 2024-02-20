@@ -53,6 +53,6 @@ class PicoVoice(RobotPart):
         semantics = {slot.key: slot.value.replace(" ", "_") for slot in result.slots}
         if demo:
             semantics["action"] = result.intent
-        hmi_result = HMIResult(sentence="", semantics=semantics)
+        hmi_result = HMIResult(sentence=result.intent, semantics=semantics)
         rospy.loginfo(f"PicoVoice.get_intent: result={hmi_result}")
         return hmi_result
