@@ -1,14 +1,14 @@
 say_dict = {
-    "your name": "ROBOT_NAME",
-    "the time": "TIME",
-    "what time it is": "TIME",
-    "the name of your team": "TEAM_NAME",
-    "the day of the month": "DAY_OF_MONTH",
-    "the day of the week": "DAY_OF_WEEK",
-    "what day is today": "TODAY",
-    "me what day it is": "TODAY",
-    "the date": "TODAY",
-    "a joke": "joke"
+    "your_name": "ROBOT_NAME",
+    "the_time": "TIME",
+    "what_time_it_is": "TIME",
+    "the_name_of_your_team": "TEAM_NAME",
+    "the_day_of_the_month": "DAY_OF_MONTH",
+    "the_day_of_the week": "DAY_OF_WEEK",
+    "what_day_is_today": "TODAY",
+    "me_what_day_it_is": "TODAY",
+    "the_date": "TODAY",
+    "a_joke": "joke"
 }
 
 
@@ -84,3 +84,4 @@ def create_semantics_generic(result):
         return {"actions": [action_dict]}
     else:
         return {"actions": []}
+
