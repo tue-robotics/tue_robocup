@@ -113,7 +113,7 @@ def main():
 
             robot.speech.speak(user_instruction, block=True)
             rospy.loginfo("Waiting for trigger")
-            trigger.execute()
+            #trigger.execute()
 
             base_loc = robot.base.get_location()
             base_pose = base_loc.frame
@@ -136,13 +136,9 @@ def main():
                     break
                 except hmi.TimeoutException:
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
+                    timeout_count += 1
                     if timeout_count >= 3:
-                        robot.hmi.restart_dragonfly()
-                        timeout_count = 0
-                        rospy.logwarn("[GPSR] Dragonfly restart")
-                    else:
-                        timeout_count += 1
-                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
+                        break
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
