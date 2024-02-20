@@ -35,7 +35,9 @@ class YoloSegmentor:
         table_mask = np.zeros_like(image, dtype=np.uint8)
         for class_id, seg in zip(class_ids, segmentations):
             if class_id in self.class_ids:
-                cv2.fillPoly(table_mask, [seg], 255)
+                cv2.fillPoly(table_mask, [seg], color=(255, 0, 255))
+            else:
+                cv2.fillPoly(table_mask, [seg], color=(255, 0, 0))
         return table_mask
 
     def callback(self, data):
