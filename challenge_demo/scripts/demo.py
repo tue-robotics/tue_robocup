@@ -138,6 +138,7 @@ def main():
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
                     timeout_count += 1
                     if timeout_count >= 3:
+                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
                         break
 
             # check if we have heard this correctly

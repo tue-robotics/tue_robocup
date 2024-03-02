@@ -20,8 +20,8 @@ def create_semantics(result):
 
     if result["action"] in ["inspect", "place", "hand-over", "navigate-to", "find"]:
         for key, value in result.items():
-            value = value.replace(" one", "1")
-            value = value.replace(" two", "2")
+            value = value.replace("_one", "1")
+            value = value.replace("_two", "2")
             value = value.replace(" ", "_")
             if key.endswith("location") or key == "entity":
                 result[key] = {"id": value}
