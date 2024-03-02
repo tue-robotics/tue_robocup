@@ -618,7 +618,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             try:
                 answer_val = answer_des.resolve()
                 rospy.logdebug(f"{answer_val=}")
-                name = answer_val.semantics["name"]
+                name = answer_val.semantics["guestname"]
                 rospy.loginfo(f"This person's name is: '{name}'")
                 output_des.write(str(name))
             except KeyError as e:
