@@ -294,6 +294,28 @@ class CheckTimeOut(smach.State):
 
         return "not_yet"
 
+class ProcessAnswer(smach.State):
+    """
+    Extract the answer from PicoVoice backend listening.
+    """
+    def __init__(self, context: Union[Designator, str], answer_des, output_des):
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+        check_type(context, str)
+        self.answer_des = answer_des
+        self.output_des = output_des
+        self.context = context
+
+    def execute(self, userdata=None):
+        try:
+            answer_val = self.answer_des.resolve()
+            rospy.logdebug(f"{answer_val=}")
+            name = answer_val.semantics[self.context]
+            rospy.loginfo(f"Your answer is: '{name}'")
+            self.output_des.write(str(name))
+        except KeyError as e:
+            rospy.loginfo(f"KeyError resolving the name heard: {e}")
+            return "failed"
+        return "succeeded"
 
 class CheckTries(smach.State):
     """
