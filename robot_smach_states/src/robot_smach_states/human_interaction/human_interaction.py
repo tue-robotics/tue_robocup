@@ -14,7 +14,7 @@ from hmi import HMIResult
 # TU/e Robotics
 from hmi import TimeoutException
 
-from robot_smach_states.utility import CheckTries, WriteDesignator
+from robot_smach_states.utility import CheckTries, WriteDesignator, ProcessAnswer
 import robot_smach_states.util.designators as ds
 # Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
@@ -613,19 +613,6 @@ class AskPersonNamePicoVoice(smach.StateMachine):
         reset_des = ds.VariableDesignator(resolve_type=bool).writeable
         answer = ds.VariableDesignator(resolve_type=HMIResult)
 
-        @smach.cb_interface(outcomes=["succeeded", "failed"])
-        def process_answer(_, answer_des, output_des):
-            try:
-                answer_val = answer_des.resolve()
-                rospy.logdebug(f"{answer_val=}")
-                name = answer_val.semantics["guestname"]
-                rospy.loginfo(f"This person's name is: '{name}'")
-                output_des.write(str(name))
-            except KeyError as e:
-                rospy.loginfo(f"KeyError resolving the name heard: {e}")
-                return "failed"
-            return "succeeded"
-
         with self:
             self.add(
                 "WRITE_RESET_DES_TRUE", WriteDesignator(reset_des, True), transitions={"written": "SAY"}
@@ -647,7 +634,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
             self.add(
                 "PROCESS_ANSWER",
-                smach.CBState(process_answer, cb_args=[answer, person_name_des]),
+                ProcessAnswer("guestname", answer, person_name_des),
                 transitions={"succeeded": "succeeded", "failed": "CHECK_TRIES"},
             )
             self.add(
