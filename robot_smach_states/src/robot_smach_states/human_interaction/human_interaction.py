@@ -604,8 +604,9 @@ class AskPersonName(smach.State):
 def process_answer(_, context: Union[ds.Designator, str], answer_des, output_des):
     try:
         answer_val = answer_des.resolve()
+        context_val = context.resolve()
         rospy.logdebug(f"{answer_val=}")
-        name = answer_val.semantics[context]
+        name = answer_val.semantics[f"{context_val}"]
         rospy.loginfo(f"Your answer is: '{name}'")
         output_des.write(str(name))
     except KeyError as e:
