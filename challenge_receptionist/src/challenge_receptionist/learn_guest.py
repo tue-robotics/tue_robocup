@@ -144,7 +144,7 @@ class LearnGuest(smach.StateMachine):
                                    transitions={"succeeded": "RESET_1", "failed": "CHECK_TRIES"})
 
             smach.StateMachine.add("CHECK_TRIES",
-                                   CheckTries(nr_tries=3, reset_des=reset_des),
+                                   CheckTries(max_tries=3, reset_des=reset_des),
                                    transitions={"not_yet": "SAY_DRINK_QUESTION", "max_tries": "DEFAULT_DRINK"})
 
             smach.StateMachine.add('DEFAULT_DRINK',
