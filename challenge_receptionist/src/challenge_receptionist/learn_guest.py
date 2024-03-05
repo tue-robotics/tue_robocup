@@ -4,9 +4,9 @@ from ed.entity import Entity
 from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice
+from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice, process_answer
 from robot_smach_states.reset import ResetArms
-from robot_smach_states.utility import CheckTries, ProcessAnswer
+from robot_smach_states.utility import CheckTries
 
 import robot_smach_states.util.designators as ds
 import smach
@@ -140,7 +140,7 @@ class LearnGuest(smach.StateMachine):
                                                     'no_result': 'CHECK_TRIES'})
 
             smach.StateMachine.add('PROCESS_ANSWER',
-                                   ProcessAnswer("chosendrink", answer, guest_drink_des.writeable),
+                                   smach.CBState(process_answer, cb_args=["chosendrink", answer, guest_drink_des.writeable]),
                                    transitions={"succeeded": "RESET_1", "failed": "CHECK_TRIES"})
 
             smach.StateMachine.add("CHECK_TRIES",
