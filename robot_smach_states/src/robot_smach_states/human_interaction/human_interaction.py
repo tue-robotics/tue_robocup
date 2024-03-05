@@ -14,7 +14,7 @@ from hmi import HMIResult
 # TU/e Robotics
 from hmi import TimeoutException
 
-from robot_smach_states.utility import CheckTries, WriteDesignator, ProcessAnswer
+from robot_smach_states.utility import CheckTries, WriteDesignator
 import robot_smach_states.util.designators as ds
 # Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
@@ -605,7 +605,7 @@ def process_answer(_, context: Union[ds.Designator, str], answer_des, output_des
     try:
         answer_val = answer_des.resolve()
         rospy.logdebug(f"{answer_val=}")
-        name = answer_val.semantics[ds.value_or_resolve(context)]
+        name = answer_val.semantics[context]
         rospy.loginfo(f"Your answer is: '{name}'")
         output_des.write(str(name))
     except KeyError as e:
