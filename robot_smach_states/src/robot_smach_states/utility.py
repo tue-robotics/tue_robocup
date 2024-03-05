@@ -309,7 +309,7 @@ class ProcessAnswer(smach.State):
         try:
             answer_val = self.answer_des.resolve()
             rospy.logdebug(f"{answer_val=}")
-            name = answer_val.semantics[self.context]
+            name = answer_val.semantics[value_or_resolve(self.context)]
             rospy.loginfo(f"Your answer is: '{name}'")
             self.output_des.write(str(name))
         except KeyError as e:
