@@ -134,13 +134,12 @@ class LearnGuest(smach.StateMachine):
             else:
                 smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                        HearOptionsExtraPicoVoice(
-                                           robot, "askPersonName", answer.writeable, look_at_standing_person=True
-                                       ),
+                                           robot, "receptionist", answer.writeable, "drinks", look_at_standing_person=True),
                                        transitions={'heard': 'PROCESS_ANSWER',
                                                     'no_result': 'CHECK_TRIES'})
 
             smach.StateMachine.add('PROCESS_ANSWER',
-                                   smach.CBState(process_answer, cb_args=["chosendrink", answer, guest_drink_des.writeable]),
+                                   smach.CBState(process_answer, cb_args=["drink", answer, guest_drink_des.writeable]),
                                    transitions={"succeeded": "RESET_1", "failed": "CHECK_TRIES"})
 
             smach.StateMachine.add("CHECK_TRIES",
