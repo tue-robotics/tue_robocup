@@ -642,12 +642,12 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
             self.add(
                 "HEAR",
-                HearOptionsExtraPicoVoice(robot, "askPersonName", answer.writeable),
+                HearOptionsExtraPicoVoice(robot, "receptionist", answer.writeable, "personName"),
                 transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
             )
             self.add(
                 "PROCESS_ANSWER",
-                smach.CBState(process_answer, cb_args=["guestname", answer, person_name_des]),
+                smach.CBState(process_answer, cb_args=["name", answer, person_name_des]),
                 transitions={"succeeded": "succeeded", "failed": "CHECK_TRIES"},
             )
             self.add(
