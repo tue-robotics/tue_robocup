@@ -122,7 +122,19 @@ class TopGrasp(smach.State):
                 arm.send_goal(pose_goal) # send the command to the robot.
                 arm.wait_for_motion_done() # wait until the motion is complete
                 move_arm = False # reset flag to move the arm.
+                #continue # dont wait for the rest of the loop.
+
+                # control the arm in joint space
+                joint_goal = [0.5, # arm lift joint. ranges from 0.0 to 0.7m
+                              -1.57, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
+                              0.0, # arm roll joint
+                              -1.57, # wrist flex joint. lower values move the hand down
+                              0.0] # wrist roll joint. 
+                arm._arm._send_joint_trajectory([joint_goal]) # send the command to the robot.
+                arm.wait_for_motion_done() # wait until the motion is complete
+                move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
+
             #TODO get base-gripper transform
 
             # check if done
