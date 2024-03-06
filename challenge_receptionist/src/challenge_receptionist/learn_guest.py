@@ -45,7 +45,6 @@ class LearnGuest(smach.StateMachine):
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
         reset_des = ds.VariableDesignator(resolve_type=bool).writeable
-        answer = ds.VariableDesignator(resolve_type=HMIResult)
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
@@ -134,13 +133,9 @@ class LearnGuest(smach.StateMachine):
             else:
                 smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                        HearOptionsExtraPicoVoice(
-                                           robot, "receptionist", answer.writeable, "drinks", look_at_standing_person=True),
-                                       transitions={'heard': 'PROCESS_ANSWER',
+                                           robot, "receptionist", guest_drink_des.writeable, ["drinks"], look_at_standing_person=True),
+                                       transitions={'heard': 'RESET_1',
                                                     'no_result': 'CHECK_TRIES'})
-
-            smach.StateMachine.add('PROCESS_ANSWER',
-                                   smach.CBState(process_answer, cb_args=["drink", answer, guest_drink_des.writeable]),
-                                   transitions={"succeeded": "RESET_1", "failed": "CHECK_TRIES"})
 
             smach.StateMachine.add("CHECK_TRIES",
                                    CheckTries(max_tries=3, reset_des=reset_des),
