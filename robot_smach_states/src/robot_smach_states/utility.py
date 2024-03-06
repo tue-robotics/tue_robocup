@@ -294,7 +294,6 @@ class CheckTimeOut(smach.State):
 
         return "not_yet"
 
-
 class CheckTries(smach.State):
     """
     This state will check if the number of tries is below a certain number.
