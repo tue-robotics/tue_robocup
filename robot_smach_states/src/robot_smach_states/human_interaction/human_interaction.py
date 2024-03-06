@@ -604,11 +604,11 @@ class AskPersonName(smach.State):
 def process_answer(_, context: Union[ds.Designator, str], answer_des, output_des):
     try:
         answer_val = answer_des.resolve()
-        context_val = context.resolve()
         rospy.logdebug(f"{answer_val=}")
-        name = answer_val.semantics[f"{context_val}"]
+        name = answer_val.semantics[context]
         rospy.loginfo(f"Your answer is: '{name}'")
-        output_des.write(str(name))
+        output_des.write(name)
+
     except KeyError as e:
         rospy.loginfo(f"KeyError resolving the name heard: {e}")
         return "failed"
@@ -642,7 +642,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
             self.add(
                 "HEAR",
-                HearOptionsExtraPicoVoice(robot, "receptionist", answer.writeable, "personName"),
+                HearOptionsExtraPicoVoice(robot, "receptionist", answer.writeable, ["personName"]),
                 transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
             )
             self.add(
