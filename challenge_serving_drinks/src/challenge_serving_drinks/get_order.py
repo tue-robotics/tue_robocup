@@ -83,7 +83,7 @@ class GetOrder(smach.StateMachine):
 
             smach.StateMachine.add("WAIT_FOR_WAVING",
                                    states.SetPoseFirstFoundPersonToEntity(robot=robot,
-                                                                          properties={'tags': ['LWave', 'RWave']},
+                                                                          properties={'tags': ['LWaving', 'RWaving']},
                                                                           strict=False,
                                                                           dst_entity_designator=caller_id,
                                                                           query_entity_designator=target_room_designator),
@@ -223,4 +223,3 @@ if __name__ == "__main__":
     else:
         print("Please provide robot_name as argument. Eg. 'hero'")
         exit(1)
-
