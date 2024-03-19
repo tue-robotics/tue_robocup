@@ -1,30 +1,31 @@
 import numpy as np
 import cv2
+import rospy
 
+class ArucoVector:
+    def __init__(self, x, y, z, roll, pitch, yaw):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.roll = roll
+        self.pitch = pitch
+        self.yaw = yaw
+def rvec_to_euler(rvec):
+    # Convert rotation vector to rotation matrix
+    R, _ = cv2.Rodrigues(rvec)
+    # Convert rotation matrix to Euler angles
+    sy = np.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+    singular = sy < 1e-6
+    if not singular:
+        x = np.arctan2(R[2,1], R[2,2])
+        y = np.arctan2(-R[2,0], sy)
+        z = np.arctan2(R[1,0], R[0,0])
+    else:
+        x = np.arctan2(-R[1,2], R[1,1])
+        y = np.arctan2(-R[2,0], sy)
+        z = 0
+    return np.degrees(x), np.degrees(y), np.degrees(z)
 
-ARUCO_DICT = {
-    "DICT_4X4_50": cv2.aruco.DICT_4X4_50,
-    "DICT_4X4_100": cv2.aruco.DICT_4X4_100,
-    "DICT_4X4_250": cv2.aruco.DICT_4X4_250,
-    "DICT_4X4_1000": cv2.aruco.DICT_4X4_1000,
-    "DICT_5X5_50": cv2.aruco.DICT_5X5_50,
-    "DICT_5X5_100": cv2.aruco.DICT_5X5_100,
-    "DICT_5X5_250": cv2.aruco.DICT_5X5_250,
-    "DICT_5X5_1000": cv2.aruco.DICT_5X5_1000,
-    "DICT_6X6_50": cv2.aruco.DICT_6X6_50,
-    "DICT_6X6_100": cv2.aruco.DICT_6X6_100,
-    "DICT_6X6_250": cv2.aruco.DICT_6X6_250,
-    "DICT_6X6_1000": cv2.aruco.DICT_6X6_1000,
-    "DICT_7X7_50": cv2.aruco.DICT_7X7_50,
-    "DICT_7X7_100": cv2.aruco.DICT_7X7_100,
-    "DICT_7X7_250": cv2.aruco.DICT_7X7_250,
-    "DICT_7X7_1000": cv2.aruco.DICT_7X7_1000,
-    "DICT_ARUCO_ORIGINAL": cv2.aruco.DICT_ARUCO_ORIGINAL,
-    "DICT_APRILTAG_16h5": cv2.aruco.DICT_APRILTAG_16h5,
-    "DICT_APRILTAG_25h9": cv2.aruco.DICT_APRILTAG_25h9,
-    "DICT_APRILTAG_36h10": cv2.aruco.DICT_APRILTAG_36h10,
-    "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
-}
 
 def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -37,37 +38,60 @@ def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     if len(corners) > 0:
         for i in range(0, len(ids)):
             rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
-                                                                           distortion_coefficients)
+                                                                         distortion_coefficients)
+    return rvec, tvec
 
-            print("rvec: {} and tvec: {}".format(rvec, tvec))
-            cv2.aruco.drawDetectedMarkers(frame, corners)
-
-            cv2.drawFrameAxes(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)
-
-    return frame
 
 aruco_type = "DICT_5X5_250"
-
 
 intrinsic_camera = np.array(((933.15867, 0, 657.59), (0, 933.1586, 400.36993), (0, 0, 1)))
 distortion = np.array((-0.43948, 0.18514, 0, 0))
 
-cap = cv2.VideoCapture(0)
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+def get_aruco_pos(self, aruco_type, intrinsic_camera, distortion):
 
-while cap.isOpened():
+    ARUCO_DICT = {
+        "DICT_4X4_50": cv2.aruco.DICT_4X4_50,
+        "DICT_4X4_100": cv2.aruco.DICT_4X4_100,
+        "DICT_4X4_250": cv2.aruco.DICT_4X4_250,
+        "DICT_4X4_1000": cv2.aruco.DICT_4X4_1000,
+        "DICT_5X5_50": cv2.aruco.DICT_5X5_50,
+        "DICT_5X5_100": cv2.aruco.DICT_5X5_100,
+        "DICT_5X5_250": cv2.aruco.DICT_5X5_250,
+        "DICT_5X5_1000": cv2.aruco.DICT_5X5_1000,
+        "DICT_6X6_50": cv2.aruco.DICT_6X6_50,
+        "DICT_6X6_100": cv2.aruco.DICT_6X6_100,
+        "DICT_6X6_250": cv2.aruco.DICT_6X6_250,
+        "DICT_6X6_1000": cv2.aruco.DICT_6X6_1000,
+        "DICT_7X7_50": cv2.aruco.DICT_7X7_50,
+        "DICT_7X7_100": cv2.aruco.DICT_7X7_100,
+        "DICT_7X7_250": cv2.aruco.DICT_7X7_250,
+        "DICT_7X7_1000": cv2.aruco.DICT_7X7_1000,
+        "DICT_ARUCO_ORIGINAL": cv2.aruco.DICT_ARUCO_ORIGINAL,
+        "DICT_APRILTAG_16h5": cv2.aruco.DICT_APRILTAG_16h5,
+        "DICT_APRILTAG_25h9": cv2.aruco.DICT_APRILTAG_25h9,
+        "DICT_APRILTAG_36h10": cv2.aruco.DICT_APRILTAG_36h10,
+        "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
+    }
 
-    ret, img = cap.read()
+    try:
+        image = self.perception.get_image()
+    except Exception as e:
+        rospy.logerr("Can't get image: {}".format(e))
+        return False
 
-    output = pose_estimation(img, ARUCO_DICT[aruco_type], intrinsic_camera, distortion)
+    rvec, tvec = pose_estimation(image, ARUCO_DICT[aruco_type], intrinsic_camera, distortion)
 
-    cv2.imshow('Estimated Pose', output)
+    if rvec is None or tvec is None:
+        rospy.logerr("Pose estimation failed.")
+        return False
 
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('q'):
-        break
+    x, y, z = tvec.flatten()
 
-cap.release()
-cv2.destroyAllWindows()
+    roll, pitch, yaw = rvec_to_euler(rvec)
+
+    rospy.loginfo("ArUco marker position - x: {:.2f}, y: {:.2f}, z: {:.2f}".format(x, y, z))
+    rospy.loginfo("ArUco marker orientation - roll: {:.2f}, pitch: {:.2f}, yaw: {:.2f}".format(roll, pitch, yaw))
+
+
+    return ArucoVector(x, y, z, roll, pitch, yaw)
