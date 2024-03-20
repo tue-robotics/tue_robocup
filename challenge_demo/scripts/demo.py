@@ -113,7 +113,7 @@ def main():
 
             robot.speech.speak(user_instruction, block=True)
             rospy.loginfo("Waiting for trigger")
-            #trigger.execute()
+            trigger.execute()
 
             base_loc = robot.base.get_location()
             base_pose = base_loc.frame
