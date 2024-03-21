@@ -123,7 +123,7 @@ def main():
                                    etype="waypoint")
 
             # Listen for the new task
-            while True:
+            for i in range(timeout_count):
                 try:
                     if is_sim_mode():
                         sentence, semantics = robot.hmi.query(description="",
@@ -132,14 +132,12 @@ def main():
                     else:
                         sentence, semantics = robot.picovoice.get_intent("demo", demo=True)
                         semantics = create_semantics(semantics)
-                    timeout_count = 0
                     break
                 except hmi.TimeoutException:
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
-                    timeout_count += 1
-                    if timeout_count >= 3:
-                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
-                        break
+            else:
+                rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
+                break
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
@@ -156,7 +154,7 @@ def main():
                     robot.speech.speak('Sorry')
                     continue
             except hmi.TimeoutException:
-                # robot did not hear the confirmation, so lets assume its correct
+                rospy.loginfo("robot did not hear the confirmation, so lets assume its correct")
                 break
 
             break
