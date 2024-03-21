@@ -106,7 +106,6 @@ def main():
         # Report to the user
         robot.head.look_at_standing_person()
         robot.speech.speak(report, block=True)
-        timeout_count = 0
 
         while True:
             rospy.loginfo("Waiting for trigger")
@@ -123,7 +122,8 @@ def main():
                                    etype="waypoint")
 
             # Listen for the new task
-            for i in range(timeout_count):
+            timeout_tries = 3
+            for i in range(timeout_tries):
                 try:
                     if is_sim_mode():
                         sentence, semantics = robot.hmi.query(description="",
@@ -136,8 +136,9 @@ def main():
                 except hmi.TimeoutException:
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
             else:
-                rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
-                break
+                rospy.logwarn("[GPSR] speech timed out {timeout_tries} times, aborting")
+                robot.speech.speak("I am sorry but I cannot hear you. Let's not try again.")
+                continue
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
