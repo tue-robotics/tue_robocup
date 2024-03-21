@@ -109,11 +109,11 @@ def main():
         timeout_count = 0
 
         while True:
-            robot.head.look_at_standing_person()
-
-            robot.speech.speak(user_instruction, block=True)
             rospy.loginfo("Waiting for trigger")
             trigger.execute()
+
+            robot.head.look_at_standing_person()
+            robot.speech.speak(user_instruction, block=True)
 
             base_loc = robot.base.get_location()
             base_pose = base_loc.frame
