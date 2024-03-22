@@ -138,7 +138,7 @@ def main():
             else:
                 rospy.logwarn("[GPSR] speech timed out {timeout_tries} times, aborting")
                 robot.speech.speak("I am sorry but I cannot hear you. Let's not try again.")
-                continue
+                continue  # Continue the outer while loop
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
