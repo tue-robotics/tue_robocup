@@ -168,7 +168,7 @@ def main():
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
 
-        rospy.loginfo(f"{task_result.missing_field}")
+        rospy.loginfo(f"{task_result.missing_field=}")
         # # Ask for missing information
         # while task_result.missing_field:
         #     request_missing_field(knowledge.task_result.missing_field)
