@@ -9,6 +9,7 @@ import tf2_ros
 from geometry_msgs.msg import Twist
 
 # TU/e Robotics
+from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from ..utility import check_arm_requirements, ResolveArm
@@ -59,7 +60,7 @@ class TopGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_goals": ["carrying_pose"], }
 
-    def __init__(self, robot: Robot, arm: ArmDesignator) -> None:
+    def __init__(self, robot: Robot, arm: ArmDesignator, grab_entity: Designator) -> None:
         """
         Pick up an item given an arm and an entity to be picked up
 
@@ -75,13 +76,35 @@ class TopGrasp(smach.State):
         assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
+        check_type(grab_entity, Entity)
+        self.grab_entity_designator = grab_entity
+
         self.yolo_segmentor = YoloSegmentor()
 
     def execute(self, userdata=None) -> str:
+        grab_entity = self.grab_entity_designator.resolve()
+        if not grab_entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
+
         arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
+
+        # define a goal with respect to the entity.
+        goal_map = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id=grab_entity.uuid)
+
+        try:
+            # Transform to goal to the base link frame
+            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
+            if goal_bl is None:
+                rospy.logerr('Transformation of goal to base failed')
+                return 'failed'
+        except tf2_ros.TransformException as tfe:
+            rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
+            return 'failed'
+        #rospy.loginfo(f"goal_bl = {goal_bl}")
 
         grasp_succeeded=False
         rate = rospy.Rate(10) # loop rate in hz
@@ -218,7 +241,7 @@ class TopGrab(smach.StateMachine):
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', TopGrasp(robot, arm),
+            smach.StateMachine.add('GRAB', TopGrasp(robot, arm, item),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
