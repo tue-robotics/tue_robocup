@@ -92,7 +92,7 @@ def main():
 
     trigger = WaitForTrigger(robot, ["gpsr"], "/" + robot_name + "/trigger")
 
-    while True:
+    while not rospy.is_shutdown():
         # Navigate to the GPSR meeting point
         if not skip:
             robot.speech.speak("Moving to the meeting point.", block=False)
@@ -107,7 +107,7 @@ def main():
         robot.head.look_at_standing_person()
         robot.speech.speak(report, block=True)
 
-        while True:
+        while not rospy.is_shutdown():
             rospy.loginfo("Waiting for trigger")
             trigger.execute()
 
