@@ -109,6 +109,7 @@ class TopGrasp(smach.State):
         grasp_succeeded=False
         rate = rospy.Rate(10) # loop rate in hz
 
+        # define a desired transformation from base to gripper
         base_to_gripper = self.frame_from_xyzrpy(0.5, # x distance to the robot
                                                 0.08, # y distance off center from the robot (fixed if rpy=0)
                                                 0.7, # z height of the gripper
@@ -158,7 +159,11 @@ class TopGrasp(smach.State):
                 move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
 
-            #TODO get base-gripper transform
+            # get base-gripper transform
+            gripper_id = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id="hand_palm_link")
+            gripper_bl = self.robot.tf_buffer.transform(gripper_id, self.robot.base_link_frame)
+            gripper_bl.frame = arm._arm.offset.Inverse() * gripper_bl.frame  # compensate for the offset in hand palm link
+            #rospy.loginfo(f"gripper_bl = {gripper_bl}")
 
             # check if done
             if False: # check if the grasp has succeeded
