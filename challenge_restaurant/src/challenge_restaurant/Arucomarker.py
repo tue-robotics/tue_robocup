@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import rospy
-
+from cv_bridge import CvBridge, CvBridgeError
 class ArucoVector:
     def __init__(self, x, y, z, roll, pitch, yaw):
         self.x = x
@@ -38,7 +38,11 @@ def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     if len(corners) > 0:
         for i in range(0, len(ids)):
             rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
-                                                                         distortion_coefficients)
+                                                                       distortion_coefficients)
+    else:
+        rospy.logerr("No ArUco markers detected in the frame.")
+        return None, None
+
     return rvec, tvec
 
 
@@ -80,7 +84,15 @@ def get_aruco_pos(self, aruco_type, intrinsic_camera, distortion):
         rospy.logerr("Can't get image: {}".format(e))
         return False
 
-    rvec, tvec = pose_estimation(image, ARUCO_DICT[aruco_type], intrinsic_camera, distortion)
+    bridge = CvBridge()
+    try:
+        cv_image = bridge.imgmsg_to_cv2(image, "bgr8")  # Specify desired encoding
+    except CvBridgeError as e:
+        rospy.logerr("CvBridge Error: {0}".format(e))
+        return False
+
+
+    rvec, tvec = pose_estimation(cv_image, ARUCO_DICT[aruco_type], intrinsic_camera, distortion)
 
     if rvec is None or tvec is None:
         rospy.logerr("Pose estimation failed.")
