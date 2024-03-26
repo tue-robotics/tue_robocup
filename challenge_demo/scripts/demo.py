@@ -92,7 +92,7 @@ def main():
 
     trigger = WaitForTrigger(robot, ["gpsr"], "/" + robot_name + "/trigger")
 
-    while True:
+    while not rospy.is_shutdown():
         # Navigate to the GPSR meeting point
         if not skip:
             robot.speech.speak("Moving to the meeting point.", block=False)
@@ -106,14 +106,13 @@ def main():
         # Report to the user
         robot.head.look_at_standing_person()
         robot.speech.speak(report, block=True)
-        timeout_count = 0
 
-        while True:
-            robot.head.look_at_standing_person()
-
-            robot.speech.speak(user_instruction, block=True)
+        while not rospy.is_shutdown():
             rospy.loginfo("Waiting for trigger")
-            #trigger.execute()
+            trigger.execute()
+
+            robot.head.look_at_standing_person()
+            robot.speech.speak(user_instruction, block=True)
 
             base_loc = robot.base.get_location()
             base_pose = base_loc.frame
@@ -123,7 +122,8 @@ def main():
                                    etype="waypoint")
 
             # Listen for the new task
-            while True:
+            timeout_tries = 3
+            for i in range(timeout_tries):
                 try:
                     if is_sim_mode():
                         sentence, semantics = robot.hmi.query(description="",
@@ -132,14 +132,13 @@ def main():
                     else:
                         sentence, semantics = robot.picovoice.get_intent("demo", demo=True)
                         semantics = create_semantics(semantics)
-                    timeout_count = 0
                     break
                 except hmi.TimeoutException:
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
-                    timeout_count += 1
-                    if timeout_count >= 3:
-                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
-                        break
+            else:
+                rospy.logwarn("[GPSR] speech timed out {timeout_tries} times, aborting")
+                robot.speech.speak("I am sorry but I cannot hear you. Let's not try again.")
+                continue  # Continue the outer while loop
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
@@ -156,7 +155,7 @@ def main():
                     robot.speech.speak('Sorry')
                     continue
             except hmi.TimeoutException:
-                # robot did not hear the confirmation, so lets assume its correct
+                rospy.loginfo("robot did not hear the confirmation, so lets assume its correct")
                 break
 
             break
@@ -169,7 +168,7 @@ def main():
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
 
-        print(task_result.missing_field)
+        rospy.loginfo(f"{task_result.missing_field=}")
         # # Ask for missing information
         # while task_result.missing_field:
         #     request_missing_field(knowledge.task_result.missing_field)
