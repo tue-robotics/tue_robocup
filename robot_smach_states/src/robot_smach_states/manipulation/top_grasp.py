@@ -87,7 +87,6 @@ class TopGrasp(smach.State):
         self.yolo_segmentor = YoloSegmentor()
 
     def execute(self, userdata=None) -> str:
-
         grab_entity = self.grab_entity_designator.resolve()
         if not grab_entity:
             rospy.logerr("Could not resolve grab_entity")
