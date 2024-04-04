@@ -12,15 +12,16 @@ from geometry_msgs.msg import Twist
 from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
-from ..utility import check_arm_requirements, ResolveArm
-from ..util.designators import check_type
-from ..navigation.navigate_to_grasp import NavigateToGrasp
-from ..manipulation.grasp_point_determination import GraspPointDeterminant
-from ..util.designators.arm import ArmDesignator
-from ..util.designators.core import Designator
+from robot_smach_states.util.designators.utility import check_arm_requirements, ResolveArm
+from robot_smach_states.util.designators import check_type
+from robot_smach_states.navigation.navigate_to_grasp import NavigateToGrasp
+from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
+from robot_smach_states.util.designators.arm import ArmDesignator
+from robot_smach_states.util.designators.core import Designator
 
 from robot_smach_states.manipulation.cutlery_detector import YoloSegmentor
 from robot_skills.util.exceptions import TimeOutException
+
 
 
 class PrepareGrasp(smach.State):
@@ -136,7 +137,7 @@ class TopGrasp(smach.State):
                                        -1.57, # wrist flex joint. lower values move the hand down
                                        0.0] # wrist roll joint. 
                 arm._arm._send_joint_trajectory([downward_joint_goal]) # send the command to the robot.
-                #Move arm downwards, don't wait until motion is done, but until a force is detected, proably wait longer than 1 s
+                #Move arm downwards, don't wait until motion is done, but until a force is detected
                 try:
                     arm._arm.force_sensor.wait_for_edge_up(5.0)  # wait 5 seconds for a force detection
                 except TimeOutException:
@@ -144,7 +145,7 @@ class TopGrasp(smach.State):
                     pass
 
                 #After force detection, make sure arm moves upwards
-                grasp_joint_goal = [0.5, # Needs to be obtained from distance open vs closed gripper
+                grasp_joint_goal = [0.65, # Needs to be obtained from distance open vs closed gripper
                                     -1.57, 
                                     0.0, 
                                     -1.57, 
@@ -153,6 +154,16 @@ class TopGrasp(smach.State):
                 arm.wait_for_motion_done() # wait until the motion is complete
                 move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
+
+            #Closing the gripper
+            arm.gripper.send_goal('close', timeout=0.0)
+            arm.wait_for_motion_done()
+
+                        # check if done
+            if False: # check if the grasp has succeeded
+                grasp_succeeded = True
+            
+            # GRASP SUCCESSFUL OR NOT
 
             # example base command
             v = Twist()
@@ -191,7 +202,7 @@ class TopGrasp(smach.State):
 
             # check if done
             if False: # check if the grasp has succeeded
-             grasp_succeeded = True
+                grasp_succeeded = True
 
             rospy.loginfo(f"print a message to show we are still running.")
             rate.sleep()
