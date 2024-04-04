@@ -12,10 +12,10 @@ from geometry_msgs.msg import Twist
 from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
-from robot_smach_states.util.designators.utility import check_arm_requirements, ResolveArm
+from robot_smach_states.utility import check_arm_requirements, ResolveArm
 from robot_smach_states.util.designators import check_type
 from robot_smach_states.navigation.navigate_to_grasp import NavigateToGrasp
-from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
+#from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 from robot_smach_states.util.designators.arm import ArmDesignator
 from robot_smach_states.util.designators.core import Designator
 
