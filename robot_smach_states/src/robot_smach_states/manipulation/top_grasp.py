@@ -46,17 +46,22 @@ class PrepareGrasp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"        
         
-        #make sure for this the robot is far enough away from the table, or first move arm upwards and then stretch out
-        #joint goal to obtain the pre-grasp position of the arm
-        pre_grasp_joint_goal = [0.7, # arm lift joint. ranges from 0.0 to 0.7m
+#pre-grasp position in two steps to limit possible collisions with the table
+        pre_grasp_joint_goal_upwards = [0.69, # arm lift joint. ranges from 0.0 to 0.7m
+                                0.0, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
+                                0.0, # arm roll joint
+                                -1.57, # wrist flex joint. lower values move the hand down
+                                0.0] # wrist roll joint. 
+        arm._arm._send_joint_trajectory([pre_grasp_joint_goal_upwards]) # send the command to the robot.
+        arm.wait_for_motion_done()
+
+        pre_grasp_joint_goal_outwards = [0.69, # arm lift joint. ranges from 0.0 to 0.7m
                                 -1.57, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
                                 0.0, # arm roll joint
                                 -1.57, # wrist flex joint. lower values move the hand down
                                 0.0] # wrist roll joint. 
-        arm._arm._send_joint_trajectory([pre_grasp_joint_goal]) # send the command to the robot.
-        arm.wait_for_motion_done()
-
-        # Open gripper
+        arm._arm._send_joint_trajectory([pre_grasp_joint_goal_outwards]) # send the command to the robot.
+# Open gripper
         arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
         return 'succeeded'
@@ -124,7 +129,7 @@ class TopGrasp(smach.State):
         self.yolo_segmentor.start()
 
         move_arm = True
-        while not grasp_succeeded:
+        while not grasp_succeeded and not rospy.is_shutdown:
             # control loop
 
             #TODO get grasp pose wrt wrist
@@ -144,8 +149,15 @@ class TopGrasp(smach.State):
                     rospy.loginfo("No edge up detected within timeout")
                     pass
 
+                #obtain gripper coordinates
+                gripper_id = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id="hand_palm_link")
+                gripper_bl = self.robot.tf_buffer.transform(gripper_id, self.robot.base_link_frame)
+                gripper_bl.frame = arm._arm.offset.Inverse() * gripper_bl.frame  # compensate for the offset in hand palm link
+                rospy.loginfo(f"gripper_bl = {gripper_bl}")
+
+                #change this in a position relative to obtained coordinates
                 #After force detection, make sure arm moves upwards
-                grasp_joint_goal = [0.65, # Needs to be obtained from distance open vs closed gripper
+                grasp_joint_goal = [0.63, # Needs to be obtained from distance open vs closed gripper
                                     -1.57, 
                                     0.0, 
                                     -1.57, 
@@ -198,7 +210,7 @@ class TopGrasp(smach.State):
             gripper_id = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id="hand_palm_link")
             gripper_bl = self.robot.tf_buffer.transform(gripper_id, self.robot.base_link_frame)
             gripper_bl.frame = arm._arm.offset.Inverse() * gripper_bl.frame  # compensate for the offset in hand palm link
-            #rospy.loginfo(f"gripper_bl = {gripper_bl}")
+            rospy.loginfo(f"gripper_bl = {gripper_bl}")
 
             # check if done
             if False: # check if the grasp has succeeded
