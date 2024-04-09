@@ -129,7 +129,7 @@ class TopGrasp(smach.State):
         self.yolo_segmentor.start()
 
         move_arm = True
-        while not grasp_succeeded and not rospy.is_shutdown:
+        while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
 
             #TODO get grasp pose wrt wrist
@@ -144,7 +144,7 @@ class TopGrasp(smach.State):
                 arm._arm._send_joint_trajectory([downward_joint_goal]) # send the command to the robot.
                 #Move arm downwards, don't wait until motion is done, but until a force is detected
                 try:
-                    arm._arm.force_sensor.wait_for_edge_up(5.0)  # wait 5 seconds for a force detection
+                    arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
                 except TimeOutException:
                     rospy.loginfo("No edge up detected within timeout")
                     pass
