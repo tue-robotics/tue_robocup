@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import rospy
+import os
 from cv_bridge import CvBridge, CvBridgeError
 class ArucoVector:
     def __init__(self, x, y, z, roll, pitch, yaw):
@@ -34,10 +35,31 @@ def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
 
     detector = cv2.aruco.ArucoDetector(cv2.aruco_dict, parameters)
     corners, ids, rejected_img_points = detector.detectMarkers(gray)
+
+    image_copy = frame.copy()
+
+    nMarkers = len(corners)
+    rvec = [None] * nMarkers
+    tvec = [None] * nMarkers
+
+
+    markerLength = 70
+    objPoints = np.array([[-markerLength / 2, markerLength / 2, 0],
+                          [markerLength / 2, markerLength / 2, 0],
+                          [markerLength / 2, -markerLength / 2, 0],
+                          [-markerLength / 2, -markerLength / 2, 0]], dtype=np.float32)
+
     if len(corners) > 0:
-        for i in range(0, len(ids)):
-            rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
-                                                                       distortion_coefficients)
+        cv2.aruco.drawDetectedMarkers(image_copy, corners, ids)
+        for i in range(nMarkers):
+            retval, rvecs, tvecs = cv2.solvePnP(objPoints, corners[i], matrix_coefficients, distortion_coefficients)
+            rvec[i] = rvecs
+            tvec[i] = tvecs
+
+            cv2.drawFrameAxes(image_copy, matrix_coefficients, distortion_coefficients, rvec[i], tvec[i], markerLength * 1.5)
+            output_path = os.path.expanduser(
+                '~/ros/noetic/system/src/challenge_restaurant/src/challenge_restaurant/output_image.jpg')
+            cv2.imwrite(output_path, image_copy)
     else:
         rospy.logerr("No ArUco markers detected in the frame.")
         return None, None
@@ -97,9 +119,9 @@ def get_aruco_pos(self, aruco_type, intrinsic_camera, distortion):
         rospy.logerr("Pose estimation failed.")
         return False
 
-    x, y, z = tvec.flatten()
+    x, y, z = tvec[0].flatten()
 
-    roll, pitch, yaw = rvec_to_euler(rvec)
+    roll, pitch, yaw = rvec_to_euler(rvec[0])
 
     rospy.loginfo("ArUco marker position - x: {:.2f}, y: {:.2f}, z: {:.2f}".format(x, y, z))
     rospy.loginfo("ArUco marker orientation - roll: {:.2f}, pitch: {:.2f}, yaw: {:.2f}".format(roll, pitch, yaw))
