@@ -168,7 +168,7 @@ class TopGrasp(smach.State):
                 continue # dont wait for the rest of the loop.
 
             #Closing the gripper
-            arm.gripper.send_goal('close', timeout=0.0)
+            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
             arm.wait_for_motion_done()
 
                         # check if done
