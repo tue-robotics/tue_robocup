@@ -1,15 +1,20 @@
 #!/usr/bin/python
 import math
-import numpy as np
 import os.path
 
-import robot_smach_states as states
+import numpy as np
 import rospkg
+
+from robot_skills.simulation.sim_mode import is_sim_mode
+from robot_smach_states.utility import CheckTries, WriteDesignator
+import robot_smach_states.util.designators as ds
+import robot_smach_states as states
 import smach
+from challenge_restaurant.ask_take_order import AskTakeTheOrder, AskTakeTheOrderPicoVoice
+from challenge_restaurant.get_customer_image import GetCustomerImage
+from challenge_restaurant.store_waypoint import StoreWaypoint
+from challenge_restaurant.take_orders import TakeOrder, ReciteOrders, ClearOrders
 from ed.entity import Entity
-from .ask_take_order import AskTakeTheOrder
-from .store_waypoint import StoreWaypoint
-from .take_orders import TakeOrder, ReciteOrders, ClearOrders
 
 V_TH = 0.5
 
@@ -36,12 +41,12 @@ class Restaurant(smach.StateMachine):
         customer_designator = states.util.designators.VariableDesignator(resolve_type=Entity, name=customer_id)
         orders = []
 
-        with self:
-            smach.StateMachine.add('INITIALIZE',
-                                   states.utility.Initialize(robot),
-                                   transitions={'initialized': 'SAY_WAVING',
-                                                'abort': 'STOP'})
+        image_designator = ds.VariableDesignator(resolve_type=str, name="image")
 
+        if not is_sim_mode():
+            reset_tries_des = ds.VariableDesignator(resolve_type=bool, initial_value=False).writeable
+
+        with self:
             smach.StateMachine.add('SAY_WAVING',
                                    states.human_interaction.Say(
                                        robot,
@@ -75,9 +80,8 @@ class Restaurant(smach.StateMachine):
                                        look_range=(-np.pi / 4, np.pi / 4),
                                        look_steps=4,
                                        search_timeout=600),  # 10 minutes
-                                   transitions={'found': 'SAY_I_HAVE_SEEN',
+                                   transitions={'found': 'GET_CUSTOMER_IMAGE',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
-
             # Asking for confirmation
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
                                    states.human_interaction.Say(
@@ -85,10 +89,37 @@ class Restaurant(smach.StateMachine):
                                               'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
                                    transitions={"spoken": 'WAIT_FOR_START'})
 
-            smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
-                                   transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
-                                                'wait': 'WAIT_FOR_CUSTOMER',
-                                                'timeout': 'WAIT_FOR_CUSTOMER'})
+            smach.StateMachine.add('GET_CUSTOMER_IMAGE',
+                                   GetCustomerImage(robot, customer_designator, image_designator.writeable),
+                                   transitions={'succeeded': 'SHOW_CUSTOMER',
+                                                'failed': 'SAY_I_HAVE_SEEN'})
+
+            smach.StateMachine.add('SHOW_CUSTOMER',
+                                   states.human_interaction.ShowImage(
+                                       robot,
+                                       image_designator,
+                                       duration=30),
+                                   transitions={'succeeded': 'SAY_I_HAVE_SEEN',
+                                                'failed': 'SAY_I_HAVE_SEEN'})
+
+            if is_sim_mode():
+                smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
+                                       transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
+                                                    'wait': 'SAY_WAVING_2',
+                                                    'timeout': 'SAY_WAVING_2'})
+            else:
+                smach.StateMachine.add('WAIT_FOR_START',
+                                       WriteDesignator(reset_tries_des, True),
+                                       transitions={'written': 'ASK_TAKE_ORDER'})
+
+                smach.StateMachine.add('ASK_TAKE_ORDER', AskTakeTheOrderPicoVoice(robot),
+                                       transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
+                                                    'wait': 'SAY_WAVING_2',
+                                                    'no_result': 'MAX_TRIES'})
+                smach.StateMachine.add('MAX_TRIES',
+                                       CheckTries(max_tries=3, reset_des=reset_tries_des),
+                                       transitions={'not_yet': 'ASK_TAKE_ORDER',
+                                                    'max_tries': 'SAY_WAVING_2'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER',
                                    states.human_interaction.Say(
@@ -102,9 +133,16 @@ class Restaurant(smach.StateMachine):
                                    states.navigation.NavigateToObserve(
                                        robot=robot, entity_designator=customer_designator,
                                        radius=0.8),
-                                   transitions={'arrived': 'TAKE_ORDER',
+                                   transitions={'arrived': 'SAY_SPEAK_2',
                                                 'unreachable': 'SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
-                                                'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
+                                                'goal_not_defined': 'SAY_WAVING_2'})
+
+            smach.StateMachine.add('SAY_SPEAK_2',
+                                   states.human_interaction.Say(
+                                       robot,
+                                       "Hi, please make sure that you speak loudly and directly into my microphone",
+                                       block=True),
+                                   transitions={'spoken': 'TAKE_ORDER'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
                                    states.human_interaction.Say(
@@ -120,9 +158,29 @@ class Restaurant(smach.StateMachine):
                                    states.navigation.NavigateToObserve(
                                        robot=robot, entity_designator=customer_designator,
                                        radius=1.1),
-                                   transitions={'arrived': 'TAKE_ORDER',
+                                   transitions={'arrived': 'SAY_SPEAK_2',
                                                 'unreachable': 'RETURN_TO_START',
                                                 'goal_not_defined': 'RETURN_TO_START'})
+
+            smach.StateMachine.add('SAY_WAVING_2',
+                                   states.human_interaction.Say(
+                                       robot,
+                                       "Mr. Barman, I'm waiting for an order please make sure that the people wave "
+                                       "slowly and put their arm up high. Like is shown "
+                                       "on my screen", block=True),
+                                   transitions={'spoken': 'SHOW_IMAGE_2'})
+
+            smach.StateMachine.add('SHOW_IMAGE_2',
+                                   states.human_interaction.ShowImage(
+                                       robot,
+                                       os.path.join(
+                                           rospkg.RosPack().get_path('challenge_restaurant'),
+                                           "images",
+                                           "waving.jpg"
+                                       ),
+                                       duration=10),
+                                   transitions={'succeeded': 'WAIT_FOR_CUSTOMER',
+                                                'failed': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('TAKE_ORDER',
                                    TakeOrder(robot=robot, entity_designator=customer_designator, orders=orders),
@@ -167,7 +225,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
-                                   states.utility.WaitTime(robot=robot, waittime=10.0),
+                                   states.utility.WaitTime(robot=robot, waittime=15.0),
                                    transitions={'waited': 'BRING_OBJECTS',
                                                 'preempted': 'STOP'})
 
@@ -201,16 +259,16 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
-                                   states.utility.WaitTime(robot=robot, waittime=10.0),
+                                   states.utility.WaitTime(robot=robot, waittime=15.0),
                                    transitions={'waited': 'RETURN_TO_START',
                                                 'preempted': 'STOP'})
 
             smach.StateMachine.add('RETURN_TO_START',
                                    states.navigation.NavigateToPose(
                                        robot=robot, x=start_x, y=start_y, rz=start_rz, radius=0.3),
-                                   transitions={'arrived': 'WAIT_FOR_CUSTOMER',
+                                   transitions={'arrived': 'SAY_WAVING_2',
                                                 'unreachable': 'SAY_RETURN_TO_START_FALLBACK',
-                                                'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
+                                                'goal_not_defined': 'SAY_WAVING_2'})
 
             smach.StateMachine.add('SAY_RETURN_TO_START_FALLBACK',
                                    states.human_interaction.Say(robot, "Help, how do I get back?"),
@@ -224,6 +282,25 @@ class Restaurant(smach.StateMachine):
                                    states.navigation.NavigateToObserve(
                                        robot=robot, entity_designator=customer_designator,
                                        radius=0.7),
-                                   transitions={'arrived': 'WAIT_FOR_CUSTOMER',
-                                                'unreachable': 'WAIT_FOR_CUSTOMER',
-                                                'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
+                                   transitions={'arrived': 'SAY_WAVING_2',
+                                                'unreachable': 'SAY_WAVING_2',
+                                                'goal_not_defined': 'SAY_WAVING_2'})
+
+
+if __name__ == '__main__':
+    from challenge_restaurant.restaurant import Restaurant
+    from robot_skills import get_robot
+    import sys
+    import rospy
+
+    if len(sys.argv) < 2:
+        print("Please provide robot name as argument.")
+        sys.exit(1)
+
+    rospy.init_node('test_find_emtpy_seat')
+
+    robot_name = sys.argv[1]
+    robot = get_robot(robot_name)
+
+    sm = Restaurant(robot)
+    sm.execute()

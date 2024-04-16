@@ -1,9 +1,15 @@
 import smach
-from hmi import TimeoutException
+from hmi.client import TimeoutException
+from hmi.common import HMIResult
+
+import robot_smach_states.util.designators as ds
+from robot_smach_states.human_interaction.human_interaction import HearOptionsExtraPicoVoice
 
 
 class AskTakeTheOrder(smach.State):
-    """ Wait for the waiving person """
+    """
+    Ask the operator if the robot should take the order.
+    """
 
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['yes', 'wait', 'timeout'])
@@ -23,3 +29,32 @@ class AskTakeTheOrder(smach.State):
             except TimeoutException:
                 pass
         return 'timeout'
+
+
+class AskTakeTheOrderPicoVoice(HearOptionsExtraPicoVoice):
+    def __init__(self, robot, timeout=10, look_at_standing_person=True):
+        self.speech_result_designator = ds.VariableDesignator(resolve_type=HMIResult)
+        super().__init__(
+            robot,
+            "restaurantTakeTheOrder",
+            self.speech_result_designator.writeable,
+            timeout=timeout,
+            look_at_standing_person=look_at_standing_person,
+        )
+        smach.State.__init__(self, outcomes=["yes", "wait", "no_result"])
+
+    def execute(self, userdata=None):
+        result = super().execute(userdata)
+        if result == "no_result":
+            return "no_result"
+
+        hmi_result = self.speech_result_designator.resolve()
+        if not hmi_result or not hmi_result.semantics:
+            return "no_result"
+
+        if "take_the_order" in hmi_result.semantics:
+            return "yes"
+        elif "wait" in hmi_result.semantics:
+            return "wait"
+        else:
+            return "no_result"
