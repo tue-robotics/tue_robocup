@@ -56,7 +56,7 @@ class FindPeople(smach.State):
         :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
         :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
-            property has non None values.
+            property has non None values. Disabled when setting `reverse` to True.
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
@@ -68,7 +68,8 @@ class FindPeople(smach.State):
                 strict = False
                     This will return a list of people who have the tags:
                         'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
-
+        :param reverse: (bool) (default: False) Want all the people that don't match ANY property. So enabling `reverse`
+            will make the property matching a `not (x1 OR x2 OR ...)`.
         :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
             requirements posed using the properties, query_entity_designator, look distance and strict arguments
         :param attempts: (int) (default: 1) Max number of search attempts
