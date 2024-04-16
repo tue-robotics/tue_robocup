@@ -213,6 +213,10 @@ class SegmentObjects(smach.State):
                 self.segmented_entity_ids_designator.write(object_classifications)
             else:
                 rospy.logerr("    Classification failed, this should not happen!")
+                objects = []
+                for obj_id in segmented_object_ids:
+                    objects.append(ClassificationResult(uuid=obj_id, etype="unknown", probability=0.0, distribution={}))
+                self.segmented_entity_ids_designator.write(objects)
         else:
             rospy.logwarn(">> Tried to segment but no objects found")
             self.segmented_entity_ids_designator.write([])

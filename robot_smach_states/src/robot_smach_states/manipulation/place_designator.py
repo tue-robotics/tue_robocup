@@ -1,4 +1,4 @@
-from __future__ import absolute_import, print_function
+from typing import Optional
 
 from builtins import range
 
@@ -90,7 +90,7 @@ class EmptySpotDesignator(Designator):
         assert all(isinstance(v, Candidate) for v in vectors_of_interest)
         assert all(isinstance(v.frame_stamped, FrameStamped) for v in vectors_of_interest)
 
-        candidates = filter(lambda candidate: self._is_poi_unoccupied(candidate.frame_stamped, place_location), vectors_of_interest)
+        candidates = filter(lambda candidate: self._is_poi_unoccupied(candidate.frame_stamped, place_location, area), vectors_of_interest)
 
         base_pose = self.robot.base.get_location()
         arm = self.arm_designator.resolve()
@@ -100,6 +100,9 @@ class EmptySpotDesignator(Designator):
 
         rospy.loginfo("1 Currently considering: {} candidates".format(len(candidates)))
         # We don't care about small differences
+        if not candidates:
+            rospy.logerr("EmptySpotDesignator: No valid candidates found")
+            return None
         closest_candidate = min(candidates, key=lambda tup:tup.distance)
         candidates = [f for f in candidates if (f.distance - closest_candidate.distance) < self._nav_threshold]
         rospy.loginfo("2 Currently considering: {} candidates".format(len(candidates)))
@@ -114,10 +117,13 @@ class EmptySpotDesignator(Designator):
         rospy.logerr("EmptySpotDesignator: Could not find an empty spot")
         return None
 
-    def _is_poi_unoccupied(self, frame_stamped, surface_entity):
+    def _is_poi_unoccupied(self, frame_stamped: FrameStamped, surface_entity: Entity, volume_id: Optional[str] = None):
         entities_at_poi = self.robot.ed.get_entities(center_point=VectorStamped.from_framestamped(frame_stamped),
-                                                     radius=self._spacing)
+                                                     radius=self._spacing,
+                                                     ignore_z=bool(volume_id))
         entities_at_poi = [entity for entity in entities_at_poi if entity.uuid != surface_entity.uuid]
+        if volume_id:
+            entities_at_poi = surface_entity.entities_in_volume(entities_at_poi, volume_id=volume_id)
         return not any(entities_at_poi)
 
     def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):

@@ -135,7 +135,8 @@ class ED(RobotPart):
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
         self._publish_marker(center_point, radius)
 
-        center_point_in_map = self.tf_buffer.transform(center_point, "map", new_type=PointStamped)
+        center_point_in_map = self.tf_buffer.transform(center_point, "map", new_type=PointStamped,
+                                                       timeout=rospy.Duration(1.0))
         query = SimpleQueryRequest(id=uuid, type=etype, center_point=center_point_in_map.point,
                                    radius=radius, ignore_z=ignore_z)
 
@@ -165,7 +166,7 @@ class ED(RobotPart):
 
         # Sort by distance
         try:
-            center_in_map = self.tf_buffer.transform(center_point, "map")
+            center_in_map = self.tf_buffer.transform(center_point, "map", timeout=rospy.Duration(1.0))
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_in_map.vector))
         except Exception as e:
             rospy.logerr("Failed to sort entities: {}".format(e))
@@ -204,7 +205,8 @@ class ED(RobotPart):
         # Sort by distance
         try:
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(
-                self.tf_buffer.transform(center_point, self.robot_name+"/base_link", new_type=VectorStamped).vector))
+                self.tf_buffer.transform(center_point, self.robot_name+"/base_link", new_type=VectorStamped).vector),
+                              timeout=rospy.Duration(1.0))
             # TODO: adjust for robot
         except Exception as e:
             rospy.logerr("Failed to sort entities: {}".format(e))
@@ -301,7 +303,7 @@ class ED(RobotPart):
         if not remove_pose and frame_stamped:
             if frame_stamped.header.frame_id != "/map" and frame_stamped.header.frame_id != "map":
                 rospy.loginfo('update_entity: frame not in map, transforming')
-                frame_stamped = self.tf_buffer.transform(frame_stamped, "map")
+                frame_stamped = self.tf_buffer.transform(frame_stamped, "map", timeout=rospy.Duration(1.0))
 
             Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
             t = frame_stamped.frame.p
@@ -377,7 +379,7 @@ class ED(RobotPart):
         """
         if center_point is None:
             center_point = VectorStamped.from_xyz(0, 0, 0, rospy.Time(), frame_id=self.robot_name+"/base_link")
-            center_point = self.tf_buffer.transform(center_point, "map")
+            center_point = self.tf_buffer.transform(center_point, "map", timeout=rospy.Duration(1.0))
         assert center_point.header.frame_id.endswith("map"), "Other frame ids not yet implemented"
 
         # Get all entities
