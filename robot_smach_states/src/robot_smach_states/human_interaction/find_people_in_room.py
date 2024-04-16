@@ -60,14 +60,15 @@ class FindPeople(smach.State):
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
-                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                properties = {'tags': ['LWaving', 'RWaving', 'LHolding', 'RHolding']}
                 strict = True
                     This will return a list of people who have the tags:
-                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+                        'LWaving' AND 'RWaving' AND 'LHolding' AND 'RHolding'
 
                 strict = False
                     This will return a list of people who have the tags:
-                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+                        'LWaving' OR 'RWaving' OR 'LHolding' OR 'RHolding'
+
         :param reverse: (bool) (default: False) Want all the people that don't match ANY property. So enabling `reverse`
             will make the property matching a `not (x1 OR x2 OR ...)`.
         :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
@@ -288,14 +289,14 @@ class FindFirstPerson(smach.StateMachine):
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
-                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                properties = {'tags': ['LWaving', 'RWaving', 'LHolding', 'RHolding']}
                 strict = True
                     This will return a list of people who have the tags:
-                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+                        'LWaving' AND 'RWaving' AND 'LHolding' AND 'RHolding'
 
                 strict = False
                     This will return a list of people who have the tags:
-                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+                        'LWaving' OR 'RWaving' OR 'LHolding' OR 'RHolding'
 
         :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
             requirements posed using the properties, query_entity_designator, look distance and strict arguments
@@ -380,14 +381,14 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
-                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                properties = {'tags': ['LWaving', 'RWaving', 'LHolding', 'RHolding']}
                 strict = True
                     This will return a list of people who have the tags:
-                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+                        'LWaving' AND 'RWaving' AND 'LHolding' AND 'RHolding'
 
                 strict = False
                     This will return a list of people who have the tags:
-                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+                        'LWaving' OR 'RWaving' OR 'LHolding' OR 'RHolding'
 
         :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
             requirements posed using the properties, query_entity_designator, look distance and strict arguments

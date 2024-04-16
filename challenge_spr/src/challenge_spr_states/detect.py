@@ -114,9 +114,9 @@ class DetectCrowd(smach.State):
         num_sitting = 0
 
         for person in self.people_received.people:
-                if {'RWave'}.intersection(set(person.tags)):
+                if {'RWaving'}.intersection(set(person.tags)):
                     rarm_persons.append(person)
-                elif {'LWave'}.intersection(set(person.tags)):
+                elif {'LWaving'}.intersection(set(person.tags)):
                     larm_persons.append(person)
                 if {'RPointing'}.intersection(set(person.tags)):
                     rpointing_persons.append(person)

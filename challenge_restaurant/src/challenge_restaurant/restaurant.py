@@ -69,7 +69,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    states.human_interaction.FindFirstPerson(
                                        robot, customer_designator.writeable,
-                                       properties={'tags': ['LWave', 'RWave']},
+                                       properties={'tags': ['LWaving', 'RWaving']},
                                        strict=False, nearest=True,
                                        speak=True,
                                        look_range=(-np.pi / 4, np.pi / 4),
