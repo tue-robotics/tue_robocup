@@ -229,7 +229,7 @@ class FindPeople(smach.State):
         person_attr_val = getattr(person.person_properties, prop_name)
         rospy.loginfo("For person {}: {} is {}".format(person.uuid, prop_name, person_attr_val))
         if prop_value:
-            if self._strict:
+            if self._strict and not self._reverse:
                 # Making the conditon less strict to increase search domain
                 rospy.loginfo("Executing strict=True")
                 if isinstance(person_attr_val, list):
