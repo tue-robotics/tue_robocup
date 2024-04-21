@@ -47,6 +47,7 @@ class GripperTfListener:
 
 if __name__ == '__main__':
     rospy.init_node('tf2_gripper_listener')   
-    
-    gripper_tf_listener = GripperTfListener()
+    robot = Robot()
+    arm = ArmDesignator(robot)
+    gripper_tf_listener = GripperTfListener(robot,arm)
     gripper_tf_listener.listening()     
