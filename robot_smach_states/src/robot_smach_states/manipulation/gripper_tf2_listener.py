@@ -6,6 +6,7 @@ from pykdl_ros import FrameStamped
 from robot_skills.robot import Robot
 from robot_smach_states.util.designators.arm import ArmDesignator
 
+robot = Robot()
 arm = ArmDesignator()
 if __name__ == '__main__':
     rospy.init_node('tf2_gripper_listener')
