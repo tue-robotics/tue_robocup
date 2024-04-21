@@ -6,10 +6,11 @@ from pykdl_ros import FrameStamped
 from robot_skills.robot import Robot
 from robot_smach_states.util.designators.arm import ArmDesignator
 
-robot = Robot()
-arm = ArmDesignator()
 if __name__ == '__main__':
     rospy.init_node('gripper_tf2_listener')
+
+    robot = Robot()
+    arm = ArmDesignator()
 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
