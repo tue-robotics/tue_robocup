@@ -9,7 +9,7 @@ from robot_smach_states.util.designators.arm import ArmDesignator
 robot = Robot()
 arm = ArmDesignator()
 if __name__ == '__main__':
-    rospy.init_node('tf2_gripper_listener')
+    rospy.init_node('gripper_tf2_listener')
 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(10.0)
     while not rospy.is_shutdown():
         try:
-            gripper_bl = tfBuffer.lookup_transform('hand_palm_link', 'base_link', rospy.Time())
+            gripper_bl = tfBuffer.lookup_transform('hand_palm_link', 'base_link', rospy.Time(0))
             gripper_bl.frame = arm._arm.offset.Inverse() * gripper_bl.frame  # compensate for the offset in hand palm link
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
