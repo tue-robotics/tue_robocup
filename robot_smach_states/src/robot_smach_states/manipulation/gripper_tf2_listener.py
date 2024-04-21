@@ -10,7 +10,7 @@ if __name__ == '__main__':
     rospy.init_node('gripper_tf2_listener')
 
     robot = Robot()
-    arm = ArmDesignator()
+    arm = ArmDesignator(robot)
 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
