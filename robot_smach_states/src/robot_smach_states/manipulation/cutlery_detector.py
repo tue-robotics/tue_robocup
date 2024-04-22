@@ -11,7 +11,7 @@ class YoloSegmentor:
         model_path = "~/MEGA/developers/Donal/yolov8x-seg.pt"
         device = "cuda"
         self.model = YOLO(model_path).to(device)
-        self.class_ids = [42, 43, 44]  # See the COCO dataset for class id to label info (table=60, person = 0)
+        self.class_ids = [42, 43, 44]  # See the COCO dataset for class id to label info (fork = 42, knife = 43, spoon = 44)
         self.active = False
 
         self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
@@ -26,10 +26,11 @@ class YoloSegmentor:
     @staticmethod
     def detect(model, frame):
         results = model(frame)
-        result = results[0]
+        result = results[0] 
+        print(results)
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
-        return class_ids, segmentation_contours_idx
+        return class_ids, segmentation_contours_idx #outputs an integer with the name of the detected object as well as a segmentation of the object's contour
 
     def extract_table_segment(self, image, class_ids, segmentations):
         table_mask = np.zeros_like(image, dtype=np.uint8)

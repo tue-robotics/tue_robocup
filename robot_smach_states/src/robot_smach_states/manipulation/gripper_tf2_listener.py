@@ -1,13 +1,11 @@
 import rospy
 import tf2_ros
 import geometry_msgs.msg
-
-from pykdl_ros import FrameStamped
 from robot_skills.robot import Robot
 from robot_smach_states.util.designators.arm import ArmDesignator
 
 class GripperTfListener:
-    def __init__(self, robot: Robot, arm: ArmDesignator) -> None:
+    def __init__(self, robot, arm) -> None:
         self.robot = robot
         self.arm_designator = arm
 
