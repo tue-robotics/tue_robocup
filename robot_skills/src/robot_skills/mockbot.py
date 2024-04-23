@@ -13,8 +13,9 @@ import geometry_msgs
 import mock
 import rospy
 import six
-import std_msgs.msg
+from std_msgs.msg import String
 import tf_conversions
+import tf2_ros
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
@@ -389,9 +390,13 @@ class MockedTfBuffer(mock.MagicMock):
         return True
 
     @staticmethod
-    def transform(point_stamped, frame_id):
+    def transform(point_stamped, frame_id, timeout=rospy.Duration(0.0), new_type=None):
         point_stamped.header.frame_id = frame_id
-        return point_stamped
+
+        if not new_type:
+            return point_stamped
+
+        return tf2_ros.convert(point_stamped, new_type)
 
 
 class Mockbot(robot.Robot):
@@ -504,9 +509,9 @@ if __name__ == "__main__":
         return loc.x, loc.y, rot3[0]
 
     def hear(text):
-        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)
+        pub = rospy.Publisher('/pocketsphinx/output', String, queue_size=10)
         rospy.logdebug("Telling Mockbot '{0}'".format(text))
-        pub.publish(std_msgs.msg.String(text))
+        pub.publish(String(text))
 
     def save_sentence(sentence):
         """

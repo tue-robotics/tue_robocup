@@ -21,8 +21,8 @@ from ed.entity import Entity
 from robot_skills.robot import Robot
 
 # Robot Smach States
-from ..navigation.constraint_functions.symbolic_constraints import symbolic_constraint
-from ..util.designators.ed_designators import Designator
+from robot_smach_states.navigation.constraint_functions.symbolic_constraints import symbolic_constraint
+from robot_smach_states.util.designators.ed_designators import Designator
 
 
 class GiveDirections(smach.State):
@@ -262,17 +262,8 @@ if __name__ == "__main__":
     rospy.init_node('give_directions')
 
     robot_name = sys.argv[1]
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        rospy.logerr("unknown robot")
-        sys.exit()
-
-    robot = Robot()
+    from robot_skills import get_robot
+    robot = get_robot(robot_name)
 
     if len(sys.argv) > 2:
         furniture_id = sys.argv[2]
@@ -282,8 +273,8 @@ if __name__ == "__main__":
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(2)  # wait for tf cache to be filled
 
-    rospy.loginfo("Testing the 'get_room' method")
-    _test_rooms(robot)
+    # rospy.loginfo("Testing the 'get_room' method")
+    # _test_rooms(robot)
 
     rospy.loginfo("Starting giving directions to {}".format(furniture_id))
     state = GiveDirections(robot=robot,

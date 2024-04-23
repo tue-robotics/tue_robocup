@@ -126,7 +126,7 @@ def tf_transform(coordinates, inputframe, outputframe, tf):
         ps.header.frame_id = inputframe
         ps.header.stamp = rospy.Time()
 
-    output_coordinates = tf.transform(ps, outputframe)
+    output_coordinates = tf.transform(ps, outputframe, timeout=rospy.Duration(1.0))
     return output_coordinates.point
 
 

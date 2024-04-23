@@ -117,7 +117,7 @@ class PickUp(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
+            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame, timeout=rospy.Duration(1.0))
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -158,7 +158,7 @@ class PickUp(smach.State):
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
-            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
+            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame, timeout=rospy.Duration(1.0))
             if goal_bl is None:
                 return 'failed'
             else:
@@ -168,7 +168,7 @@ class PickUp(smach.State):
             try:
                 self.robot.tf_buffer.can_transform("map", self.robot.base_link_frame, rospy.Time(), rospy.Duration(10))
                 # Transform to base link frame
-                goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
+                goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame, timeout=rospy.Duration(1.0))
                 if goal_bl is None:
                     return 'failed'
             except tf2_ros.TransformException as tfe:
@@ -195,7 +195,7 @@ class PickUp(smach.State):
         arm.gripper.occupied_by = grab_entity
 
         # Retract
-        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
+        goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame, timeout=rospy.Duration(1.0))
         rospy.loginfo('Start retracting')
         roll = 0.0
 
@@ -217,10 +217,10 @@ class PickUp(smach.State):
         # Remove pose from ED as we are holding the object in the gripper
         self.robot.ed.update_entity(uuid=grab_entity.uuid, remove_pose=True)
 
-        arm.wait_for_motion_done(cancel=True)
-
         # Carrying pose
         arm.send_joint_goal('carrying_pose', timeout=0.0)
+
+        arm.wait_for_motion_done(cancel=True)
 
         result = 'succeeded'
         if self._check_occupancy and hasattr(arm.gripper, 'grasp_sensor'):
