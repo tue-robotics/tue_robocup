@@ -84,4 +84,4 @@ class PickPourPlaceCereal(StateMachine):
 if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
-    PickPourPlaceCereal(robot_instance, "dinner_table").execute()
+    PickPourPlaceCereal(robot_instance, "kitchen_table").execute()

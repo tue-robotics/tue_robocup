@@ -110,7 +110,7 @@ class PickItem(StateMachine):
                      transitions={"succeeded": "CHECK_PICK_SUCCESSFUL", "failed": "failed"})
             self.add("CHECK_PICK_SUCCESSFUL",
                      ActiveGraspDetector(robot, armdes),
-                     transitions={'true': "ADD_ITEM_TO_LIST",
+                     transitions={'true': "ADD_MM_TO_LIST",
                                   'false': "SAY_SOMETHING_WENT_WRONG",
                                   'failed': "failed",
                                   'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
@@ -131,7 +131,7 @@ class NavigateToAndPickItem(StateMachine):
         with self:
             StateMachine.add(
                 "NAVIGATE_TO_PICK_SPOT",
-                NavigateToSymbolic(robot, {pick_spot: pick_spot_navigation_area},pick_spot, speak=False),
+                NavigateToSymbolic(robot, {pick_spot: pick_spot_navigation_area}, pick_spot, speak=False),
                 transitions={"arrived": "PICK_ITEM", "unreachable": "failed", "goal_not_defined": "failed"},
             )
 

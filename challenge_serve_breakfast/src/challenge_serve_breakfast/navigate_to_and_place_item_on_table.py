@@ -129,10 +129,6 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             )
 
             StateMachine.add(
-                "FORCE_DRIVE", ForceDrive(robot, -0.1, 0, 0, 5.0), transitions={"done": "SAY_PICK_AWAY_THE_CHAIR"}
-            )
-
-            StateMachine.add(
                 "SAY_PICK_AWAY_THE_CHAIR",
                 Say(robot, "Please pick away the chair, I cannot get close enough to the {}".format(table_id)),
                 transitions={"spoken": "WAIT_FOR_PICK_AWAY_CHAIR"},
@@ -175,6 +171,7 @@ def _publish_item_poses(user_data, marker_array_pub, items):
         marker_msg.type = visualization_msgs.msg.Marker.SPHERE
         marker_msg.action = 0
         marker_msg.pose = posestamped.pose
+        marker_msg.pose.position.z = 1.0
         marker_msg.scale = Vector3(0.05, 0.05, 0.05)
         marker_msg.color = COLOR_DICT[k]
         array_msg.markers.append(marker_msg)
@@ -200,6 +197,6 @@ if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
 
     robot_instance = get_robot("hero")
-    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, "dinner_table", "in_front_of")
+    state_machine = NavigateToAndPlaceItemOnTable(robot_instance, "kitchen_table", "in_front_of")
     state_machine.userdata["item_picked"] = sys.argv[1]
     state_machine.execute()
