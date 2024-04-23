@@ -601,18 +601,19 @@ class AskPersonName(smach.State):
         return 'succeeded'
 
 @smach.cb_interface(outcomes=["succeeded", "failed"])
-def process_answer(_, context: Union[ds.Designator, str], answer_des, output_des):
+def process_answer(_, context: Union[ds.Designator[str], str], answer_des, output_des):
     try:
         answer_val = answer_des.resolve()
         rospy.logdebug(f"{answer_val=}")
-        name = answer_val.semantics[context]
-        rospy.loginfo(f"Your answer is: '{name}'")
-        output_des.write(name)
+        semantic = answer_val.semantics[ds.value_or_resolve(context)]
+        rospy.loginfo(f"Your answer is: '{semantic}'")
+        output_des.write(semantic)
 
     except KeyError as e:
         rospy.loginfo(f"KeyError resolving the name heard: {e}")
         return "failed"
     return "succeeded"
+
 
 class AskPersonNamePicoVoice(smach.StateMachine):
     """
