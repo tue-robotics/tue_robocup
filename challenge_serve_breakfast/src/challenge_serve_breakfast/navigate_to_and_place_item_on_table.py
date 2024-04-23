@@ -36,6 +36,7 @@ class PlaceItemOnTable(StateMachine):
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
         self.retract = retract
+
         def send_goal(pose_goal, wait_for_motion_done=True):
             arm.send_goal(pose_goal, timeout=0.0)
             if wait_for_motion_done:
