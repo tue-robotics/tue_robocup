@@ -26,6 +26,23 @@ def item_vector_to_item_frame(item_vector):
 
     return item_frame
 
+def item_vector_to_item_frame_2d(item_vector):
+    frame = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi))
+
+    rot = item_vector.z()
+    item_vector.z(0)
+    item_placement_vector = item_vector
+    item_frame = frame
+    item_frame.p = frame * item_placement_vector
+    item_frame.M = PyKDL.Rotation.RPY(0, 0, rot)
+    rospy.loginfo(
+        "Driving at frame ({f}) * item_placement_vector ({ipv}) = {itf}".format(
+            f=frame, ipv=item_placement_vector, itf=item_frame
+        )
+    )
+
+    return item_frame
+
 
 def item_frame_to_pose(item_frame, frame_id):
     goal_pose = PoseStamped()
