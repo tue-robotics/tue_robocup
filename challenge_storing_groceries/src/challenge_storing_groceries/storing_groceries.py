@@ -22,8 +22,8 @@ challenge_knowledge = load_knowledge('challenge_storing_groceries')
 def setup_statemachine(robot):
     state_machine = smach.StateMachine(outcomes=['Done', 'Failed', 'Aborted'])
 
-    skip_door = rospy.get_param("~skip_door", True)
-    skip_inspect = rospy.get_param("~skip inspect", True)
+    skip_door = rospy.get_param("~skip_door", False)
+    skip_inspect = rospy.get_param("~skip inspect", False)
     shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
     tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
     objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
@@ -45,8 +45,13 @@ def setup_statemachine(robot):
         # open the door of the cabinet
         smach.StateMachine.add("OPEN_DOOR",
                                OpenDoorMachine(robot, shelfDes),
-                               transitions={'succeeded': 'NAV_TO_START',
+                               transitions={'succeeded': 'SAY_CLOSE_DOOR',
                                             'failed': 'SAY_UNABLE_TO_OPEN_DOOR'})
+
+        smach.StateMachine.add("SAY_CLOSE_DOOR",
+                               states.human_interaction.Say(robot, "I might close the door later,"
+                                                                   "do not be shocked by it"),
+                               transitions={'spoken': 'NAV_TO_START'})
 
         smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
                                states.human_interaction.Say(robot, "I am unable to open the shelf door, "

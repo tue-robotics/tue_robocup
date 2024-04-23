@@ -61,8 +61,12 @@ class StoreSingleItem(smach.StateMachine):
                                                              place_pose_designator,
                                                              arm),
                                    transitions={'done': 'succeeded',
-                                                'failed': 'SAY_HANDOVER'}
+                                                'failed': 'LOOK_AT_ROOM_CENTER'}
                                    )
+
+            smach.StateMachine.add("LOOK_AT_ROOM_CENTER", states.perception.RotateToEntity(robot, room, 0.75),
+                                   transitions={'succeeded': 'SAY_HANDOVER',
+                                                'failed': 'SAY_HANDOVER'})
 
             smach.StateMachine.add("SAY_HANDOVER",
                                    states.human_interaction.Say(robot, ["I failed to place the object, "
@@ -75,6 +79,8 @@ class StoreSingleItem(smach.StateMachine):
                                    transitions={'succeeded': 'failed',
                                                 'failed': 'failed'}
                                    )
+
+            states.utility.check_arm_requirements(self, robot)
 
 
 class StoreItems(smach.StateMachine):
@@ -111,7 +117,8 @@ class StoreItems(smach.StateMachine):
                                                  "required_goals": ["carrying_pose", "handover_to_human"],
                                                  "required_gripper_types": [GripperTypes.GRASPING]},
                                          name="empty_arm_designator").lockable()
-        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=knowledge.default_area,
+        random_area_designator = ds.RandomDesignator(knowledge.place_areas, resolve_type=str, name="random_area_designator")
+        place_anywhere_designator = EmptySpotDesignator(robot, target_entity, arm, area=random_area_designator,
                                                         name="empty_spot_designator")
 
         with self:
@@ -126,7 +133,9 @@ class StoreItems(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["selected", "no_entities"])
             def SelectClosestEntity(userdata=None):
-                """ convert Classificationresult to Entity and select the closest for grabbing"""
+                """
+                Convert ClassificationResult to Entity and select the closest for grabbing
+                """
                 entities = []
                 distances = []
                 segmented_entities = segmented_entities_designator.resolve()
