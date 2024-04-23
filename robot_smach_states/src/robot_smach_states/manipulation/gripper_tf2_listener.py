@@ -4,6 +4,8 @@ import geometry_msgs.msg
 from robot_skills.robot import Robot
 from robot_smach_states.util.designators.arm import ArmDesignator
 
+from robot_skills.get_robot import get_robot
+
 class GripperTfListener:
     def __init__(self, robot, arm) -> None:
         self.robot = robot
@@ -45,7 +47,7 @@ class GripperTfListener:
 
 if __name__ == '__main__':
     rospy.init_node('tf2_gripper_listener')   
-    robot = Robot()
+    robot = get_robot("hero")
     arm = ArmDesignator(robot)
     gripper_tf_listener = GripperTfListener(robot,arm)
     gripper_tf_listener.listening()     
