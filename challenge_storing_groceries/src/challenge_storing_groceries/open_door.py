@@ -42,7 +42,6 @@ def _get_yaw_from_quaternion_msg(msg):
     return yaw
 
 
-
 class UpdateCabinetPose(smach.State):
     def __init__(self, robot, cabinet, cabinet_inspect_area):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -51,14 +50,14 @@ class UpdateCabinetPose(smach.State):
         self.cabinet_inspect_area = cabinet_inspect_area
 
     def execute(self, userdata=None):
-        self.robot.torso.send_goal('upper_limit')
+        self.robot.torso.send_goal("reset")
         self.robot.head.look_at_ground_in_front_of_robot(2.0)
 
         rospy.sleep(1)
         # Now update the pose of the cabinet
-        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet.uuid))
+        self.robot.ed.update_kinect(f"{self.cabinet_inspect_area} {self.cabinet.uuid}")
 
-        return 'succeeded'
+        return "succeeded"
 
 
 class OpenDoor(smach.State):
@@ -71,12 +70,11 @@ class OpenDoor(smach.State):
         # self.arm = self.robot.leftArm  # Joint goals are tuned for this arm only
 
         self._rate = rospy.Rate(10)
-        self._goal_position_tolerance = 0.01
+        self._goal_position_tolerance = 0.025
         self._goal_rotation_tolerance = 0.1
 
-        self._tf_buffer = tf2_ros.Buffer()
-        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
-        self._cmd_vel_publisher = rospy.Publisher("/" + robot.robot_name + "/base/references", Twist, queue_size=1)
+        self._tf_buffer = self.robot.tf_buffer
+        self._cmd_vel_publisher = rospy.Publisher(f"/{robot.robot_name}/base/references", Twist, queue_size=1)
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
         goal_pose.header.stamp = rospy.Time.now()
@@ -99,7 +97,7 @@ class OpenDoor(smach.State):
             if self._goal_reached(dx, dy, dyaw):
                 break
 
-            rospy.loginfo_throttle(1.0, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
+            rospy.loginfo_throttle(1.0, f"Aligning .. Delta = {dx} {dy} {dyaw}")
 
             self._cmd_vel_publisher.publish(Twist(
                 linear=Vector3(
@@ -117,8 +115,9 @@ class OpenDoor(smach.State):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
-        goal_pose.pose.position.x = 0.6
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.4))
+        goal_pose.pose.position.x = 0.8
+        goal_pose.pose.position.y = 0.2
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
 
     def _return_from_cabinet(self):
@@ -129,25 +128,56 @@ class OpenDoor(smach.State):
         goal_pose.pose.position.x = 1.0
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.5, 0.5, 0.5)
 
+    def _move_arm_to_open_cabinet_position(self):
+        self.arm._arm._send_joint_trajectory([[0.0, 0.0, -1.572, -1.572, 0.0]])
+        self.arm._arm._send_joint_trajectory([[0.0, 0.0, 1.572, -1.572, 0.0]])
+        self.arm._arm._send_joint_trajectory([[0.0, -1.572, 1.572, -1.572, 0.0]])
+        self.arm.gripper.send_goal("close")
+
     def _move_arm_in_cabinet(self):
-        self.arm._send_joint_trajectory([[-0.101, 0.119, 0.200, 1.363, 0.230, 0.688, 0.280]])
-        self.arm._send_joint_trajectory([[-0.574, 0.802, 0.691, 1.021, 0.750, 0.535, 0.378]])
-        #self.arm._send_joint_trajectory([[-0.042, 0.720, 0.846, 1.039, 0.849, 0.534, 0.377]])
-        self.arm._send_joint_trajectory([[-0.04446312115056816, 0.9908744970312501, 0.9101328212542089, 0.9240762995414635, 1.0067001691414637, 0.3949460482219828, 0.1621731308728449]])
+        goal_pose = PoseStamped()
+        goal_pose.header.stamp = rospy.Time.now()
+        goal_pose.header.frame_id = self.cabinet.uuid
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.1))
+        goal_pose.pose.position.x = 0.50
+        goal_pose.pose.position.y = 0.27
+        self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
+
+    def _move_arm_in_cabinet2(self):
+        goal_pose = PoseStamped()
+        goal_pose.header.stamp = rospy.Time.now()
+        goal_pose.header.frame_id = self.cabinet.uuid
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.1))
+        goal_pose.pose.position.x = 0.50
+        goal_pose.pose.position.y = 0.17
+        self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
+
 
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.uuid
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.8))
-        goal_pose.pose.position.x = 0.75
-        goal_pose.pose.position.y = -0.02
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi + 0.15))
+        goal_pose.pose.position.x = 0.55
+        goal_pose.pose.position.y = 0.17
+        self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
+
+    def _drive_to_open_cabinet2(self):
+        goal_pose = PoseStamped()
+        goal_pose.header.stamp = rospy.Time.now()
+        goal_pose.header.frame_id = self.cabinet.uuid
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi + 0.5))
+        goal_pose.pose.position.x = 0.8
+        goal_pose.pose.position.y = 0.17
         self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
 
     def execute(self, userdata=None):
         self._align_with_cabinet()
+        self._move_arm_to_open_cabinet_position()
         self._move_arm_in_cabinet()
+        self._move_arm_in_cabinet2()
         self._drive_to_open_cabinet()
+        self._drive_to_open_cabinet2()
         self.arm.reset()
         rospy.sleep(1)
         self._return_from_cabinet()
