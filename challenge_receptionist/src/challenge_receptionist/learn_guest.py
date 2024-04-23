@@ -4,7 +4,7 @@ from ed.entity import Entity
 from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice, process_answer
+from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice
 from robot_smach_states.reset import ResetArms
 from robot_smach_states.utility import CheckTries
 
