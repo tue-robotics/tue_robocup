@@ -21,8 +21,6 @@ from smach import cb_interface, CBState
 
 
 class PickUpArucomarker(smach.State):
-    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
-                               "required_goals": ["carrying_pose"], }
 
     def __init__(self, robot: Robot, arm: ArmDesignator) -> None:
         """
@@ -36,9 +34,6 @@ class PickUpArucomarker(smach.State):
         # Assign member variables
         self.robot = robot
         self.arm_designator = arm
-
-    #    assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
-     #       "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None) -> str:
         arm = self.arm_designator.resolve()
@@ -58,8 +53,9 @@ class PickUpArucomarker(smach.State):
 ### TO DO: dit ergens anders
         aruco_type = "DICT_5X5_250"
 
-        intrinsic_camera = np.array(((933.15867, 0, 657.59), (0, 933.1586, 400.36993), (0, 0, 1)))
-        distortion = np.array((-0.43948, 0.18514, 0, 0))
+        intrinsic_camera = np.array(((568.09415192, 0, 343.88872714), (0,  568.09415192, 211.47931024), (0, 0, 1)))
+        distortion = np.array((1.79783341e+01, -1.56647194e+02, -1.27060586e-02, 3.36172848e-02,
+        9.10987308e+02, 1.77606753e+01, -1.54458073e+02, 8.87397178e+02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
         vector = get_aruco_pos(self.robot, aruco_type, intrinsic_camera, distortion)
         if vector is False:
             return 'failed'
@@ -69,7 +65,7 @@ class PickUpArucomarker(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = self.robot.tf_buffer.transform(goal_map, "map")
+            goal_bl = self.robot.tf_buffer.transform(goal_map, "map", timeout=rospy.Duration(1.0))
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to (0,0) failed')
                 return 'failed'
@@ -121,6 +117,7 @@ class PickUpArucomarker(smach.State):
         arm.wait_for_motion_done(cancel=True)
 
         # Carrying pose
+        rospy.loginfo('start moving to carrying pose')
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         result = 'succeeded'
@@ -186,7 +183,7 @@ class GrabBasket(smach.StateMachine):
             arm.resolve().gripper.send_goal('open', timeout=0)
 
             # Torso up (non-blocking)
-            robot.torso.high()
+          #  robot.torso.high()
 
 
             # Arm to position in a safe way
