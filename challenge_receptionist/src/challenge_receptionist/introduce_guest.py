@@ -1,7 +1,10 @@
 import rospy
+
+import numpy as np
+
 from ed.entity import Entity
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.human_interaction.find_people_in_room import FindPeopleInRoom
+from robot_smach_states.human_interaction.find_people_in_room import FindPeople
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.navigation.navigation import ForceDrive
@@ -20,45 +23,29 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 class SayForIntroduceGuest(smach.State):
     # TODO: test
     # TODO: make sure that has person_properties
-    def __init__(self, robot_name, entity_des, guest_drinkname_des, assume_john, previous_guest_drink_des):
+    def __init__(self, robot_name, entity_des, guest_name_des, guest_drinkname_des, assume_john, previous_guest_name_des, previous_guest_drink_des):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot_name
-        self.entity = entity_des.resolve()
+        self.entity = entity_des
         self.assume_john = assume_john
+        self.guest_name_des = guest_name_des
         self.guest_drinkname_des = guest_drinkname_des
-        self.previous_guest_drink_des = previous_guest_drink_des
         self._number_of_executions = 0
+        ds.is_writeable(previous_guest_name_des)
+        ds.is_writeable(previous_guest_drink_des)
+        self.previous_guest_name_des = previous_guest_name_des
+        self.previous_guest_drink_des = previous_guest_drink_des
 
     def execute(self, userdata=None):
         if self.assume_john:
-            self.previous_guest_drink_des.write(self.guest_drinkname_des.resolve())
+            self.previous_guest_drink_des.write(ds.value_or_resolve(self.guest_drinkname_des))
+            self.previous_guest_name_des.write(ds.value_or_resolve(self.guest_name_des))
             self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
                                                                               drink=challenge_knowledge.operator_drink))
         else:
-            if hasattr(self.entity, 'person_properties'):
-                name = self.entity.person_properties.name
-                if self.entity.person_properties.gender == 1.0:
-                    gender = 'female'
-                else:
-                    gender = 'male'
-                    age = self.entity.person_properties.age
-                    shirt_color = self.entity.person_properties.shirt_colors
-                    shirt_color = shirt_color[0]
-                    drink = self.previous_guest_drink_des.resolve()
-                    pose = self.entity.person_properties.tags
-                    if len(pose) > 1:
-                        pose = pose[1][1:]
-                    else:
-                        pose = pose[0][1:]
-                    self.robot.speech.speak("This is {name}. Who is {gender}, likes {drink}, is {age} years old, is {pose} and"
-                                            " wears a {shirt_color} shirt.".format(name=name, gender=gender, drink=drink,
-                                                                                   age=age, pose=pose, shirt_color=shirt_color))
-            # else:
-            #     self.robot.speech.speak("This is {name} who likes {drink}".format(name="charlie",
-            #                                                                           drink=challenge_knowledge.operator_drink))
             if self._number_of_executions == 0:
-                self.robot.speech.speak("This is {name} who likes {drink}".format(name="ava",
-                                                                                  drink="coke"))
+                self.robot.speech.speak("This is {name} who likes {drink}".format(name=ds.value_or_resolve(self.previous_guest_name_des),
+                                                                                  drink=ds.value_or_resolve(self.previous_guest_drink_des)))
                 self._number_of_executions += 1
             else:
                 self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
@@ -87,20 +74,21 @@ class GuestDescriptionStrDesignator(ds.Designator):
 
 
 class IntroduceGuest(smach.StateMachine):
-
-    def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des, assume_john=False):
+    def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des, previous_guest_name_des, previous_guest_drink_des, assume_john=False):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
         self.num_tries = 0
 
         ds.check_type(guest_name_des, str)
         ds.check_type(guest_drinkname_des, str)
+        ds.check_type(previous_guest_name_des, str)
+        ds.check_type(previous_guest_drink_des, str)
         ds.check_type(guest_ent_des, Entity)
 
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
         current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
-        previous_guest_drink_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_drink')
-        previous_guest_name_des = ds.VariableDesignator(resolve_type=str, name='previous_guest_name')
+
+        room_designator = ds.EntityByIdDesignator(robot=robot, uuid=challenge_knowledge.sitting_room)
 
 
         # For each person:
@@ -117,12 +105,14 @@ class IntroduceGuest(smach.StateMachine):
             #                                 block=True),
             #                        transitions={'spoken': 'FIND_OLD_GUESTS'})
 
-            smach.StateMachine.add('FIND_OLD_GUESTS',
-                                   FindPeopleInRoom(robot,
-                                                    room=challenge_knowledge.sitting_room,
-                                                    found_people_designator=all_old_guests.writeable),
+            smach.StateMachine.add("FIND_OLD_GUESTS",
+                                   FindPeople(robot=robot,
+                                              query_entity_designator=room_designator,
+                                              found_people_designator=all_old_guests.writeable,
+                                              speak=True),
                                    transitions={"found": "CHECK_NUM_PEOPLE",
-                                                "not_found": "CHECK_NUM_PEOPLE"})
+                                                "failed": "CHECK_NUM_PEOPLE"})
+
 
             @cb_interface(outcomes=["incorrect", "correct", "continue"])
             def check_num_people(ud=None):
@@ -157,7 +147,7 @@ class IntroduceGuest(smach.StateMachine):
                                                      current_old_guest,
                                                             radius=1.0,
                                                             margin=1.0, # Makes the robot go within 2m of current_old_guest
-                                                            speak=False),  
+                                                            speak=False),
                                    transitions={'arrived': 'SAY_LOOK_AT_GUEST',
                                                 'unreachable': 'SAY_LOOK_AT_GUEST',
                                                 'goal_not_defined': 'SAY_LOOK_AT_GUEST'})
@@ -220,14 +210,13 @@ class IntroduceGuest(smach.StateMachine):
                                     transitions={"done": "SAY_FOR_INTRODUCE_GUEST"})
 
             smach.StateMachine.add('SAY_FOR_INTRODUCE_GUEST',
-                                   SayForIntroduceGuest(robot, current_old_guest, guest_drinkname_des, assume_john,
+                                   SayForIntroduceGuest(robot, current_old_guest, guest_name_des, guest_drinkname_des, assume_john, previous_guest_name_des.writeable,
                                                         previous_guest_drink_des.writeable),
                                    transitions={'done': 'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
                                    ResetArms(robot),
                                    transitions={'done': 'succeeded' if assume_john else 'ITERATE_OLD_GUESTS'})
-
 
 if __name__ == "__main__":
     import sys
