@@ -150,6 +150,13 @@ class TopGrasp(smach.State):
                 except TimeOutException:
                     rospy.loginfo("No edge up detected within timeout")
 
+                #gripper coordinates included temporarily to check if they are the same as obtained from the listener
+                ##this part will be removed from the code
+                gripper_id = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id="hand_palm_link")
+                gripper_bl = self.robot.tf_buffer.transform(gripper_id, self.robot.base_link_frame)
+                gripper_bl.frame = arm._arm.offset.Inverse() * gripper_bl.frame  # compensate for the offset in hand palm link
+                rospy.loginfo(f"gripper_bl = {gripper_bl}")    
+
                 #After force detection, make sure arm moves upwards
                 grasp_joint_goal = [0.63, #change this in a position relative to obtained coordinates or table height
                                     -1.57, 

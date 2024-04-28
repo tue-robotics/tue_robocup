@@ -29,6 +29,7 @@ class YoloSegmentor:
         result = results[0] 
         print(results)
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
+        print(result.masks.xy)
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
         return class_ids, segmentation_contours_idx #outputs an integer with the name of the detected object as well as a segmentation of the object's contour
 
