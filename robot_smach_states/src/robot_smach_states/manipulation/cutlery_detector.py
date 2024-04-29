@@ -6,6 +6,7 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
 
+
 class YoloSegmentor:
     def __init__(self) -> None:
         model_path = "~/MEGA/developers/Donal/yolov8x-seg.pt"
@@ -16,6 +17,10 @@ class YoloSegmentor:
 
         self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
         self.subscriber = rospy.Subscriber('/hero/hand_camera/image_raw', Image, self.callback)
+
+        #yolov8 trained with an image size of 640x640
+        image_width = 640
+        image_height = 640
 
     def start(self):
         self.active = True
@@ -31,7 +36,13 @@ class YoloSegmentor:
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         print(result.masks.xy)
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
-        return class_ids, segmentation_contours_idx #outputs an integer with the name of the detected object as well as a segmentation of the object's contour
+
+        coordinates_box = result.boxes.xywh.tolist()[0] # To get the coordinates of the bounding box.
+        x_center, y_center = coordinates_box[0], coordinates_box[1] # x, y are the center coordinates.
+
+        print(x_center,y_center)
+
+        return class_ids, segmentation_contours_idx #outputs an integer with the name of the detected object as well as a segmentation of the object's contour   
 
     def extract_table_segment(self, image, class_ids, segmentations):
         table_mask = np.zeros_like(image, dtype=np.uint8)
@@ -41,6 +52,13 @@ class YoloSegmentor:
             else:
                 cv2.fillPoly(table_mask, [seg], color=(255, 0, 0))
         return table_mask
+
+    def get_center_point(self, image_width, image_height, x_center, y_center):
+        #object's center expressed in pixel coordinates
+        x_pixel_center = x_center * image_width
+        y_pixel_center = y_center * image_height
+
+    #def get_orientation
 
     def callback(self, data):
         #rospy.loginfo("got message")
