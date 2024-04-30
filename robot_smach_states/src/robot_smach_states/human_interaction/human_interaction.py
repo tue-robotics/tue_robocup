@@ -610,7 +610,7 @@ def process_answer(_, context: Union[ds.Designator[str], str], answer_des, outpu
         output_des.write(semantic)
 
     except KeyError as e:
-        rospy.loginfo(f"KeyError resolving the name heard: {e}")
+        rospy.loginfo(f"KeyError resolving the semantic heard: {e}")
         return "failed"
     return "succeeded"
 
