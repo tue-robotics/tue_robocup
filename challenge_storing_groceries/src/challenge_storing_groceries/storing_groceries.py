@@ -24,10 +24,10 @@ def setup_statemachine(robot):
 
     skip_door = rospy.get_param("~skip_door", False)
     skip_inspect = rospy.get_param("~skip inspect", False)
-    shelfDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
-    tableDes = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
-    objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
-    roomDes = ds.EntityByIdDesignator(robot, challenge_knowledge.room, name="room_designator")
+    shelf_des = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
+    table_des = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
+    objects_des = ds.VariableDesignator(resolve_type=[ClassificationResult])
+    room_des = ds.EntityByIdDesignator(robot, challenge_knowledge.room, name="room_designator")
 
     with state_machine:
 
@@ -44,7 +44,7 @@ def setup_statemachine(robot):
 
         # open the door of the cabinet
         smach.StateMachine.add("OPEN_DOOR",
-                               OpenDoorMachine(robot, shelfDes),
+                               OpenDoorMachine(robot, shelf_des),
                                transitions={'succeeded': 'SAY_CLOSE_DOOR',
                                             'failed': 'SAY_UNABLE_TO_OPEN_DOOR'})
 
@@ -61,8 +61,8 @@ def setup_statemachine(robot):
         # Inspect shelf
         smach.StateMachine.add("NAV_TO_START",
                                states.navigation.NavigateToSymbolic(robot,
-                                                                    {shelfDes: "in_front_of"},
-                                                                    shelfDes, room=roomDes),
+                                                                    {shelf_des: "in_front_of"},
+                                                                    shelf_des, room=room_des),
                                transitions={'arrived': 'SKIP_INSPECT',
                                             'unreachable': 'SKIP_INSPECT',
                                             'goal_not_defined': 'SKIP_INSPECT'})
@@ -73,7 +73,7 @@ def setup_statemachine(robot):
                                             'false': 'INSPECT_SHELVES'})
 
         smach.StateMachine.add("INSPECT_SHELVES",
-                               InspectAreas(robot, shelfDes, objectsDes, roomDes, knowledge=challenge_knowledge,
+                               InspectAreas(robot, shelf_des, objects_des, room_des, knowledge=challenge_knowledge,
                                             navigation_area='in_front_of'),
                                transitions={'done': 'RESET_ARM',
                                             'failed': 'Failed'})
@@ -90,7 +90,7 @@ def setup_statemachine(robot):
 
         # store items
         smach.StateMachine.add("STORE_GROCERIES",
-                               StoreItems(robot, tableDes, shelfDes, objectsDes, challenge_knowledge, room=roomDes),
+                               StoreItems(robot, table_des, shelf_des, objects_des, challenge_knowledge, room=room_des),
                                transitions={'succeeded': 'AT_END',
                                             'preempted': 'Aborted',
                                             'failed': 'Failed'}
