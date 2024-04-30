@@ -600,6 +600,20 @@ class AskPersonName(smach.State):
 
         return 'succeeded'
 
+@smach.cb_interface(outcomes=["succeeded", "failed"])
+def process_answer(_, context: Union[ds.Designator[str], str], answer_des, output_des):
+    try:
+        answer_val = answer_des.resolve()
+        rospy.logdebug(f"{answer_val=}")
+        semantic = answer_val.semantics[ds.value_or_resolve(context)]
+        rospy.loginfo(f"Your answer is: '{semantic}'")
+        output_des.write(semantic)
+
+    except KeyError as e:
+        rospy.loginfo(f"KeyError resolving the semantic heard: {e}")
+        return "failed"
+    return "succeeded"
+
 
 class AskPersonNamePicoVoice(smach.StateMachine):
     """
@@ -612,19 +626,6 @@ class AskPersonNamePicoVoice(smach.StateMachine):
         ds.is_writeable(person_name_des)
         reset_des = ds.VariableDesignator(resolve_type=bool).writeable
         answer = ds.VariableDesignator(resolve_type=HMIResult)
-
-        @smach.cb_interface(outcomes=["succeeded", "failed"])
-        def process_answer(_, answer_des, output_des):
-            try:
-                answer_val = answer_des.resolve()
-                rospy.logdebug(f"{answer_val=}")
-                name = answer_val.semantics["name"]
-                rospy.loginfo(f"This person's name is: '{name}'")
-                output_des.write(str(name))
-            except KeyError as e:
-                rospy.loginfo(f"KeyError resolving the name heard: {e}")
-                return "failed"
-            return "succeeded"
 
         with self:
             self.add(
@@ -642,12 +643,12 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
             self.add(
                 "HEAR",
-                HearOptionsExtraPicoVoice(robot, "askPersonName", answer.writeable),
+                HearOptionsExtraPicoVoice(robot, "receptionist", answer.writeable, ["personName"]),
                 transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
             )
             self.add(
                 "PROCESS_ANSWER",
-                smach.CBState(process_answer, cb_args=[answer, person_name_des]),
+                smach.CBState(process_answer, cb_args=["name", answer, person_name_des]),
                 transitions={"succeeded": "succeeded", "failed": "CHECK_TRIES"},
             )
             self.add(

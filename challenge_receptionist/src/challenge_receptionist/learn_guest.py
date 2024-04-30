@@ -6,6 +6,7 @@ from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoin
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice
 from robot_smach_states.reset import ResetArms
+from robot_smach_states.utility import CheckTries
 
 import robot_smach_states.util.designators as ds
 import smach
@@ -43,6 +44,7 @@ class LearnGuest(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
+        reset_des = ds.VariableDesignator(resolve_type=bool).writeable
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
@@ -131,10 +133,13 @@ class LearnGuest(smach.StateMachine):
             else:
                 smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                        HearOptionsExtraPicoVoice(
-                                           robot, "drinks", guest_drink_des.writeable, look_at_standing_person=True
-                                       ),
+                                           robot, "receptionist", guest_drink_des.writeable, ["drinks"], look_at_standing_person=True),
                                        transitions={'heard': 'RESET_1',
-                                                    'no_result': 'DEFAULT_DRINK'})
+                                                    'no_result': 'CHECK_TRIES'})
+
+            smach.StateMachine.add("CHECK_TRIES",
+                                   CheckTries(max_tries=3, reset_des=reset_des),
+                                   transitions={"not_yet": "SAY_DRINK_QUESTION", "max_tries": "DEFAULT_DRINK"})
 
             smach.StateMachine.add('DEFAULT_DRINK',
                                    DrinkNotHeard(guest_drink_des.writeable, default_drink=default_drink),
