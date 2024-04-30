@@ -44,7 +44,7 @@ def setup_statemachine(robot):
 
         # open the door of the cabinet
         smach.StateMachine.add("OPEN_DOOR",
-                               OpenDoorMachine(robot, shelf_des),
+                               OpenDoorMachine(robot, shelf_des, cabinet_inspect_area=challenge_knowledge.cabinet_inspect_area),
                                transitions={'succeeded': 'SAY_CLOSE_DOOR',
                                             'failed': 'SAY_UNABLE_TO_OPEN_DOOR'})
 
