@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import PyKDL as kdl
 
 import robot_smach_states.util.designators as ds
@@ -10,10 +11,12 @@ from robot_skills.arm import arms
 from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, Say
 from robot_smach_states.manipulation import HandoverToHuman
-from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint
+from robot_smach_states.navigation import FollowOperator, NavigateToWaypoint, NavigateToPose
 from robot_smach_states.utility import Initialize, SetInitialPose
 from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
+
+import rospy
 
 challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
@@ -37,6 +40,14 @@ def place(userdata, designator, robot):
     return "done"
 
 
+@cb_interface(outcomes=["done"])
+def kill_global_planner(userdata, robot):
+    rospy.set_param(f"/{robot.robot_name}/global_planner/global_costmap/track_unknown_space", True)
+    os.system(f"rosnode kill /{robot.robot_name}/global_planner")
+    rospy.sleep(3.0)
+    return "done"
+
+
 class CarryMyLuggage(StateMachine):
     def __init__(self, robot):
         """
@@ -45,6 +56,12 @@ class CarryMyLuggage(StateMachine):
         """
         StateMachine.__init__(self, outcomes=["Done", "Aborted"])
         self.robot = robot
+
+        start_pose = self.robot.base.get_location()
+        start_x = start_pose.frame.p.x()
+        start_y = start_pose.frame.p.y()
+        start_rz = start_pose.frame.M.GetRPY()[2]
+
         self.entity_designator = ds.VariableDesignator(resolve_type=Entity)
         self.arm_designator = ds.UnoccupiedArmDesignator(
             robot,
@@ -61,18 +78,18 @@ class CarryMyLuggage(StateMachine):
             StateMachine.add(
                 "INITIALIZE",
                 Initialize(self.robot),
-                transitions={"initialized": "SET_INITIAL_POSE", "abort": "SET_INITIAL_POSE"},
+                transitions={"initialized": "MOVE_CUSTOM_CARRY", "abort": "MOVE_CUSTOM_CARRY"},
             )
 
-            StateMachine.add(
-                "SET_INITIAL_POSE",
-                SetInitialPose(self.robot, STARTING_POINT),
-                transitions={
-                    "done": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
-                    "preempted": "MOVE_CUSTOM_CARRY",  # todo: change this?
-                    "error": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
-                },
-            )
+            # StateMachine.add(
+            #     "SET_INITIAL_POSE",
+            #     SetInitialPose(self.robot, STARTING_POINT),
+            #     transitions={
+            #         "done": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
+            #         "preempted": "MOVE_CUSTOM_CARRY",  # todo: change this?
+            #         "error": "MOVE_CUSTOM_CARRY",  # Choice here; try to pick up the bag or not: MOVE_CUSTOM_CARRY or POINT_BAG
+            #     },
+            # )
 
             # Choice 1; Do no try to pick up the bag
             @cb_interface(outcomes=["done"])
@@ -242,14 +259,30 @@ class CarryMyLuggage(StateMachine):
                 "HANDOVER_TO_HUMAN",
                 HandoverToHuman(self.robot, self.arm_designator),
                 transitions={
-                    "succeeded": "NAVIGATE_TO_ARENA",
-                    "failed": "NAVIGATE_TO_ARENA",  # todo change this?
+                    "succeeded": "KILL_GLOBAL_PLANNER",
+                    "failed": "KILL_GLOBAL_PLANNER",  # todo change this?
                 },
+            )
+
+            # StateMachine.add(
+            #     "NAVIGATE_TO_ARENA",
+            #     NavigateToWaypoint(self.robot, self.waypoint_designator),
+            #     transitions={
+            #         "arrived": "Done",
+            #         "unreachable": "Done",  # todo change this?
+            #         "goal_not_defined": "Done",  # todo change this?
+            #     },
+            # )
+
+            StateMachine.add(
+                "KILL_GLOBAL_PLANNER",
+                CBState(kill_global_planner, cb_args=[self.robot]),
+                transitions={"done": "NAVIGATE_TO_ARENA"},
             )
 
             StateMachine.add(
                 "NAVIGATE_TO_ARENA",
-                NavigateToWaypoint(self.robot, self.waypoint_designator),
+                NavigateToPose(robot=self.robot, x=start_x, y=start_y, rz=start_rz, radius=0.3),
                 transitions={
                     "arrived": "Done",
                     "unreachable": "Done",  # todo change this?
