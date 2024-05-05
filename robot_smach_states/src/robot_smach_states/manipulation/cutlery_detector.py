@@ -42,7 +42,7 @@ class YoloSegmentor:
 
         print(x_center,y_center)
 
-        return class_ids, segmentation_contours_idx #outputs an integer with the name of the detected object as well as a segmentation of the object's contour   
+        return class_ids, segmentation_contours_idx, x_center, y_center #outputs an integer with the name of the detected object as well as a segmentation of the object's contour   
 
     def extract_table_segment(self, image, class_ids, segmentations):
         table_mask = np.zeros_like(image, dtype=np.uint8)

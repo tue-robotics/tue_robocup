@@ -16,8 +16,8 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         try:
             gripper_id = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id="hand_palm_link") #generates the frame of the gripper 
-            gripper_bl = tfBuffer.lookup_transform("hand_palm_link", "base_link", rospy.Time()) #calculates the transform between the origin of the base frame and that of the gripper frame
-            
+            gripper_bl = tfBuffer.lookup_transform("base_link", "hand_palm_link", rospy.Time()) #calculates the transform between the origin of the base frame and that of the gripper frame
+
             # PoseStamped coordinates
             # obtains coordinates and orientation of the gripper transformed into the coordinate frame of the robot's base
             msg = geometry_msgs.msg.PoseStamped()
@@ -38,7 +38,3 @@ if __name__ == '__main__':
 
     rate.sleep()
 
-
-
-
-  
