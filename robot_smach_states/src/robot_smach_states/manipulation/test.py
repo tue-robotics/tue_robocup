@@ -5,39 +5,25 @@ from ultralytics import YOLO
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
-
-
 class YoloSegmentor:
     def __init__(self) -> None:
         model_path = "~/MEGA/developers/Donal/yolov8x-seg.pt"
         device = "cuda"
         self.model = YOLO(model_path).to(device)
         self.class_ids = [42, 43, 44]  # See the COCO dataset for class id to label info (fork = 42, knife = 43, spoon = 44)
-        self.active = False
 
-        self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
-        self.subscriber = rospy.Subscriber('/hero/hand_camera/image_raw', Image, self.callback)
-
-    def start(self):
-        self.active = True
-
-    def stop(self):
-        self.active = False
-
-    @staticmethod
-    def detect(model, frame):
-        results = model(frame)
-        global result
-        result = results[0] 
+    def detect(self, frame):
+        results = self.model(frame)
+        global result # Make 'result' global such that in can be accessed in the LeastSquaresMethod class
+        result = results[0]
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
-
+        
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
-
         coordinates_box = result.boxes.xywh.tolist()[0]  # Obtains all coordinates of the bounding box.
         x_center, y_center = coordinates_box[0], coordinates_box[1]  # Obtain the center coordinates of the bounding box = center coordinates object
 
         print(f"x_center, y_center = {x_center, y_center}") #print center coordinates
-        return class_ids, segmentation_contours_idx, x_center, y_center # outputs an integer with the name of the detected object as well as a segmentation of the object's contour
+        return class_ids, segmentation_contours_idx, x_center, y_center  # outputs an integer with the name of the detected object as well as a segmentation of the object's contour
 
     def extract_table_segment(self, image, class_ids, segmentations):
         table_mask = np.zeros_like(image, dtype=np.uint8)
@@ -46,34 +32,13 @@ class YoloSegmentor:
                 cv2.fillPoly(table_mask, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink/purple mask will be created 
             else:
                 cv2.fillPoly(table_mask, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a red mask will be created
-        
         return table_mask
-    
-    def visualize_center_point(self, cv_image):
+
+    def process_image(self, cv_image):
         classes, segmentations, x_center, y_center = self.detect(cv_image)
         table_segment = self.extract_table_segment(cv_image, classes, segmentations)
-
-        # Draw yellow dot at the center point 
-        cv2.circle(table_segment, (int(x_center), int(y_center)), 5, (0, 255, 255), -1) 
         return table_segment, x_center, y_center
 
-
-    def callback(self, data):
-        #rospy.loginfo("got message")
-        if not self.active:
-            return
-        bridge = CvBridge()
-        cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        #rospy.loginfo("converted message")
-
-        classes, segmentations = self.detect(self.model, cv_image)
-        global table_segment
-        table_segment = self.extract_table_segment(cv_image, classes, segmentations)
-        
-        # Publish the table segment as a binary mask
-        table_message = bridge.cv2_to_imgmsg(table_segment, encoding="passthrough")
-        self.publisher.publish(table_message)
 
 class LeastSquaresMethod:
     def __init__(self):
@@ -95,14 +60,12 @@ class LeastSquaresMethod:
     def predict(self, x):
         return self.slope * x + self.intercept
 
-
 if __name__ == '__main__':
-    rospy.init_node("cutlery_detector")
     ts = YoloSegmentor()
-    ts.start()
+    image = cv2.imread('fork.jpg')
+    table_segment, x_center, y_center = ts.process_image(image)
 
     model = LeastSquaresMethod()
-    classes, segmentations, result = ts.detect(ts.model, Image) 
 
     inner_array = result.masks.xy[0] # result.masks.xy is an array in an array, so has to be unpacked first
 
@@ -113,10 +76,13 @@ if __name__ == '__main__':
     print(f"Calculated slope: {model.slope}")
     print(f"Calculated intercept: {model.intercept}")
 
+    # Draw yellow dot at the center point 
+    cv2.circle(table_segment, (int(x_center), int(y_center)), 5, (0, 255, 255), -1)
+
     # Draw the line created by the least squares method in green, this is only for visualization
     min_x = int(min(x))
     max_x = int(max(x))
     cv2.line(table_segment, (min_x, int(model.predict(min_x))), (max_x, int(model.predict(max_x))), (0, 255, 0), 2)
 
-
-    rospy.spin()
+    cv2.imshow('Table Segment', table_segment)
+    cv2.waitKey(0)
