@@ -52,9 +52,22 @@ class LeastSquaresMethod:
         mean_x = np.mean(x)
         mean_y = np.mean(y)
         numerator = np.sum((x - mean_x) * (y - mean_y))
-        denominator = np.sum((x - mean_x) ** 2)
-        slope = numerator / denominator
+
+        min_x = int(min(x))
+        max_x = int(max(x))
+        #for nearly vertical cases:
+        if max_x - min_x <150: #LOGISCHE WAARDE GEVEN, MAXIMALE VERWACHTE DIKTE VAN BESTEK IN PIXELS
+            numerator = np.sum((y - mean_y) ** 2)
+            denominator = np.sum((x - mean_x) * (y - mean_y))
+            slope = numerator / denominator 
+        #for all other orientations:    
+        else:
+            numerator = np.sum((x - mean_x) * (y - mean_y))
+            denominator = np.sum((x - mean_x) ** 2)
+            slope = numerator / denominator   
         intercept = mean_y - slope * mean_x
+        return slope, intercept
+
         return slope, intercept
 
     def predict(self, x):
@@ -82,7 +95,11 @@ if __name__ == '__main__':
     # Draw the line created by the least squares method in green, this is only for visualization
     min_x = int(min(x))
     max_x = int(max(x))
+    
+    # this should be x,y starting point of line, x,y end point of line
     cv2.line(table_segment, (min_x, int(model.predict(min_x))), (max_x, int(model.predict(max_x))), (0, 255, 0), 2)
+
+
 
     cv2.imshow('Table Segment', table_segment)
     cv2.waitKey(0)
