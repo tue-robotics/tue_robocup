@@ -10,6 +10,6 @@ waypoint_ids = ["living_room", "kitchen", "dining_room", "office"]
 
 # Detection
 forbidden_room = "office"
-forbidden_room_waypoint = "forbidden_room_waypoint"
+forbidden_room_waypoint = "office"
 
 drinks_entity_id = "fridge"
