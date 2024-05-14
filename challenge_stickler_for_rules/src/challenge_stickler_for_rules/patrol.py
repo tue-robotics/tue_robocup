@@ -2,6 +2,7 @@
 Module contains states to patrol the environment while navigating to a goal.
 """
 from __future__ import absolute_import
+import numpy as np
 
 # ROS
 import rospy
@@ -47,7 +48,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
-                                search_timeout=30),
+                                search_timeout=30,
+                                look_range= (-np.pi, np.pi)),
                 transitions={"found": "GOTO_PERSON", "failed": "done"}
             )
 
