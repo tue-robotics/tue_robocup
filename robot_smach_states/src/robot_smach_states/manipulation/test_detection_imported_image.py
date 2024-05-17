@@ -55,8 +55,10 @@ class LeastSquaresMethod:
 
         min_x = int(min(x))
         max_x = int(max(x))
+
+        height, width, channels = image.shape 
         #for nearly vertical cases:
-        if max_x - min_x <150: #LOGISCHE WAARDE GEVEN, MAXIMALE VERWACHTE DIKTE VAN BESTEK IN PIXELS
+        if max_x - min_x < (1/3 * width): 
             numerator = np.sum((y - mean_y) ** 2)
             denominator = np.sum((x - mean_x) * (y - mean_y))
             slope = numerator / denominator 
@@ -68,10 +70,31 @@ class LeastSquaresMethod:
         intercept = mean_y - slope * mean_x
         return slope, intercept
 
-        return slope, intercept
-
     def predict(self, x):
         return self.slope * x + self.intercept
+    
+    def object_direction(self, y_center):
+        
+        inner_array = result.masks.xy[0] 
+        y = inner_array[:,1]
+        coordinates_upper = 0
+        coordinates_lower = 0
+        for i in range(len(y)):
+            yi = inner_array[i, 1]
+            if yi >= y_center:
+                coordinates_upper += 1
+            elif yi < y_center:
+                coordinates_lower += 1
+
+        print("Size outline upper half of the mask:", coordinates_upper)
+        print("Size outline lower half of the mask:", coordinates_lower)
+
+        if coordinates_upper <= coordinates_lower: #The y-axis points downwards so points shown above y_center in the figure actually have a y-coordinate below y_center
+            upwards = True
+        elif coordinates_upper > coordinates_lower:
+            upwards = False    
+
+        return upwards
 
 if __name__ == '__main__':
     ts = YoloSegmentor()
@@ -99,7 +122,8 @@ if __name__ == '__main__':
     # this should be x,y starting point of line, x,y end point of line
     cv2.line(table_segment, (min_x, int(model.predict(min_x))), (max_x, int(model.predict(max_x))), (0, 255, 0), 2)
 
-
+    upwards = model.object_direction(y_center)
+    print("Object direction:", "upwards" if upwards else "downwards")
 
     cv2.imshow('Table Segment', table_segment)
     cv2.waitKey(0)

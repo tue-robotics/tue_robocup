@@ -88,7 +88,7 @@ class TopGrasp(smach.State):
 
         assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
-
+#what does this do???
         check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
 
@@ -127,9 +127,27 @@ class TopGrasp(smach.State):
                                                 0.08, # y distance off center from the robot (fixed if rpy=0)
                                                 0.7, # z height of the gripper
                                                 0, 0, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
-        # start segmentation
+# start segmentation
         self.yolo_segmentor.start()
 
+        #Obtain needed data from the cutlery detector
+        x_center, y_center = self.yolo_segmentor.coordinates_center_point()
+        print(f"TOPGRASP: x_centerpoint, y_centerpoint= {x_center, y_center}") #print center coordinates)
+
+        slope, intercept, min_x, max_x = self.calculate_slope_intercept()
+        print(f"TOPGRASP: slope, intercept= {slope, intercept}") #print center coordinates)
+
+    #rewrite camera frame into cooridnate frame
+
+    
+    #what is the orientation of the gripper coordinate frame
+
+#move towards coordinates (with arm or with base?) will this even work with base or get stuck because too close to table
+
+#rotate wrist according to orientation
+
+
+#Moving arm downwards
         move_arm = True
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
@@ -161,15 +179,30 @@ class TopGrasp(smach.State):
                 move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
 
-            #Closing the gripper
+#Closing the gripper = Grasping
             arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
             arm.wait_for_motion_done()
 
                         # check if done
             if False: # check if the grasp has succeeded
                 grasp_succeeded = True
+
+#Move towards able edge, with base or with gripper
+#TAKE MARGINS INTO ACCOUNT
+
+# open gripper
+
             
-            # GRASP SUCCESSFUL OR NOT
+#move gripper towards end point cutlery or choose a good position
+
+#rotate wrist around the cutlery, pre-grasp
+
+#close gripper
+
+#lift up, go to original stance
+
+
+
 
             # example base command
             v = Twist()
