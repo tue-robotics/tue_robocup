@@ -20,7 +20,12 @@ class YoloSegmentor:
 
         self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
         self.subscriber = rospy.Subscriber('/hero/hand_camera/image_raw', Image, self.callback)
-
+        
+        # Initialize the attributes to store the values
+        self.x_center = None
+        self.y_center = None
+        self.slope = None
+        self.upwards = None
 
     def start(self):
         self.active = True
@@ -29,13 +34,13 @@ class YoloSegmentor:
         self.active = False
 
     @staticmethod
-    def detect(model, frame):
+    def detect(self, model, frame):
         results = model(frame)
         global result
         result = results[0] 
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
-        
+        self.class_ids = class_ids
         
         return class_ids, segmentation_contours_idx, result
     
@@ -44,18 +49,21 @@ class YoloSegmentor:
     
         x_center, y_center = coordinates_box[0], coordinates_box[1]  # Obtain the center coordinates of the bounding box = center coordinates object
         print(f"x_center, y_center = {x_center, y_center}") #print center coordinates
+        
+        # Store the values
+        self.x_center = x_center
+        self.y_center = y_center
+
         return x_center, y_center
 
     def extract_table_segment(self, image, class_ids, segmentation_contours_idx):
         table_segment = np.zeros_like(image, dtype=np.uint8)
         global width
         height, width, channels = image.shape #obtain data on image size
-
+        self.class_id = class_id
         for class_id, seg in zip(class_ids, segmentation_contours_idx):
-            if class_id in self.class_ids:
-                cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink/purple mask will be created 
-            else:
-                cv2.fillPoly(table_segment, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a red mask will be created
+            cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #for cutlery a mask will be created
+
         
         return table_segment
     
@@ -88,6 +96,10 @@ class YoloSegmentor:
 
         print(f"Calculated slope: {slope}")
         print(f"Calculated intercept: {intercept}")
+        
+        # Store the slope value
+        self.slope = slope
+
         return slope, intercept, min_x, max_x
 
     def predict(self, slope, intercept, min_x, max_x):
@@ -121,6 +133,8 @@ class YoloSegmentor:
         elif coordinates_upper > coordinates_lower:
             upwards = False    
 
+        self.upwards = upwards
+
         return upwards
 
     def callback(self, data):
@@ -135,32 +149,49 @@ class YoloSegmentor:
         rospy.loginfo("Image converted")
 
         class_ids, segmentation_contours_idx, result = self.detect(self.model, cv_image)
-        table_segment = self.extract_table_segment(cv_image, class_ids, segmentation_contours_idx)
 
-        x_center, y_center = self.coordinates_center_point()
+        if any(class_id in self.class_ids for class_id in class_ids):
+            rospy.loginfo("Cutlery detected")
+            table_segment = self.extract_table_segment(cv_image, class_ids, segmentation_contours_idx)
 
-        # Visualize center point
-        table_segment_with_center = self.visualize_center_point(x_center, y_center, table_segment)
-        rospy.loginfo("Center point visualized")
+            x_center, y_center = self.coordinates_center_point()
 
-        # Calculate slope and intercept
-        slope, intercept, min_x, max_x = self.calculate_slope_intercept()
-        rospy.loginfo("Slope and intercept calculated")
+            # Visualize center point
+            table_segment_with_center = self.visualize_center_point(x_center, y_center, table_segment)
+            rospy.loginfo("Center point visualized")
 
-        y_minx, y_maxx = self.predict(slope, intercept, min_x, max_x)
+            # Calculate slope and intercept
+            slope, intercept, min_x, max_x = self.calculate_slope_intercept()
+            rospy.loginfo("Slope and intercept calculated")
 
-        # Visualize orientation
-        table_segment_with_orientation = self.visualize_orientation(min_x, max_x, y_minx, y_maxx, table_segment_with_center)
-        rospy.loginfo("Orientation visualized")
+            y_minx, y_maxx = self.predict(slope, intercept, min_x, max_x)
 
-        # Publish the table segment as a binary mask
-        table_message = bridge.cv2_to_imgmsg(table_segment_with_orientation, encoding="passthrough")
-        self.publisher.publish(table_message)
-        rospy.loginfo("Segmented image with orientation published")
+            # Visualize orientation
+            table_segment_with_orientation = self.visualize_orientation(min_x, max_x, y_minx, y_maxx, table_segment_with_center)
+            rospy.loginfo("Orientation visualized")
 
-        upwards = self.object_direction(y_center)
-        rospy.loginfo("Direction determined")
+            # Publish the table segment as a binary mask
+            table_message = bridge.cv2_to_imgmsg(table_segment_with_orientation, encoding="passthrough")
+            self.publisher.publish(table_message)
+            rospy.loginfo("Segmented image with orientation published")
 
+            upwards = self.object_direction(y_center)
+            rospy.loginfo("Direction determined")
+        else:
+            rospy.loginfo("No cutlery detected")
+
+    # Method to be able to access values in the top_grasp code
+    def data_class(self):
+        return self.class_id
+
+    def data_center(self):
+        return self.x_center, self.y_center
+    
+    def data_slope(self):
+        return self.slope
+    
+    def data_direction(self):
+        return self.upwards
 
 
 if __name__ == '__main__':

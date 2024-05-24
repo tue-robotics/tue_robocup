@@ -7,6 +7,7 @@ import rospy
 import smach
 import tf2_ros
 from geometry_msgs.msg import Twist
+import time
 
 # TU/e Robotics
 from ed.entity import Entity
@@ -45,7 +46,6 @@ class PrepareGrasp(smach.State):
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"        
-        
         #pre-grasp position in two steps to limit possible collisions with the table
         pre_grasp_joint_goal_upwards = [0.69, # arm lift joint. ranges from 0.0 to 0.7m
                                         0.0, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
@@ -54,7 +54,6 @@ class PrepareGrasp(smach.State):
                                         0.0] # wrist roll joint. 
         arm._arm._send_joint_trajectory([pre_grasp_joint_goal_upwards]) # send the command to the robot.
         arm.wait_for_motion_done()
-
         #only lifting the arm flex joint
         pre_grasp_joint_goal_outwards = [0.69, 
                                         -1.57,
@@ -62,7 +61,6 @@ class PrepareGrasp(smach.State):
                                         -1.57, 
                                         0.0] 
         arm._arm._send_joint_trajectory([pre_grasp_joint_goal_outwards]) 
-
         # Open gripper
         arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
@@ -88,10 +86,8 @@ class TopGrasp(smach.State):
 
         assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
             "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
-#what does this do???
         check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
-
         self.yolo_segmentor = YoloSegmentor()
 
     def execute(self, userdata=None) -> str:
@@ -105,6 +101,7 @@ class TopGrasp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
         
+#### examples, this part can be commented out      
         # define a goal with respect to the entity.
         goal_map = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id=grab_entity.uuid)
 
@@ -130,12 +127,17 @@ class TopGrasp(smach.State):
 # start segmentation
         self.yolo_segmentor.start()
 
-        #Obtain needed data from the cutlery detector
-        x_center, y_center = self.yolo_segmentor.coordinates_center_point()
-        print(f"TOPGRASP: x_centerpoint, y_centerpoint= {x_center, y_center}") #print center coordinates)
+        class_id = self.yolo_segmentor.data_class()
 
-        slope, intercept, min_x, max_x = self.calculate_slope_intercept()
-        print(f"TOPGRASP: slope, intercept= {slope, intercept}") #print center coordinates)
+        #wait until cutlery is detected
+        while class_id not in {42, 43, 44}: 
+            rospy.sleep()
+
+
+        #Obtain needed data from the cutlery detector
+        x_center, y_center = self.yolo_segmentor.data_center()
+ 
+        print(f"DATA FROM DETECTION: x_center: {x_center}, y_center: {y_center}, slope: {slope}, upwards: {upwards}")
 
     #rewrite camera frame into cooridnate frame
 
@@ -179,13 +181,14 @@ class TopGrasp(smach.State):
                 move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
 
-#Closing the gripper = Grasping
+#Closing the gripper = grasping
             arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
             arm.wait_for_motion_done()
 
                         # check if done
             if False: # check if the grasp has succeeded
                 grasp_succeeded = True
+    #create a way out of the while loop by grasp_succeeded
 
 #Move towards able edge, with base or with gripper
 #TAKE MARGINS INTO ACCOUNT
