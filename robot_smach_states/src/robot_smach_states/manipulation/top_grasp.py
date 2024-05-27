@@ -126,18 +126,17 @@ class TopGrasp(smach.State):
                                                 0, 0, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
 # start segmentation
         self.yolo_segmentor.start()
+        class_id = None
+        while class_id not in {42, 43, 44}:
+            class_id = self.yolo_segmentor.data_class_id()
 
-        class_id = self.yolo_segmentor.data_class()
-
-        #wait until cutlery is detected
-        while class_id not in {42, 43, 44}: 
-            rospy.sleep()
-
+    
+    
+        
 
         #Obtain needed data from the cutlery detector
         x_center, y_center = self.yolo_segmentor.data_center()
  
-        print(f"DATA FROM DETECTION: x_center: {x_center}, y_center: {y_center}, slope: {slope}, upwards: {upwards}")
 
     #rewrite camera frame into cooridnate frame
 

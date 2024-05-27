@@ -26,6 +26,7 @@ class YoloSegmentor:
         self.y_center = None
         self.slope = None
         self.upwards = None
+        self.class_id = None
 
     def start(self):
         self.active = True
@@ -34,15 +35,28 @@ class YoloSegmentor:
         self.active = False
 
     @staticmethod
-    def detect(self, model, frame):
+    def detect(model, frame):
         results = model(frame)
         global result
         result = results[0] 
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
-        self.class_ids = class_ids
-        
+
         return class_ids, segmentation_contours_idx, result
+
+    def extract_table_segment(self, image, class_ids, segmentation_contours_idx):
+        table_segment = np.zeros_like(image, dtype=np.uint8)
+        global width
+        height, width, channels = image.shape #obtain data on image size
+        
+        for class_id, seg in zip(class_ids, segmentation_contours_idx):
+            self.class_id = class_id
+            if class_id in self.class_ids:
+                cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink/purple mask will be created 
+            else:
+                cv2.fillPoly(table_segment, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a red mask will be created
+        
+        return table_segment
     
     def coordinates_center_point(self):
         coordinates_box = result.boxes.xywh.tolist()[0]  # Obtains all coordinates of the bounding box.
@@ -54,18 +68,7 @@ class YoloSegmentor:
         self.x_center = x_center
         self.y_center = y_center
 
-        return x_center, y_center
-
-    def extract_table_segment(self, image, class_ids, segmentation_contours_idx):
-        table_segment = np.zeros_like(image, dtype=np.uint8)
-        global width
-        height, width, channels = image.shape #obtain data on image size
-        self.class_id = class_id
-        for class_id, seg in zip(class_ids, segmentation_contours_idx):
-            cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #for cutlery a mask will be created
-
-        
-        return table_segment
+        return x_center, y_center    
     
     def visualize_center_point(self, x_center, y_center, table_segment):
         cv2.circle(table_segment, (int(x_center), int(y_center)), 5, (0, 255, 255), -1) # Draw yellow dot at the center point 
@@ -149,12 +152,15 @@ class YoloSegmentor:
         rospy.loginfo("Image converted")
 
         class_ids, segmentation_contours_idx, result = self.detect(self.model, cv_image)
+        rospy.loginfo("Object detected")
+
+        table_segment = self.extract_table_segment(cv_image, class_ids, segmentation_contours_idx)
 
         if any(class_id in self.class_ids for class_id in class_ids):
             rospy.loginfo("Cutlery detected")
-            table_segment = self.extract_table_segment(cv_image, class_ids, segmentation_contours_idx)
 
             x_center, y_center = self.coordinates_center_point()
+
 
             # Visualize center point
             table_segment_with_center = self.visualize_center_point(x_center, y_center, table_segment)
@@ -181,7 +187,7 @@ class YoloSegmentor:
             rospy.loginfo("No cutlery detected")
 
     # Method to be able to access values in the top_grasp code
-    def data_class(self):
+    def data_class_id(self):
         return self.class_id
 
     def data_center(self):
