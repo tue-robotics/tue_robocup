@@ -27,6 +27,8 @@ class YoloSegmentor:
         self.slope = None
         self.upwards = None
         self.class_id = None
+        self.x_frame = None #center camera frame
+        self.y_frame = None
 
     def start(self):
         self.active = True
@@ -48,6 +50,10 @@ class YoloSegmentor:
         table_segment = np.zeros_like(image, dtype=np.uint8)
         global width
         height, width, channels = image.shape #obtain data on image size
+        x_frame = width/2 
+        y_frame = height/2
+        self.x_frame = x_frame
+        self.y_frame = y_frame
         
         for class_id, seg in zip(class_ids, segmentation_contours_idx):
             self.class_id = class_id
@@ -115,25 +121,25 @@ class YoloSegmentor:
         cv2.line(table_segment, (min_x, int(y_minx)), (max_x, int(y_maxx)), (0, 255, 0), 2) # Draw the line created by the least squares method in green
         return table_segment
     
-    def object_direction(self, y_center):
+    def object_direction(self, x_center):
         
         inner_array = result.masks.xy[0] 
-        y = inner_array[:,1]
+        x = inner_array[:,0]
         coordinates_upper = 0
         coordinates_lower = 0
-        for i in range(len(y)):
-            yi = inner_array[i, 1]
-            if yi >= y_center:
+        for i in range(len(x)):
+            xi = inner_array[i, 1]
+            if xi >= x_center:
                 coordinates_upper += 1
-            elif yi < y_center:
+            elif xi < x_center:
                 coordinates_lower += 1
 
         print("Size outline upper half of the mask:", coordinates_upper)
         print("Size outline lower half of the mask:", coordinates_lower)
 
-        if coordinates_upper <= coordinates_lower: #The y-axis points downwards so points shown above y_center in the figure actually have a y-coordinate below y_center
+        if coordinates_upper >= coordinates_lower: 
             upwards = True
-        elif coordinates_upper > coordinates_lower:
+        elif coordinates_upper < coordinates_lower:
             upwards = False    
 
         self.upwards = upwards
@@ -181,7 +187,7 @@ class YoloSegmentor:
             self.publisher.publish(table_message)
             rospy.loginfo("Segmented image with orientation published")
 
-            upwards = self.object_direction(y_center)
+            upwards = self.object_direction(x_center)
             rospy.loginfo("Direction determined")
         else:
             rospy.loginfo("No cutlery detected")
@@ -190,11 +196,8 @@ class YoloSegmentor:
     def data_class_id(self):
         return self.class_id
 
-    def data_center(self):
-        return self.x_center, self.y_center
-    
-    def data_slope(self):
-        return self.slope
+    def data_center_slope(self):
+        return self.x_center, self.y_center, self.x_frame, self.y_frame, self.slope
     
     def data_direction(self):
         return self.upwards

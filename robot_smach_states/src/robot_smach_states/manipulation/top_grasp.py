@@ -7,7 +7,6 @@ import rospy
 import smach
 import tf2_ros
 from geometry_msgs.msg import Twist
-import time
 
 # TU/e Robotics
 from ed.entity import Entity
@@ -130,13 +129,18 @@ class TopGrasp(smach.State):
         while class_id not in {42, 43, 44}:
             class_id = self.yolo_segmentor.data_class_id()
 
-    
-    
-        
+        x_center, y_center, x_frame, y_frame, slope = self.yolo_segmentor.data_center() #obtain cutlery's center point from the detection
 
-        #Obtain needed data from the cutlery detector
-        x_center, y_center = self.yolo_segmentor.data_center()
- 
+        #stop segmentation after desired data has been obtained
+        self.yolo_segmentor.stop()
+
+        #write center coordinates with respect to the camera frame (in pixels)
+        x_center_camera = x_center - x_frame
+        y_center_camera = y_center - y_frame
+
+        # CHECK WITH BOOLEAN IF THIS DATA IS RELEVANT/RECENT
+        
+        
 
     #rewrite camera frame into cooridnate frame
 
@@ -147,15 +151,21 @@ class TopGrasp(smach.State):
 
 #rotate wrist according to orientation
 
+        #data for the direction should be obtained before grasping, because otherwise the camera will be too close to the object
+        self.yolo_segmentor.start()
+        class_id_check = None
+        
+        while class_id_check != class_id: #while loop to make sure that data of the same object is obtained
+            class_id_check = self.yolo_segmentor.data_class_id()
+
+        upwards = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
+        self.yolo_segmentor.stop()
 
 #Moving arm downwards
         move_arm = True
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
 
-            #TODO get grasp pose wrt wrist
-
-            #TODO force sensor does not provide a good interface for this.
             if (move_arm):
                 downward_joint_goal = [0.0, # arm lift joint. ranges from 0.0 to 0.7m
                                        -1.57, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
@@ -168,7 +178,7 @@ class TopGrasp(smach.State):
                     arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
                 except TimeOutException:
                     rospy.loginfo("No edge up detected within timeout")
-
+#comment this out ?
                 #After force detection, make sure arm moves upwards
                 grasp_joint_goal = [0.63, #change this in a position relative to obtained coordinates or table height
                                     -1.57, 
@@ -188,6 +198,8 @@ class TopGrasp(smach.State):
             if False: # check if the grasp has succeeded
                 grasp_succeeded = True
     #create a way out of the while loop by grasp_succeeded
+
+#upwards or downwards, rotate wrist back to original position     
 
 #Move towards able edge, with base or with gripper
 #TAKE MARGINS INTO ACCOUNT
