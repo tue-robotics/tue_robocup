@@ -129,20 +129,26 @@ class TopGrasp(smach.State):
         while class_id not in {42, 43, 44}:
             class_id = self.yolo_segmentor.data_class_id()
 
-        x_center, y_center, x_frame, y_frame, slope = self.yolo_segmentor.data_center() #obtain cutlery's center point from the detection
+        x_cutlery, y_cutlery, slope = self.yolo_segmentor.data_center() #obtain cutlery's center point from the detection
 
         #stop segmentation after desired data has been obtained
         self.yolo_segmentor.stop()
 
+        height_table = 0.74 #manual input of table height 
         #write center coordinates with respect to the camera frame (in pixels)
-        x_center_camera = x_center - x_frame
-        y_center_camera = y_center - y_frame
-
-        # CHECK WITH BOOLEAN IF THIS DATA IS RELEVANT/RECENT
+        x_optical_center = 320.5 #optical center in pixels
+        y_optical_center = 240.5
+        focal_length = 205.46963709098583 #focal length in pixels
+        height_gripper = 0.89 #set value for position of 0.69 of the arm lift joint
+        distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the distance between hand palm link and the camera frame
         
-        
 
-    #rewrite camera frame into cooridnate frame
+        x_cutlery_pixel = x_cutlery - x_optical_center # coordinates in pixels w.r.t. the coordinate frame at the optical center
+        y_cutlery_pixel = y_cutlery - y_optical_center
+
+        #real-world coordinates w.r.t the optical center = hand palm link
+        x_cutlery_real = x_cutlery_pixel*distance_camera/focal_length
+        y_cutlery_real = y_cutlery_pixel*distance_camera/focal_length
 
     
     #what is the orientation of the gripper coordinate frame

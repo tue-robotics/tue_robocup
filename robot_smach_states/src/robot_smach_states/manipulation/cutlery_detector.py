@@ -27,8 +27,6 @@ class YoloSegmentor:
         self.slope = None
         self.upwards = None
         self.class_id = None
-        self.x_frame = None #center camera frame
-        self.y_frame = None
 
     def start(self):
         self.active = True
@@ -50,10 +48,6 @@ class YoloSegmentor:
         table_segment = np.zeros_like(image, dtype=np.uint8)
         global width
         height, width, channels = image.shape #obtain data on image size
-        x_frame = width/2 
-        y_frame = height/2
-        self.x_frame = x_frame
-        self.y_frame = y_frame
         
         for class_id, seg in zip(class_ids, segmentation_contours_idx):
             self.class_id = class_id
@@ -197,7 +191,7 @@ class YoloSegmentor:
         return self.class_id
 
     def data_center_slope(self):
-        return self.x_center, self.y_center, self.x_frame, self.y_frame, self.slope
+        return self.x_center, self.y_center, self.slope
     
     def data_direction(self):
         return self.upwards
