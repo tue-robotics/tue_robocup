@@ -126,6 +126,7 @@ class InspectAreas(smach.StateMachine):
 
 
 if __name__ == "__main__":
+    #changes
     import sys
     from robot_skills.get_robot import get_robot
     from robot_smach_states.util.designators import EntityByIdDesignator
