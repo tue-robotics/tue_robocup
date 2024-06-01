@@ -27,7 +27,7 @@ def setup_statemachine(robot):
     shelf_des = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.shelf)
     shelf_room_des = ds.EntityByIdDesignator(robot, challenge_knowledge.shelf_room, name="shelf_room_designator")
     table_des = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.table)
-    objects_des = ds.VariableDesignator(resolve_type=[ClassificationResult])
+    objects_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
     table_room_des = ds.EntityByIdDesignator(robot, challenge_knowledge.table_room, name="table_room_designator")
 
     with state_machine:
