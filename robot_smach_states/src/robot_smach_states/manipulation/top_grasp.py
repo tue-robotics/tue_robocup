@@ -44,7 +44,8 @@ class PrepareGrasp(smach.State):
         arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
-            return "failed"        
+            return "failed"  
+              
         #pre-grasp position in two steps to limit possible collisions with the table
         pre_grasp_joint_goal_upwards = [0.69, # arm lift joint. ranges from 0.0 to 0.7m
                                         0.0, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
@@ -64,6 +65,7 @@ class PrepareGrasp(smach.State):
         arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
         return 'succeeded'
+
 
 
 class TopGrasp(smach.State):
@@ -100,62 +102,113 @@ class TopGrasp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
         
-#### examples, this part can be commented out      
-        # define a goal with respect to the entity.
-        goal_map = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id=grab_entity.uuid)
-
-        try:
-            # Transform to goal to the base link frame
-            goal_bl = self.robot.tf_buffer.transform(goal_map, self.robot.base_link_frame)
-            if goal_bl is None:
-                rospy.logerr('Transformation of goal to base failed')
-                return 'failed'
-        except tf2_ros.TransformException as tfe:
-            rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
-            return 'failed'
-        #rospy.loginfo(f"goal_bl = {goal_bl}")
-
         grasp_succeeded=False
-        rate = rospy.Rate(10) # loop rate in hz
 
-        # define a desired transformation from base to gripper
-        base_to_gripper = self.frame_from_xyzrpy(0.5, # x distance to the robot
-                                                0.08, # y distance off center from the robot (fixed if rpy=0)
-                                                0.7, # z height of the gripper
-                                                0, 0, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
 # start segmentation
         self.yolo_segmentor.start()
         class_id = None
         while class_id not in {42, 43, 44}:
             class_id = self.yolo_segmentor.data_class_id()
 
-        x_cutlery, y_cutlery, slope = self.yolo_segmentor.data_center() #obtain cutlery's center point from the detection
+        x_cutlery, y_cutlery, slope = self.yolo_segmentor.data_center_slope() #obtain cutlery's center point from the detection
 
         #stop segmentation after desired data has been obtained
         self.yolo_segmentor.stop()
 
+#rewrite pixel coordinate into the robot's frame
         height_table = 0.74 #manual input of table height 
         #write center coordinates with respect to the camera frame (in pixels)
         x_optical_center = 320.5 #optical center in pixels
         y_optical_center = 240.5
         focal_length = 205.46963709098583 #focal length in pixels
         height_gripper = 0.89 #set value for position of 0.69 of the arm lift joint
-        distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the distance between hand palm link and the camera frame
+        distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
         
 
         x_cutlery_pixel = x_cutlery - x_optical_center # coordinates in pixels w.r.t. the coordinate frame at the optical center
         y_cutlery_pixel = y_cutlery - y_optical_center
 
-        #real-world coordinates w.r.t the optical center = hand palm link
-        x_cutlery_real = x_cutlery_pixel*distance_camera/focal_length
+        #real-world coordinates w.r.t the hand palm link
+        x_cutlery_real = x_cutlery_pixel*distance_camera/focal_length + 0.039 #3.9 cm corrects for the offset between camera and hand palm link in x-direction
         y_cutlery_real = y_cutlery_pixel*distance_camera/focal_length
 
-    
-    #what is the orientation of the gripper coordinate frame
+#move gripper towards object's determined grasping point
+        rate = rospy.Rate(10) # loop rate in hz
+        #move towards y coordinates with base
+        velocity = 0.05 # desired robot driving velocity WHAT IS THE UNIT AND WHAT IS A GOOD VALUE
+        new_time = 0
+        duration_y = abs(y_cutlery_real)/velocity
 
-#move towards coordinates (with arm or with base?) will this even work with base or get stuck because too close to table
+        v = Twist()
+        v.linear.x = 0
+        if y_cutlery_real > 0:
+            v.linear.y = -velocity# linear left
+        else:
+            v.linear.y = velocity     
+        v.angular.z = 0 # rotation speed to the left, none desired
+        self.robot.base._cmd_vel.publish(v) # send command to the robot
+        start_time = rospy.Time.now()
+
+        while new_time - start_time < duration_y:
+            new_time = rospy.Time.now()
+
+        v.linear.y = 0 # linear left
+        self.robot.base._cmd_vel.publish(v) # send command to the robot    
+
+        #move towards negative x coordinates with arm and towrads positive x-coordinates with base
+        if x_cutlery_real < 0:
+            #current gripper coordinates in the base link frame, with new x-coordinate implemented
+            base_to_gripper = self.frame_from_xyzrpy((0.478 - x_cutlery_real), # x distance to the robot
+                                                0.078, # y distance off center from the robot (fixed if rpy=0)
+                                                0.881, # z height of the gripper
+                                                0, 1.5, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
+
+            pose_goal = FrameStamped(base_to_gripper,
+                                    rospy.Time.now(), #timestamp when this pose was created
+                                    "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                    )
+            arm.send_goal(pose_goal) # send the command to the robot.
+            arm.wait_for_motion_done() # wait until the motion is complete
+                          
+        else:
+            new_time = 0
+            duration_x = abs(x_cutlery_real)/velocity
+
+            v.linear.x = velocity # forward
+            v.linear.y = 0
+            v.angular.z = 0 # rotation speed to the left, none desired
+            self.robot.base._cmd_vel.publish(v) # send command to the robot
+            start_time = rospy.Time.now()   
+
+            while new_time - start_time < duration_x:
+                new_time = rospy.Time.now()
+
+            v.linear.x = 0 # forward
+            self.robot.base._cmd_vel.publish(v) # send command to the robot    
+
 
 #rotate wrist according to orientation
+        #wrist roll joint werkt van 1.5 tot -1.5, schrijf slope om naar wrist waarde
+        wrist_roll_joint
+
+        #Obtain the arm's current joint positions
+        joints_arm = arm._arm.get_joint_states()
+        arm_lift_joint = joints_arm['arm_lift_joint']
+        arm_flex_joint = joints_arm['arm_flex_joint']
+        arm_roll_joint = joints_arm['arm_roll_joint']
+        wrist_flex_joint = joints_arm['wrist_flex_joint']
+
+        
+        wrist_rotation_joint_goal = [arm_lift_joint,
+                                        arm_flex_joint, 
+                                        arm_roll_joint, 
+                                        wrist_flex_joint, 
+                                        wrist_roll_joint] 
+        arm._arm._send_joint_trajectory([wrist_rotation_joint_goal]) # send the command to the robot.
+        arm.wait_for_motion_done()
+
+
+#BEREKENEN OP DIT MOMENT OOK DE CENTER OF MASS
 
         #data for the direction should be obtained before grasping, because otherwise the camera will be too close to the object
         self.yolo_segmentor.start()
@@ -167,30 +220,49 @@ class TopGrasp(smach.State):
         upwards = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
         self.yolo_segmentor.stop()
 
+        #Obtain the arm's joint positions
+        joints_arm = arm._arm.get_joint_states()
+        arm_lift_joint = joints_arm['arm_lift_joint']
+        arm_flex_joint = joints_arm['arm_flex_joint']
+        arm_roll_joint = joints_arm['arm_roll_joint']
+        wrist_flex_joint = joints_arm['wrist_flex_joint']
+        wrist_roll_joint = joints_arm['wrist_roll_joint']
+
+        print("Arm lift joint:", arm_lift_joint)
+        print("Arm flex joint:", arm_flex_joint)
+        print("Arm roll joint:", arm_roll_joint)
+        print("Wrist flex joint:", wrist_flex_joint)
+        print("Wrist roll joint:", wrist_roll_joint)
+
+        #IF UPWARDS IS FALSE, MAKE SURE TO ROTATE WRIST BY 180 DEGREES
+
 #Moving arm downwards
         move_arm = True
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
-
             if (move_arm):
-                downward_joint_goal = [0.0, # arm lift joint. ranges from 0.0 to 0.7m
-                                       -1.57, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
-                                       0.0, # arm roll joint
-                                       -1.57, # wrist flex joint. lower values move the hand down
-                                       0.0] # wrist roll joint. 
+                downward_joint_goal = [arm_lift_joint, # arm lift joint. ranges from 0.0 to 0.7m
+                                       arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
+                                       arm_roll_joint, # arm roll joint
+                                       wrist_flex_joint, # wrist flex joint. lower values move the hand down
+                                       wrist_roll_joint] # wrist roll joint. 
                 arm._arm._send_joint_trajectory([downward_joint_goal]) # send the command to the robot.
                 #Move arm downwards, don't wait until motion is done, but until a force is detected
                 try:
                     arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
                 except TimeOutException:
                     rospy.loginfo("No edge up detected within timeout")
-#comment this out ?
+
+                joints_arm = arm._arm.get_joint_states()
+                arm_lift_joint = joints_arm['arm_lift_joint']   
+                
                 #After force detection, make sure arm moves upwards
+        #MAKE SURE TO ADJUST THIS        
                 grasp_joint_goal = [0.63, #change this in a position relative to obtained coordinates or table height
-                                    -1.57, 
-                                    0.0, 
-                                    -1.57, 
-                                    0.0]
+                                    arm_flex_joint, 
+                                    arm_roll_joint, 
+                                    wrist_flex_joint, 
+                                    wrist_roll_joint]
                 arm._arm._send_joint_trajectory([grasp_joint_goal]) # send the command to the robot.
                 arm.wait_for_motion_done() # wait until the motion is complete
                 move_arm = False # reset flag to move the arm.
@@ -205,7 +277,7 @@ class TopGrasp(smach.State):
                 grasp_succeeded = True
     #create a way out of the while loop by grasp_succeeded
 
-#upwards or downwards, rotate wrist back to original position     
+#upwards or downwards, rotate wrist back in lign with table edge     
 
 #Move towards able edge, with base or with gripper
 #TAKE MARGINS INTO ACCOUNT

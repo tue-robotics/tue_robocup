@@ -156,6 +156,10 @@ class YoloSegmentor:
 
         table_segment = self.extract_table_segment(cv_image, class_ids, segmentation_contours_idx)
 
+        #makes sure that even when no cutlery is detected, the segmentation of objects is visualized
+        table_message = bridge.cv2_to_imgmsg(table_segment, encoding="passthrough")
+        self.publisher.publish(table_message)
+
         if any(class_id in self.class_ids for class_id in class_ids):
             rospy.loginfo("Cutlery detected")
 
