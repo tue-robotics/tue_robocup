@@ -51,7 +51,7 @@ class PickUpArucomarker(smach.State):
 
 
 ### TO DO: dit ergens anders
-        aruco_type = "DICT_5X5_250"
+        aruco_type = "DICT_5X5_50"
 
         intrinsic_camera = np.array(((568.09415192, 0, 343.88872714), (0,  568.09415192, 211.47931024), (0, 0, 1)))
         distortion = np.array((1.79783341e+01, -1.56647194e+02, -1.27060586e-02, 3.36172848e-02,
@@ -61,7 +61,7 @@ class PickUpArucomarker(smach.State):
             return 'failed'
 ####
 
-        goal_map = FrameStamped.from_xyz_rpy(vector.x, vector.y, vector.z, vector.roll, vector.pitch, vector.yaw, rospy.Time.now(), self.robot.base_link_frame)
+        goal_map = FrameStamped.from_xyz_rpy(vector.x, vector.y, vector.z, vector.roll*np.pi/180,(vector.pitch*np.pi/180)-np.pi/2, (vector.yaw*np.pi/180)+np.pi/2, rospy.Time.now(), "head_rgbd_sensor_rgb_frame")
 
         try:
             # Transform to base link frame
