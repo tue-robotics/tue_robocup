@@ -103,7 +103,7 @@ class StoreItems(smach.StateMachine):
 
         segmented_entities_designator = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
-        closest_item_designator = ds.VariableDesignator(resolve_type=Entity)
+        closest_item_designator = ds.VariableDesignator([], resolve_type=Entity)
 
         current_blacklist = []
 
