@@ -1,7 +1,7 @@
 import rospy
 
 from ed.entity import Entity
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators import Designator, EntityByIdDesignator
 
 
 class SimilarEntityDesignator(Designator):
@@ -25,9 +25,12 @@ class SimilarEntityDesignator(Designator):
         original = self.original.resolve()
         entity_list = self.entity_list.resolve()
         match = find_similar_entity(original, entity_list, self.knowledge)
-        if match:
-            rospy.loginfo("Selected {}, as it is similar to {}".format(match, original))
-            return self.robot.ed.get_entity(uuid=match.uuid)
+        for match_entity in entity_list:
+            if match_entity.uuid == match.uuid:
+                match_des = EntityByIdDesignator(self.robot, uuid=match.uuid)
+                match_uuid_ds = match_des.resolve()
+                rospy.loginfo("Selected {}, as it is similar to {}".format(match, original))
+                return self.robot.ed.get_entity(uuid=match_uuid_ds.uuid)
         return None
 
 
