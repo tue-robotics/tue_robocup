@@ -184,9 +184,9 @@ class TopGrasp(smach.State):
         if angle < 0: # Normalize the angle to the range [0, pi]
             angle += math.pi 
     
-        # Fit the angle to the range [-0.75, 0.75] of the wrist roll joint
+        # Fit the angle to the range [-1.5, 1.5] of the wrist roll joint
         normalized_angle = angle / math.pi  # orientation in range [0, 1]
-        wrist_roll_joint = normalized_angle * 1.5 - 0.75  # Orientation in desired range [-0.75, 0.75]
+        wrist_roll_joint = normalized_angle * 3 - 1.5  # Orientation in desired range [-1.5, 1.5]
 
         #Obtain the arm's current joint positions
         joints_arm = arm._arm.get_joint_states()
@@ -217,21 +217,28 @@ class TopGrasp(smach.State):
         upwards = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
         self.yolo_segmentor.stop()
 
-        #Obtain the arm's joint positions
-        joints_arm = arm._arm.get_joint_states()
-        arm_lift_joint = joints_arm['arm_lift_joint']
-        arm_flex_joint = joints_arm['arm_flex_joint']
-        arm_roll_joint = joints_arm['arm_roll_joint']
-        wrist_flex_joint = joints_arm['wrist_flex_joint']
-        wrist_roll_joint = joints_arm['wrist_roll_joint']
+        if not upwards:
+            if wrist_roll_joint <= 0:
+                wrist_roll_joint = 3 - abs(wrist_roll_joint)
+            elif 0 < wrist_roll_joint <= 0.7:
+                wrist_roll_joint = 3 + wrist_roll_joint
+            elif 1.2 <= wrist_roll_joint < 1.5:    
+                wrist_roll_joint = - 3 + wrist_roll_joint
+            #wrist roll joint values between 1.2 and 0.7 don't have an 180 degrees turned opposite since this is out of range. 
+            #therefore the gripper will go to the closest possible value which has a max inaccuarcy of 15 degrees    
+            elif 0.95 <= wrist_roll_joint < 1.2:    
+                wrist_roll_joint = -1.8
+            elif 0.7 < wrist_roll_joint < 0.95:    
+                wrist_roll_joint = 3.7
 
-        print("Arm lift joint:", arm_lift_joint)
-        print("Arm flex joint:", arm_flex_joint)
-        print("Arm roll joint:", arm_roll_joint)
-        print("Wrist flex joint:", wrist_flex_joint)
-        print("Wrist roll joint:", wrist_roll_joint)
-
-        #IF UPWARDS IS FALSE, MAKE SURE TO ROTATE WRIST BY 180 DEGREES
+            #rotate gripper 180 degrees to grasp cutlery in the correct direction
+            cutlery_direction_wrist_joint_goal = [arm_lift_joint,
+                                        arm_flex_joint, 
+                                        arm_roll_joint, 
+                                        wrist_flex_joint, 
+                                        wrist_roll_joint] 
+            arm._arm._send_joint_trajectory([cutlery_direction_wrist_joint_goal]) # send the command to the robot.
+            arm.wait_for_motion_done()
 
 #Moving arm downwards
         move_arm = True
