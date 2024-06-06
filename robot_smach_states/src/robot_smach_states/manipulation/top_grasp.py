@@ -6,6 +6,7 @@ from pykdl_ros import VectorStamped, FrameStamped
 import rospy
 import smach
 import tf2_ros
+import math
 from geometry_msgs.msg import Twist
 
 # TU/e Robotics
@@ -103,6 +104,7 @@ class TopGrasp(smach.State):
             return "failed"
         
         grasp_succeeded=False
+        rate = rospy.Rate(10) # loop rate in hz
 
 # start segmentation
         self.yolo_segmentor.start()
@@ -121,7 +123,7 @@ class TopGrasp(smach.State):
         x_optical_center = 320.5 #optical center in pixels
         y_optical_center = 240.5
         focal_length = 205.46963709098583 #focal length in pixels
-        height_gripper = 0.89 #set value for position of 0.69 of the arm lift joint
+        height_gripper = 0.89 #value for gripper position in set pre-grasp-pose
         distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
         
 
@@ -133,10 +135,8 @@ class TopGrasp(smach.State):
         y_cutlery_real = y_cutlery_pixel*distance_camera/focal_length
 
 #move gripper towards object's determined grasping point
-        rate = rospy.Rate(10) # loop rate in hz
         #move towards y coordinates with base
-        velocity = 0.05 # desired robot driving velocity WHAT IS THE UNIT AND WHAT IS A GOOD VALUE
-        new_time = 0
+        velocity = 0.05 # desired robot speed, relatively slow since ony short distances are to be covered
         duration_y = abs(y_cutlery_real)/velocity
 
         v = Twist()
@@ -146,16 +146,11 @@ class TopGrasp(smach.State):
         else:
             v.linear.y = velocity     
         v.angular.z = 0 # rotation speed to the left, none desired
-        self.robot.base._cmd_vel.publish(v) # send command to the robot
         start_time = rospy.Time.now()
-
-        while new_time - start_time < duration_y:
-            new_time = rospy.Time.now()
-
-        v.linear.y = 0 # linear left
-        self.robot.base._cmd_vel.publish(v) # send command to the robot    
-
-        #move towards negative x coordinates with arm and towrads positive x-coordinates with base
+        while (rospy.Time.now() - start_time).to_sec() < duration_y:
+            self.robot.base._cmd_vel.publish(v) # send command to the robot
+ 
+        #move towards negative x coordinates with arm 
         if x_cutlery_real < 0:
             #current gripper coordinates in the base link frame, with new x-coordinate implemented
             base_to_gripper = self.frame_from_xyzrpy((0.478 - x_cutlery_real), # x distance to the robot
@@ -169,27 +164,29 @@ class TopGrasp(smach.State):
                                     )
             arm.send_goal(pose_goal) # send the command to the robot.
             arm.wait_for_motion_done() # wait until the motion is complete
-                          
-        else:
-            new_time = 0
-            duration_x = abs(x_cutlery_real)/velocity
 
+        #move towards positive x-coordinates with base                  
+        else:
+            duration_x = abs(x_cutlery_real)/velocity
             v.linear.x = velocity # forward
             v.linear.y = 0
             v.angular.z = 0 # rotation speed to the left, none desired
-            self.robot.base._cmd_vel.publish(v) # send command to the robot
+
             start_time = rospy.Time.now()   
-
-            while new_time - start_time < duration_x:
-                new_time = rospy.Time.now()
-
-            v.linear.x = 0 # forward
-            self.robot.base._cmd_vel.publish(v) # send command to the robot    
-
+            while (rospy.Time.now() - start_time).to_sec() < duration_x:
+                self.robot.base._cmd_vel.publish(v) # send command to the robot
 
 #rotate wrist according to orientation
-        #wrist roll joint werkt van 1.5 tot -1.5, schrijf slope om naar wrist waarde
-        wrist_roll_joint
+        slope_rotated = 1/slope # invert the slope since the image is rotated
+
+        # Calculate the angle
+        angle = math.atan(slope_rotated)
+        if angle < 0: # Normalize the angle to the range [0, pi]
+            angle += math.pi 
+    
+        # Fit the angle to the range [-0.75, 0.75] of the wrist roll joint
+        normalized_angle = angle / math.pi  # orientation in range [0, 1]
+        wrist_roll_joint = normalized_angle * 1.5 - 0.75  # Orientation in desired range [-0.75, 0.75]
 
         #Obtain the arm's current joint positions
         joints_arm = arm._arm.get_joint_states()
@@ -372,7 +369,7 @@ class ResetOnFailure(smach.State):
         arm = self.arm_designator.resolve()
         arm.reset()
 
-        if self._robot.robot_name == "amigo":
+        if self._robot.robot_name == "hero":
             self._robot.torso.reset()  # Move up to make resetting of the arm safer.
         if arm is not None:
             arm.gripper.send_goal('open')
