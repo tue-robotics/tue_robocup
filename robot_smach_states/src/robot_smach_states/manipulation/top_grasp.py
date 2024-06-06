@@ -16,11 +16,12 @@ from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_smach_states.utility import check_arm_requirements, ResolveArm
 from robot_smach_states.util.designators import check_type
 from robot_smach_states.navigation.navigate_to_grasp import NavigateToGrasp
-#from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
+
 from robot_smach_states.util.designators.arm import ArmDesignator
 from robot_smach_states.util.designators.core import Designator
 
 from robot_smach_states.manipulation.cutlery_detector import YoloSegmentor
+from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
 from robot_skills.util.exceptions import TimeOutException
 
 
@@ -196,16 +197,16 @@ class TopGrasp(smach.State):
         wrist_flex_joint = joints_arm['wrist_flex_joint']
 
         
-        wrist_rotation_joint_goal = [arm_lift_joint,
+        wrist_rotation_goal = [arm_lift_joint,
                                         arm_flex_joint, 
                                         arm_roll_joint, 
                                         wrist_flex_joint, 
                                         wrist_roll_joint] 
-        arm._arm._send_joint_trajectory([wrist_rotation_joint_goal]) # send the command to the robot.
+        arm._arm._send_joint_trajectory([wrist_rotation_goal]) # send the command to the robot.
         arm.wait_for_motion_done()
 
 
-#BEREKENEN OP DIT MOMENT OOK DE CENTER OF MASS
+#BEREKENEN OP DIT MOMENT OOK DE CENTER OF MASS ALS NODIG
 
         #data for the direction should be obtained before grasping, because otherwise the camera will be too close to the object
         self.yolo_segmentor.start()
@@ -259,10 +260,8 @@ class TopGrasp(smach.State):
 
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
-                
-                #After force detection, make sure arm moves upwards
-        #MAKE SURE TO ADJUST THIS        
-                grasp_joint_goal = [0.63, #change this in a position relative to obtained coordinates or table height
+                    
+                grasp_joint_goal = [(arm_lift_joint + 0.063), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
@@ -272,18 +271,31 @@ class TopGrasp(smach.State):
                 move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
 
-#Closing the gripper = grasping
+            #grasp object    
             arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
             arm.wait_for_motion_done()
 
-                        # check if done
-            if False: # check if the grasp has succeeded
+            #detecting if grasp has succeeded
+            active_grasp_detector = ActiveGraspDetector(self.robot, arm)
+            grasp_detection = active_grasp_detector.execute()
+
+            if grasp_detection == 'true':
                 grasp_succeeded = True
-    #create a way out of the while loop by grasp_succeeded
+            else: # for other options: false, cannot determine and failed, the grasp has not succeeded and grasp_succeeded is therefore false
+                grasp_succeeded = False
+        
+            rospy.loginfo("The robot is holding something: {}!".format(grasp_succeeded))
 
-#upwards or downwards, rotate wrist back in lign with table edge     
+#Rotate wrist back in line with table edge    
+#TAKE INTO ACCOUNT TABLE 
+        wrist_roll_joint = 0 #only zero when hero is aligned straight towrads table
+        wrist_rotation_back_goal = grasp_joint_goal 
+        wrist_rotation_back_goal[4]= wrist_roll_joint
+        arm._arm._send_joint_trajectory([wrist_rotation_back_goal]) # send the command to the robot.
+        arm.wait_for_motion_done()
 
-#Move towards able edge, with base or with gripper
+
+#Move towards table edge, with base or with gripper
 #TAKE MARGINS INTO ACCOUNT
 
 # open gripper
@@ -298,51 +310,6 @@ class TopGrasp(smach.State):
 #lift up, go to original stance
 
 
-
-
-            # example base command
-            v = Twist()
-            v.linear.x = 0 # forward
-            v.linear.y = 0 # linear left
-            v.angular.z = 0 # rotation speed to the left
-            self.robot.base._cmd_vel.publish(v) # send command to the robot
-
-            # example arm pose command
-            if (move_arm):
-                pose_goal = FrameStamped(base_to_gripper,
-                                        rospy.Time.now(), #timestamp when this pose was created
-                                        "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
-                                        )
-                arm.send_goal(pose_goal) # send the command to the robot.
-                arm.wait_for_motion_done() # wait until the motion is complete
-                move_arm = False # reset flag to move the arm.
-                #continue # dont wait for the rest of the loop.
-
-                # control the arm in joint space
-                joint_goal = [0.5, # arm lift joint. ranges from 0.0 to 0.7m
-                              -1.57, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
-                              0.0, # arm roll joint
-                              -1.57, # wrist flex joint. lower values move the hand down
-                              0.0] # wrist roll joint. 
-                arm._arm._send_joint_trajectory([joint_goal]) # send the command to the robot.
-                arm.wait_for_motion_done() # wait until the motion is complete
-                move_arm = False # reset flag to move the arm.
-                continue # dont wait for the rest of the loop.
-
-            # get base-gripper transform
-            gripper_id = FrameStamped.from_xyz_rpy(0, 0, 0, 0, 0, 0, rospy.Time(), frame_id="hand_palm_link")
-            gripper_bl = self.robot.tf_buffer.transform(gripper_id, self.robot.base_link_frame)
-            gripper_bl.frame = arm._arm.offset.Inverse() * gripper_bl.frame  # compensate for the offset in hand palm link
-            rospy.loginfo(f"gripper_bl = {gripper_bl}")
-
-            # check if done
-            if False: # check if the grasp has succeeded
-                grasp_succeeded = True
-
-            rospy.loginfo(f"print a message to show we are still running.")
-            rate.sleep()
-        # stop segmentation to preserve computation power
-        self.yolo_segmentor.stop()
 
         return "succeeded"
 
