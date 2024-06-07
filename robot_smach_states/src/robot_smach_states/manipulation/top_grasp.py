@@ -8,6 +8,8 @@ import smach
 import tf2_ros
 import math
 from geometry_msgs.msg import Twist
+import tf.transformations as tft
+import numpy as np
 
 # TU/e Robotics
 from ed.entity import Entity
@@ -157,7 +159,7 @@ class TopGrasp(smach.State):
             base_to_gripper = self.frame_from_xyzrpy((0.478 - x_cutlery_real), # x distance to the robot
                                                 0.078, # y distance off center from the robot (fixed if rpy=0)
                                                 0.881, # z height of the gripper
-                                                0, 1.5, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
+                                                0, 1.57, 0) # Roll pitch yaw. 0,0,0 for a horizontal gripper.
 
             pose_goal = FrameStamped(base_to_gripper,
                                     rospy.Time.now(), #timestamp when this pose was created
@@ -185,9 +187,9 @@ class TopGrasp(smach.State):
         if angle < 0: # Normalize the angle to the range [0, pi]
             angle += math.pi 
     
-        # Fit the angle to the range [-1.5, 1.5] of the wrist roll joint
+        # Fit the angle to the range [-1.57, 1.57] of the wrist roll joint
         normalized_angle = angle / math.pi  # orientation in range [0, 1]
-        wrist_roll_joint = normalized_angle * 3 - 1.5  # Orientation in desired range [-1.5, 1.5]
+        wrist_roll_joint = normalized_angle * 3.14 - 1.57  # Orientation in desired range [-1.57, 1.57]
 
         #Obtain the arm's current joint positions
         joints_arm = arm._arm.get_joint_states()
@@ -220,16 +222,16 @@ class TopGrasp(smach.State):
 
         if not upwards:
             if wrist_roll_joint <= 0:
-                wrist_roll_joint = 3 - abs(wrist_roll_joint)
-            elif 0 < wrist_roll_joint <= 0.7:
-                wrist_roll_joint = 3 + wrist_roll_joint
-            elif 1.2 <= wrist_roll_joint < 1.5:    
-                wrist_roll_joint = - 3 + wrist_roll_joint
-            #wrist roll joint values between 1.2 and 0.7 don't have an 180 degrees turned opposite since this is out of range. 
+                wrist_roll_joint = 3.14 - abs(wrist_roll_joint)
+            elif 0 < wrist_roll_joint <= 0.56:
+                wrist_roll_joint = 3.14 + wrist_roll_joint
+            elif 1.34 <= wrist_roll_joint < 1.57:    
+                wrist_roll_joint = - 3.14 + wrist_roll_joint
+            #wrist roll joint values between 1.34 and 0.56 don't have an 180 degrees turned opposite since this is out of range. 
             #therefore the gripper will go to the closest possible value which has a max inaccuarcy of 15 degrees    
-            elif 0.95 <= wrist_roll_joint < 1.2:    
+            elif 0.95 <= wrist_roll_joint < 1.34:    
                 wrist_roll_joint = -1.8
-            elif 0.7 < wrist_roll_joint < 0.95:    
+            elif 0.56 < wrist_roll_joint < 0.95:    
                 wrist_roll_joint = 3.7
 
             #rotate gripper 180 degrees to grasp cutlery in the correct direction
@@ -286,9 +288,104 @@ class TopGrasp(smach.State):
         
             rospy.loginfo("The robot is holding something: {}!".format(grasp_succeeded))
 
-#Rotate wrist back in line with table edge    
-#TAKE INTO ACCOUNT TABLE 
-        wrist_roll_joint = 0 #only zero when hero is aligned straight towrads table
+#determine on which side of the table Hero is
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
+        
+        base_in_table_frame = tfBuffer.lookup_transform("dinner_table", "base_link", rospy.Time())
+        rospy.loginfo(f"gripper_table_frame = {base_in_table_frame}")
+
+        #x and y coordinates of the base in the coordinate frame of the table
+        x_base = base_in_table_frame.transform.translation.x
+        y_base = base_in_table_frame.transform.translation.y
+
+#manual input of table size NEEDS TO BE CHECKED IRL
+        table_length = 1.65
+        table_width = 0.84
+
+        #position around the table divided in four quarters: 1 = positive x side, 3 = negative x side, 2 = negative y side, 4 = positive y side
+        if x_base > 1/2*table_length and (abs(x_base) - 1/2*table_length) >= (abs(y_base) - 1/2*table_width):
+            position = 1
+        elif y_base < -1/2*table_width and (abs(x_base) - 1/2*table_length) < (abs(y_base) - 1/2*table_width):
+            position = 2
+        elif x_base < -1/2*table_length and (abs(x_base) - 1/2*table_length) >= (abs(y_base) - 1/2*table_width): 
+            position = 3   
+        elif y_base > 1/2*table_width and (abs(x_base) - 1/2*table_length) < (abs(y_base) - 1/2*table_width):    
+            position = 4
+
+#Rotate wrist back in line with table edge  
+        tfBuffer = tf2_ros.Buffer()
+        rospy.sleep(2)
+
+        gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+        rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
+
+        # Convert the original quaternion to a rotation matrix
+        rotation_matrix = tft.quaternion_matrix([
+            gripper_in_table_frame.transform.rotation.x,
+            gripper_in_table_frame.transform.rotation.y,
+            gripper_in_table_frame.transform.rotation.z,
+            gripper_in_table_frame.transform.rotation.w
+        ])
+
+        if position == 1: # y-axes should align
+            
+            y_direction_gripper = rotation_matrix[:3, 1] # Extract the y-axis direction vector of the gripper in the table frame
+            y_direction_gripper_xy = np.array([y_direction_gripper[0], y_direction_gripper[1], 0]) # Project the y-direction vector onto the x-y plane
+            y_direction_gripper_xy /= np.linalg.norm(y_direction_gripper_xy) # Normalize
+            y_axis_table_xy = np.array([0, 1, 0])
+
+            # Calculate the cross product and dot product in the x-y plane
+            cross_prod = np.cross(y_axis_table_xy, y_direction_gripper_xy)
+            dot_prod = np.dot(y_axis_table_xy, y_direction_gripper_xy)
+
+        if position == 2: # x-axis gripper should align with y-axis table
+            x_direction_gripper = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
+            x_direction_gripper_xy = np.array([x_direction_gripper[0], x_direction_gripper[1], 0]) # Project the x-direction vector onto the x-y plane
+            x_direction_gripper_xy /= np.linalg.norm(x_direction_gripper_xy) # Normalize 
+            y_axis_table_xy = np.array([0, 1, 0])
+
+            # Calculate the cross product and dot product in the x-y plane
+            cross_prod = np.cross(y_axis_table_xy, x_direction_gripper_xy)
+            dot_prod = np.dot(y_axis_table_xy, x_direction_gripper_xy)    
+
+        if position == 3: # x-axes should align
+            
+            x_direction_gripper = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
+            x_direction_gripper_xy = np.array([x_direction_gripper[0], x_direction_gripper[1], 0]) # Project the x-direction vector onto the x-y plane
+            x_direction_gripper_xy /= np.linalg.norm(x_direction_gripper_xy) # Normalize 
+            x_axis_table_xy = np.array([1, 0, 0])
+
+            # Calculate the cross product and dot product in the x-y plane
+            cross_prod = np.cross(x_axis_table_xy, x_direction_gripper_xy)
+            dot_prod = np.dot(x_axis_table_xy, x_direction_gripper_xy) 
+
+        if position == 4: # y-axis gripper should align with x-axis table
+            
+            y_direction_gripper = rotation_matrix[:3, 1] # Extract the y-axis direction vector of the gripper in the table frame
+            y_direction_gripper_xy = np.array([y_direction_gripper[0], y_direction_gripper[1], 0]) # Project the y-direction vector onto the x-y plane
+            y_direction_gripper_xy /= np.linalg.norm(y_direction_gripper_xy) # Normalize
+            x_axis_table_xy = np.array([1, 0, 0])  
+
+            # Calculate the cross product and dot product in the x-y plane
+            cross_prod = np.cross(x_axis_table_xy, y_direction_gripper_xy)
+            dot_prod = np.dot(x_axis_table_xy, y_direction_gripper_xy)      
+
+        # Calculate the angle using atan2 for a more stable solution
+        angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
+
+        # Determine the direction of rotation
+        if cross_prod[2] < 0:
+            angle_to_align = -angle_to_align
+
+        # Ensure the angle is within the range -1.57 to 1.57 radians
+        if angle_to_align > 1.57:
+            angle_to_align = -3.14 + angle_to_align
+        if angle_to_align < -1.57:
+            angle_to_align = 3.14 - abs(angle_to_align)    
+
+        wrist_roll_joint = angle_to_align
         wrist_rotation_back_goal = grasp_joint_goal 
         wrist_rotation_back_goal[4]= wrist_roll_joint
         arm._arm._send_joint_trajectory([wrist_rotation_back_goal]) # send the command to the robot.
