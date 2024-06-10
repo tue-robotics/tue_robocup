@@ -107,7 +107,7 @@ class TopGrasp(smach.State):
             return "failed"
         
         grasp_succeeded=False
-        rate = rospy.Rate(10) # loop rate in hz
+        rate = rospy.Rate(10) # loop rate in hz    
 
 # start segmentation
         self.yolo_segmentor.start()
@@ -316,6 +316,7 @@ class TopGrasp(smach.State):
 
 #Rotate wrist back in line with table edge  
         tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
         rospy.sleep(2)
 
         gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
@@ -392,13 +393,50 @@ class TopGrasp(smach.State):
         arm.wait_for_motion_done()
 
 
-#Move towards table edge, with base or with gripper
-#TAKE MARGINS INTO ACCOUNT
+#Move towards table edge with base
+        #movement of base should be in negative x direction of the gripper frame
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
 
-# open gripper
+        base_in_gripper_frame = tfBuffer.lookup_transform("hand_palm_link", "base_link", rospy.Time())
+        rospy.loginfo(f"base_gripper_frame = {base_in_gripper_frame}")
 
-            
-#move gripper towards end point cutlery or choose a good position
+        # Convert the original quaternion to a rotation matrix
+        rotation_matrix = tft.quaternion_matrix([
+            base_in_gripper_frame.transform.rotation.x,
+            base_in_gripper_frame.transform.rotation.y,
+            base_in_gripper_frame.transform.rotation.z,
+            base_in_gripper_frame.transform.rotation.w
+        ])
+
+        # Desired movement direction in the gripper frame (negative x direction)
+        direction_in_gripper_frame = [ -1, 0, 0, 1 ] 
+
+        # Transform the direction vector to the base frame
+        direction_in_base_frame = rotation_matrix.dot(direction_in_gripper_frame)
+
+        v = Twist()
+        v.linear.x = direction_in_base_frame[0]/20 #velocity ranges from -0.05 to 0.05
+        v.linear.y = direction_in_base_frame[1]/20
+        v.angular.z = 0  # Assuming no rotation is needed
+
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
+
+        gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+        rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
+        
+        #0.01 accounts for a margin of 1 cm
+        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - 0.01) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - 0.01):
+            self.robot.base._cmd_vel.publish(v) # send command to the robot
+            gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+
+        #open gripper
+        arm.gripper.send_goal('open', timeout=0.0)
+        arm.wait_for_motion_done()    
+
 
 #rotate wrist around the cutlery, pre-grasp
 
