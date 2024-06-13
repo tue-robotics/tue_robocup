@@ -112,11 +112,9 @@ class TopGrasp(smach.State):
 
 # start segmentation
         self.yolo_segmentor.start()
-        class_id = None
-        while class_id not in {42, 43, 44}:
-            class_id = self.yolo_segmentor.data_class_id()
-
-        x_cutlery, y_cutlery, slope = self.yolo_segmentor.data_center_slope() #obtain cutlery's center point from the detection
+        slope = None
+        while slope == None:
+            x_cutlery, y_cutlery, slope = self.yolo_segmentor.data_center_slope() #obtain cutlery's center point from the detection
 
         #stop segmentation after desired data has been obtained
         self.yolo_segmentor.stop()
@@ -165,7 +163,7 @@ class TopGrasp(smach.State):
             rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
 
 
-            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x - x_cutlery_real), # x distance to the robot
+            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x + x_cutlery_real), # x distance to the robot
                                                     gripper_in_base_frame.transform.translation.y, # y distance off center from the robot (fixed if rpy=0)
                                                     gripper_in_base_frame.transform.translation.z, # z height of the gripper
                                                     0, 1.57, 0) # Roll pitch yaw. 0,1.57,0 for a downwards gripper.
@@ -196,9 +194,9 @@ class TopGrasp(smach.State):
         if angle < 0: # Normalize the angle to the range [0, pi]
             angle += math.pi 
     
-        # Fit the angle to the range [-1.57, 1.57] of the wrist roll joint
+        # Fit the angle to the range [1.57, -1.57] of the wrist roll joint
         normalized_angle = angle / math.pi  # orientation in range [0, 1]
-        wrist_roll_joint = normalized_angle * 3.14 - 1.57  # Orientation in desired range [-1.57, 1.57]
+        wrist_roll_joint = normalized_angle * -3.14 + 1.57  # Orientation in desired range [1.57, -1.57]
 
         #Obtain the arm's current joint positions
         joints_arm = arm._arm.get_joint_states()
@@ -215,18 +213,15 @@ class TopGrasp(smach.State):
                                         wrist_roll_joint] 
         arm._arm._send_joint_trajectory([wrist_rotation_goal]) # send the command to the robot.
         arm.wait_for_motion_done()
-
-
-#BEREKENEN OP DIT MOMENT OOK DE CENTER OF MASS ALS NODIG
-
+        
         #data for the direction should be obtained before grasping, because otherwise the camera will be too close to the object
         self.yolo_segmentor.start()
-        class_id_check = None
+        upwards = None
         
-        while class_id_check != class_id: #while loop to make sure that data of the same object is obtained
-            class_id_check = self.yolo_segmentor.data_class_id()
+        while upwards == None: #while loop to make sure that data of the same object is obtained
+            upwards = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
 
-        upwards = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
+        
         self.yolo_segmentor.stop()
 
         if not upwards:
@@ -257,7 +252,7 @@ class TopGrasp(smach.State):
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
             if (move_arm):
-                downward_joint_goal = [arm_lift_joint, # arm lift joint. ranges from 0.0 to 0.7m
+                downward_joint_goal = [0, # arm lift joint. ranges from 0.0 to 0.7m
                                        arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
                                        arm_roll_joint, # arm roll joint
                                        wrist_flex_joint, # wrist flex joint. lower values move the hand down
@@ -287,7 +282,7 @@ class TopGrasp(smach.State):
             arm.wait_for_motion_done()
 
             #detecting if grasp has succeeded
-            active_grasp_detector = ActiveGraspDetector(self.robot, arm)
+            active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
             grasp_detection = active_grasp_detector.execute()
 
             if grasp_detection == 'true':
@@ -457,18 +452,40 @@ class TopGrasp(smach.State):
         else:
             side = 'left' #gripper is left of base
         #CHECK OF DIT KLOPT    
+        print(side)
             
         #daarna bewgen naar positie, want dan weet je welke kant
         #CHECK HOE DEZE POSITIE WERKT, IS DIT DE GRIPPER FRAME OF HET GRASP PUNT
 
         #if gripper is to the left of base
         #if arm flex joint is omhoog: andere pose aannemen
+#deze joint waardes        
         joints_arm = arm._arm.get_joint_states()
         arm_lift_joint = joints_arm['arm_lift_joint']
         arm_flex_joint = joints_arm['arm_flex_joint']
         arm_roll_joint = -1.57
         wrist_flex_joint = -1.57
         wrist_roll_joint = 3.14
+        
+#of deze transformattie (ongeveer)
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
+        gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
+        rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
+
+
+        base_to_gripper = self.frame_from_xyzrpy(gripper_in_base_frame.transform.translation.x , # x distance to the robot
+                                                gripper_in_base_frame.transform.translation.y, # y distance off center from the robot (fixed if rpy=0)
+                                                gripper_in_base_frame.transform.translation.z, # z height of the gripper
+                                                1.57, 0, -1.57)
+
+        pose_goal = FrameStamped(base_to_gripper,
+                                rospy.Time.now(), #timestamp when this pose was created
+                                "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                )
+        arm.send_goal(pose_goal) # send the command to the robot.
+        arm.wait_for_motion_done() # wait until the motion is complete
 
 #dit moet misschien algemeen, als goede positie wordt aangeneomen door links
         #if gripper is to the right of base or (to the left of base and arm flex joint is omlaag)
@@ -567,9 +584,25 @@ class TopGrasp(smach.State):
         arm._arm._send_joint_trajectory([wrist_flex_goal]) # send the command to the robot.
         arm.wait_for_motion_done()    
 
+   #move to coordinates     
+
 #close gripper POSSIBLY WITH MORE FORCE
         arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
         arm.wait_for_motion_done()
+
+        #detecting if grasp has succeeded
+        active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
+        grasp_detection = active_grasp_detector.execute()
+
+        if grasp_detection == 'true':
+            grasp_succeeded = True
+        else: # for other options: false, cannot determine and failed, the grasp has not succeeded and grasp_succeeded is therefore false
+            grasp_succeeded = False
+        
+        rospy.loginfo("The robot is holding something: {}!".format(grasp_succeeded))
+
+
+
 
 #lift up, go to original stance
 

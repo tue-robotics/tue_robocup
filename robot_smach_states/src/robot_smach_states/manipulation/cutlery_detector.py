@@ -85,7 +85,7 @@ class YoloSegmentor:
         max_x = int(max(x))
 
         #for nearly vertical cases:
-        if max_x - min_x < (1/3 * width): #if the object takes up a small width (less than 1/3 of the image) it is oriented (nearly) vertical
+        if max_x - min_x < (1/3 * width): #if the object takes up a small width (less than 1/3 of the image) it is oriented (nearly) vertical in the camera coordinate frame
             numerator = np.sum((y - mean_y) ** 2)
             denominator = np.sum((x - mean_x) * (y - mean_y))
             slope = numerator / denominator 
