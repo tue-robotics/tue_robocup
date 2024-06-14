@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>challenge_move_obstacles</name>
+  <version>0.1.0</version>
+  <description>Challenge move obstacles</description>
+
+  <maintainer email="ar13pit@gmail.com">Arpit Aggarwal</maintainer>
+
+  <license>BSD3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <buildtool_depend >python3-setuptools</buildtool_depend>
+
+  <depend>robocup_knowledge</depend>
+  <depend>rospy</depend>
+  <depend>robot_skills</depend>
+  <depend>robot_smach_states</depend>
+
+</package>
