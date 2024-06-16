@@ -27,6 +27,8 @@ class YoloSegmentor:
         self.slope = None
         self.upwards = None
         self.class_id = None
+        self.time = rospy.Time.now()
+        
 
     def start(self):
         self.active = True
@@ -53,8 +55,6 @@ class YoloSegmentor:
             self.class_id = class_id
             if class_id in self.class_ids:
                 cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink/purple mask will be created 
-            else:
-                cv2.fillPoly(table_segment, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a red mask will be created
         
         return table_segment
     
@@ -85,7 +85,7 @@ class YoloSegmentor:
         max_x = int(max(x))
 
         #for nearly vertical cases:
-        if max_x - min_x < (1/3 * width): #if the object takes up a small width (less than 1/3 of the image) it is oriented (nearly) vertical in the camera coordinate frame
+        if max_x - min_x < (1/5 * width): #if the object takes up a small width (less than 1/5 of the image) it is oriented (nearly) vertical in the camera coordinate frame
             numerator = np.sum((y - mean_y) ** 2)
             denominator = np.sum((x - mean_x) * (y - mean_y))
             slope = numerator / denominator 
@@ -100,6 +100,8 @@ class YoloSegmentor:
         print(f"Calculated slope: {slope}")
         print(f"Calculated intercept: {intercept}")
         
+        
+        self.time = rospy.Time.now()
         # Store the slope value
         self.slope = slope
 
@@ -195,10 +197,10 @@ class YoloSegmentor:
         return self.class_id
 
     def data_center_slope(self):
-        return self.x_center, self.y_center, self.slope
+        return self.x_center, self.y_center, self.slope, self.time
     
     def data_direction(self):
-        return self.upwards
+        return self.upwards, self.time 
 
 
 if __name__ == '__main__':

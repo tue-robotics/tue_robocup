@@ -83,7 +83,7 @@ class TopGrasp(smach.State):
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to grasp with
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'grasp_failed'])
 
         # Assign member variables
         self.robot = robot
@@ -107,27 +107,29 @@ class TopGrasp(smach.State):
             return "failed"
         
         grasp_succeeded=False
-        rate = rospy.Rate(10) # loop rate in hz    
-
+        rate = rospy.Rate(10) # loop rate in hz      
 
 # start segmentation
         self.yolo_segmentor.start()
         slope = None
-        while slope == None:
-            x_cutlery, y_cutlery, slope = self.yolo_segmentor.data_center_slope() #obtain cutlery's center point from the detection
-
+        time_difference = 5 
+        while slope == None or time_difference > 2: #recency of data is important tehrefore the obtained data should be from within 2 seconds ago
+            x_cutlery, y_cutlery, slope, time = self.yolo_segmentor.data_center_slope() #obtain cutlery's center point from the detection
+            time_difference = (time - rospy.Time.now()).to_sec()
         #stop segmentation after desired data has been obtained
         self.yolo_segmentor.stop()
-
+        print('x,y,slope obatained')
 #rewrite pixel coordinate into the robot's frame
-        height_table = 0.74 #manual input of table height 
+        height_table = 0.735 #manual input of table height 
         #write center coordinates with respect to the camera frame (in pixels)
         x_optical_center = 320.5 #optical center in pixels
         y_optical_center = 240.5
         focal_length = 205.46963709098583 #focal length in pixels
-        height_gripper = 0.89 #value for gripper position in set pre-grasp-pose
-        distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
+    
         
+        height_gripper = 0.895 #value for gripper position in set pre-grasp-pose
+        distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
+        rospy.loginfo(f"distance camera = {distance_camera}")
 
         x_cutlery_pixel = x_cutlery - x_optical_center # coordinates in pixels w.r.t. the coordinate frame at the optical center
         y_cutlery_pixel = y_cutlery - y_optical_center
@@ -135,6 +137,7 @@ class TopGrasp(smach.State):
         #real-world coordinates w.r.t the hand palm link
         x_cutlery_real = x_cutlery_pixel*distance_camera/focal_length + 0.039 #3.9 cm corrects for the offset between camera and hand palm link in x-direction
         y_cutlery_real = y_cutlery_pixel*distance_camera/focal_length
+        print('frame rewritten')
 
 #move gripper towards object's determined grasping point
         #move towards y coordinates with base
@@ -158,16 +161,13 @@ class TopGrasp(smach.State):
             tfBuffer = tf2_ros.Buffer()
             listener = tf2_ros.TransformListener(tfBuffer)
             rospy.sleep(2)
-
             gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
             rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
-
-
+           
             base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x + x_cutlery_real), # x distance to the robot
                                                     gripper_in_base_frame.transform.translation.y, # y distance off center from the robot (fixed if rpy=0)
                                                     gripper_in_base_frame.transform.translation.z, # z height of the gripper
-                                                    0, 1.57, 0) # Roll pitch yaw. 0,1.57,0 for a downwards gripper.
-
+                                                    0, 1.57,0) # Roll pitch yaw. 0,1.57,0 for a downwards gripper.
             pose_goal = FrameStamped(base_to_gripper,
                                     rospy.Time.now(), #timestamp when this pose was created
                                     "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
@@ -185,7 +185,7 @@ class TopGrasp(smach.State):
             start_time = rospy.Time.now()   
             while (rospy.Time.now() - start_time).to_sec() < duration_x:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
-
+        print('moved towards')
 #rotate wrist according to orientation
         slope_rotated = 1/slope # invert the slope since the image is rotated
 
@@ -214,14 +214,16 @@ class TopGrasp(smach.State):
         arm._arm._send_joint_trajectory([wrist_rotation_goal]) # send the command to the robot.
         arm.wait_for_motion_done()
         
-        #data for the direction should be obtained before grasping, because otherwise the camera will be too close to the object
-        self.yolo_segmentor.start()
+        #hero needs time to go to the object first
+        rospy.sleep(2)
+        #data for the direction 
         upwards = None
-        
-        while upwards == None: #while loop to make sure that data of the same object is obtained
-            upwards = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
-
-        
+        self.yolo_segmentor.start()
+        time_diff = 5 # make sure that only recent data of upwards is obtained
+        while upwards == None or time_diff > 2: #while loop to make sure that data of the same object is obtained
+            upwards, time = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
+            time_diff = (time - rospy.Time.now()).to_sec()
+        rospy.loginfo(f"direction upwards = {upwards}")
         self.yolo_segmentor.stop()
 
         if not upwards:
@@ -246,39 +248,37 @@ class TopGrasp(smach.State):
                                         wrist_roll_joint] 
             arm._arm._send_joint_trajectory([cutlery_direction_wrist_joint_goal]) # send the command to the robot.
             arm.wait_for_motion_done()
+            print('wrist rotation done')
 
-#Moving arm downwards
+            #180 degree rotation of wrist_roll_joint leads to change in gripper coordinates. therefore the gripper should move backwards by 0.024 m (twice the offset between wrist_roll_link and hand_palm_link)
+            tfBuffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tfBuffer)
+            rospy.sleep(2)
+            gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
+            rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
+            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x - 0.024), # x distance to the robot
+                                                        gripper_in_base_frame.transform.translation.y, # y distance off center from the robot (fixed if rpy=0)
+                                                        gripper_in_base_frame.transform.translation.z, # z height of the gripper
+                                                        0, 1.57, -wrist_roll_joint) 
+            pose_goal = FrameStamped(base_to_gripper,
+                                    rospy.Time.now(), #timestamp when this pose was created
+                                    "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                    )
+            arm.send_goal(pose_goal) # send the command to the robot.
+            arm.wait_for_motion_done() # wait until the motion is complete
+
+
+#Moving arm downwards until force detection
         move_arm = True
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
             if (move_arm):
-                downward_joint_goal = [0, # arm lift joint. ranges from 0.0 to 0.7m
-                                       arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
-                                       arm_roll_joint, # arm roll joint
-                                       wrist_flex_joint, # wrist flex joint. lower values move the hand down
-                                       wrist_roll_joint] # wrist roll joint. 
-                arm._arm._send_joint_trajectory([downward_joint_goal]) # send the command to the robot.
-                #Move arm downwards, don't wait until motion is done, but until a force is detected
-                try:
-                    arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
-                except TimeOutException:
-                    rospy.loginfo("No edge up detected within timeout")
-
-                joints_arm = arm._arm.get_joint_states()
-                arm_lift_joint = joints_arm['arm_lift_joint']   
-                    
-                grasp_joint_goal = [(arm_lift_joint + 0.063), #change this in a position relative to obtained coordinates or table height
-                                    arm_flex_joint, 
-                                    arm_roll_joint, 
-                                    wrist_flex_joint, 
-                                    wrist_roll_joint]
-                arm._arm._send_joint_trajectory([grasp_joint_goal]) # send the command to the robot.
-                arm.wait_for_motion_done() # wait until the motion is complete
-                move_arm = False # reset flag to move the arm.
-                continue # dont wait for the rest of the loop.
+                arm._arm.move_down_until_force_sensor_edge_up(timeout=3,
+                                                              retract_distance=0.063,
+                                                              distance_move_down= gripper_in_base_frame.transform.translation.z)
 
             #grasp object    
-            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
+            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) # option given by max_torque to close the gripper with more force
             arm.wait_for_motion_done()
 
             #detecting if grasp has succeeded
@@ -289,6 +289,18 @@ class TopGrasp(smach.State):
                 grasp_succeeded = True
             else: # for other options: false, cannot determine and failed, the grasp has not succeeded and grasp_succeeded is therefore false
                 grasp_succeeded = False
+                #move arm back
+                pre_grasp_joint_goal_outwards = [0.69, 
+                                        -1.57,
+                                        0.0, 
+                                        -1.57, 
+                                        0.0] 
+                arm._arm._send_joint_trajectory([pre_grasp_joint_goal_outwards]) 
+                # Open gripper
+                arm.gripper.send_goal('open', timeout=0.0)
+                arm.wait_for_motion_done()
+                return "grasp_failed"
+
         
             rospy.loginfo("The robot is holding something: {}!".format(grasp_succeeded))
 
@@ -304,9 +316,9 @@ class TopGrasp(smach.State):
         x_base = base_in_table_frame.transform.translation.x
         y_base = base_in_table_frame.transform.translation.y
 
-#manual input of table size NEEDS TO BE CHECKED IRL
-        table_length = 1.65
-        table_width = 0.84
+#manual input of table size
+        table_length = 1.645
+        table_width = 0.845
 
         #position around the table divided in four quarters: 1 = positive x side, 3 = negative x side, 2 = negative y side, 4 = positive y side
         if x_base > 1/2*table_length and (abs(x_base) - 1/2*table_length) >= (abs(y_base) - 1/2*table_width):
@@ -386,15 +398,25 @@ class TopGrasp(smach.State):
             angle_to_align = -3.14 + angle_to_align
         if angle_to_align < -1.57:
             angle_to_align = 3.14 - abs(angle_to_align)    
-
+        
+        joints_arm = arm._arm.get_joint_states()
+        arm_lift_joint = joints_arm['arm_lift_joint']
+        arm_flex_joint = joints_arm['arm_flex_joint']
+        arm_roll_joint = joints_arm['arm_roll_joint']
+        wrist_flex_joint = joints_arm['wrist_flex_joint']
         wrist_roll_joint = angle_to_align
-        wrist_rotation_back_goal = grasp_joint_goal 
-        wrist_rotation_back_goal[4]= wrist_roll_joint
+        
+        wrist_rotation_back_goal = [arm_lift_joint,
+                                        arm_flex_joint, 
+                                        arm_roll_joint, 
+                                        wrist_flex_joint, 
+                                        wrist_roll_joint] 
         arm._arm._send_joint_trajectory([wrist_rotation_back_goal]) # send the command to the robot.
         arm.wait_for_motion_done()
+        rospy.sleep(5) #wait until the wrist has stopped turning
 
 
-#Move towards table edge with base
+#Move towards table edge
         #movement of base should be in negative x direction of the gripper frame
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
@@ -429,8 +451,8 @@ class TopGrasp(smach.State):
         gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
         rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
         
-        #0.01 accounts for a margin of 1 cm
-        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - 0.01) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - 0.01):
+        #0.015 accounts for a margin of 1.5 cm, which accounts for both wheel sleep and CoM of the cutlery
+        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - 0.015) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - 0.015):
             self.robot.base._cmd_vel.publish(v) # send command to the robot
             gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
 
@@ -440,168 +462,143 @@ class TopGrasp(smach.State):
 
 
 #rotate wrist around the cutlery, towards pre-grasp pose for a sideways grasp
-        #move arm to correct position from which only wrist needs to be positioned to be able to grasp
-
-
         #determine towards which side hero will grasp the object
         x_gripper = gripper_in_table_frame.transform.translation.x,
         y_gripper = gripper_in_table_frame.transform.translation.y
         side = None
-        if (position == 1 and y_gripper >= y_base) or (position == 2 and x_gripper >= x_base) or (position == 3 and y_gripper <= y_base) or (position == 4 and x_gripper <= x_base):
+        if (position == 1 and y_gripper >= (y_base - 0.078)) or (position == 2 and x_gripper >= (x_base - 0.078)) or (position == 3 and y_gripper <= (y_base + 0.078)) or (position == 4 and x_gripper <= (x_base + 0.078)):
             side = 'right' #gripper is right of base              
         else:
             side = 'left' #gripper is left of base
-        #CHECK OF DIT KLOPT    
-        print(side)
-            
-        #daarna bewgen naar positie, want dan weet je welke kant
-        #CHECK HOE DEZE POSITIE WERKT, IS DIT DE GRIPPER FRAME OF HET GRASP PUNT
+        print(side, position)
 
-        #if gripper is to the left of base
-        #if arm flex joint is omhoog: andere pose aannemen
-#deze joint waardes        
-        joints_arm = arm._arm.get_joint_states()
-        arm_lift_joint = joints_arm['arm_lift_joint']
-        arm_flex_joint = joints_arm['arm_flex_joint']
-        arm_roll_joint = -1.57
-        wrist_flex_joint = -1.57
-        wrist_roll_joint = 3.14
-        
-#of deze transformattie (ongeveer)
-        tfBuffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tfBuffer)
-        rospy.sleep(2)
-        gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
-        rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
-
-
-        base_to_gripper = self.frame_from_xyzrpy(gripper_in_base_frame.transform.translation.x , # x distance to the robot
-                                                gripper_in_base_frame.transform.translation.y, # y distance off center from the robot (fixed if rpy=0)
-                                                gripper_in_base_frame.transform.translation.z, # z height of the gripper
-                                                1.57, 0, -1.57)
-
-        pose_goal = FrameStamped(base_to_gripper,
-                                rospy.Time.now(), #timestamp when this pose was created
-                                "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
-                                )
-        arm.send_goal(pose_goal) # send the command to the robot.
-        arm.wait_for_motion_done() # wait until the motion is complete
-
-#dit moet misschien algemeen, als goede positie wordt aangeneomen door links
-        #if gripper is to the right of base or (to the left of base and arm flex joint is omlaag)
-        if side == 'right' or (side == 'left' and arm_flex_joint <= 0 ):
-            tfBuffer = tf2_ros.Buffer()
-            listener = tf2_ros.TransformListener(tfBuffer)
-            rospy.sleep(2)
-
-            gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
-            rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
-
-            rotation_matrix = tft.quaternion_matrix([
-                gripper_in_base_frame.transform.rotation.x,
-                gripper_in_base_frame.transform.rotation.y,
-                gripper_in_base_frame.transform.rotation.z,
-                gripper_in_base_frame.transform.rotation.w
-            ])
-        
-            x_direction_gripper = rotation_matrix[:3, 0] # Extract the y-axis direction vector of the gripper in the base frame
-            x_direction_gripper_xz = np.array([x_direction_gripper[0], 0, x_direction_gripper[2]]) # Project the y-direction vector onto the x-z plane
-            x_direction_gripper_xz /= np.linalg.norm(x_direction_gripper_xz) # Normalize
-            x_axis_base_xz = np.array([-1, 0, 0]) #negative x-axis
-
-            # Calculate the cross product and dot product in the x-z plane
-            cross_prod = np.cross(x_axis_base_xz, x_direction_gripper_xz)
-            dot_prod = np.dot(x_axis_base_xz, x_direction_gripper_xz)
-
-            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
-
-            # Determine the direction of rotation
-            if cross_prod[2] < 0:
-                angle_to_align = -angle_to_align
- 
-
-            joints_arm = arm._arm.get_joint_states()
-            arm_lift_joint = joints_arm['arm_lift_joint']
-            arm_flex_joint = joints_arm['arm_flex_joint']
-            arm_roll_joint = -1.57
-            wrist_flex_joint = -1.57
-            wrist_roll_joint = angle_to_align
-
-        
-            wrist_vertical_goal = [arm_lift_joint,
-                                arm_flex_joint, 
-                                arm_roll_joint, 
-                                wrist_flex_joint, 
-                                wrist_roll_joint] 
-            arm._arm._send_joint_trajectory([wrist_vertical_goal]) # send the command to the robot.
-            arm.wait_for_motion_done()
-        
-        #x-axis gripper should align with x-axis table
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         rospy.sleep(2)
 
-        gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
-        rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
+        base_in_table_frame = tfBuffer.lookup_transform("dinner_table", "base_link", rospy.Time())
+        rospy.loginfo(f"base_table_frame = {base_in_table_frame}")
 
         #Convert the original quaternion to a rotation matrix
         rotation_matrix = tft.quaternion_matrix([
-            gripper_in_table_frame.transform.rotation.x,
-            gripper_in_table_frame.transform.rotation.y,
-            gripper_in_table_frame.transform.rotation.z,
-            gripper_in_table_frame.transform.rotation.w
+            base_in_table_frame.transform.rotation.x,
+            base_in_table_frame.transform.rotation.y,
+            base_in_table_frame.transform.rotation.z,
+            base_in_table_frame.transform.rotation.w
         ])
 
-        x_direction_gripper = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
-        x_direction_gripper_xy = np.array([x_direction_gripper[0], x_direction_gripper[1], 0]) # Project the x-direction vector onto the x-y plane
-        x_direction_gripper_xy /= np.linalg.norm(x_direction_gripper_xy) # Normalize 
+        x_direction_base = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
+        negative_x_direction_base_xy = np.array([-x_direction_base[0], -x_direction_base[1], 0]) # Project the x-direction vector onto the x-y plane
+        negative_x_direction_base_xy /= np.linalg.norm(negative_x_direction_base_xy) # Normalize 
         x_axis_table_xy = np.array([1, 0, 0])
+        y_axis_table_xy = np.array([0, 1, 0])
+        negative_x_axis_table_xy = np.array([-1, 0, 0])
+        negative_y_axis_table_xy = np.array([0, -1, 0])
 
-        # Calculate the cross product and dot product in the x-y plane
-        cross_prod = np.cross(x_axis_table_xy, x_direction_gripper_xy)
-        dot_prod = np.dot(x_axis_table_xy, x_direction_gripper_xy)
+        if position == 1: #negative x-axis base should align with x-axis table
+            cross_prod = np.cross(x_axis_table_xy, negative_x_direction_base_xy)
+            dot_prod = np.dot(x_axis_table_xy, negative_x_direction_base_xy)
+            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
 
-        # Calculate the angle using atan2 for a more stable solution
-        angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
+        elif position == 2: #negative x-axis base should align with negative y-axis table
+            cross_prod = np.cross(negative_y_axis_table_xy, negative_x_direction_base_xy)
+            dot_prod = np.dot(negative_y_axis_table_xy, negative_x_direction_base_xy)
+            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
+
+        elif position == 3: #negative x-axis base should align with negative x-axis table
+            cross_prod = np.cross(negative_x_axis_table_xy, negative_x_direction_base_xy)
+            dot_prod = np.dot(negative_x_axis_table_xy, negative_x_direction_base_xy)
+            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
+
+        elif position == 4: #negative x-axis base should align with y-axis table
+            cross_prod = np.cross(y_axis_table_xy, negative_x_direction_base_xy)
+            dot_prod = np.dot(y_axis_table_xy, negative_x_direction_base_xy)
+            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)            
 
         # Determine the direction of rotation
         if cross_prod[2] < 0:
             angle_to_align = -angle_to_align
+        rotation = 1 - abs(angle_to_align)/1.57
+        rospy.loginfo(f"ANGLE= {angle_to_align}")
+        if side == 'right':
+            v = Twist()
+            v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
+            v.linear.y = direction_in_base_frame[0]/20
+            v.angular.z = 0  # Assuming no rotation is needed
+            duration = 0.09/math.sqrt(v.linear.x^2 + v.linear.y^2)
+            start_time = rospy.Time.now()
+            while (rospy.Time.now() - start_time).to_sec() < duration:
+                self.robot.base._cmd_vel.publish(v) # send command to the robot
 
-        joints_arm = arm._arm.get_joint_states()
-        arm_lift_joint = joints_arm['arm_lift_joint']
-        arm_flex_joint = joints_arm['arm_flex_joint']
-        arm_roll_joint = joints_arm['arm_roll_joint']
-        wrist_flex_joint = angle_to_align
-        wrist_roll_joint = joints_arm['wrist_roll_joint']
+            gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
 
-        
-        wrist_flex_goal = [arm_lift_joint,
-                            arm_flex_joint, 
-                            arm_roll_joint, 
-                            wrist_flex_joint, 
-                            wrist_roll_joint] 
-        arm._arm._send_joint_trajectory([wrist_flex_goal]) # send the command to the robot.
-        arm.wait_for_motion_done()    
+            tfBuffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tfBuffer)
+            rospy.sleep(2)
+            gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
+            rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
 
-   #move to coordinates     
 
-#close gripper POSSIBLY WITH MORE FORCE
-        arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
+            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x - 0.032), # x distance to the robot
+                                                (gripper_in_base_frame.transform.translation.y - 0.1405*rotation), # y distance off center from the robot (fixed if rpy=0)
+                                                (gripper_in_base_frame.transform.translation.z - 0.095), # z height of the gripper
+                                                1.57, 0, (-1.57 - angle_to_align))
+
+            pose_goal = FrameStamped(base_to_gripper,
+                                rospy.Time.now(), #timestamp when this pose was created
+                                "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                )
+            arm.send_goal(pose_goal) # send the command to the robot.
+            arm.wait_for_motion_done() # wait until the motion is complete
+
+        if side == 'left':
+            v = Twist()
+            v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
+            v.linear.y = -direction_in_base_frame[0]/20
+            v.angular.z = 0  # Assuming no rotation is needed
+            duration = 0.09/math.sqrt(v.linear.x^2 + v.linear.y^2)
+            start_time = rospy.Time.now()
+            while (rospy.Time.now() - start_time).to_sec() < duration:
+                self.robot.base._cmd_vel.publish(v) # send command to the robot
+
+            tfBuffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tfBuffer)
+            rospy.sleep(2)
+            gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
+            rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
+
+
+            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x -0.032), # x distance to the robot
+                                                (gripper_in_base_frame.transform.translation.y + 0.1405*rotation), # y distance off center from the robot (fixed if rpy=0)
+                                                (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
+                                                -1.57, 0, (1.57 - angle_to_align))
+
+            pose_goal = FrameStamped(base_to_gripper,
+                                rospy.Time.now(), #timestamp when this pose was created
+                                "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                )
+            arm.send_goal(pose_goal) # send the command to the robot.
+            arm.wait_for_motion_done() # wait until the motion is complete
+
+
+
+
+#close gripper 
+        arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) # option given by max_torque to close the gripper with more force
         arm.wait_for_motion_done()
 
         #detecting if grasp has succeeded
         active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
         grasp_detection = active_grasp_detector.execute()
 
+
         if grasp_detection == 'true':
             grasp_succeeded = True
         else: # for other options: false, cannot determine and failed, the grasp has not succeeded and grasp_succeeded is therefore false
             grasp_succeeded = False
+            return "failed"
         
         rospy.loginfo("The robot is holding something: {}!".format(grasp_succeeded))
-
-
 
 
 #lift up, go to original stance
@@ -682,7 +679,8 @@ class TopGrab(smach.StateMachine):
 
             smach.StateMachine.add('GRAB', TopGrasp(robot, arm, item),
                                    transitions={'succeeded': 'done',
-                                                'failed': 'RESET_FAILURE'})
+                                                'failed': 'RESET_FAILURE',
+                                                'grasp_failed': 'GRAB'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
