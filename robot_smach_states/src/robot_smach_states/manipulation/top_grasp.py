@@ -115,7 +115,7 @@ class TopGrasp(smach.State):
         time_difference = 5 
         while slope == None or time_difference > 2: #recency of data is important tehrefore the obtained data should be from within 2 seconds ago
             x_cutlery, y_cutlery, slope, time = self.yolo_segmentor.data_center_slope() #obtain cutlery's center point from the detection
-            time_difference = (time - rospy.Time.now()).to_sec()
+            time_difference = (rospy.Time.now()- time).to_sec()
         #stop segmentation after desired data has been obtained
         self.yolo_segmentor.stop()
         print('x,y,slope obatained')
@@ -222,7 +222,7 @@ class TopGrasp(smach.State):
         time_diff = 5 # make sure that only recent data of upwards is obtained
         while upwards == None or time_diff > 2: #while loop to make sure that data of the same object is obtained
             upwards, time = self.yolo_segmentor.data_direction() #boolean if cutlery is oriented upwards w.r.t. the gripper
-            time_diff = (time - rospy.Time.now()).to_sec()
+            time_diff = (rospy.Time.now()-time).to_sec()
         rospy.loginfo(f"direction upwards = {upwards}")
         self.yolo_segmentor.stop()
 
@@ -280,7 +280,7 @@ class TopGrasp(smach.State):
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
                 print(arm_lift_joint)    
-                grasp_joint_goal = [(arm_lift_joint + 0.05), #change this in a position relative to obtained coordinates or table height
+                grasp_joint_goal = [(arm_lift_joint + 0.063), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
