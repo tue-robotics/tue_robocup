@@ -251,22 +251,7 @@ class TopGrasp(smach.State):
             print('wrist rotation done')
 
             #180 degree rotation of wrist_roll_joint leads to change in gripper coordinates. therefore the gripper should move backwards by 0.024 m (twice the offset between wrist_roll_link and hand_palm_link)
-            tfBuffer = tf2_ros.Buffer()
-            listener = tf2_ros.TransformListener(tfBuffer)
-            rospy.sleep(2)
-            gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
-            rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
-            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x - 0.024), # x distance to the robot
-                                                        gripper_in_base_frame.transform.translation.y, # y distance off center from the robot (fixed if rpy=0)
-                                                        gripper_in_base_frame.transform.translation.z, # z height of the gripper
-                                                        0, 1.57, -wrist_roll_joint) 
-            pose_goal = FrameStamped(base_to_gripper,
-                                    rospy.Time.now(), #timestamp when this pose was created
-                                    "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
-                                    )
-            arm.send_goal(pose_goal) # send the command to the robot.
-            arm.wait_for_motion_done() # wait until the motion is complete
-
+            #THIS SHOULD BE IN THE DIRECTON OF THE GRIPPER
 
 #Moving arm downwards until force detection
 
@@ -295,7 +280,7 @@ class TopGrasp(smach.State):
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
                 print(arm_lift_joint)    
-                grasp_joint_goal = [(arm_lift_joint + 0.028), #change this in a position relative to obtained coordinates or table height
+                grasp_joint_goal = [(arm_lift_joint + 0.05), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
