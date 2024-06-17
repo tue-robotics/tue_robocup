@@ -110,11 +110,18 @@ class TopGrasp(smach.State):
         rate = rospy.Rate(10) # loop rate in hz      
 
 #TEST CODE
+        joints_arm = arm._arm.get_joint_states()
+        arm_lift_joint = joints_arm['arm_lift_joint']
+        arm_flex_joint = joints_arm['arm_flex_joint']
+        arm_roll_joint = joints_arm['arm_roll_joint']
+        wrist_flex_joint = joints_arm['wrist_flex_joint']
+        wrist_roll_joint = joints_arm['wrist_roll_joint']
         move_arm = True
+
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
             if (move_arm):
-                downward_joint_goal = [arm_lift_joint, # arm lift joint. ranges from 0.0 to 0.7m
+                downward_joint_goal = [0, # arm lift joint. ranges from 0.0 to 0.7m
                                        arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
                                        arm_roll_joint, # arm roll joint
                                        wrist_flex_joint, # wrist flex joint. lower values move the hand down
