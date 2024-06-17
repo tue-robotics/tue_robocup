@@ -140,8 +140,8 @@ class TopGrasp(smach.State):
         print('frame rewritten')
 
         #adjust for inaccuracy coordinates
-        x_cutlery_real = 0.55*x_cutlery_real
-        y_cutlery_real = 0.55*y_cutlery_real
+        x_cutlery_real = 0.6*x_cutlery_real
+        y_cutlery_real = 0.6*y_cutlery_real
 
 #move gripper towards object's determined grasping point
         #move towards y coordinates with base
@@ -299,7 +299,7 @@ class TopGrasp(smach.State):
             arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.2) 
             arm.wait_for_motion_done() 
 
-            rospy.sleep(10) #wait until gripper is closed before doing grasp detection
+            rospy.sleep(5) #wait until gripper is closed before doing grasp detection
             #detecting if grasp has succeeded
             active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
             grasp_detection = active_grasp_detector.execute()
@@ -332,7 +332,7 @@ class TopGrasp(smach.State):
         wrist_flex_joint = joints_arm['wrist_flex_joint']
         wrist_roll_joint = joints_arm['wrist_roll_joint']
         
-        arm_upwards_joint_goal = [(arm_lift_joint + 0.002), # arm lift joint. ranges from 0.0 to 0.7m
+        arm_upwards_joint_goal = [(arm_lift_joint + 0.003), # arm lift joint. ranges from 0.0 to 0.7m
                                        arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
                                        arm_roll_joint, # arm roll joint
                                        wrist_flex_joint, # wrist flex joint. lower values move the hand down
@@ -439,7 +439,7 @@ class TopGrasp(smach.State):
         arm_flex_joint = joints_arm['arm_flex_joint']
         arm_roll_joint = joints_arm['arm_roll_joint']
         wrist_flex_joint = joints_arm['wrist_flex_joint']
-        wrist_roll_joint = angle_to_align
+        wrist_roll_joint = joints_arm['wrist_roll_joint'] + angle_to_align
         
         wrist_rotation_back_goal = [arm_lift_joint,
                                         arm_flex_joint, 
@@ -493,93 +493,6 @@ class TopGrasp(smach.State):
 
         rospy.sleep(5)
          
-
-#DO THE ROTATION AGAIN TO MAKE SURE IT IS CORRECT
-        tfBuffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tfBuffer)
-        rospy.sleep(2)
-
-        gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
-        rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
-
-        #Convert the original quaternion to a rotation matrix
-        rotation_matrix = tft.quaternion_matrix([
-            gripper_in_table_frame.transform.rotation.x,
-            gripper_in_table_frame.transform.rotation.y,
-            gripper_in_table_frame.transform.rotation.z,
-            gripper_in_table_frame.transform.rotation.w
-        ])
-
-        if position == 1: # y-axes should align 
-            y_direction_gripper = rotation_matrix[:3, 1] # Extract the y-axis direction vector of the gripper in the table frame
-            y_direction_gripper_xy = np.array([y_direction_gripper[0], y_direction_gripper[1], 0]) # Project the y-direction vector onto the x-y plane
-            y_direction_gripper_xy /= np.linalg.norm(y_direction_gripper_xy) # Normalize
-            y_axis_table_xy = np.array([0, 1, 0])
-
-            # Calculate the cross product and dot product in the x-y plane
-            cross_prod = np.cross(y_axis_table_xy, y_direction_gripper_xy)
-            dot_prod = np.dot(y_axis_table_xy, y_direction_gripper_xy)   #
-
-        if position == 2: # x-axis gripper should align with y-axis table
-            x_direction_gripper = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
-            x_direction_gripper_xy = np.array([x_direction_gripper[0], x_direction_gripper[1], 0]) # Project the x-direction vector onto the x-y plane
-            x_direction_gripper_xy /= np.linalg.norm(x_direction_gripper_xy) # Normalize 
-            y_axis_table_xy = np.array([0, 1, 0])
-
-            # Calculate the cross product and dot product in the x-y plane
-            cross_prod = np.cross(y_axis_table_xy, x_direction_gripper_xy)
-            dot_prod = np.dot(y_axis_table_xy, x_direction_gripper_xy)    
-
-        if position == 3: # x-axes should align 
-            x_direction_gripper = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
-            x_direction_gripper_xy = np.array([x_direction_gripper[0], x_direction_gripper[1], 0]) # Project the x-direction vector onto the x-y plane
-            x_direction_gripper_xy /= np.linalg.norm(x_direction_gripper_xy) # Normalize 
-            x_axis_table_xy = np.array([1, 0, 0])
-
-            # Calculate the cross product and dot product in the x-y plane
-            cross_prod = np.cross(x_axis_table_xy, x_direction_gripper_xy)
-            dot_prod = np.dot(x_axis_table_xy, x_direction_gripper_xy) 
-
-        if position == 4: # y-axis gripper should align with x-axis table
-            y_direction_gripper = rotation_matrix[:3, 1] # Extract the y-axis direction vector of the gripper in the table frame
-            y_direction_gripper_xy = np.array([y_direction_gripper[0], y_direction_gripper[1], 0]) # Project the y-direction vector onto the x-y plane
-            y_direction_gripper_xy /= np.linalg.norm(y_direction_gripper_xy) # Normalize
-            x_axis_table_xy = np.array([1, 0, 0])  
-
-            # Calculate the cross product and dot product in the x-y plane
-            cross_prod = np.cross(x_axis_table_xy, y_direction_gripper_xy)
-            dot_prod = np.dot(x_axis_table_xy, y_direction_gripper_xy)      
-
-        # Calculate the angle using atan2 for a more stable solution
-        angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
-
-        # Determine the direction of rotation
-        if cross_prod[2] < 0:
-            angle_to_align = -angle_to_align
-
-        # Ensure the angle is within the range -1.57 to 1.57 radians
-        if angle_to_align > 1.57:
-            angle_to_align = -3.14 + angle_to_align
-        if angle_to_align < -1.57:
-            angle_to_align = 3.14 - abs(angle_to_align)    
-        
-        joints_arm = arm._arm.get_joint_states()
-        arm_lift_joint = joints_arm['arm_lift_joint']
-        arm_flex_joint = joints_arm['arm_flex_joint']
-        arm_roll_joint = joints_arm['arm_roll_joint']
-        wrist_flex_joint = joints_arm['wrist_flex_joint']
-        wrist_roll_joint = angle_to_align
-        
-        wrist_rotation_back_goal = [arm_lift_joint,
-                                        arm_flex_joint, 
-                                        arm_roll_joint, 
-                                        wrist_flex_joint, 
-                                        wrist_roll_joint] 
-        arm._arm._send_joint_trajectory([wrist_rotation_back_goal]) # send the command to the robot.
-        arm.wait_for_motion_done()
-        rospy.sleep(5) #wait until the wrist has stopped turning 
-#UNTIL HERE
-
         #open gripper
         arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()  
@@ -699,7 +612,7 @@ class TopGrasp(smach.State):
             v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
             v.linear.y = -direction_in_base_frame[0]/20
             v.angular.z = 0  # Assuming no rotation is needed
-            duration = 0.2305/math.sqrt(v.linear.x^2 + v.linear.y^2)
+            duration = 0.2305/math.sqrt(v.linear.x**2 + v.linear.y**2)
             start_time = rospy.Time.now()
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
