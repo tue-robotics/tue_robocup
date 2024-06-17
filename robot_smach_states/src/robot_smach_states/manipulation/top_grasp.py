@@ -284,7 +284,7 @@ class TopGrasp(smach.State):
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
                 print(arm_lift_joint)    
-                grasp_joint_goal = [(arm_lift_joint + 0.062), #change this in a position relative to obtained coordinates or table height
+                grasp_joint_goal = [(arm_lift_joint + 0.0615), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
@@ -293,11 +293,12 @@ class TopGrasp(smach.State):
                 arm.wait_for_motion_done() # wait until the motion is complete
                 move_arm = False # reset flag to move the arm.
                 continue # dont wait for the rest of the loop.
-
+            
             #grasp object    
             arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.2) 
             arm.wait_for_motion_done() 
 
+            rospy.sleep(5) #wait until gripper is closed before doing grasp detection
             #detecting if grasp has succeeded
             active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
             grasp_detection = active_grasp_detector.execute()
@@ -617,7 +618,7 @@ class TopGrasp(smach.State):
 
 
 #close gripper 
-        arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.2) # option given by max_torque to close the gripper with more force
+        arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) # option given by max_torque to close the gripper with more force
         arm.wait_for_motion_done()
 
         #detecting if grasp has succeeded
