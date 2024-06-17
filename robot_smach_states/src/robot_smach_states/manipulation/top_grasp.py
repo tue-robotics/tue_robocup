@@ -109,49 +109,6 @@ class TopGrasp(smach.State):
         grasp_succeeded=False
         rate = rospy.Rate(10) # loop rate in hz      
 
-#TEST CODE
-        joints_arm = arm._arm.get_joint_states()
-        arm_lift_joint = joints_arm['arm_lift_joint']
-        arm_flex_joint = joints_arm['arm_flex_joint']
-        arm_roll_joint = joints_arm['arm_roll_joint']
-        wrist_flex_joint = joints_arm['wrist_flex_joint']
-        wrist_roll_joint = joints_arm['wrist_roll_joint']
-        move_arm = True
-
-        while not grasp_succeeded and not rospy.is_shutdown():
-            # control loop
-            if (move_arm):
-                downward_joint_goal = [0, # arm lift joint. ranges from 0.0 to 0.7m
-                                       arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
-                                       arm_roll_joint, # arm roll joint
-                                       wrist_flex_joint, # wrist flex joint. lower values move the hand down
-                                       wrist_roll_joint] # wrist roll joint. 
-                arm._arm._send_joint_trajectory([downward_joint_goal], max_joint_vel = 0.02) # send the command to the robot.
-                #Move arm downwards, don't wait until motion is done, but until a force is detected
-                try:
-                    arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
-                except TimeOutException:
-                    rospy.loginfo("No edge up detected within timeout")
-
-                joints_arm = arm._arm.get_joint_states()
-                arm_lift_joint = joints_arm['arm_lift_joint']   
-                    
-                grasp_joint_goal = [(arm_lift_joint + 0.028), #change this in a position relative to obtained coordinates or table height
-                                    arm_flex_joint, 
-                                    arm_roll_joint, 
-                                    wrist_flex_joint, 
-                                    wrist_roll_joint]
-                arm._arm._send_joint_trajectory([grasp_joint_goal]) # send the command to the robot.
-                arm.wait_for_motion_done() # wait until the motion is complete
-                move_arm = False # reset flag to move the arm.
-                continue # dont wait for the rest of the loop.
-
-            #grasp object    
-            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
-            arm.wait_for_motion_done()   
-
-# UNTIL HERE        
-
 # start segmentation
         self.yolo_segmentor.start()
         slope = None
@@ -312,17 +269,46 @@ class TopGrasp(smach.State):
 
 
 #Moving arm downwards until force detection
+
+        joints_arm = arm._arm.get_joint_states()
+        arm_lift_joint = joints_arm['arm_lift_joint']
+        arm_flex_joint = joints_arm['arm_flex_joint']
+        arm_roll_joint = joints_arm['arm_roll_joint']
+        wrist_flex_joint = joints_arm['wrist_flex_joint']
+        wrist_roll_joint = joints_arm['wrist_roll_joint']
         move_arm = True
+
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
             if (move_arm):
-                arm._arm.move_down_until_force_sensor_edge_up(timeout=3,
-                                                              retract_distance=0.063,
-                                                              distance_move_down= gripper_in_base_frame.transform.translation.z)
-                continue
+                downward_joint_goal = [0, # arm lift joint. ranges from 0.0 to 0.7m
+                                       arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
+                                       arm_roll_joint, # arm roll joint
+                                       wrist_flex_joint, # wrist flex joint. lower values move the hand down
+                                       wrist_roll_joint] # wrist roll joint. 
+                arm._arm._send_joint_trajectory([downward_joint_goal], max_joint_vel = 0.02) # send the command to the robot.
+                #Move arm downwards, don't wait until motion is done, but until a force is detected
+                try:
+                    arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
+                except TimeOutException:
+                    rospy.loginfo("No edge up detected within timeout")
+
+                joints_arm = arm._arm.get_joint_states()
+                arm_lift_joint = joints_arm['arm_lift_joint']   
+                    
+                grasp_joint_goal = [(arm_lift_joint + 0.028), #change this in a position relative to obtained coordinates or table height
+                                    arm_flex_joint, 
+                                    arm_roll_joint, 
+                                    wrist_flex_joint, 
+                                    wrist_roll_joint]
+                arm._arm._send_joint_trajectory([grasp_joint_goal]) # send the command to the robot.
+                arm.wait_for_motion_done() # wait until the motion is complete
+                move_arm = False # reset flag to move the arm.
+                continue # dont wait for the rest of the loop.
+
             #grasp object    
-            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) # option given by max_torque to close the gripper with more force
-            arm.wait_for_motion_done()
+            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.1) # option given by max_torque to close the gripper with more force
+            arm.wait_for_motion_done() 
 
             #detecting if grasp has succeeded
             active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
@@ -330,6 +316,7 @@ class TopGrasp(smach.State):
 
             if grasp_detection == 'true':
                 grasp_succeeded = True
+        
             else: # for other options: false, cannot determine and failed, the grasp has not succeeded and grasp_succeeded is therefore false
                 grasp_succeeded = False
                 #move arm back
@@ -346,6 +333,21 @@ class TopGrasp(smach.State):
 
         
             rospy.loginfo("The robot is holding something: {}!".format(grasp_succeeded))
+
+# move arm up slightly to limit friction on table      
+        joints_arm = arm._arm.get_joint_states()
+        arm_lift_joint = joints_arm['arm_lift_joint']
+        arm_flex_joint = joints_arm['arm_flex_joint']
+        arm_roll_joint = joints_arm['arm_roll_joint']
+        wrist_flex_joint = joints_arm['wrist_flex_joint']
+        wrist_roll_joint = joints_arm['wrist_roll_joint']
+        
+        arm_upwards_joint_goal = [(arm_lift_joint + 0.002), # arm lift joint. ranges from 0.0 to 0.7m
+                                       arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
+                                       arm_roll_joint, # arm roll joint
+                                       wrist_flex_joint, # wrist flex joint. lower values move the hand down
+                                       wrist_roll_joint] # wrist roll joint. 
+        arm._arm._send_joint_trajectory([arm_upwards_joint_goal]) # send the command to the robot.      
 
 #determine on which side of the table Hero is
         tfBuffer = tf2_ros.Buffer()
