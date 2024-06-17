@@ -116,7 +116,7 @@ class TopGrasp(smach.State):
             if (move_arm):
                 arm._arm.move_down_until_force_sensor_edge_up(timeout=3,
                                                               retract_distance=0.063,
-                                                              distance_move_down= gripper_in_base_frame.transform.translation.z)
+                                                              distance_move_down= 0.7)
             continue
             #grasp object    
         arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) # option given by max_torque to close the gripper with more force
