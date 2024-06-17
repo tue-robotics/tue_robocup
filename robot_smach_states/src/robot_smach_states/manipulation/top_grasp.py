@@ -229,7 +229,8 @@ class TopGrasp(smach.State):
             time_diff = (rospy.Time.now()-time).to_sec()
         rospy.loginfo(f"direction upwards = {upwards}")
         self.yolo_segmentor.stop()
-
+#input upwards is true since it often does not give correct values
+        upwards = True
         if not upwards:
             if wrist_roll_joint <= 0:
                 wrist_roll_joint = 3.14 - abs(wrist_roll_joint)
@@ -284,7 +285,7 @@ class TopGrasp(smach.State):
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
                 print(arm_lift_joint)    
-                grasp_joint_goal = [(arm_lift_joint + 0.0615), #change this in a position relative to obtained coordinates or table height
+                grasp_joint_goal = [(arm_lift_joint + 0.061), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
@@ -298,7 +299,7 @@ class TopGrasp(smach.State):
             arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.2) 
             arm.wait_for_motion_done() 
 
-            rospy.sleep(5) #wait until gripper is closed before doing grasp detection
+            rospy.sleep(10) #wait until gripper is closed before doing grasp detection
             #detecting if grasp has succeeded
             active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
             grasp_detection = active_grasp_detector.execute()
@@ -622,7 +623,7 @@ class TopGrasp(smach.State):
         arm.wait_for_motion_done()
 
         #detecting if grasp has succeeded
-        rospy.sleep(5)
+        rospy.sleep(10)
         active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
         grasp_detection = active_grasp_detector.execute()
 
