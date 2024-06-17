@@ -556,8 +556,8 @@ class TopGrasp(smach.State):
         rospy.loginfo(f"ANGLE= {angle_to_align}")
         if side == 'right':
             v = Twist()
-            v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
-            v.linear.y = direction_in_base_frame[0]/20
+            v.linear.x = -abs(direction_in_base_frame[1]/20) #velocity ranges from -0.05 to 0.05
+            v.linear.y = -direction_in_base_frame[0]/20
             v.angular.z = 0  # Assuming no rotation is needed
             duration = 0.2305/math.sqrt(v.linear.x**2 + v.linear.y**2)
             start_time = rospy.Time.now()
@@ -587,8 +587,8 @@ class TopGrasp(smach.State):
 
         if side == 'left':
             v = Twist()
-            v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
-            v.linear.y = -direction_in_base_frame[0]/20
+            v.linear.x = -abs(direction_in_base_frame[1]/20) #velocity ranges from -0.05 to 0.05
+            v.linear.y = direction_in_base_frame[0]/20
             v.angular.z = 0  # Assuming no rotation is needed
             duration = 0.2305/math.sqrt(v.linear.x^2 + v.linear.y^2)
             start_time = rospy.Time.now()
@@ -622,6 +622,7 @@ class TopGrasp(smach.State):
         arm.wait_for_motion_done()
 
         #detecting if grasp has succeeded
+        rospy.sleep(5)
         active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
         grasp_detection = active_grasp_detector.execute()
 
