@@ -525,7 +525,7 @@ class TopGrasp(smach.State):
             v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
             v.linear.y = direction_in_base_frame[0]/20
             v.angular.z = 0  # Assuming no rotation is needed
-            duration = 0.09/math.sqrt(v.linear.x^2 + v.linear.y^2)
+            duration = 0.2305/math.sqrt(v.linear.x^2 + v.linear.y^2)
             start_time = rospy.Time.now()
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
@@ -556,7 +556,7 @@ class TopGrasp(smach.State):
             v.linear.x = direction_in_base_frame[1]/20 #velocity ranges from -0.05 to 0.05
             v.linear.y = -direction_in_base_frame[0]/20
             v.angular.z = 0  # Assuming no rotation is needed
-            duration = 0.09/math.sqrt(v.linear.x^2 + v.linear.y^2)
+            duration = 0.2305/math.sqrt(v.linear.x^2 + v.linear.y^2)
             start_time = rospy.Time.now()
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
