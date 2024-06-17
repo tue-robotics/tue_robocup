@@ -449,6 +449,50 @@ class TopGrasp(smach.State):
         arm._arm._send_joint_trajectory([wrist_rotation_back_goal]) # send the command to the robot.
         arm.wait_for_motion_done()
         rospy.sleep(5) #wait until the wrist has stopped turning
+     
+
+#Move towards table edge
+        #movement of base should be in negative x direction of the gripper frame
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
+
+        base_in_gripper_frame = tfBuffer.lookup_transform("hand_palm_link", "base_link", rospy.Time())
+        rospy.loginfo(f"base_gripper_frame = {base_in_gripper_frame}")
+
+        # Convert the original quaternion to a rotation matrix
+        rotation_matrix = tft.quaternion_matrix([
+            base_in_gripper_frame.transform.rotation.x,
+            base_in_gripper_frame.transform.rotation.y,
+            base_in_gripper_frame.transform.rotation.z,
+            base_in_gripper_frame.transform.rotation.w
+        ])
+
+        # Desired movement direction in the gripper frame (negative x direction)
+        direction_in_gripper_frame = [ -1, 0, 0, 1 ] 
+
+        # Transform the direction vector to the base frame
+        direction_in_base_frame = rotation_matrix.dot(direction_in_gripper_frame)
+
+        v = Twist()
+        v.linear.x = direction_in_base_frame[0]/20 #velocity ranges from -0.05 to 0.05
+        v.linear.y = direction_in_base_frame[1]/20
+        v.angular.z = 0  # Assuming no rotation is needed
+
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
+
+        gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+        rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
+        
+        #0.015 accounts for a margin of 1.5 cm, which accounts for both wheel slip and CoM of the cutlery
+        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - 0.015) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - 0.015):
+            self.robot.base._cmd_vel.publish(v) # send command to the robot
+            gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+
+        rospy.sleep(5)
+         
 
 #DO THE ROTATION AGAIN TO MAKE SURE IT IS CORRECT
         tfBuffer = tf2_ros.Buffer()
@@ -533,53 +577,12 @@ class TopGrasp(smach.State):
                                         wrist_roll_joint] 
         arm._arm._send_joint_trajectory([wrist_rotation_back_goal]) # send the command to the robot.
         arm.wait_for_motion_done()
-        rospy.sleep(5) #wait until the wrist has stopped turning
-
-
-#Move towards table edge
-        #movement of base should be in negative x direction of the gripper frame
-        tfBuffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tfBuffer)
-        rospy.sleep(2)
-
-        base_in_gripper_frame = tfBuffer.lookup_transform("hand_palm_link", "base_link", rospy.Time())
-        rospy.loginfo(f"base_gripper_frame = {base_in_gripper_frame}")
-
-        # Convert the original quaternion to a rotation matrix
-        rotation_matrix = tft.quaternion_matrix([
-            base_in_gripper_frame.transform.rotation.x,
-            base_in_gripper_frame.transform.rotation.y,
-            base_in_gripper_frame.transform.rotation.z,
-            base_in_gripper_frame.transform.rotation.w
-        ])
-
-        # Desired movement direction in the gripper frame (negative x direction)
-        direction_in_gripper_frame = [ -1, 0, 0, 1 ] 
-
-        # Transform the direction vector to the base frame
-        direction_in_base_frame = rotation_matrix.dot(direction_in_gripper_frame)
-
-        v = Twist()
-        v.linear.x = direction_in_base_frame[0]/20 #velocity ranges from -0.05 to 0.05
-        v.linear.y = direction_in_base_frame[1]/20
-        v.angular.z = 0  # Assuming no rotation is needed
-
-        tfBuffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tfBuffer)
-        rospy.sleep(2)
-
-        gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
-        rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
-        
-        #0.015 accounts for a margin of 1.5 cm, which accounts for both wheel slip and CoM of the cutlery
-        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - 0.015) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - 0.015):
-            self.robot.base._cmd_vel.publish(v) # send command to the robot
-            gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+        rospy.sleep(5) #wait until the wrist has stopped turning 
+#UNTIL HERE
 
         #open gripper
         arm.gripper.send_goal('open', timeout=0.0)
-        arm.wait_for_motion_done()    
-
+        arm.wait_for_motion_done()  
 
 #rotate wrist around the cutlery, towards pre-grasp pose for a sideways grasp
         #determine towards which side hero will grasp the object
