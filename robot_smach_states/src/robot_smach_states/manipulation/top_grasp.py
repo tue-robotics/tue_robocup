@@ -139,6 +139,10 @@ class TopGrasp(smach.State):
         y_cutlery_real = y_cutlery_pixel*distance_camera/focal_length
         print('frame rewritten')
 
+        #adjust for inaccuracy coordinates
+        x_cutlery_real = 0.7*x_cutlery_real
+        y_cutlery_real = 0.7*y_cutlery_real
+
 #move gripper towards object's determined grasping point
         #move towards y coordinates with base
         velocity = 0.05 # desired robot speed, relatively slow since ony short distances are to be covered
@@ -280,7 +284,7 @@ class TopGrasp(smach.State):
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
                 print(arm_lift_joint)    
-                grasp_joint_goal = [(arm_lift_joint + 0.063), #change this in a position relative to obtained coordinates or table height
+                grasp_joint_goal = [(arm_lift_joint + 0.062), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
@@ -291,7 +295,7 @@ class TopGrasp(smach.State):
                 continue # dont wait for the rest of the loop.
 
             #grasp object    
-            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) 
+            arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.2) 
             arm.wait_for_motion_done() 
 
             #detecting if grasp has succeeded
@@ -613,7 +617,7 @@ class TopGrasp(smach.State):
 
 
 #close gripper 
-        arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.3) # option given by max_torque to close the gripper with more force
+        arm.gripper.send_goal('close', timeout=0.0, max_torque = 0.2) # option given by max_torque to close the gripper with more force
         arm.wait_for_motion_done()
 
         #detecting if grasp has succeeded
