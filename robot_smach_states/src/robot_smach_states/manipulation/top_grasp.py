@@ -229,8 +229,7 @@ class TopGrasp(smach.State):
             time_diff = (rospy.Time.now()-time).to_sec()
         rospy.loginfo(f"direction upwards = {upwards}")
         self.yolo_segmentor.stop()
-#input upwards is true since it often does not give correct values
-        upwards = True
+
         if not upwards:
             if wrist_roll_joint <= 0:
                 wrist_roll_joint = 3.14 - abs(wrist_roll_joint)
@@ -254,9 +253,38 @@ class TopGrasp(smach.State):
             arm._arm._send_joint_trajectory([cutlery_direction_wrist_joint_goal]) # send the command to the robot.
             arm.wait_for_motion_done()
             print('wrist rotation done')
-
+            rospy.sleep(5)
             #180 degree rotation of wrist_roll_joint leads to change in gripper coordinates. therefore the gripper should move backwards by 0.024 m (twice the offset between wrist_roll_link and hand_palm_link)
-            #THIS SHOULD BE IN THE DIRECTON OF THE GRIPPER
+            
+            tfBuffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tfBuffer)
+            rospy.sleep(2)
+
+            base_in_gripper_frame = tfBuffer.lookup_transform("hand_palm_link", "base_link", rospy.Time())
+            rospy.loginfo(f"base_gripper_frame = {base_in_gripper_frame}")
+
+            # Convert the original quaternion to a rotation matrix
+            rotation_matrix = tft.quaternion_matrix([
+                base_in_gripper_frame.transform.rotation.x,
+                base_in_gripper_frame.transform.rotation.y,
+                base_in_gripper_frame.transform.rotation.z,
+                base_in_gripper_frame.transform.rotation.w
+            ])
+
+            # Desired movement direction in the gripper frame (positive direction)
+            direction_in_gripper_frame = [ 1, 0, 0, 1 ] 
+
+            # Transform the direction vector to the base frame
+            direction_in_base_frame = rotation_matrix.dot(direction_in_gripper_frame)
+
+            v = Twist()
+            v.linear.x = direction_in_base_frame[1]/40 #velocity ranges from -0.025 to 0.025
+            v.linear.y = direction_in_base_frame[0]/40
+            v.angular.z = 0  # Assuming no rotation is needed
+            duration = 0.024/math.sqrt(v.linear.x**2 + v.linear.y**2)
+            start_time = rospy.Time.now()
+            while (rospy.Time.now() - start_time).to_sec() < duration:
+                self.robot.base._cmd_vel.publish(v) # send command to the robot
 
 #Moving arm downwards until force detection
 
@@ -512,44 +540,26 @@ class TopGrasp(smach.State):
         listener = tf2_ros.TransformListener(tfBuffer)
         rospy.sleep(2)
 
-        base_in_table_frame = tfBuffer.lookup_transform("dinner_table", "base_link", rospy.Time())
-        rospy.loginfo(f"base_table_frame = {base_in_table_frame}")
+        base_in_gripper_frame = tfBuffer.lookup_transform("hand_palm_link", "base_link", rospy.Time())
+        rospy.loginfo(f"base_in_gripper_frame = {base_in_gripper_frame}")
 
         #Convert the original quaternion to a rotation matrix
         rotation_matrix = tft.quaternion_matrix([
-            base_in_table_frame.transform.rotation.x,
-            base_in_table_frame.transform.rotation.y,
-            base_in_table_frame.transform.rotation.z,
-            base_in_table_frame.transform.rotation.w
+            base_in_gripper_frame.transform.rotation.x,
+            base_in_gripper_frame.transform.rotation.y,
+            base_in_gripper_frame.transform.rotation.z,
+            base_in_gripper_frame.transform.rotation.w
         ])
 
         x_direction_base = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
         negative_x_direction_base_xy = np.array([-x_direction_base[0], -x_direction_base[1], 0]) # Project the x-direction vector onto the x-y plane
         negative_x_direction_base_xy /= np.linalg.norm(negative_x_direction_base_xy) # Normalize 
-        x_axis_table_xy = np.array([1, 0, 0])
-        y_axis_table_xy = np.array([0, 1, 0])
-        negative_x_axis_table_xy = np.array([-1, 0, 0])
-        negative_y_axis_table_xy = np.array([0, -1, 0])
-
-        if position == 1: #negative x-axis base should align with x-axis table
-            cross_prod = np.cross(x_axis_table_xy, negative_x_direction_base_xy)
-            dot_prod = np.dot(x_axis_table_xy, negative_x_direction_base_xy)
-            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
-
-        elif position == 2: #negative x-axis base should align with negative y-axis table
-            cross_prod = np.cross(negative_y_axis_table_xy, negative_x_direction_base_xy)
-            dot_prod = np.dot(negative_y_axis_table_xy, negative_x_direction_base_xy)
-            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
-
-        elif position == 3: #negative x-axis base should align with negative x-axis table
-            cross_prod = np.cross(negative_x_axis_table_xy, negative_x_direction_base_xy)
-            dot_prod = np.dot(negative_x_axis_table_xy, negative_x_direction_base_xy)
-            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)
-
-        elif position == 4: #negative x-axis base should align with y-axis table
-            cross_prod = np.cross(y_axis_table_xy, negative_x_direction_base_xy)
-            dot_prod = np.dot(y_axis_table_xy, negative_x_direction_base_xy)
-            angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)            
+        x_axis_gripper_xy = np.array([1, 0, 0])
+        
+        #negative x-axis base should align with x-axis gripper
+        cross_prod = np.cross(x_axis_gripper_xy, negative_x_direction_base_xy)
+        dot_prod = np.dot(x_axis_gripper_xy, negative_x_direction_base_xy)
+        angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)          
 
         # Determine the direction of rotation
         if cross_prod[2] < 0:
@@ -586,7 +596,12 @@ class TopGrasp(smach.State):
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
             rospy.sleep(5) #wait until base is done moving
-            gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
+
+            tfBuffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tfBuffer)
+            rospy.sleep(2)
+            gripper_position_before= tfBuffer.lookup_transform("dinner_table", "hand_palm_link",rospy.Time())
+            rospy.loginfo(f"gripper_position_before = {gripper_position_before}")
 
             tfBuffer = tf2_ros.Buffer()
             listener = tf2_ros.TransformListener(tfBuffer)
@@ -595,7 +610,7 @@ class TopGrasp(smach.State):
             rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
 
 
-            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x - 0.032), # x distance to the robot
+            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x - 0.03), # x distance to the robot
                                                 (gripper_in_base_frame.transform.translation.y - 0.1405*rotation), # y distance off center from the robot (fixed if rpy=0)
                                                 (gripper_in_base_frame.transform.translation.z - 0.095), # z height of the gripper
                                                 1.57, 0, (-1.57 - angle_to_align))
@@ -617,6 +632,13 @@ class TopGrasp(smach.State):
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
             rospy.sleep(5) #wait until base is done moving
+
+            tfBuffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tfBuffer)
+            rospy.sleep(2)
+            gripper_position_before= tfBuffer.lookup_transform("dinner_table", "hand_palm_link",rospy.Time())
+            rospy.loginfo(f"gripper_position_before = {gripper_position_before}")
+
             tfBuffer = tf2_ros.Buffer()
             listener = tf2_ros.TransformListener(tfBuffer)
             rospy.sleep(2)
@@ -624,7 +646,7 @@ class TopGrasp(smach.State):
             rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
 
 
-            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x -0.032), # x distance to the robot
+            base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x -0.03), # x distance to the robot
                                                 (gripper_in_base_frame.transform.translation.y + 0.1405*rotation), # y distance off center from the robot (fixed if rpy=0)
                                                 (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
                                                 -1.57, 0, (1.57 - angle_to_align))
@@ -636,7 +658,34 @@ class TopGrasp(smach.State):
             arm.send_goal(pose_goal) # send the command to the robot.
             arm.wait_for_motion_done() # wait until the motion is complete
 
+        #Move base back towards table
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(2)
+        gripper_position_after = tfBuffer.lookup_transform("dinner_table", "hand_palm_link",rospy.Time())
+        rospy.loginfo(f"gripper_position_after = {gripper_position_after}")
 
+        if position == 1 or 3:
+            distance_forward = abs(gripper_position_after.transform.translation.x - gripper_position_before.transform.translation.x)
+        if position == 2 or 4:
+            distance_forward = abs(gripper_position_after.transform.translation.y - gripper_position_before.transform.translation.y)
+            
+
+        # Desired movement direction 
+        direction_forwards = [1, 0, 0, 1 ] 
+
+        # Transform the direction vector to the base frame
+        direction_forwards_base = rotation_matrix.dot(direction_forwards)
+
+        # Transform the direction vector to the base frame
+        v = Twist()
+        v.linear.x = direction_forwards_base[1]/20 #velocity ranges from -0.05 to 0.05
+        v.linear.y = direction_forwards_base[0]/20
+        v.angular.z = 0  # Assuming no rotation is needed
+        duration = (distance_forward - 0.038)/math.sqrt(v.linear.x**2 + v.linear.y**2) #3.8 cm = 1.5 cm unitl edge + 2 cm half gripper width + 3 mm margin
+        start_time = rospy.Time.now()
+        while (rospy.Time.now() - start_time).to_sec() < duration:
+            self.robot.base._cmd_vel.publish(v) # send command to the robot
 
 
 #close gripper 
@@ -644,7 +693,7 @@ class TopGrasp(smach.State):
         arm.wait_for_motion_done()
 
         #detecting if grasp has succeeded
-        rospy.sleep(7)
+        rospy.sleep(5)
         active_grasp_detector = ActiveGraspDetector(self.robot, self.arm_designator)
         grasp_detection = active_grasp_detector.execute()
 
