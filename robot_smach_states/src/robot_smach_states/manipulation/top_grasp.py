@@ -585,7 +585,7 @@ class TopGrasp(smach.State):
             start_time = rospy.Time.now()
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
-
+            rospy.sleep(5) #wait until base is done moving
             gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
 
             tfBuffer = tf2_ros.Buffer()
@@ -616,7 +616,7 @@ class TopGrasp(smach.State):
             start_time = rospy.Time.now()
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
-
+            rospy.sleep(5) #wait until base is done moving
             tfBuffer = tf2_ros.Buffer()
             listener = tf2_ros.TransformListener(tfBuffer)
             rospy.sleep(2)
