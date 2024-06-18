@@ -14,13 +14,13 @@ from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_smach_states.utility  import check_arm_requirements, ResolveArm
 from robot_smach_states.util.designators import check_type
-from robot_smach_states.navigation.navigate_to_grasp import NavigateToGrasp
 from robot_smach_states.util.designators.arm import ArmDesignator
 from robot_smach_states.util.designators.core import Designator
 from smach import cb_interface, CBState
 
 
 class PickUpArucomarker(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_goals": ["carrying_pose"], }
 
     def __init__(self, robot: Robot, arm: ArmDesignator) -> None:
         """
@@ -34,6 +34,9 @@ class PickUpArucomarker(smach.State):
         # Assign member variables
         self.robot = robot
         self.arm_designator = arm
+
+        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None, \
+            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None) -> str:
         arm = self.arm_designator.resolve()
@@ -60,8 +63,7 @@ class PickUpArucomarker(smach.State):
         if vector is False:
             return 'failed'
 ####
-
-        goal_map = FrameStamped.from_xyz_rpy(vector.x, vector.y, vector.z, vector.roll*np.pi/180,(vector.pitch*np.pi/180)-np.pi/2, (vector.yaw*np.pi/180)+np.pi/2, rospy.Time.now(), "head_rgbd_sensor_rgb_frame")
+        goal_map = FrameStamped.from_xyz_rpy(vector.x, vector.y, vector.z, vector.roll*np.pi/180,(vector.pitch*np.pi/180)-np.pi/2, (vector.yaw*np.pi/180)-np.pi/2, rospy.Time.now(), "head_rgbd_sensor_rgb_frame")
 
         try:
             # Transform to base link frame
@@ -85,29 +87,8 @@ class PickUpArucomarker(smach.State):
         # Close gripper
         arm.gripper.send_goal('close')
 
-        # Lift
-        rospy.loginfo('Start lifting')
-        if arm.side == "left":
-            roll = 0.3
-        else:
-            roll = -0.3
-
-        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
-        goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
-        rospy.loginfo("Start lift")
-        if not arm.send_goal(goal_bl, timeout=20):
-            rospy.logerr('Failed lift')
-
-            # Retract
-            rospy.loginfo('Start retracting')
-            if arm.side == "left":
-                roll = 0.6
-            else:
-                roll = -0.6
-
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.1)  # Go 10 cm higher
-        goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0):
             rospy.logerr('Failed retract')
@@ -163,6 +144,8 @@ class ResetOnFailure(smach.State):
 
 
 class GrabBasket(smach.StateMachine):
+    REQUIRED_ARM_PROPERTIES = {"required_trajectories": ["prepare_grasp"], }
+
     def __init__(self, robot: Robot, arm: ArmDesignator):
         """
         Let the given robot grab an object with an arucomarker on it
@@ -175,28 +158,29 @@ class GrabBasket(smach.StateMachine):
 
         # Check types or designator resolve types
 
-  #      check_type(arm, PublicArm)
+        check_type(arm, PublicArm)
+        self.robot = robot
+
+        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None, \
+            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
         @cb_interface(outcomes=['succeeded'])
         def prepare_grasp(ud):
-            # Open gripper (non-blocking)
-            arm.resolve().gripper.send_goal('open', timeout=0)
 
-            # Torso up (non-blocking)
-          #  robot.torso.high()
-
+            #Torso up (non-blocking)
+            #robot.torso.high()
 
             # Arm to position in a safe way
-           # arm.resolve().send_joint_trajectory('prepare_grasp', timeout=0)
+            #arm.resolve().send_joint_trajectory('prepare_grasp', timeout=0)
 
             # Open gripper
             arm.resolve().gripper.send_goal('open', timeout=0.0)
             return 'succeeded'
 
         with self:
-  #          smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
-  #                                 transitions={'succeeded': 'PREPARE_GRASP',
-  #                                              'failed': 'failed'})
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
+                                   transitions={'succeeded': 'PREPARE_GRASP',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add("PREPARE_GRASP", CBState(prepare_grasp),
                                    transitions={'succeeded': 'GRAB'})

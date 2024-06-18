@@ -124,7 +124,7 @@ def get_aruco_pos(self, aruco_type, intrinsic_camera, distortion):
     T[3, 3] = 1
     T_inv = np.linalg.inv(T)
 
-    x, y, z = T_inv [:3,3]
+    x, y, z = T_inv[:3, 3]
 
     roll, pitch, yaw = rvec_to_euler(T_inv[:3, :3])
 
