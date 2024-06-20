@@ -1,5 +1,6 @@
 import rospy
 import cv2
+import math
 import numpy as np
 from ultralytics import YOLO
 from cv_bridge import CvBridge
@@ -83,6 +84,11 @@ class YoloSegmentor:
         mean_y = np.mean(y)
         min_x = int(min(x))
         max_x = int(max(x))
+        min_y = int(min(y))
+        max_y = int(max(y))
+
+        length = math.sqrt((max_x - min_x)**2+(max_y - min_y)**2)
+        self.length = length
 
         #for nearly vertical cases:
         if max_x - min_x < (1/5 * width): #if the object takes up a small width (less than 1/5 of the image) it is oriented (nearly) vertical in the camera coordinate frame
@@ -100,8 +106,6 @@ class YoloSegmentor:
         print(f"Calculated slope: {slope}")
         print(f"Calculated intercept: {intercept}")
         
-        
-        self.time = rospy.Time.now()
         # Store the slope value
         self.slope = slope
 
@@ -117,19 +121,31 @@ class YoloSegmentor:
         cv2.line(table_segment, (min_x, int(y_minx)), (max_x, int(y_maxx)), (0, 255, 0), 2) # Draw the line created by the least squares method in green
         return table_segment
     
-    def object_direction(self, x_center):
-        
+    def object_direction(self, x_center, y_center, slope):
+        perpendicular_slope = -1/slope
+        perpendicular_intercept = y_center - slope * x_center
+
         inner_array = result.masks.xy[0] 
         x = inner_array[:,0]
+        y = inner_array[:,1]
         coordinates_upper = 0
         coordinates_lower = 0
-        for i in range(len(x)):
-            xi = inner_array[i, 1]
-            if xi >= x_center:
-                coordinates_upper += 1
-            elif xi < x_center:
-                coordinates_lower += 1
-
+        if 0 <= perpendicular_slope < math.inf:
+            for i in range(len(x)):
+                xi = x[i]
+                yi = y[i]
+                if yi<= perpendicular_slope*xi + perpendicular_intercept:
+                    coordinates_upper += 1
+                else:
+                    coordinates_lower += 1
+        if -math.inf < perpendicular_slope < 0:
+            for i in range(len(x)):
+                xi = x[i]
+                yi = y[i]
+                if yi >= perpendicular_slope*xi + perpendicular_intercept:
+                    coordinates_upper += 1
+                else:
+                    coordinates_lower += 1
         print("Size outline upper half of the mask:", coordinates_upper)
         print("Size outline lower half of the mask:", coordinates_lower)
 
@@ -137,7 +153,7 @@ class YoloSegmentor:
             upwards = True
         elif coordinates_upper < coordinates_lower:
             upwards = False    
-
+        self.time = rospy.Time.now()
         self.upwards = upwards
 
         return upwards
@@ -187,20 +203,12 @@ class YoloSegmentor:
             self.publisher.publish(table_message)
             rospy.loginfo("Segmented image with orientation published")
 
-            upwards = self.object_direction(x_center)
-            rospy.loginfo("Direction determined")
         else:
             rospy.loginfo("No cutlery detected")
 
     # Method to be able to access values in the top_grasp code
-    def data_class_id(self):
-        return self.class_id
-
-    def data_center_slope(self):
-        return self.x_center, self.y_center, self.slope, self.time
-    
-    def data_direction(self):
-        return self.upwards, self.time 
+    def data_object(self):
+        return self.x_center, self.y_center, self.length, self.slope, self. upwards, self.time
 
 
 if __name__ == '__main__':
