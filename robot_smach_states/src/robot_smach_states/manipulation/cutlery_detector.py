@@ -18,6 +18,7 @@ class YoloSegmentor:
 
         self.intercept = 0
         self.slope = 0
+        self.length = 0
 
         self.publisher = rospy.Publisher('/hero/segmented_image', Image, queue_size=10)
         self.subscriber = rospy.Subscriber('/hero/hand_camera/image_raw', Image, self.callback)
@@ -28,6 +29,7 @@ class YoloSegmentor:
         self.slope = None
         self.upwards = None
         self.class_id = None
+        self.filtered_masks = None
         self.time = rospy.Time.now()
         
 

@@ -118,33 +118,57 @@ class TopGrasp(smach.State):
             time_difference = (rospy.Time.now()- time).to_sec()
         #stop segmentation after desired data has been obtained
         self.yolo_segmentor.stop()
-        print('x,y,slope obatained')
+        print('x,y,slope obtained')
         rospy.loginfo(f"direction upwards = {upwards}")
 #rewrite pixel coordinate into the robot's frame
-        height_table = 0.735 #manual input of table height 
-        #write center coordinates with respect to the camera frame (in pixels)
-        x_optical_center = 320.5 #optical center in pixels
-        y_optical_center = 240.5
-        focal_length = 205.46963709098583 #focal length in pixels
-    
-        
+        height_table = 0.735 #manual input of table height
         height_gripper = 0.895 #value for gripper position in set pre-grasp-pose
-        distance_camera =  height_gripper - height_table + 0.0045 # 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
+        distance_camera =  height_gripper - height_table + 0.0045 
 
-        x_cutlery_pixel = x_cutlery - x_optical_center # coordinates in pixels w.r.t. the coordinate frame at the optical center
-        y_cutlery_pixel = y_cutlery - y_optical_center
+        #camera info
+        K = np.array([
+            [205.46963709898583, 0, 320.5],
+            [0, 205.46963709898583, 240.5],
+            [0, 0, 1]
+        ])
 
-        #real-world coordinates w.r.t the hand palm link
-        x_cutlery_real = x_cutlery_pixel*distance_camera/focal_length + 0.039 #3.9 cm corrects for the offset between camera and hand palm link in x-direction
-        y_cutlery_real = y_cutlery_pixel*distance_camera/focal_length
-        cutlery_length = length * distance_camera/focal_length
+        P = np.array([
+            [205.46963709898583, 0.0, 320.5, -14.382874596929009],
+            [0.0, 205.46963709898583, 240.5, 0.0],
+            [0.0, 0.0, 1.0, 0.0]
+        ])
+        T_x = P[0, 3]  # Translation along x-axis (baseline)
+
+        # Transformation matrix from camera frame to base frame (example values)
+        T_base_to_camera = np.array([
+            [1, 0, 0, 0.039],#3.9 cm corrects for the offset between camera and hand palm link in x-direction
+            [0, 1, 0, 0],
+            [0, 0, 1, -0.0045],# 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
+            [0, 0, 0, 1]
+        ])
+
+        fx = K[0, 0]
+        fy = K[1, 1]
+        cx = K[0, 2]
+        cy = K[1, 2]
+        x_n = (x_cutlery - (cx + T_x)) / fx
+        y_n = (y_cutlery - cy) / fy
+
+        X_c = distance_camera * x_n
+        Y_c = distance_camera * y_n
+
+        cutlery_length = distance_camera*length /fx # this can be done since fx is equal to fy
+
+        camera_coordinates = np.array([X_c, Y_c, distance_camera, 1])
+        base_coordinates = T_base_to_camera @ camera_coordinates
+        x_cutlery_real, y_cutlery_real = base_coordinates[:2]
         rospy.loginfo(f"X, Y, length = {x_cutlery_real, y_cutlery_real, cutlery_length}")
         print('frame rewritten')
 
 
 #move gripper towards object's determined grasping point
         #move towards y coordinates with base
-        velocity = 0.05 # desired robot speed, relatively slow since ony short distances are to be covered
+        velocity = 0.025 # desired robot speed, relatively slow since ony short distances are to be covered
         duration_y = abs(y_cutlery_real)/velocity
 
         v = Twist()
