@@ -42,6 +42,7 @@ class YoloSegmentor:
         results = model(frame)
         global result
         result = results[0] 
+
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
 
@@ -56,11 +57,34 @@ class YoloSegmentor:
             self.class_id = class_id
             if class_id in self.class_ids:
                 cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink/purple mask will be created 
+            else:
+                cv2.fillPoly(table_segment, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a red mask will be created    
         
         return table_segment
     
     def coordinates_center_point(self):
-        coordinates_box = result.boxes.xywh.tolist()[0]  # Obtains all coordinates of the bounding box.
+        # Separating boxes and masks for cutlery from other objects
+        cutlery_boxes = []
+        filtered_masks = []
+        for i, box in enumerate(result.boxes):
+            if int(box.cls) in self.class_ids:
+                cutlery_boxes.append(box)
+                filtered_masks.append(result.masks.xy[i])   
+        self.filtered_masks = filtered_masks
+        x_center = None
+        y_center = None
+
+        # Check if cutlery_boxes is empty
+        if not cutlery_boxes:
+            coordinates_box = None  # No bounding boxes found
+        else:
+            # Access the xywh attribute of the first box in cutlery_boxes
+            coordinates_box_tensor = cutlery_boxes[0].xywh
+            if coordinates_box_tensor.numel() == 0: # emake sure that the tensor is not empty before accessing its elements
+                coordinates_box = None
+            else:
+                coordinates_box = coordinates_box_tensor[0].tolist()
+                x_center, y_center = coordinates_box[0], coordinates_box[1]  # Center coordinates of the bounding box
     
         x_center, y_center = coordinates_box[0], coordinates_box[1]  # Obtain the center coordinates of the bounding box = center coordinates object
         print(f"x_center, y_center = {x_center, y_center}") #print center coordinates
@@ -76,7 +100,8 @@ class YoloSegmentor:
         return table_segment
 
     def calculate_slope_intercept(self):
-        inner_array = result.masks.xy[0] # result.masks.xy is an array in an array, so has to be unpacked first
+        
+        inner_array = self.filtered_masks[0] # result.masks.xy is an array in an array, so has to be unpacked first
         x = inner_array[:,0] # first column = x coordinates of all points of the segmentation mask
         y = inner_array[:,1] # second column = y coordinates of all points of the segmentation mask
 
@@ -123,26 +148,22 @@ class YoloSegmentor:
     
     def object_direction(self, x_center, y_center, slope):
         perpendicular_slope = -1/slope
-        perpendicular_intercept = y_center - slope * x_center
+        perpendicular_intercept = y_center - perpendicular_slope * x_center
 
-        inner_array = result.masks.xy[0] 
+        inner_array = self.filtered_masks[0] 
         x = inner_array[:,0]
         y = inner_array[:,1]
         coordinates_upper = 0
         coordinates_lower = 0
         if 0 <= perpendicular_slope < math.inf:
             for i in range(len(x)):
-                xi = x[i]
-                yi = y[i]
-                if yi<= perpendicular_slope*xi + perpendicular_intercept:
+                if y[i]<= perpendicular_slope*x[i] + perpendicular_intercept:
                     coordinates_upper += 1
                 else:
                     coordinates_lower += 1
         if -math.inf < perpendicular_slope < 0:
             for i in range(len(x)):
-                xi = x[i]
-                yi = y[i]
-                if yi >= perpendicular_slope*xi + perpendicular_intercept:
+                if y[i]>= perpendicular_slope*x[i] + perpendicular_intercept:
                     coordinates_upper += 1
                 else:
                     coordinates_lower += 1

@@ -1,6 +1,7 @@
 import rospy
 import cv2
 import numpy as np
+import math
 from ultralytics import YOLO
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
@@ -19,8 +20,32 @@ class YoloSegmentor:
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
-        coordinates_box = result.boxes.xywh.tolist()[0]  # Obtains all coordinates of the bounding box.
-        x_center, y_center = coordinates_box[0], coordinates_box[1]  # Obtain the center coordinates of the bounding box = center coordinates object
+        
+
+        # Collecting boxes and masks for the specified class IDs
+        global filtered_masks
+        cutlery_boxes = []
+        filtered_masks = []
+        for i, box in enumerate(result.boxes):
+            if int(box.cls) in self.class_ids:
+                cutlery_boxes.append(box)
+                filtered_masks.append(result.masks.xy[i])   
+    
+        x_center = None
+        y_center = None
+
+        # Check if cutlery_boxes is empty
+        if not cutlery_boxes:
+            coordinates_box = None  # No bounding boxes found
+        else:
+            # Access the xywh attribute of the first box in cutlery_boxes
+            coordinates_box_tensor = cutlery_boxes[0].xywh
+            if coordinates_box_tensor.numel() == 0:
+                coordinates_box = None
+            else:
+                coordinates_box = coordinates_box_tensor[0].tolist()
+                x_center, y_center = coordinates_box[0], coordinates_box[1]  # Center coordinates of the bounding box
+
 
         print(f"x_center, y_center = {x_center, y_center}") #print center coordinates
         return class_ids, segmentation_contours_idx, x_center, y_center  # outputs an integer with the name of the detected object as well as a segmentation of the object's contour
@@ -66,33 +91,43 @@ class LeastSquaresMethod:
         else:
             numerator = np.sum((x - mean_x) * (y - mean_y))
             denominator = np.sum((x - mean_x) ** 2)
-            slope = numerator / denominator   
+            slope = numerator / denominator  
+            self.slope = slope 
         intercept = mean_y - slope * mean_x
         return slope, intercept
 
     def predict(self, x):
         return self.slope * x + self.intercept
     
-    def object_direction(self, y_center):
-        
-        inner_array = result.masks.xy[0] 
+    def object_direction(self, x_center, y_center):
+        perpendicular_slope = -1/self.slope
+        perpendicular_intercept = y_center - perpendicular_slope * x_center
+
+        inner_array = filtered_masks[0] 
+        x = inner_array[:,0]
         y = inner_array[:,1]
         coordinates_upper = 0
         coordinates_lower = 0
-        for i in range(len(y)):
-            yi = inner_array[i, 1]
-            if yi >= y_center:
-                coordinates_upper += 1
-            elif yi < y_center:
-                coordinates_lower += 1
-
+        if 0 <= perpendicular_slope < math.inf:
+            for i in range(len(x)):
+                if y[i]<= perpendicular_slope*x[i] + perpendicular_intercept:
+                    coordinates_upper += 1
+                else:
+                    coordinates_lower += 1
+        if -math.inf < perpendicular_slope < 0:
+            for i in range(len(x)):
+                if y[i]>= perpendicular_slope*x[i] + perpendicular_intercept:
+                    coordinates_upper += 1
+                else:
+                    coordinates_lower += 1
         print("Size outline upper half of the mask:", coordinates_upper)
         print("Size outline lower half of the mask:", coordinates_lower)
 
-        if coordinates_upper <= coordinates_lower: #The y-axis points downwards so points shown above y_center in the figure actually have a y-coordinate below y_center
+        if coordinates_upper >= coordinates_lower: 
             upwards = True
-        elif coordinates_upper > coordinates_lower:
+        elif coordinates_upper < coordinates_lower:
             upwards = False    
+        self.upwards = upwards
 
         return upwards
 
@@ -113,7 +148,8 @@ if __name__ == '__main__':
     print(f"Calculated intercept: {model.intercept}")
 
     # Draw yellow dot at the center point 
-    cv2.circle(table_segment, (int(x_center), int(y_center)), 5, (0, 255, 255), -1)
+    if x_center != None:
+        cv2.circle(table_segment, (int(x_center), int(y_center)), 5, (0, 255, 255), -1)
 
     # Draw the line created by the least squares method in green, this is only for visualization
     min_x = int(min(x))
@@ -122,7 +158,7 @@ if __name__ == '__main__':
     # this should be x,y starting point of line, x,y end point of line
     cv2.line(table_segment, (min_x, int(model.predict(min_x))), (max_x, int(model.predict(max_x))), (0, 255, 0), 2)
 
-    upwards = model.object_direction(y_center)
+    upwards = model.object_direction(x_center, y_center)
     print("Object direction:", "upwards" if upwards else "downwards")
 
     cv2.imshow('Table Segment', table_segment)
