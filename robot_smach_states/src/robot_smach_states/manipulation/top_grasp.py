@@ -173,10 +173,7 @@ class TopGrasp(smach.State):
 
         v = Twist()
         v.linear.x = 0
-        if y_cutlery_real > 0:
-            v.linear.y = -velocity# linear left
-        else:
-            v.linear.y = velocity     
+        v.linear.y = velocity     
         v.angular.z = 0 # rotation speed to the left, none desired
         start_time = rospy.Time.now()
         while (rospy.Time.now() - start_time).to_sec() < duration_y:
