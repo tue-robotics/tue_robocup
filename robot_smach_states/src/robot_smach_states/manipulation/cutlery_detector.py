@@ -58,9 +58,9 @@ class YoloSegmentor:
         for class_id, seg in zip(class_ids, segmentation_contours_idx):
             self.class_id = class_id
             if class_id in self.class_ids:
-                cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink/purple mask will be created 
+                cv2.fillPoly(table_segment, [seg], color=(255, 0, 255)) #If fork, knife or spoon a pink mask will be created 
             else:
-                cv2.fillPoly(table_segment, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a red mask will be created    
+                cv2.fillPoly(table_segment, [seg], color=(255, 0, 0)) #If another object from the COCO dataset a blue mask will be created    
         
         return table_segment
     
@@ -225,6 +225,9 @@ class YoloSegmentor:
             table_message = bridge.cv2_to_imgmsg(table_segment_with_orientation, encoding="passthrough")
             self.publisher.publish(table_message)
             rospy.loginfo("Segmented image with orientation published")
+
+            upwards = self.object_direction(x_center, y_center, slope)
+            rospy.loginfo("Direction determined")
 
         else:
             rospy.loginfo("No cutlery detected")
