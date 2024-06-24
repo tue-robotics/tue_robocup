@@ -151,7 +151,7 @@ class TopGrasp(smach.State):
         fy = K[1, 1]
         cx = K[0, 2]
         cy = K[1, 2]
-        x_n = (x_cutlery - (cx + T_x)) / fx
+        x_n = (x_cutlery - cx - T_x) / fx
         y_n = (y_cutlery - cy) / fy
 
         X_c = distance_camera * x_n
