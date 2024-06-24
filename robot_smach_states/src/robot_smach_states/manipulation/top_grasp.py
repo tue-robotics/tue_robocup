@@ -168,7 +168,7 @@ class TopGrasp(smach.State):
 
 #move gripper towards object's determined grasping point
         #move towards y coordinates with base
-        velocity = 0.025 # desired robot speed, relatively slow since ony short distances are to be covered
+        velocity = 0.01 # desired robot speed, relatively slow since ony short distances are to be covered
         duration_y = abs(y_cutlery_real)/velocity
 
         v = Twist()
