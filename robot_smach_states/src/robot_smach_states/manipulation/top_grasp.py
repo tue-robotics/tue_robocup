@@ -297,22 +297,8 @@ class TopGrasp(smach.State):
         while not grasp_succeeded and not rospy.is_shutdown():
             # control loop
             if (move_arm):
-                downward_joint_goal = [0, # arm lift joint. ranges from 0.0 to 0.7m
-                                       arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
-                                       arm_roll_joint, # arm roll joint
-                                       wrist_flex_joint, # wrist flex joint. lower values move the hand down
-                                       wrist_roll_joint] # wrist roll joint. 
-                arm._arm._send_joint_trajectory([downward_joint_goal], max_joint_vel = 0.02) # send the command to the robot.
-                #Move arm downwards, don't wait until motion is done, but until a force is detected
-                try:
-                    arm._arm.force_sensor.wait_for_edge_up(3.0)  # wait 3 seconds for a force detection
-                except TimeOutException:
-                    rospy.loginfo("No edge up detected within timeout")
-
-                joints_arm = arm._arm.get_joint_states()
-                arm_lift_joint = joints_arm['arm_lift_joint']   
-                print(arm_lift_joint)    
-                grasp_joint_goal = [(arm_lift_joint + 0.061), #change this in a position relative to obtained coordinates or table height
+                 
+                grasp_joint_goal = [(0.63), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
