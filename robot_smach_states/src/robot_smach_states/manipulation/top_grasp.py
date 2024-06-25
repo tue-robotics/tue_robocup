@@ -227,6 +227,9 @@ class TopGrasp(smach.State):
         wrist_flex_joint = joints_arm['wrist_flex_joint']
         wrist_roll_joint = normalized_angle * -3.14 + 1.57  # Orientation in desired range [1.57, -1.57]
 
+        #FOR TESTING
+        upwards = True
+
         if not upwards: #rotate gripper 180 degrees to grasp cutlery in the correct direction
             if wrist_roll_joint <= 0:
                 wrist_roll_joint = 3.14 - abs(wrist_roll_joint)
@@ -413,7 +416,7 @@ class TopGrasp(smach.State):
 
             # Calculate the cross product and dot product in the x-y plane
             cross_prod = np.cross(y_axis_table_xy, y_direction_gripper_xy)
-            dot_prod = np.dot(y_axis_table_xy, y_direction_gripper_xy)   #
+            dot_prod = np.dot(y_axis_table_xy, y_direction_gripper_xy)   
 
         if position == 2: # x-axis gripper should align with y-axis table
             x_direction_gripper = rotation_matrix[:3, 0] # Extract the x-axis direction vector of the gripper in the table frame
@@ -452,12 +455,6 @@ class TopGrasp(smach.State):
         if cross_prod[2] < 0:
             angle_to_align = -angle_to_align
 
-        # Ensure the angle is within the range -1.57 to 1.57 radians
-        if angle_to_align > 1.57:
-            angle_to_align = -3.14 + angle_to_align
-        if angle_to_align < -1.57:
-            angle_to_align = 3.14 - abs(angle_to_align)    
-        
         joints_arm = arm._arm.get_joint_states()
         arm_lift_joint = joints_arm['arm_lift_joint']
         arm_flex_joint = joints_arm['arm_flex_joint']
