@@ -507,19 +507,20 @@ class TopGrasp(smach.State):
         gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
         rospy.loginfo(f"gripper_table_frame = {gripper_in_table_frame}")
         
-    
-        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - 0.015) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - 0.015):
+        #this ensures 4 to 4.5 cm of the object sticks out over the edge. a margin of 5 mm is taken into account here for wheel slip
+        distance_gripper_to_edge = (cutlery_length-0.05)/2 -0.045 + 0.005
+        while abs(gripper_in_table_frame.transform.translation.x) < (1/2*table_length - distance_gripper_to_edge) and abs(gripper_in_table_frame.transform.translation.y) < (1/2*table_width - distance_gripper_to_edge):
             self.robot.base._cmd_vel.publish(v) # send command to the robot
             gripper_in_table_frame = tfBuffer.lookup_transform("dinner_table", "hand_palm_link", rospy.Time())
 
-        rospy.sleep(10)
+        rospy.sleep(5)
          
         #open gripper
         arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()  
 
         #move farther away until grasp distance from edge o grasp at 2cm from cutlery's outer end (half gripper width)
-        duration = 0.04/math.sqrt(v.linear.x**2 + v.linear.y**2)
+        duration = (((cutlery_length-0.05)/2)-0.02)/math.sqrt(v.linear.x**2 + v.linear.y**2)
         start_time = rospy.Time.now()
         while (rospy.Time.now() - start_time).to_sec() < duration:
             self.robot.base._cmd_vel.publish(v) # send command to the robot
