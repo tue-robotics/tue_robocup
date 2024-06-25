@@ -499,8 +499,8 @@ class TopGrasp(smach.State):
         direction_in_base_frame = rotation_matrix.dot(direction_in_gripper_frame)
 
         v = Twist()
-        v.linear.x = direction_in_base_frame[0]/20 #velocity ranges from -0.05 to 0.05
-        v.linear.y = direction_in_base_frame[1]/20
+        v.linear.x = direction_in_base_frame[0]/40 #velocity ranges from -0.025 to 0.025
+        v.linear.y = direction_in_base_frame[1]/40
         v.angular.z = 0  # Assuming no rotation is needed
 
         tfBuffer = tf2_ros.Buffer()
