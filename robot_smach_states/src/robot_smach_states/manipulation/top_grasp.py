@@ -141,7 +141,7 @@ class TopGrasp(smach.State):
 
         # Transformation matrix from camera frame to base frame (example values)
         T_base_to_camera = np.array([
-            [1, 0, 0, 0.039],#3.9 cm corrects for the offset between camera and hand palm link in x-direction
+            [1, 0, 0, 0]
             [0, 1, 0, 0],
             [0, 0, 1, -0.0045],# 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
             [0, 0, 0, 1]
