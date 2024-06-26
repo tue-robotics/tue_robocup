@@ -118,8 +118,8 @@ class TopGrasp(smach.State):
         rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
 
 
-        base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x), # x distance to the robot
-                                                (gripper_in_base_frame.transform.translation.y), # y distance off center from the robot (fixed if rpy=0)
+        base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x-0.1), # x distance to the robot
+                                                (gripper_in_base_frame.transform.translation.y+0.1405), # y distance off center from the robot (fixed if rpy=0)
                                                 (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
                                                 -1.57, 0, 1.57)
 
