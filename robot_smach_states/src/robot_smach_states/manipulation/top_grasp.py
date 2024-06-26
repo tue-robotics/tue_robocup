@@ -109,29 +109,6 @@ class TopGrasp(smach.State):
         rate = rospy.Rate(10) # loop rate in hz      
 
 
-        #TESTING
-
-        tfBuffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tfBuffer)
-        rospy.sleep(1)
-        gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
-        rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
-
-
-        base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x-0.1), # x distance to the robot
-                                                (gripper_in_base_frame.transform.translation.y+0.1405), # y distance off center from the robot (fixed if rpy=0)
-                                                (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
-                                                -1.57, 0, 1)
-
-        pose_goal = FrameStamped(base_to_gripper,
-                                rospy.Time.now(), #timestamp when this pose was created
-                                "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
-                                )
-        arm.send_goal(pose_goal) # send the command to the robot.
-        arm.wait_for_motion_done() # wait until the motion is complete
-
-        #TESTING
-
 # start segmentation
         self.yolo_segmentor.start()
         upwards = None
@@ -577,10 +554,10 @@ class TopGrasp(smach.State):
         cross_prod = np.cross(x_axis_gripper_xy, negative_x_direction_base_xy)
         dot_prod = np.dot(x_axis_gripper_xy, negative_x_direction_base_xy)
         angle_to_align = np.arctan2(np.linalg.norm(cross_prod), dot_prod)          
-
-        # Determine the direction of rotation
-        if cross_prod[2] < 0:
-            angle_to_align = -angle_to_align
+        
+        if abs(angle_to_align) >1.57:
+            angle_to_align = abs(angle_to_align) - 1.57
+        
         rotation_y = 1 - abs(angle_to_align)/1.57
         rotation_x = abs(angle_to_align)/1.57
         tfBuffer = tf2_ros.Buffer()
@@ -625,7 +602,7 @@ class TopGrasp(smach.State):
             base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x + 0.1405*rotation_x), # x distance to the robot
                                                 (gripper_in_base_frame.transform.translation.y - 0.1405*rotation_y), # y distance off center from the robot (fixed if rpy=0)
                                                 (gripper_in_base_frame.transform.translation.z - 0.095), # z height of the gripper
-                                                1.57, 0, (-1.57 - angle_to_align))
+                                                1.57, 0, (-1.57 + abs(angle_to_align)))
 
             pose_goal = FrameStamped(base_to_gripper,
                                 rospy.Time.now(), #timestamp when this pose was created
@@ -655,7 +632,7 @@ class TopGrasp(smach.State):
             base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x+ 0.1405*rotation_x), # x distance to the robot
                                                 (gripper_in_base_frame.transform.translation.y + 0.1405*rotation_y), # y distance off center from the robot (fixed if rpy=0)
                                                 (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
-                                                -1.57, 0, (1.57 - angle_to_align))
+                                                -1.57, 0, (1.57 - abs(angle_to_align)))
 
             pose_goal = FrameStamped(base_to_gripper,
                                 rospy.Time.now(), #timestamp when this pose was created
