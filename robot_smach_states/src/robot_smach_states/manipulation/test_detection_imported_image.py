@@ -19,6 +19,10 @@ class YoloSegmentor:
         result = results[0]
         segmentation_contours_idx = [np.array(seg, dtype=np.int32) for seg in result.masks.xy]
         
+
+        print(f"RESULTSS= {results}")
+        print(f"RESULT = {result}")
+
         class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
         
 
@@ -133,7 +137,7 @@ class LeastSquaresMethod:
 
 if __name__ == '__main__':
     ts = YoloSegmentor()
-    image = cv2.imread('fork.jpg')
+    image = cv2.imread('fork.jpeg')
     table_segment, x_center, y_center = ts.process_image(image)
 
     model = LeastSquaresMethod()
