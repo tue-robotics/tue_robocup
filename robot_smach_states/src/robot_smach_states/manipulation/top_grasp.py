@@ -121,7 +121,7 @@ class TopGrasp(smach.State):
         base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x-0.1), # x distance to the robot
                                                 (gripper_in_base_frame.transform.translation.y+0.1405), # y distance off center from the robot (fixed if rpy=0)
                                                 (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
-                                                -1.57, 0, 1.57)
+                                                -1.57, 0, 1)
 
         pose_goal = FrameStamped(base_to_gripper,
                                 rospy.Time.now(), #timestamp when this pose was created
