@@ -306,7 +306,7 @@ class TopGrasp(smach.State):
                 joints_arm = arm._arm.get_joint_states()
                 arm_lift_joint = joints_arm['arm_lift_joint']   
                 print(arm_lift_joint)    
-                grasp_joint_goal = [(0.63), #change this in a position relative to obtained coordinates or table height
+                grasp_joint_goal = [(arm_lift_joint + 0.061), #change this in a position relative to obtained coordinates or table height
                                     arm_flex_joint, 
                                     arm_roll_joint, 
                                     wrist_flex_joint, 
@@ -353,7 +353,7 @@ class TopGrasp(smach.State):
         wrist_flex_joint = joints_arm['wrist_flex_joint']
         wrist_roll_joint = joints_arm['wrist_roll_joint']
         
-        arm_upwards_joint_goal = [(arm_lift_joint + 0.003), # arm lift joint. ranges from 0.0 to 0.7m
+        arm_upwards_joint_goal = [(arm_lift_joint + 0.005), # arm lift joint. ranges from 0.0 to 0.7m
                                        arm_flex_joint, # arm flex joint. lower values move the arm downwards ranges from -2 to 0.0 radians
                                        arm_roll_joint, # arm roll joint
                                        wrist_flex_joint, # wrist flex joint. lower values move the hand down
