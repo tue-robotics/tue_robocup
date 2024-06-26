@@ -465,7 +465,7 @@ class TopGrasp(smach.State):
         arm.wait_for_motion_done()
         rospy.sleep(5) #wait until the wrist has stopped turning
      
-
+        print('rotated to align with table edge')
 #Move towards table edge
         #movement of base should be in negative x direction of the gripper frame
         tfBuffer = tf2_ros.Buffer()
