@@ -135,7 +135,7 @@ class TopGrasp(smach.State):
         # Transformation matrix from camera frame to base frame. axes have the same orientation, therefore it is equal to identity
         T_base_to_camera = np.array([
             [1, 0, 0, 0],
-            [0, 1, 0, 0],
+            [0, -1, 0, 0],
             [0, 0, 1, -0.0045],# 0.0045 corrects for the offset between hand palm link and the camera frame in z-direction
             [0, 0, 0, 1]
         ])
@@ -222,7 +222,7 @@ class TopGrasp(smach.State):
         wrist_roll_joint = normalized_angle * -3.14 + 1.57  # Orientation in desired range [1.57, -1.57]
 
         #FOR TESTING
-        upwards = False
+        upwards = True
 
         if not upwards: #rotate gripper 180 degrees to grasp cutlery in the correct direction
             if wrist_roll_joint <= 0:
