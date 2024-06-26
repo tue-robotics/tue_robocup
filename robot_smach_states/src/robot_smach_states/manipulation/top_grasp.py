@@ -71,7 +71,6 @@ class PrepareGrasp(smach.State):
         return 'succeeded'
 
 
-
 class TopGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_goals": ["carrying_pose"], }
@@ -108,6 +107,30 @@ class TopGrasp(smach.State):
         
         grasp_succeeded=False
         rate = rospy.Rate(10) # loop rate in hz      
+
+
+        #TESTING
+
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        rospy.sleep(1)
+        gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
+        rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
+
+
+        base_to_gripper = self.frame_from_xyzrpy((gripper_in_base_frame.transform.translation.x+ 0.1405*rotation_x), # x distance to the robot
+                                                (gripper_in_base_frame.transform.translation.y + 0.1405*rotation_y), # y distance off center from the robot (fixed if rpy=0)
+                                                (gripper_in_base_frame.transform.translation.z -0.095), # z height of the gripper
+                                                -1.57, 0, (1.57 - angle_to_align))
+
+        pose_goal = FrameStamped(base_to_gripper,
+                                rospy.Time.now(), #timestamp when this pose was created
+                                "base_link" # the frame in which the pose is expressed. base link lies in the center of the robot at the height of the floor.
+                                )
+        arm.send_goal(pose_goal) # send the command to the robot.
+        arm.wait_for_motion_done() # wait until the motion is complete
+
+        #TESTING
 
 # start segmentation
         self.yolo_segmentor.start()
@@ -162,7 +185,7 @@ class TopGrasp(smach.State):
 
 #move gripper towards object's determined grasping point
         #move towards y coordinates with base
-        velocity = 0.01 # desired robot speed, relatively slow since ony short distances are to be covered
+        velocity = 0.02 # desired robot speed, relatively slow since ony short distances are to be covered
         duration_y = abs(y_cutlery_real)/velocity
 
         v = Twist()
@@ -595,12 +618,6 @@ class TopGrasp(smach.State):
             tfBuffer = tf2_ros.Buffer()
             listener = tf2_ros.TransformListener(tfBuffer)
             rospy.sleep(1)
-            gripper_position_before= tfBuffer.lookup_transform("dinner_table", "hand_palm_link",rospy.Time())
-            rospy.loginfo(f"gripper_position_before = {gripper_position_before}")
-
-            tfBuffer = tf2_ros.Buffer()
-            listener = tf2_ros.TransformListener(tfBuffer)
-            rospy.sleep(1)
             gripper_in_base_frame = tfBuffer.lookup_transform("base_link", "hand_palm_link",rospy.Time())
             rospy.loginfo(f"base_gripper_frame = {gripper_in_base_frame}")
 
@@ -627,12 +644,6 @@ class TopGrasp(smach.State):
             while (rospy.Time.now() - start_time).to_sec() < duration:
                 self.robot.base._cmd_vel.publish(v) # send command to the robot
             rospy.sleep(5) #wait until base is done moving
-
-            tfBuffer = tf2_ros.Buffer()
-            listener = tf2_ros.TransformListener(tfBuffer)
-            rospy.sleep(1)
-            gripper_position_before= tfBuffer.lookup_transform("dinner_table", "hand_palm_link",rospy.Time())
-            rospy.loginfo(f"gripper_position_before = {gripper_position_before}")
 
             tfBuffer = tf2_ros.Buffer()
             listener = tf2_ros.TransformListener(tfBuffer)
