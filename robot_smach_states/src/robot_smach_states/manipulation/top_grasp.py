@@ -222,7 +222,7 @@ class TopGrasp(smach.State):
         wrist_roll_joint = normalized_angle * -3.14 + 1.57  # Orientation in desired range [1.57, -1.57]
 
         #FOR TESTING
-        upwards = True
+        upwards = False
 
         if not upwards: #rotate gripper 180 degrees to grasp cutlery in the correct direction
             if wrist_roll_joint <= 0:
