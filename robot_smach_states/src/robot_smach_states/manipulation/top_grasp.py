@@ -126,20 +126,13 @@ class TopGrasp(smach.State):
         distance_camera =  height_gripper - height_table + 0.0045 
 
         #camera info
-        K = np.array([
-            [205.46963709898583, 0, 320.5],
-            [0, 205.46963709898583, 240.5],
-            [0, 0, 1]
-        ])
-
         P = np.array([
             [205.46963709898583, 0.0, 320.5, -14.382874596929009],
             [0.0, 205.46963709898583, 240.5, 0.0],
             [0.0, 0.0, 1.0, 0.0]
         ])
-        T_x = P[0, 3]  # Translation along x-axis (baseline)
 
-        # Transformation matrix from camera frame to base frame (example values)
+        # Transformation matrix from camera frame to base frame. axes have the same orientation, therefore it is equal to identity
         T_base_to_camera = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
@@ -147,10 +140,11 @@ class TopGrasp(smach.State):
             [0, 0, 0, 1]
         ])
 
-        fx = K[0, 0]
-        fy = K[1, 1]
-        cx = K[0, 2]
-        cy = K[1, 2]
+        fx = P[0, 0]
+        fy = P[1, 1]
+        cx = P[0, 2]
+        cy = P[1, 2]
+        T_x = P[0, 3]  #Translation along x-axis between camera frame and hand_palm_link
         x_n = (x_cutlery - cx - T_x) / fx
         y_n = (y_cutlery - cy) / fy
 
