@@ -63,10 +63,8 @@ class PickUpArucomarker(smach.State):
         if vector is False:
             return 'failed'
 ####
-        goal_map = FrameStamped.from_xyz_rpy(vector.x, vector.y, vector.z, vector.roll * np.pi / 180,
-                                             (vector.pitch * np.pi / 180) - np.pi / 2,
-                                             (vector.yaw * np.pi / 180) - np.pi / 2, rospy.Time.now(),
-                                             "head_rgbd_sensor_rgb_frame")
+        goal_map = FrameStamped.from_xyz_rpy(vector.x, vector.y, vector.z, np.pi, - np.pi / 2, - np.pi / 2,
+                                             rospy.Time.now(), "head_rgbd_sensor_rgb_frame")
 
         try:
             # Transform to base link frame
@@ -96,7 +94,7 @@ class PickUpArucomarker(smach.State):
         if not arm.send_goal(goal_bl, timeout=0.0):
             rospy.logerr('Failed retract')
         arm.wait_for_motion_done()
-        self.robot.base.force_drive(-0.125, 0, 0, 2.0)
+        self.robot.base.force_drive(-0.125, 0, 0, 3.0)
 
         arm.wait_for_motion_done(cancel=True)
 
@@ -197,7 +195,9 @@ class GrabBasket(smach.StateMachine):
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
+
 if __name__ == '__main__':
+
     from robot_skills import get_robot
     from robot_smach_states.util.designators import ArmDesignator, LockingDesignator
 

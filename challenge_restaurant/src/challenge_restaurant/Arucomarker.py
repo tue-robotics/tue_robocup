@@ -65,7 +65,7 @@ def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
     return rvec, tvec
 
 
-aruco_type = "DICT_5X5_250"
+aruco_type = "DICT_5X5_50"
 
 intrinsic_camera = np.array(((933.15867, 0, 657.59), (0, 933.1586, 400.36993), (0, 0, 1)))
 distortion = np.array((-0.43948, 0.18514, 0, 0))
