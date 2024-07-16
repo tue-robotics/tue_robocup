@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from typing import Union
+
 # ROS
 import rospy
 import smach
@@ -11,7 +13,7 @@ from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
 from ..reset import ResetPart
 from ..utility import ResolveArm, check_arm_requirements, collect_arm_requirements
-from ..util.designators import check_type, ArmDesignator
+from ..util.designators import check_type, ArmDesignator, LockingDesignator
 
 
 class ArmToJointConfig(smach.State):
@@ -29,11 +31,14 @@ class ArmToJointConfig(smach.State):
 
         self.robot = robot
         check_type(arm_designator, PublicArm)
-        self.arm_designator: ArmDesignator = arm_designator
+        self.arm_designator: Union[ArmDesignator, LockingDesignator] = arm_designator
         self.REQUIRED_ARM_PROPERTIES = {'required_goals': [configuration]}
         self.configuration = configuration
 
-        self.arm_designator.arm_properties.update(collect_arm_requirements(self))
+        if isinstance(self.arm_designator, LockingDesignator):
+            self.arm_designator.to_be_locked.arm_properties.update(collect_arm_requirements(self))
+        elif isinstance(self.arm_designator, ArmDesignator):
+            self.arm_designator.arm_properties.update(collect_arm_requirements(self))
 
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
