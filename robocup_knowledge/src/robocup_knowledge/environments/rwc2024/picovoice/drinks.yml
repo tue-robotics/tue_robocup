@@ -1,0 +1,50 @@
+context:
+  expressions:
+    getDrink:
+      - (@greet) (@likeWant) (a, an, the) $drink:drink
+  slots:
+    drink:
+      - cola
+      - ice tea
+      - water
+      - milk
+      - big coke
+      - fanta
+      - double fris
+  macros:
+    greet:
+      - hello
+      - hey
+      - hi
+      - yo
+    likeWant:
+      - I want
+      - I want to have
+      - I want to drink
+      - I would like
+      - I would like to have
+      - I would like to drink
+      - Can I have
+      - Can I please have
+      - Could I have
+      - Could I please have
+      - I like
+      - I like to have
+      - I like to drink
+      - I prefer
+      - I prefer to have
+      - I prefer to drink
+      - My favourite is
+      - My favourite drink is
+      - Bring me
+      - Please bring me
+      - Can you bring me
+      - Can you please bring me
+      - Could you bring me
+      - Could you please bring me
+      - Get me
+      - Please get me
+      - Can you get me
+      - Can you please get me
+      - Could you get me
+      - Could you please get me
