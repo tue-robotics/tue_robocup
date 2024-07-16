@@ -175,7 +175,7 @@ class HandoverToHuman(smach.StateMachine):
                                    transitions={'succeeded': 'SAY_DETECT_HANDOVER',
                                                 'failed': 'SAY_DETECT_HANDOVER'})
 
-            smach.StateMachine.add("SAY_DETECT_HANDOVER", Say(robot, ["I will handover the object now"
+            smach.StateMachine.add("SAY_DETECT_HANDOVER", Say(robot, ["I will handover the object now. "
                                                                       "Please take it and press my gripper."]),
                                    transitions={'spoken': 'DETECT_HANDOVER'})
 
