@@ -109,6 +109,7 @@ class IntroduceGuest(smach.StateMachine):
                                    FindPeople(robot=robot,
                                               query_entity_designator=room_designator,
                                               found_people_designator=all_old_guests.writeable,
+                                              look_distance=2.0,
                                               speak=True),
                                    transitions={"found": "CHECK_NUM_PEOPLE",
                                                 "failed": "CHECK_NUM_PEOPLE"})
