@@ -79,15 +79,10 @@ def setup_statemachine(robot):
                                transitions={'done': 'RESET_ARM',
                                             'failed': 'Failed'})
 
-        @smach.cb_interface(outcomes=["done"])
-        def reset_arm(userdata=None):
-            """ Set the robots arm to reset pose"""
-            arm = robot.get_arm(required_goals=['reset'])
-            arm.send_joint_goal('reset')
-            return "done"
         smach.StateMachine.add("RESET_ARM",
-                               smach.CBState(reset_arm),
-                               transitions={'done': 'STORE_GROCERIES'})
+                               states.manipulation.ArmToJointConfig(robot, ds.arm.ArmDesignator(robot), "reset"),
+                               transitions={'succeeded': 'STORE_GROCERIES',
+                                            'failed': 'STORE_GROCERIES'})
 
         # store items
         smach.StateMachine.add("STORE_GROCERIES",
@@ -102,5 +97,6 @@ def setup_statemachine(robot):
                                transitions={'spoken': 'Done'})
 
         ds.analyse_designators(state_machine, "manipulation")
+        states.utility.check_arm_requirements(state_machine, robot)
 
     return state_machine
