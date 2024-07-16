@@ -205,8 +205,8 @@ class ED(RobotPart):
         # Sort by distance
         try:
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(
-                self.tf_buffer.transform(center_point, self.robot_name+"/base_link", new_type=VectorStamped).vector),
-                              timeout=rospy.Duration(1.0))
+                self.tf_buffer.transform(center_point, self.robot_name+"/base_link", new_type=VectorStamped,
+                              timeout=rospy.Duration(1.0)).vector))
             # TODO: adjust for robot
         except Exception as e:
             rospy.logerr("Failed to sort entities: {}".format(e))
