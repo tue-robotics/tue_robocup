@@ -1,0 +1,37 @@
+context:
+  expressions:
+    declareName:
+      - (@greet) (@name_is) $name:name
+  slots:
+    name:
+      - emma
+      - fleur
+      - gabrielle
+      - harrie
+      - hayley
+      - jesse
+      - john
+      - julia
+      - kevin
+      - laura
+      - liam
+      - lucas
+      - noah
+      - peter
+      - robin
+      - sara
+      - sophie
+      - susan
+      - william
+  macros:
+    name_is:
+      - My name is
+      - I'm called
+      - I'm
+      - Its
+      - It is
+    greet:
+      - hello
+      - hey
+      - hi
+      - yo
