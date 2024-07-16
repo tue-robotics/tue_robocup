@@ -11,10 +11,10 @@ from robot_skills.get_robot import get_robot
 
 class TestArmToJointConfig(smach.StateMachine):
     """StateMachine used to test the ArmToJointConfig in robot_smach_states"""
-    def __init__(self, robot, configuration):
+    def __init__(self, robot, configuration: str) -> None:
         """
         :param robot: robot object used to test the arm (type:string)
-        :param configuartion: desired configuration for the arm to reach (type:string)
+        :param configuration: desired configuration for the arm to reach (type:string)
         """
         super().__init__(outcomes=["succeeded", "failed"])
         self.robot = robot
