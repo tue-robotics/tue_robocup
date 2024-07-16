@@ -12,7 +12,7 @@ from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
 from ..reset import ResetPart
-from ..utility import ResolveArm, check_arm_requirements, collect_arm_requirements
+from ..utility import ResolveArm, check_arm_requirements
 from ..util.designators import check_type, ArmDesignator, LockingDesignator
 
 
@@ -34,11 +34,6 @@ class ArmToJointConfig(smach.State):
         self.arm_designator: Union[ArmDesignator, LockingDesignator] = arm_designator
         self.REQUIRED_ARM_PROPERTIES = {'required_goals': [configuration]}
         self.configuration = configuration
-
-        if isinstance(self.arm_designator, LockingDesignator):
-            self.arm_designator.to_be_locked.arm_properties.update(collect_arm_requirements(self))
-        elif isinstance(self.arm_designator, ArmDesignator):
-            self.arm_designator.arm_properties.update(collect_arm_requirements(self))
 
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
