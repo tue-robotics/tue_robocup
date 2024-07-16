@@ -28,8 +28,8 @@ class HandleSingleGuest(smach.StateMachine):
 
         door_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_door['id'])
 
-        sofa_des = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])  # ToDo: Make it so that it looks at the center
-                                                                # of the sitting area
+        # ToDo: Make it so that it looks at the center of the sitting area
+        sofa_des = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])
 
         livingroom_waypoint = ds.EntityByIdDesignator(robot, uuid=challenge_knowledge.waypoint_livingroom['id'])
 
