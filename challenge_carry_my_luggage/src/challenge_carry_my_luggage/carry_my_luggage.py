@@ -94,7 +94,7 @@ class CarryMyLuggage(StateMachine):
             # Choice 1; Do no try to pick up the bag
             @cb_interface(outcomes=["done"])
             def move_to_custom_carry_pose(_):
-                p = [0.15, 0, -1.1, -1.37, 0]
+                p = [0.18, 0, -1.1, -1.37, 0]
                 # noinspection PyProtectedMember
                 self._arm._send_joint_trajectory([p], timeout=0)
                 self._arm.wait_for_motion_done()
