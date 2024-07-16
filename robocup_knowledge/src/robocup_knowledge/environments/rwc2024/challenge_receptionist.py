@@ -20,4 +20,4 @@ waypoint_livingroom = {"id": "receptionist_living_room", "radius": 0.2}
 
 sitting_room = "living_room"  # Where people will be guided to sit and the robot will find a seat
 
-seats = {"couch": ["on_top_of_sofa_left", "on_top_of_sofa_right"], "lounge_chair": ["on_top_of"]}
+seats = {"couch": ["on_top_of_couch_left", "on_top_of_couch_right"], "lounge_chair": ["on_top_of"]}
