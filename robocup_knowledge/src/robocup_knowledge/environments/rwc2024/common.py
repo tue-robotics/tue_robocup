@@ -1,5 +1,3 @@
-from robocup_knowledge.utils import *  # noqa: F401, F403
-
 female_names = sorted(["sophie", "julia", "emma", "sara", "laura", "hayley", "susan", "fleur", "gabrielle", "robin", "jesse", "noah"])
 male_names = sorted(["robin", "john", "liam", "lucas", "william", "kevin", "jesse", "noah", "harrie", "peter"])
 names = set(female_names)
