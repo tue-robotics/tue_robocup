@@ -9,10 +9,9 @@ starting_point = "initial_pose"
 
 # Detection
 shelf = "kitchen_cabinet"
-default_area = "shelf4"
+default_area = "shelf3"
 inspect_area = "in_front_of"
-object_shelves = ["shelf2", "shelf3", "shelf4"]  # TODO unused variable?
-object_types = [obj["name"] for obj in common.objects]  # TODO unused variable?
+place_areas = common.get_inspect_areas(shelf)
 
 # Grasping
 table = "dinner_table"
