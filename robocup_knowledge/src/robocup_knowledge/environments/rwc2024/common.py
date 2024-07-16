@@ -86,7 +86,7 @@ category_locations = {
 }
 
 inspect_areas = {
-    "kitchen_cabinet": ["shelf2", "shelf3"],
+    "kitchen_cabinet": ["shelf2", "shelf3", "shelf4"],
 }
 
 inspect_positions = {
@@ -108,3 +108,107 @@ inspect_positions = {
 drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
 for drink in [obj["name"] for obj in objects if obj["category"] == "drinks"]:
     drink_spec += "OPTIONS['{drink}'] -> {drink}\n".format(drink=drink)
+
+def is_location(location):
+    # global locations
+    for loc in locations:  # noqa: F821
+        if loc["name"] == location:
+            return True
+    return False
+
+
+def get_room(location):
+    # global locations
+    for loc in locations:  # noqa: F821
+        if loc["name"] == location:
+            return loc["room"]
+    return None
+
+
+def is_room(entity_id):
+    # global location_rooms
+    return entity_id in location_rooms  # noqa: F821
+
+
+def get_inspect_areas(location):
+    # global inspection_areas
+    if location in inspect_areas:  # noqa: F821
+        return inspect_areas[location]  # noqa: F821
+    else:
+        return ["on_top_of"]
+
+
+def get_inspect_position(location, area=""):
+    # global inspect_positions
+    if location in inspect_positions and area in inspect_positions[location]:  # noqa: F821
+        return inspect_positions[location][area]  # noqa: F821
+    else:
+        return "in_front_of"
+
+
+def is_manipulation_location(location):
+    # global locations
+    for loc in locations:  # noqa: F821
+        if loc["name"] == location and loc["manipulation"]:
+            return True
+    return False
+
+
+def get_locations(room=None, manipulation_location=None):
+    # global locations
+    return [loc["name"] for loc in locations  # noqa: F821
+                if (room is None or loc["room"] == room) and \
+                   (manipulation_location is None or manipulation_location == is_manipulation_location(loc["name"]))]
+
+
+def is_known_object(obj):
+    # global objects
+    for o in objects:  # noqa: F821
+        if o["name"] == obj:
+            return True
+    return False
+
+
+def get_objects(category=None):
+    # global objects
+    return [obj["name"] for obj in objects  # noqa: F821
+                if category is None or category == obj["category"]]
+
+
+def get_object_category(obj):
+    # global objects
+    for o in objects:  # noqa: F821
+        if o["name"] == obj:
+            return o["category"]
+    return None
+
+
+def get_object_color(obj):
+    # global objects
+    for o in objects:  # noqa: F821
+        if o["name"] == obj:
+            return o["color"]
+    return None
+
+
+def get_object_size(obj):
+    # global objects
+    for o in objects:  # noqa: F821
+        if o["name"] == obj:
+            return o["volume"]
+    return None
+
+
+def get_object_weight(obj):
+    # global objects
+    for o in objects:  # noqa: F821
+        if o["name"] == obj:
+            return o["weight"]
+    return None
+
+
+# Returns (location, area_name)
+def get_object_category_location(obj_cat):
+    # global category_locations
+    location, area_name = next(iter(category_locations[obj_cat].items()))  # noqa: F821
+    return location, area_name
