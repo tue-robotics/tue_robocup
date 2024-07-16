@@ -1,0 +1,142 @@
+context:
+  expressions:
+    find:
+      - "@find $people:person"
+      - "@find @a_person"
+      - "@find @a_person in the $locations:loc"
+      - "@find $people:person in the $locations:loc"
+    navigateTo:
+      - "[go to, navigate to] (the) $locations:loc"
+    pickup:
+      - "@grab (@article) $objects:obj from the $locations:loc"
+    place:
+      - "@place (@article) $objects:obj on the $locations:targetloc"
+      - "@bring (@article) $objects:obj from the $locations:sourceloc to the
+        $locations:targetloc"
+      - "@bring (@article) $objects:obj to the $locations:targetloc"
+    handover:
+      - "@bring $people:per (@article) $objects:obj"
+      - "@bring $people:per (@article) $objects:obj from the
+        $locations:sourceloc"
+      - "@bring (@article) $objects:obj to $people:per"
+      - "@bring (@article) $objects:obj from the $locations:sourceloc to
+        $people:per"
+    say:
+      - "[say, tell] $saySentence:sentence"
+      - $saySentence:sentence
+      - tell me $saySentence:sentence
+    present:
+      - "[present, introduce] yourself"
+      - tell us who you are
+  slots:
+    locations:
+      - bookshelf
+      - sofa
+      - side tables
+      - lamp
+      - storage rack
+      - tv stand
+      - waste basket
+      - armchair
+      - desk
+      - coatrack
+      - cabinet
+      - bed
+      - bedside table
+      - shelf
+      - trash bin
+      - dishwasher
+      - potted plant
+      - kitchen table
+      - pantry
+      - refrigerator
+      - sink
+    objects:
+      - sponge
+      - cleanser
+      - red_wine
+      - juice_pack
+      - cola
+      - tropical_juice
+      - milk
+      - iced_tea
+      - orange_juice
+      - tuna
+      - tomato_soup
+      - spam
+      - mustard
+      - strawberry_jello
+      - chocolate_jello
+      - coffee_grounds
+      - sugar
+      - pear
+      - plum
+      - peach
+      - lemon
+      - orange
+      - strawberry
+      - banana
+      - apple
+      - tennis_ball
+      - soccer_ball
+      - rubiks_cube
+      - dice
+      - baseball
+      - pringles
+      - cornflakes
+      - cheezit
+      - spoon
+      - plate
+      - cup
+      - fork
+      - bowl
+      - knife
+    people:
+      - simone
+      - robin
+      - paris
+      - morgan
+      - jules
+      - john
+      - jane
+      - charlie
+      - axel
+      - adel
+      - angel
+    saySentence:
+      - the time
+      - your teams country
+      - your team name
+      - your teams affiliation
+      - the day of the month
+      - the day of the week
+      - what day is today
+      - what day is tomorrow
+      - a joke
+      - something about yourself
+  macros:
+    bring:
+      - bring
+      - deliver
+      - take
+      - give
+    find:
+      - find
+      - locate
+      - look for
+    grab:
+      - grab
+      - get
+      - grasp
+      - pick up
+      - take
+    a_person:
+      - somebody
+      - a person
+      - someone
+    place:
+      - place
+      - put
+    article:
+      - a
+      - the

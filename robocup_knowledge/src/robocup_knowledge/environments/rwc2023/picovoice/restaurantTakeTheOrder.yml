@@ -1,0 +1,20 @@
+context:
+  expressions:
+    actOrWait:
+      - (@robot_name) (@please) $wait:wait
+      - (@robot_name) (@please) $take_the_order:take_the_order
+  slots:
+    take_the_order:
+      - go
+      - take it
+      - go for it
+      - go get it
+      - take the order
+    wait:
+      - hold
+      - wait
+  macros:
+    robot_name:
+      - hero
+    please:
+      - please
