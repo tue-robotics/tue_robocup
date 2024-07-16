@@ -253,14 +253,14 @@ def main():
     if not skip and not restart:
 
         # Wait for door, enter arena
-        s = StartChallengeRobust(robot, knowledge.initial_pose)
+        s = StartChallengeRobust(robot, knowledge.starting_point)
         s.execute()
 
         if not skip:
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              uuid=knowledge.starting_pose),
+                                                                              uuid=knowledge.instruction_point),
                                      radius=0.3)
             nwc.execute()
 
