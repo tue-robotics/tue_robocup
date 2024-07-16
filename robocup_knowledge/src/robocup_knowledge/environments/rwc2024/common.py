@@ -156,7 +156,7 @@ def get_locations(room=None, manipulation_location=None):
     # global locations
     return [loc["name"] for loc in locations  # noqa: F821
                 if (room is None or loc["room"] == room) and \
-                   (manipulation_location is None or manipulation_location == is_manipulation_location(loc["name"]))]
+                   (manipulation_location is None or manipulation_location == loc["manipulation"])]
 
 
 def is_known_object(obj):
