@@ -62,7 +62,7 @@ grammar += "\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]"
 for obj in common.object_names:
     grammar += "\nNAMED_OBJECT[{'type': '%s'}] -> %s" % (obj, obj)
 
-for loc in common.get_locations(manipulation=True):
+for loc in common.get_locations(manipulation_location=True):
     grammar += (
         '\nMANIPULATION_AREA_LOCATION[{"id": "%s"}] -> MANIPULATION_PP the %s'
         % (loc, loc)
