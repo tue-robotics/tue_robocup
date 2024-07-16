@@ -39,7 +39,7 @@ class StoreSingleItem(smach.StateMachine):
         # Create designators
         if not arm:
             arm = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp", "prepare_place"],
-                                                     "required_goals": ["carrying_pose"],
+                                                     "required_goals": ["carrying_pose", "handover_to_human", "reset"],
                                                      "required_gripper_types": [GripperTypes.GRASPING]},
                                              name="empty_arm_designator").lockable()
 
@@ -114,7 +114,7 @@ class StoreItems(smach.StateMachine):
                                                          name="place_near_designator")
 
         arm = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp", "prepare_place"],
-                                                 "required_goals": ["carrying_pose", "handover_to_human"],
+                                                 "required_goals": ["carrying_pose", "handover_to_human", "reset"],
                                                  "required_gripper_types": [GripperTypes.GRASPING]},
                                          name="empty_arm_designator").lockable()
         random_area_designator = ds.RandomDesignator(knowledge.place_areas, resolve_type=str, name="random_area_designator")
