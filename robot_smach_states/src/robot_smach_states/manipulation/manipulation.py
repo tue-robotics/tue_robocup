@@ -10,8 +10,8 @@ from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
 from ..reset import ResetPart
-from ..utility import ResolveArm, check_arm_requirements
-from ..util.designators import check_type, LockingDesignator
+from ..utility import ResolveArm, check_arm_requirements, collect_arm_requirements
+from ..util.designators import check_type, ArmDesignator
 
 
 class ArmToJointConfig(smach.State):
@@ -29,9 +29,11 @@ class ArmToJointConfig(smach.State):
 
         self.robot = robot
         check_type(arm_designator, PublicArm)
-        self.arm_designator = arm_designator
+        self.arm_designator: ArmDesignator = arm_designator
         self.REQUIRED_ARM_PROPERTIES = {'required_goals': [configuration]}
         self.configuration = configuration
+
+        self.arm_designator.arm_properties.update(collect_arm_requirements(self))
 
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()

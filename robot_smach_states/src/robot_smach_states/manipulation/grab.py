@@ -11,7 +11,7 @@ import tf2_ros
 from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
-from ..utility import check_arm_requirements, ResolveArm
+from robot_smach_states.utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
