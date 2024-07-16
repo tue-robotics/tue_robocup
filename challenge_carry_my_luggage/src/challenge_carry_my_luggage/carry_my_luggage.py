@@ -6,7 +6,7 @@ import robot_smach_states.util.designators as ds
 from ed.entity import Entity
 from ed.shape import RightPrism
 from pykdl_ros import FrameStamped
-from robocup_knowledge import load_knowledge
+# from robocup_knowledge import load_knowledge
 from robot_skills.arm import arms
 from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, Say
@@ -18,9 +18,9 @@ from smach import StateMachine, cb_interface, CBState
 
 import rospy
 
-challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
+# challenge_knowledge = load_knowledge("challenge_carry_my_luggage")
 
-STARTING_POINT = challenge_knowledge.starting_point
+# STARTING_POINT = challenge_knowledge.starting_point
 
 
 @cb_interface(outcomes=["done"])
@@ -70,7 +70,7 @@ class CarryMyLuggage(StateMachine):
                 "required_gripper_types": [arms.GripperTypes.GRASPING],
             },
         ).lockable()
-        self.waypoint_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
+        # self.waypoint_designator = ds.EntityByIdDesignator(robot, uuid=STARTING_POINT)
         # noinspection PyProtectedMember
         self._arm = robot.get_arm()._arm
 
@@ -294,7 +294,6 @@ class CarryMyLuggage(StateMachine):
 if __name__ == "__main__":
     from robot_skills import get_robot
     import sys
-    import rospy
 
     if len(sys.argv) < 2:
         print("Please provide robot name as argument.")
