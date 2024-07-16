@@ -30,6 +30,18 @@ context:
       - I'm
       - Its
       - It is
+      - I want to be called
+      - I would like to be called
+      - Call me
+      - You can call me
+      - You could call me
+      - Remember me as
+      - You can remember me as
+      - You could remember me as
+      - Refer to me as
+      - You can refer to me as
+      - You could refer to me as
+      - I want you to call me
     greet:
       - hello
       - hey
