@@ -80,7 +80,10 @@ def setup_statemachine(robot):
                                             'failed': 'Failed'})
 
         smach.StateMachine.add("RESET_ARM",
-                               states.manipulation.ArmToJointConfig(robot, ds.arm.ArmDesignator(robot), "reset"),
+                               states.manipulation.ArmToJointConfig(robot,
+                                                                    ds.arm.ArmDesignator(robot,
+                                                                                         {"required_goals": ["reset"]}),
+                                                                    "reset"),
                                transitions={'succeeded': 'STORE_GROCERIES',
                                             'failed': 'STORE_GROCERIES'})
 
