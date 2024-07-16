@@ -212,3 +212,6 @@ def get_object_category_location(obj_cat):
     # global category_locations
     location, area_name = next(iter(category_locations[obj_cat].items()))  # noqa: F821
     return location, area_name
+
+def object_names_of_category(category):
+    return [obj["name"] for obj in objects if obj["category"] == category]
