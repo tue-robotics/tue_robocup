@@ -1,0 +1,51 @@
+context:
+  expressions:
+    personName:
+      - (@intro) $names:name
+    drinks:
+      - (@reply) $drinks:drink
+  slots:
+    names:
+      - emma
+      - fleur
+      - gabrielle
+      - harrie
+      - hayley
+      - jesse
+      - john
+      - julia
+      - kevin
+      - laura
+      - liam
+      - lucas
+      - noah
+      - peter
+      - robin
+      - sara
+      - sophie
+      - susan
+      - william
+    drinks:
+      - cola
+      - ice tea
+      - water
+      - milk
+      - big coke
+      - fanta
+      - double fris
+  macros:
+    intro:
+      - I am
+      - My name is
+    reply:
+      - I would like an
+      - I would like a
+      - I want an
+      - I want a
+      - I want to have an
+      - I want to have a
+      - I want to drink an
+      - I want to drink a
+      - I would like to have an
+      - I would like to have a
+      - My favorite drink is
