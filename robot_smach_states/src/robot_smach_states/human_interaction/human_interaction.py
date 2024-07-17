@@ -662,6 +662,29 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
 
 
+class AskContinuePicoVoice(smach.StateMachine):
+    def __init__(self, robot, timeout=10, look_at_standing_person=True):
+        smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
+        answer = ds.VariableDesignator(resolve_type=HMIResult)
+        result = ds.VariableDesignator()
+        with self:
+            self.add("SAY",
+                    Say(robot,
+                        random.choice(["I will continue my task if you say continue.",
+                                        "Please say continue so that I can continue my task.",
+                                        "I will wait until you say continue."])),
+                    transitions={'spoken': 'HEAR'})
+
+            self.add("HEAR",
+                    HearOptionsExtraPicoVoice(robot, "yesOrNo", answer.writeable, timeout=timeout, look_at_standing_person=look_at_standing_person),
+                    transitions={"heard": "PROCESS_ANSWER",
+                                "no_result": "no_response"})
+
+            self.add("PROCESS_ANSWER",
+                     smach.CBState(process_answer, cb_args=["continue", answer, result.writeable]),
+                     transitions={"succeeded": "continue", "failed": "no_response"})
+
+
 if __name__ == "__main__":
     rospy.init_node('human_interaction_doctest')  # Needed to instantiate a Robot subclass
     import doctest
