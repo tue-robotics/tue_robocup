@@ -73,7 +73,7 @@ class FindEmptySeat(smach.StateMachine):
         with self:
             smach.StateMachine.add('SAY_LETS_FIND_SEAT',
                                    Say(robot,
-                                       ["Let me find a place for {name} to sit. Please be patient while I check "
+                                       ["Let me find a place for {name} to sit. {name}, please follow me and be patient while I check "
                                         "out where there's place to sit"],
                                        name=seat_is_for,
                                        block=False),

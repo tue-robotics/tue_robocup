@@ -140,8 +140,15 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('ITERATE_OLD_GUESTS',
                                    IterateDesignator(all_old_guests,
                                                      current_old_guest.writeable),
-                                   transitions={'next': 'GOTO_OPERATOR',
+                                   transitions={'next': 'SAY_STAY_BEHIND',
                                                 'stop_iteration': 'succeeded'})
+
+            smach.StateMachine.add('SAY_STAY_BEHIND',
+                                   Say(robot,
+                                       ["{name}, please follow me and stand behind me"],
+                                       name=guest_name_des,
+                                       block=True),
+                                   transitions={'spoken': 'GOTO_OPERATOR'})
 
             smach.StateMachine.add('GOTO_OPERATOR',
                                    NavigateToObserve(robot,
