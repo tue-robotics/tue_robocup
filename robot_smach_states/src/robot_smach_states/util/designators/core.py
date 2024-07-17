@@ -165,7 +165,7 @@ class VariableDesignator(Designator):
     """
 
     def __init__(self, initial_value=None, resolve_type=None, name=None):
-        if not resolve_type and not initial_value:
+        if resolve_type is None and initial_value is None:
             raise TypeError("VariableDesignator requires to set either initial_value or resolve_type to ensure user "
                             "can use it")
 
