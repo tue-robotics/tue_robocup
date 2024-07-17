@@ -666,7 +666,7 @@ class AskContinuePicoVoice(smach.StateMachine):
     def __init__(self, robot, timeout=10, look_at_standing_person=True):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
         answer = ds.VariableDesignator(resolve_type=HMIResult)
-        result = ds.VariableDesignator()
+        result = ds.VariableDesignator(resolve_type=str)
         with self:
             self.add("SAY",
                     Say(robot,
