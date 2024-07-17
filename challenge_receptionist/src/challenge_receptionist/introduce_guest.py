@@ -43,13 +43,18 @@ class SayForIntroduceGuest(smach.State):
             self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
                                                                               drink=challenge_knowledge.operator_drink))
         else:
-            if self._number_of_executions == 0:
-                self.robot.speech.speak("This is {name} who likes {drink}".format(name=ds.value_or_resolve(self.previous_guest_name_des),
-                                                                                  drink=ds.value_or_resolve(self.previous_guest_drink_des)))
-                self._number_of_executions += 1
-            else:
-                self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
-                                                                                  drink=challenge_knowledge.operator_drink))
+            self.robot.speech.speak(
+                "The other guest is {name} who likes {drink} and the operator is {name_operator} who liks {drink_operator}".format(name=ds.value_or_resolve(self.previous_guest_name_des),
+                                                          drink=ds.value_or_resolve(self.previous_guest_drink_des),
+                                                          name_operator = challenge_knowledge.operator_name,
+                                                          drink_operator = challenge_knowledge.operator_drink))
+            # if self._number_of_executions == 0:
+            #     self.robot.speech.speak("This is {name} who likes {drink}".format(name=ds.value_or_resolve(self.previous_guest_name_des),
+            #                                                                       drink=ds.value_or_resolve(self.previous_guest_drink_des)))
+            #     self._number_of_executions += 1
+            # else:
+            #     self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
+            #                                                                       drink=challenge_knowledge.operator_drink))
 
             # else:
             #     self.robot.speech.speak("Since I could not recognize the person who is already inside,"
