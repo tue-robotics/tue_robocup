@@ -643,7 +643,7 @@ class AskPersonNamePicoVoice(smach.StateMachine):
             )
             self.add(
                 "HEAR",
-                HearOptionsExtraPicoVoice(robot, "receptionist", answer.writeable, ["personName"]),
+                HearOptionsExtraPicoVoice(robot, "askPersonName", answer.writeable),
                 transitions={"heard": "PROCESS_ANSWER", "no_result": "CHECK_TRIES"},
             )
             self.add(
