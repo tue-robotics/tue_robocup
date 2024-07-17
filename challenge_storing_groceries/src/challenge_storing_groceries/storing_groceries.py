@@ -1,10 +1,10 @@
 # ROS
+import rospy
 import smach
 
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.util.geometry_helpers import *
 
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import CheckBool
@@ -89,7 +89,13 @@ def setup_statemachine(robot):
 
         # store items
         smach.StateMachine.add("STORE_GROCERIES",
-                               StoreItems(robot, table_des, shelf_des, objects_des, challenge_knowledge, room=table_room_des),
+                               StoreItems(robot,
+                                          table_des,
+                                          shelf_des,
+                                          objects_des,
+                                          challenge_knowledge,
+                                          source_room=table_room_des,
+                                          target_room=shelf_room_des),
                                transitions={'succeeded': 'AT_END',
                                             'preempted': 'Aborted',
                                             'failed': 'Failed'}

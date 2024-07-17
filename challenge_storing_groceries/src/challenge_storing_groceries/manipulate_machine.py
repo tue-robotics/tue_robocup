@@ -1,3 +1,5 @@
+from typing import Optional
+
 # ROS
 import rospy
 import smach
@@ -24,7 +26,7 @@ class StoreSingleItem(smach.StateMachine):
     Store a single item at another place
     """
 
-    def __init__(self, robot, item_designator, place_pose_designator, arm=None, room: Designator = None):
+    def __init__(self, robot, item_designator, place_pose_designator, arm=None, source_room: Optional[Designator[Entity]] = None, target_room: Optional[Designator[Entity]] = None):
         """
         Constructor
 
@@ -32,7 +34,8 @@ class StoreSingleItem(smach.StateMachine):
         :param item_designator:
         :param place_pose_designator: EdEntityDesignator designating the item to grab
         :param arm (optional): arm to use to store the item
-        :param room (optional): room to stay in while storing the item
+        :param source_room (optional): room to stay in while getting the item
+        :param target_room (optional): room to stay in while storing the item
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -50,7 +53,7 @@ class StoreSingleItem(smach.StateMachine):
                                    )
 
             smach.StateMachine.add("GRAB",
-                                   states.manipulation.Grab(robot, item_designator, arm, room),
+                                   states.manipulation.Grab(robot, item_designator, arm, source_room),
                                    transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
@@ -59,12 +62,13 @@ class StoreSingleItem(smach.StateMachine):
                                    states.manipulation.Place(robot,
                                                              item_designator,
                                                              place_pose_designator,
-                                                             arm),
+                                                             arm,
+                                                             room=target_room),
                                    transitions={'done': 'succeeded',
                                                 'failed': 'LOOK_AT_ROOM_CENTER'}
                                    )
 
-            smach.StateMachine.add("LOOK_AT_ROOM_CENTER", states.perception.RotateToEntity(robot, room, 0.75),
+            smach.StateMachine.add("LOOK_AT_ROOM_CENTER", states.perception.RotateToEntity(robot, source_room, 0.75),
                                    transitions={'succeeded': 'SAY_HANDOVER',
                                                 'failed': 'SAY_HANDOVER'})
 
@@ -88,7 +92,15 @@ class StoreItems(smach.StateMachine):
     Store a number of items from one place to another
     """
 
-    def __init__(self, robot, source_entity, target_entity, item_classifications, knowledge, room: Designator = None):
+    def __init__(self,
+                 robot,
+                 source_entity,
+                 target_entity,
+                 item_classifications,
+                 knowledge,
+                 source_room: Optional[Designator[Entity]] = None,
+                 target_room: Optional[Designator[Entity]] = None
+                 ):
         """
         Constructor
 
@@ -97,7 +109,8 @@ class StoreItems(smach.StateMachine):
         :param target_entity: EdEntityDesignator designating the target entity
         :param item_classifications: dict of item classifications
         :param knowledge: knowledge object
-        :param room (optional): room to stay in while storing the item
+        :param source_room (optional): room to stay in while getting the item
+        :param target_room (optional): room to stay in while storing the item
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "preempted"])
 
@@ -127,7 +140,7 @@ class StoreItems(smach.StateMachine):
                                                               segmented_entities_designator,
                                                               navigation_area=knowledge.inspect_area,
                                                               fit_supporting_entity=False,
-                                                              room=room),
+                                                              room=target_room),
                                    transitions={'done': 'SELECT_CLOSEST_ENTITY',
                                                 'failed': 'failed'})
 
@@ -209,7 +222,11 @@ class StoreItems(smach.StateMachine):
                                    transitions={"spoken": "STORE_ANYWHERE"})
 
             smach.StateMachine.add('STORE_NEAR_ITEM',
-                                   StoreSingleItem(robot, closest_item_designator, place_near_designator, room=room),
+                                   StoreSingleItem(robot,
+                                                   closest_item_designator,
+                                                   place_near_designator,
+                                                   source_room=source_room,
+                                                   target_room=target_room),
                                    transitions={'succeeded': 'INSPECT',
                                                 'failed': 'INSPECT'}
                                    )
@@ -228,7 +245,8 @@ class StoreItems(smach.StateMachine):
                                                    closest_item_designator,
                                                    place_anywhere_designator,
                                                    arm,
-                                                   room=room),
+                                                   source_room=source_room,
+                                                   target_room=target_room),
                                    transitions={'succeeded': 'INSPECT',
                                                 'failed': 'ADD_ITEM_TO_BLACKLIST'}
                                    )
