@@ -198,8 +198,14 @@ class OpenDoorMachine(smach.StateMachine):
 
             smach.StateMachine.add("UPDATE_CABINET_POSE",
                                    UpdateCabinetPose(robot, shelf_designator, cabinet_inspect_area),
-                                   transitions={'succeeded': 'OPEN_DOOR',
+                                   transitions={'succeeded': 'SAY_OPEN_DOOR',
                                                 'failed': 'failed'})
+
+            smach.StateMachine.add("SAY_OPEN_DOOR",
+                                   states.human_interaction.Say(robot,
+                                                                "I will now try to open the left door of the cabinet",
+                                                                block=False),
+                                   transitions={'spoken': 'OPEN_DOOR'})
 
             smach.StateMachine.add("OPEN_DOOR",
                                    OpenDoor(robot, shelf_designator),
