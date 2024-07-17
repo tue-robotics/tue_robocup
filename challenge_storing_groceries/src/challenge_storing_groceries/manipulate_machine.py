@@ -177,8 +177,36 @@ class StoreItems(smach.StateMachine):
 
             smach.StateMachine.add("CHECK_SIMILAR_ITEM",
                                    smach.CBState(check_similar_item),
-                                   transitions={"item_found": "STORE_NEAR_ITEM",
-                                                "no_similar_item": "STORE_ANYWHERE"})
+                                   transitions={"item_found": "SAY_NEAR_ITEM",
+                                                "no_similar_item": "SAY_ANYWHERE"})
+
+            smach.StateMachine.add("SAY_NEAR_ITEM",
+                                   states.human_interaction.Say(
+                                       robot,
+                                       "I am going to place the {object_name} next to the {similar_object_name}",
+                                       object_name=ds.AttrDesignator(closest_item_designator,
+                                                                     resolve_type=str,
+                                                                     attribute="etype"),
+                                       similar_object_name=ds.AttrDesignator(near_object_designator,
+                                                                             resolve_type=str,
+                                                                             attribute="etype"),
+                                       block=True
+                                   ),
+                                   transitions={"spoken": "STORE_NEAR_ITEM"})
+
+            smach.StateMachine.add("SAY_ANYWHERE",
+                                   states.human_interaction.Say(
+                                       robot,
+                                       "I am going to place the {object_name} at a free spot in the {target_name}",
+                                       object_name=ds.AttrDesignator(closest_item_designator,
+                                                                     resolve_type=str,
+                                                                     attribute="etype"),
+                                       target_name=ds.AttrDesignator(target_entity,
+                                                                     resolve_type=str,
+                                                                     attribute="uuid"),
+                                       block=True
+                                   ),
+                                   transitions={"spoken": "STORE_ANYWHERE"})
 
             smach.StateMachine.add('STORE_NEAR_ITEM',
                                    StoreSingleItem(robot, closest_item_designator, place_near_designator, room=room),
