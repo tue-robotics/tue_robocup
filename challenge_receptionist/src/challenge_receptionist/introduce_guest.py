@@ -119,7 +119,6 @@ class IntroduceGuest(smach.StateMachine):
                                    transitions={"found": "CHECK_NUM_PEOPLE",
                                                 "failed": "CHECK_NUM_PEOPLE"})
 
-
             @cb_interface(outcomes=["incorrect", "correct", "continue"])
             def check_num_people(ud=None):
                 check_correct_num_people = all_old_guests.resolve()
