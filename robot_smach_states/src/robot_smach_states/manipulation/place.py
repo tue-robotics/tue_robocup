@@ -151,7 +151,7 @@ class Put(smach.State):
 class Place(smach.StateMachine):
 
     def __init__(self, robot: Robot, item_to_place: Designator[Entity], place_pose: Union[Designator[str], Designator[Entity], str], arm: Designator[PublicArm],
-                 place_volume: Optional[str] = None) -> None:
+                 place_volume: Optional[str] = None, room: Optional[Designator[Entity]] = None) -> None:
         """
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
         item there
@@ -166,6 +166,7 @@ class Place(smach.StateMachine):
             ArmHoldingEntityDesignator
         :param place_volume: (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
             'shelf3'
+        :param room: (optional) Designator -> room where the object should be placed
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -190,7 +191,7 @@ class Place(smach.StateMachine):
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
                                                    arm_designator=arm, area=place_area)
         # Case 1
-        elif place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped:
+        elif place_pose.resolve_type == FrameStamped or isinstance(place_pose, FrameStamped):
             furniture_designator = None
             place_designator = place_pose
         # Case 2
@@ -218,7 +219,7 @@ class Place(smach.StateMachine):
             smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
                                    transitions={'locked': 'NAVIGATE_TO_PLACE'})
 
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm, room=room),
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
                                                 'arrived': 'PUT'})
