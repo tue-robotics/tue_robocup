@@ -41,7 +41,7 @@ from challenge_clean_the_table.knowledge import (
 from challenge_clean_the_table.util import item_vector_to_item_frame, item_vector_to_item_frame_2d, item_frame_to_pose
 from robot_skills import get_robot
 from robot_skills.simulation.sim_mode import is_sim_mode
-from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, AskContinue, Say
+from robot_smach_states.human_interaction import AskYesNo, AskYesNoPicoVoice, AskContinue, AskContinuePicoVoice, Say
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlToPose, ControlParameters
 from robot_smach_states.util.designators import EdEntityDesignator
@@ -222,8 +222,12 @@ class OpenDishwasher(StateMachine):
                      Say(robot, "Please open the door fully and let me know when I should continue"),
                      transitions={"spoken": "DOOR_CONTINUE"})
 
-            self.add("DOOR_CONTINUE", AskContinue(robot, timeout=20),
-                     transitions={"continue": "PULL_RACK_PREPARE", "no_response": "PULL_RACK_PREPARE"})
+            if is_sim_mode():
+                self.add("DOOR_CONTINUE", AskContinue(robot, timeout=20),
+                        transitions={"continue": "PULL_RACK_PREPARE", "no_response": "PULL_RACK_PREPARE"})
+            else:
+                self.add("DOOR_CONTINUE", AskContinuePicoVoice(robot, timeout=20),
+                        transitions={"continue": "PULL_RACK_PREPARE", "no_response": "PULL_RACK_PREPARE"})
 
             self.add("PULL_RACK_PREPARE", CBState(_pull_rack_prepare), transitions={"done": "PULL_RACK"})
             self.add("PULL_RACK", CBState(_pull_rack), transitions={"done": "SAY_RACK_CORRECT"})
@@ -244,8 +248,12 @@ class OpenDishwasher(StateMachine):
                      Say(robot, "Please pull out the rack fully and let me know when I should continue"),
                      transitions={"spoken": "RACK_CONTINUE"})
 
-            self.add("RACK_CONTINUE", AskContinue(robot, timeout=20),
-                     transitions={"continue": "succeeded", "no_response": "succeeded"})
+            if is_sim_mode():
+                self.add("RACK_CONTINUE", AskContinue(robot, timeout=20),
+                        transitions={"continue": "succeeded", "no_response": "succeeded"})
+            else:
+                self.add("RACK_CONTINUE", AskContinuePicoVoice(robot, timeout=20),
+                        transitions={"continue": "succeeded", "no_response": "succeeded"})
 
 
 class NavigateToAndOpenDishwasher(StateMachine):
