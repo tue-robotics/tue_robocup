@@ -10,6 +10,8 @@ import rospy
 
 from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER
 from robot_skills import get_robot
+from robot_skills.arm.arms import GripperTypes
+
 # ROS
 from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
@@ -110,7 +112,7 @@ class PickItem(StateMachine):
                      transitions={"succeeded": "CHECK_PICK_SUCCESSFUL", "failed": "failed"})
             self.add("CHECK_PICK_SUCCESSFUL",
                      ActiveGraspDetector(robot, armdes),
-                     transitions={'true': "ADD_MM_TO_LIST",
+                     transitions={'true': "ADD_ITEM_TO_LIST",
                                   'false': "SAY_SOMETHING_WENT_WRONG",
                                   'failed': "failed",
                                   'cannot_determine': "SAY_SOMETHING_WENT_WRONG"}
