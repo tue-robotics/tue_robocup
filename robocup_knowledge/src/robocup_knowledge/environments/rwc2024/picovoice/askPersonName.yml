@@ -42,6 +42,12 @@ context:
       - You can refer to me as
       - You could refer to me as
       - I want you to call me
+      - I want you to refer to me as
+      - I want you to remember me as
+      - I would like you to call me
+      - I would like you to refer to me as
+      - I would like you to remember me as
+      - I go by
     greet:
       - hello
       - hey
