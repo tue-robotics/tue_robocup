@@ -11,6 +11,8 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EdEntityDesignator
 from robot_smach_states.world_model import UpdateEntityPose
 from robot_smach_states.utility import WaitTime
+from smach import cb_interface, CBState
+
 from smach import State, StateMachine
 from .navigate_to_and_pick_item import NavigateToAndPickItem, NavigateToSymbolic
 from .navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
@@ -52,12 +54,24 @@ class CheckIfWeHaveItAll(State):
 def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
-    pick_id = "closet"
+    pick_id_dishes = "dishwasher"
+    pick_id_drink = "kitchen_cabinet"
+    pick_id_food = "kitchen_counter"
     pick_area_id = "in_front_of"
     place_id = "dinner_table"
     place_area_id = "in_front_of"
     exit_id = "starting_pose"
     table_des = EdEntityDesignator(robot=robot, uuid=place_id)
+
+    @cb_interface(outcomes=["pick_drink", "pick_food", "pick_other"], input_keys=["item_picked"])
+    def determine_next_pick(userdata):
+        rospy.loginfo("Item Picked: {}".format(userdata.item_picked))
+        if userdata["item_picked"] == "bowl":
+            return "pick_drink"
+        elif userdata["item_picked"] == "milk_carton":
+            return "pick_food"
+        else:
+            return "pick_other"
 
     with state_machine:
         # Intro
@@ -97,17 +111,37 @@ def setup_statemachine(robot):
                 "Lets serve some breakfast baby! I will be asking for some fast handovers.",
                 block=False,
             ),
-            transitions={"spoken": "NAVIGATE_AND_PICK_ITEM"},
+            transitions={"spoken": "DETERMINE_NEXT_PICK"},
         )
+
         StateMachine.add(
-            "NAVIGATE_AND_PICK_ITEM",
-            NavigateToAndPickItem(robot, pick_id, pick_area_id),
+            "DETERMINE_NEXT_PICK",
+            CBState(determine_next_pick, input_keys=["item_picked"]),
+            transitions={"pick_drink": "NAVIGATE_AND_PICK_DRINK", "pick_food": "NAVIGATE_AND_PICK_FOOD",
+                         "pick_other": "NAVIGATE_AND_PICK_DISHES"},
+        )
+
+        StateMachine.add(
+            "NAVIGATE_AND_PICK_DRINK",
+            NavigateToAndPickItem(robot, pick_id_drink, pick_area_id),
+            transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
+        )
+
+        StateMachine.add(
+            "NAVIGATE_AND_PICK_FOOD",
+            NavigateToAndPickItem(robot, pick_id_food, pick_area_id),
+            transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
+        )
+
+        StateMachine.add(
+            "NAVIGATE_AND_PICK_DISHES",
+            NavigateToAndPickItem(robot, pick_id_dishes, pick_area_id),
             transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
         )
 
         StateMachine.add(
             "NAVIGATE_AND_PICK_ITEM_FAILED", WaitTime(robot, 2),
-            transitions={"waited": "NAVIGATE_AND_PICK_ITEM", "preempted": "GOODBYE"}
+            transitions={"waited": "DETERMINE_NEXT_PICK", "preempted": "GOODBYE"}
         )
 
         StateMachine.add(
@@ -123,7 +157,7 @@ def setup_statemachine(robot):
         StateMachine.add(
             "CHECK_IF_WE_HAVE_IT_ALL",
             CheckIfWeHaveItAll(robot),
-            transitions={"we_have_it_all": "PICK_POUR_PLACE_CEREAL", "keep_going": "NAVIGATE_AND_PICK_ITEM"},
+            transitions={"we_have_it_all": "PICK_POUR_PLACE_CEREAL", "keep_going": "DETERMINE_NEXT_PICK"},
         )
 
         # Outro
@@ -157,3 +191,4 @@ def setup_statemachine(robot):
         )
 
     return state_machine
+

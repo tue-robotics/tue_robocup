@@ -28,13 +28,12 @@ item_img_dict = {
     "milk_carton": "images/milk_carton.jpg",
 }
 
-
+picked_items = []
 class PickItem(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], output_keys=["item_picked"])
         # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
-        picked_items = []
         armdes = ArmDesignator(robot, {"required_gripper_types": [GripperTypes.GRASPING]})
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
