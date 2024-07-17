@@ -9,6 +9,7 @@ from ed.entity import Entity
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.util.designators import LockingDesignator
+from robot_smach_states.utility import CheckTries, WriteDesignator
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.world_model import CheckVolumeEmpty
 from robot_smach_states.reset import ResetArms
@@ -54,7 +55,7 @@ class FindEmptySeat(smach.StateMachine):
     If there are none, then the seat is empty
     """
 
-    def __init__(self, robot, seats_to_inspect: dict, room, fit_supporting_entity=False, seat_is_for=None):
+    def __init__(self, robot, seats_to_inspect: dict, room, fit_supporting_entity=False, seat_is_for=None, max_tries: int = 3):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats_volumes_des = ds.VariableDesignator(seats_to_inspect)
@@ -64,6 +65,8 @@ class FindEmptySeat(smach.StateMachine):
         volumes_des = ds.ValueByKeyDesignator(seats_volumes_des, seat_ent_uuid_des, resolve_type=[str],
                                               name="volumes_des")
         volume_des = ds.VariableDesignator(resolve_type=str)
+
+        reset_des = ds.VariableDesignator(initial_value=False, name="reset_des").writeable
 
         if seat_is_for:
             ds.check_type(seat_is_for, str)
@@ -89,15 +92,23 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('ITERATE_NEXT_VOLUME',
                                    IterateDesignator(volumes_des, volume_des.writeable),
-                                   transitions={'next': 'CHECK_SEAT_EMPTY',
+                                   transitions={'next': 'RESET_TRIES',
                                                 'stop_iteration': 'ITERATE_NEXT_SEAT'})
+
+            smach.StateMachine.add('RESET_TRIES',
+                                   WriteDesignator(reset_des, True),
+                                   transitions={'written': 'CHECK_TRIES'})
+
+            smach.StateMachine.add('CHECK_TRIES',
+                                   CheckTries(max_tries=max_tries, reset_des=reset_des),
+                                   transitions={"not_yet": "CHECK_SEAT_EMPTY", "max_tries": "ITERATE_NEXT_VOLUME"})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
                                    CheckVolumeEmpty(robot, seat_ent_des, volume_des, 0.6, None),
                                    transitions={'occupied': 'ITERATE_NEXT_VOLUME',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
-                                                'failed': 'ITERATE_NEXT_VOLUME'})
+                                                'failed': 'CHECK_TRIES'})
 
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
                                    PointAtReception(robot=robot,
