@@ -180,7 +180,9 @@ if __name__ == "__main__":
                 smach.StateMachine.add('LEARN_GUEST',
                                        LearnGuest(robot, self.door_waypoint, self.guest1_entity_des,
                                                   self.guest1_name_des,
-                                                  self.guest1_drink_des),
+                                                  self.guest1_drink_des,
+                                                  "john",
+                                                  "beer"),
                                        transitions={'succeeded': 'succeeded',
                                                     'failed': 'failed',
                                                     'aborted': 'aborted'})
