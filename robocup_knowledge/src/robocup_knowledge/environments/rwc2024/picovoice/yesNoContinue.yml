@@ -1,0 +1,18 @@
+context:
+  expressions:
+    getResponse:
+      - "[$yes:yes, $no:no, $continue:continue ]"
+  slots:
+    yes:
+      - ya
+      - yeah
+      - yes
+    no:
+      - ne
+      - nee
+      - naa
+      - nah
+      - negative
+      - no
+    continue:
+      - continue
