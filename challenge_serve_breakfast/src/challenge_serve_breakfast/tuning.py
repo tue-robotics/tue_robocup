@@ -20,7 +20,7 @@ BREAKFAST_POSE = PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, math.pi), PyKDL.Vector(0.7
 
 # vectors of the items with respect to the breakfast frame
 ITEM_VECTOR_DICT = {
-    "spoon": PyKDL.Vector(0.0, -0.125, 0),
+    "spoon": PyKDL.Vector(0.0, -0.15, 0),
     "bowl": PyKDL.Vector(0.0, 0.0, 0),
     "milk_carton": PyKDL.Vector(-0.05, 0.15, 0),
     "cereal_box": PyKDL.Vector(0.0, -0.25, 0),
@@ -28,16 +28,16 @@ ITEM_VECTOR_DICT = {
 
 # frame indicating the pose of the hand with respect to the vector in ITEM_VECTOR_DICT
 ITEM_OFFSET_DICT = {
-    "spoon": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0.5*math.pi, 0), PyKDL.Vector(0.0, 0.0, 0.1)),
+    "spoon": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0.5*math.pi, 0), PyKDL.Vector(0.0, 0.0, 0.15)),
     "bowl": PyKDL.Frame(PyKDL.Rotation.RPY(0.5*math.pi, 0.25*math.pi, 0.0), PyKDL.Vector(-0.08, 0.0, 0.07)),
     "milk_carton": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.07)),
-    "cereal_box": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.07)),
+    "cereal_box": PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, 0.0, 0.05)),
 }
 
 POUR_OFFSET_DICT = {
-    "bowl": [PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, -0.12, 0.20)),
-             PyKDL.Frame(PyKDL.Rotation.RPY(-0.5*math.pi, 0, 0), PyKDL.Vector(0.0, -0.12, 0.20)),
-             PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.0, -0.12, 0.20))]
+    "bowl": [PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.16, -0.12, 0.20)),
+             PyKDL.Frame(PyKDL.Rotation.RPY(-0.5*math.pi, 0, 0), PyKDL.Vector(0.16, -0.12, 0.20)),
+             PyKDL.Frame(PyKDL.Rotation.RPY(0, 0, 0), PyKDL.Vector(0.16, -0.12, 0.20))]
 }
 
 COLOR_DICT = {

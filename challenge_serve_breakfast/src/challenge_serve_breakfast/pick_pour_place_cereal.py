@@ -30,7 +30,7 @@ class PickPourPlaceCereal(StateMachine):
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
-        def send_gripper_goal(open_close_string, max_torque=0.1, wait_for_motion_done=True):
+        def send_gripper_goal(open_close_string, max_torque=0.3, wait_for_motion_done=True):
             arm.gripper.send_goal(open_close_string, max_torque=max_torque)
 
         def send_goal(pose_goal, wait_for_motion_done=True):
