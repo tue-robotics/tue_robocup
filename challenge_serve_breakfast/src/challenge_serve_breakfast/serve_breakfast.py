@@ -80,7 +80,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
-            StartChallengeRobust(robot, "test_pose_serve_breakfast"),
+            StartChallengeRobust(robot, "initial_pose_serve_breakfast"),
             transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "GOODBYE", "Failed": "NAVIGATE_TO_TABLE"},
         )
         #Main loop
