@@ -18,8 +18,7 @@ from .navigate_to_and_pick_item import NavigateToAndPickItem, NavigateToSymbolic
 from .navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
 from .pick_pour_place_cereal import PickPourPlaceCereal
 from .tuning import REQUIRED_ITEMS
-
-
+from robocup_knowledge import load_knowledge
 class CheckIfWeHaveItAll(State):
     def __init__(self, robot, max_iterations=10):
         State.__init__(self, outcomes=["we_have_it_all", "keep_going"], input_keys=["item_picked"])
@@ -78,7 +77,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
-            StartChallengeRobust(robot, "initial_pose"),
+            StartChallengeRobust(robot, "initial_pose_serve_breakfast"),
             transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "GOODBYE", "Failed": "NAVIGATE_TO_TABLE"},
         )
         #Main loop
@@ -98,7 +97,7 @@ def setup_statemachine(robot):
             "SAY_OPERATOR_WHERE_TO_STAND",
             Say(
                 robot,
-                "Operator, please stand at the RIGHT of the dishwasher",
+                "Operator I'm unable to grab the objects I need your assistance in this, please stand at the RIGHT of the dishwasher",
                 block=False,
             ),
             transitions={"spoken": "SAY_START"},
@@ -117,14 +116,34 @@ def setup_statemachine(robot):
         StateMachine.add(
             "DETERMINE_NEXT_PICK",
             CBState(determine_next_pick, input_keys=["item_picked"]),
-            transitions={"pick_drink": "NAVIGATE_AND_PICK_DRINK", "pick_food": "NAVIGATE_AND_PICK_FOOD",
+            transitions={"pick_drink": "SAY_OPERATOR_WHERE_TO_STAND_FOR_DRINK", "pick_food": "SAY_OPERATOR_WHERE_TO_STAND_FOR_FOOD",
                          "pick_other": "NAVIGATE_AND_PICK_DISHES"},
+        )
+
+        StateMachine.add(
+            "SAY_OPERATOR_WHERE_TO_STAND_FOR_DRINK",
+            Say(
+                robot,
+                "Operator, please stand at the LEFT of the kitchen cabinet",
+                block=False,
+            ),
+            transitions={"spoken": "NAVIGATE_AND_PICK_DRINK"},
         )
 
         StateMachine.add(
             "NAVIGATE_AND_PICK_DRINK",
             NavigateToAndPickItem(robot, pick_id_drink, pick_area_id),
             transitions={"succeeded": "PLACE_ITEM_ON_TABLE", "failed": "NAVIGATE_AND_PICK_ITEM_FAILED"},
+        )
+
+        StateMachine.add(
+            "SAY_OPERATOR_WHERE_TO_STAND_FOR_FOOD",
+            Say(
+                robot,
+                "Operator, please stand at the RIGHT of the kitchen counter",
+                block=False,
+            ),
+            transitions={"spoken": "NAVIGATE_AND_PICK_FOOD"},
         )
 
         StateMachine.add(
