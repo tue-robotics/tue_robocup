@@ -106,7 +106,7 @@ class FollowOperator(smach.State):
         self._max_replan_attempts: int = 3
         self._update_period: float = update_period
 
-    def _operator_standing_still_for_x_seconds(self, timeout, cartesian_limit: float = 0.15):
+    def _operator_standing_still_for_x_seconds(self, timeout, cartesian_limit: float = 0.25):
         """
         Check whether the operator is standing still for X seconds
 
