@@ -31,34 +31,34 @@ class SticklerForRules(smach.StateMachine):
                                                 'error': 'SAY_START'})
             smach.StateMachine.add(
                 "SAY_START", Say(robot, "Party police! Party police!. I'm coming.", block=False),
-                transitions={"spoken": "GO_TO_BEDROOM"},
+                transitions={"spoken": "GO_TO_OFFICE"},
             )
 
             # Main loop
             # TODO make a proper loop over waypoints (AFTER ROBOCUP)
-            smach.StateMachine.add('GO_TO_BEDROOM',
-                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2])),
+            smach.StateMachine.add('GO_TO_OFFICE',
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3])),
                                    transitions={'done': 'GO_TO_KITCHEN'})
 
             smach.StateMachine.add('GO_TO_KITCHEN',
-                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2])),
                                    transitions={'done': 'GO_TO_LIVING_ROOM'})
 
             smach.StateMachine.add('GO_TO_LIVING_ROOM',
-                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0])),
-                                   transitions={'done': 'GO_TO_STUDY'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
+                                   transitions={'done': 'GO_TO_HALLWAY'})
 
-            smach.StateMachine.add('GO_TO_STUDY',
-                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[3])),
+            smach.StateMachine.add('GO_TO_HALLWAY',
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0])),
                                    transitions={'done': 'GO_TO_LIVING_ROOM_AGAIN'})
 
             smach.StateMachine.add('GO_TO_LIVING_ROOM_AGAIN',
-                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[0])),
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
                                    transitions={'done': 'GO_TO_KITCHEN_AGAIN'})
 
             smach.StateMachine.add('GO_TO_KITCHEN_AGAIN',
-                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[1])),
-                                   transitions={'done': 'GO_TO_BEDROOM'})
+                                   Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_ids[2])),
+                                   transitions={'done': 'GO_TO_OFFICE'})
 
 
             # Outro
