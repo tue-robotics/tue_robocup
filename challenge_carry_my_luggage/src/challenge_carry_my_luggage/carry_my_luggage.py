@@ -108,7 +108,7 @@ class CarryMyLuggage(StateMachine):
                 "ASK_BAG_HANDOVER",
                 Say(
                     self.robot,
-                    ["I am unable to pick up the bag, please put it in my gripper"],
+                    ["I am unable to pick up the bag, please put it around my finger"],
                     block=True,
                     look_at_standing_person=True,
                 ),
