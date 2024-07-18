@@ -6,7 +6,7 @@ from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoin
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.human_interaction.human_interaction import WaitForPersonInFront, AskPersonName, AskPersonNamePicoVoice, LearnPerson, HearOptionsExtra, HearOptionsExtraPicoVoice
 from robot_smach_states.reset import ResetArms
-from robot_smach_states.utility import CheckTries
+from robot_smach_states.utility import CheckTries, WriteDesignator
 
 import robot_smach_states.util.designators as ds
 import smach
@@ -45,6 +45,7 @@ class LearnGuest(smach.StateMachine):
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
         reset_des = ds.VariableDesignator(resolve_type=bool).writeable
+        reset_learn_des = ds.VariableDesignator(False, resolve_type=bool).writeable
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
@@ -98,12 +99,22 @@ class LearnGuest(smach.StateMachine):
                                        name=guest_name_des,
                                        block=False,
                                        look_at_standing_person=True),
-                                   transitions={'spoken': 'LEARN_PERSON'})
+                                   transitions={'spoken': 'RESET_TRIES_LEARN'})
+
+            smach.StateMachine.add('RESET_TRIES_LEARN',
+                                   WriteDesignator(reset_learn_des, True),
+                                   transitions={"written": "CHECK_TRIES_LEARN"})
+
+            smach.StateMachine.add("CHECK_TRIES_LEARN",
+                                   CheckTries(max_tries=3, reset_des=reset_learn_des),
+                                   transitions={"not_yet": "LEARN_PERSON",
+                                                "max_tries": "SAY_FAILED_LEARNING"}
+                                   )
 
             smach.StateMachine.add('LEARN_PERSON',
                                    LearnPerson(robot, name_designator=guest_name_des),
                                    transitions={'succeeded': 'SAY_GUEST_LEARNED',
-                                                'failed': 'SAY_FAILED_LEARNING'})
+                                                'failed': 'CHECK_TRIES_LEARN'})
 
             smach.StateMachine.add('SAY_FAILED_LEARNING',
                                    Say(robot, ["Not sure if I remember you, but I'll do my best"],
