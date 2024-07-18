@@ -143,7 +143,7 @@ class ConversationEngineWithHmi(ConversationEngine):
 
         self.wait_to_be_called()
 
-        self.robot.speech.speak("Please state your command clearly into the microphone after the ping!.", block=True)
+        self.robot.speech.speak("Please state your command into the microphone or show QR code.", block=True)
 
         while not rospy.is_shutdown():
             try:
