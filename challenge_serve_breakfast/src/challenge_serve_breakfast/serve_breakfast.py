@@ -53,9 +53,12 @@ class CheckIfWeHaveItAll(State):
 def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
-    pick_id_dishes = "dishwasher"
-    pick_id_drink = "kitchen_cabinet"
-    pick_id_food = "kitchen_counter"
+    # pick_id_dishes = "dishwasher"
+    # pick_id_drink = "kitchen_cabinet"
+    # pick_id_food = "kitchen_counter"
+    pick_id_dishes = "dinner_table"
+    pick_id_drink = "dinner_table"
+    pick_id_food = "dinner_table"
     pick_area_id = "in_front_of"
     place_id = "dinner_table"
     place_area_id = "in_front_of"
@@ -77,7 +80,7 @@ def setup_statemachine(robot):
 
         StateMachine.add(
             "START_CHALLENGE_ROBUST",
-            StartChallengeRobust(robot, "initial_pose_serve_breakfast"),
+            StartChallengeRobust(robot, "test_pose_serve_breakfast"),
             transitions={"Done": "NAVIGATE_TO_TABLE", "Aborted": "GOODBYE", "Failed": "NAVIGATE_TO_TABLE"},
         )
         #Main loop
