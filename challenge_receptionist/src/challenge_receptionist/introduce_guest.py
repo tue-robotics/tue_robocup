@@ -31,13 +31,11 @@ class SayForIntroduceGuest(smach.State):
         self.guest_name_des = guest_name_des
         self.guest_drinkname_des = guest_drinkname_des
         self._number_of_executions = 0
-        ds.is_writeable(previous_guest_name_des)
-        ds.is_writeable(previous_guest_drink_des)
         self.previous_guest_name_des = previous_guest_name_des
         self.previous_guest_drink_des = previous_guest_drink_des
 
     def execute(self, userdata=None):
-        if self.assume_john:
+        if not ds.value_or_resolve(self.assume_john):
             self.previous_guest_drink_des.write(ds.value_or_resolve(self.guest_drinkname_des))
             self.previous_guest_name_des.write(ds.value_or_resolve(self.guest_name_des))
             self.robot.speech.speak("This is {name} who likes {drink}".format(name=challenge_knowledge.operator_name,
@@ -95,6 +93,7 @@ class IntroduceGuest(smach.StateMachine):
 
         room_designator = ds.EntityByIdDesignator(robot=robot, uuid=challenge_knowledge.sitting_room)
 
+        other_guest_name = ds.VariableDesignator("", name="other_guest_name")
 
         # For each person:
         #   0. Go to the person (old guest)
@@ -115,31 +114,32 @@ class IntroduceGuest(smach.StateMachine):
                                               query_entity_designator=room_designator,
                                               found_people_designator=all_old_guests.writeable,
                                               look_distance=3.0,
-                                              speak=True),
-                                   transitions={"found": "CHECK_NUM_PEOPLE",
-                                                "failed": "CHECK_NUM_PEOPLE"})
+                                              speak=True,
+                                              properties={"id": other_guest_name}),
+                                   transitions={"found": "ITERATE_OLD_GUESTS",
+                                                "failed": "FIND_OLD_GUESTS"})
 
-            @cb_interface(outcomes=["incorrect", "correct", "continue"])
-            def check_num_people(ud=None):
-                check_correct_num_people = all_old_guests.resolve()
-                self.num_tries += 1
-                if self.num_tries > 2:
-                    return "continue"
-
-                if check_correct_num_people:
-                    if len(check_correct_num_people) == 1 and assume_john:
-                        self.num_tries = 0
-                        return "correct"
-
-                    if len(check_correct_num_people) == 2 and not assume_john:
-                        return "correct"
-
-                return "incorrect"
-
-            smach.StateMachine.add("CHECK_NUM_PEOPLE", CBState(check_num_people),
-                                   transitions={"correct": "ITERATE_OLD_GUESTS",
-                                                "incorrect": "FIND_OLD_GUESTS",
-                                                "continue": "ITERATE_OLD_GUESTS"})
+            # @cb_interface(outcomes=["incorrect", "correct", "continue"])
+            # def check_num_people(ud=None):
+            #     check_correct_num_people = all_old_guests.resolve()
+            #     self.num_tries += 1
+            #     if self.num_tries > 2:
+            #         return "continue"
+            #
+            #     if check_correct_num_people:
+            #         if len(check_correct_num_people) == 1 and assume_john:
+            #             self.num_tries = 0
+            #             return "correct"
+            #
+            #         if len(check_correct_num_people) == 2 and not assume_john:
+            #             return "correct"
+            #
+            #     return "incorrect"
+            #
+            # smach.StateMachine.add("CHECK_NUM_PEOPLE", CBState(check_num_people),
+            #                        transitions={"correct": "ITERATE_OLD_GUESTS",
+            #                                     "incorrect": "FIND_OLD_GUESTS",
+            #                                     "continue": "ITERATE_OLD_GUESTS"})
 
             smach.StateMachine.add('ITERATE_OLD_GUESTS',
                                    IterateDesignator(all_old_guests,
@@ -154,20 +154,33 @@ class IntroduceGuest(smach.StateMachine):
                                        block=True),
                                    transitions={'spoken': 'GOTO_OPERATOR'})
 
-            smach.StateMachine.add('GOTO_OPERATOR',
+            smach.StateMachine.add('GOTO_OPERATOR',  # OR the guest
                                    NavigateToObserve(robot,
                                                      current_old_guest,
                                                             radius=1.0,
                                                             margin=1.0, # Makes the robot go within 2m of current_old_guest
                                                             speak=False),
-                                   transitions={'arrived': 'SAY_LOOK_AT_GUEST',
-                                                'unreachable': 'SAY_LOOK_AT_GUEST',
-                                                'goal_not_defined': 'SAY_LOOK_AT_GUEST'})
+                                   transitions={'arrived': 'WRITE_GUEST_NAME',
+                                                'unreachable': 'WRITE_GUEST_NAME',
+                                                'goal_not_defined': 'WRITE_GUEST_NAME'})
+
+            @cb_interface(outcomes=["done"])
+            def write_guest_name(ud=None):
+                if not current_old_guest.resolve():
+                    other_guest_name.writeable.write(challenge_knowledge.operator_name)
+                else:
+                    other_guest_name.writeable.write(ds.AttrDesignator(current_old_guest, "id"))
+
+                return "done"
+
+            smach.StateMachine.add("WRITE_GUEST_NAME",
+                                    CBState(write_guest_name),
+                                    transitions={"done": "SAY_LOOK_AT_GUEST"})
 
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
                                    Say(robot,
                                        ["Hi {name}, let me show you our guest"],
-                                        name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator(""),
+                                        name=other_guest_name,
                                         block=True),
                                    transitions={'spoken': 'INTRODUCE_GUEST_WITHOUT_POINTING'})
 
@@ -222,13 +235,25 @@ class IntroduceGuest(smach.StateMachine):
                                     transitions={"done": "SAY_FOR_INTRODUCE_GUEST"})
 
             smach.StateMachine.add('SAY_FOR_INTRODUCE_GUEST',
-                                   SayForIntroduceGuest(robot, current_old_guest, guest_name_des, guest_drinkname_des, assume_john, previous_guest_name_des.writeable,
-                                                        previous_guest_drink_des.writeable),
+                                   SayForIntroduceGuest(robot, current_old_guest, guest_name_des, guest_drinkname_des, other_guest_name, previous_guest_name_des,
+                                                        previous_guest_drink_des),
                                    transitions={'done': 'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
                                    ResetArms(robot),
-                                   transitions={'done': 'succeeded' if assume_john else 'ITERATE_OLD_GUESTS'})
+                                   transitions={'done': 'CHECK_OTHER_GUEST'})
+
+            @cb_interface(outcomes=["other_guest", "done"])
+            def check_other_guest(ud=None):
+                if not other_guest_name.resolve():
+                    other_guest_name.writeable.write(previous_guest_name_des.resolve())
+                    return "other_guest"
+                return "done"
+
+            smach.StateMachine.add("CHECK_OTHER_GUEST", CBState(check_other_guest),
+                                   transitions={"other_guest": "ITERATE_OLD_GUESTS",
+                                                "done": "succeeded"})
+
 
 if __name__ == "__main__":
     import sys

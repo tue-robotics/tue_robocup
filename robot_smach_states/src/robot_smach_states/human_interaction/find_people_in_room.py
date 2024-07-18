@@ -111,7 +111,7 @@ class FindPeople(smach.State):
         if self._properties:
             try:
                 person_label = self._properties["id"]
-                ds.check_type(person_label, "str")
+                ds.check_type(person_label, str)
                 person_label = person_label.resolve() if hasattr(person_label, 'resolve') else person_label
 
                 rospy.loginfo("Trying to find {}".format(person_label))
