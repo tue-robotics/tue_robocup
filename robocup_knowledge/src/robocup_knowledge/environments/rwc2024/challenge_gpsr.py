@@ -45,7 +45,7 @@ V_GUIDE -> guide | escort | take | lead | accompany | conduct
 PPN_OBJECT -> it | them
 PPN_PERSON -> him | her | them
 
-DET -> the
+DET -> the | a | an
 NUMBER -> one | two | three
 MEETING_PP -> at | in
 MANIPULATION_PP -> on
