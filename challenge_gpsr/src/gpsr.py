@@ -56,10 +56,10 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.finished = rospy.get_time() - self.start_time > (60 * self.time_limit - 45) and self.tasks_done >= 1
 
         if not self.skip and not self.finished:
-            self.robot.speech.speak("Moving to the meeting point.", block=False)
+            self.robot.speech.speak("Moving to the instruction point.", block=False)
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
-                                                                              uuid=self.knowledge.starting_pose),
+                                                                              uuid=self.knowledge.instruction_point),
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
