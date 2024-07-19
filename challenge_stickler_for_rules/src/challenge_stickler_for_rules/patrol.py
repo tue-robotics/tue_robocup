@@ -316,8 +316,14 @@ class CheckForLitter(smach.StateMachine):
 
             smach.StateMachine.add("FILTER_LITTER",
                                    CBState(filter_litter),
-                                   transitions={"done": "SAY_LITTER_FOUND",
-                                                "failed": "SAY_NO_LITTER"})
+                                   transitions={"done": "SHOW_LITTER_IMAGE",
+                                                "failed": "ITERATE_VOLUMES"})
+
+
+            smach.StateMachine.add("SHOW_LITTER_IMAGE",
+                                   ShowImageArray(robot, image_des),
+                                   transitions={"succeeded": "SAY_LITTER_FOUND",
+                                                "failed": "SAY_LITTER_FOUND"})
 
             smach.StateMachine.add("SAY_LITTER_FOUND",
                                    Say(robot, "I have found litter on the floor. I will pick it up", block=True),
