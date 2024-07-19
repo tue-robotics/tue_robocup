@@ -6,6 +6,7 @@ import numpy as np
 import rospkg
 
 from robot_skills.simulation.sim_mode import is_sim_mode
+from robot_smach_states.navigation import NavigateWiggle
 from robot_smach_states.utility import CheckTries, WriteDesignator
 import robot_smach_states.util.designators as ds
 import robot_smach_states as states
@@ -69,7 +70,11 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('STORE_KITCHEN',
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
-                                   transitions={'done': 'WAIT_FOR_CUSTOMER'})
+                                   transitions={'done': 'MAPPING'})
+
+            smach.StateMachine.add("MAPPING",
+                                   NavigateWiggle(robot=robot, duration=15, angle=1.25, speak=False),
+                                   transitions={"done": "WAIT_FOR_CUSTOMER"})
 
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    states.human_interaction.FindFirstPerson(
