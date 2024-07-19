@@ -1,0 +1,79 @@
+context:
+  expressions:
+    order:
+      - (@greet) (@likeWant) (a) $item:item1
+      - (@greet) (@likeWant) (a) $item:item1 and (@likeWant) (a) $item:item2
+      - (@greet) (@likeWant) (a) $item:item1 (@likeWant) (a) $item:item2 and
+        (@likeWant) (a) $item:item3
+  slots:
+    item:
+      - apple
+      - banana
+      - big coke
+      - candy
+      - cola
+      - cornflakes
+      - crisps
+      - curry
+      - double fris
+      - fanta
+      - hagel slag
+      - ice tea
+      - lemon
+      - liquorice
+      - mayonnaise
+      - milk
+      - orange
+      - pancake mix
+      - pea soup
+      - peach
+      - pear
+      - plum
+      - pringles
+      - sausages
+      - strawberry
+      - stroop waffle
+      - tictac
+      - water
+  macros:
+    greet:
+      - yo
+      - hi
+      - hey
+      - hello
+    likeWant:
+      - I would love
+      - I love to have
+      - I would love to have
+      - I wanna
+      - I would like to eat
+      - I would like to drink
+      - I want to drink
+      - I want to eat
+      - Get me
+      - Please get me
+      - Please bring me
+      - Can I order
+      - I want to order
+      - Can I place an order for
+      - I would like to order
+      - Bring me
+      - Can you bring me
+      - Can you please bring me
+      - Could you bring me
+      - Could you please bring me
+      - Can you get me
+      - Can you please get me
+      - Could you get me
+      - Could you please get me
+      - I like
+      - I prefer
+      - I want
+      - I want to have
+      - I would like
+      - I would like to have
+      - Could I please have
+      - Can I have
+      - Can I please have
+    robot:
+      - hero
