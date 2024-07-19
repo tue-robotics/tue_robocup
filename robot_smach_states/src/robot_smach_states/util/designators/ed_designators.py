@@ -11,8 +11,9 @@ import rospy
 # TU/e Robotics
 from ed.entity import Entity
 from pykdl_ros import VectorStamped
+from robot_smach_states.util.designators import value_or_resolve
 from .core import Designator
-from .checks import check_resolve_type
+from .checks import check_resolve_type, check_type
 
 
 __author__ = 'loy'
@@ -207,11 +208,13 @@ class EntityByIdDesignator(Designator):
         :param name: Name of the designator for introspection purposes
         """
         super(EntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
+        check_type(uuid, str)
         self.ed = robot.ed
         self.uuid = uuid
 
     def _resolve(self):
-        entities = self.ed.get_entities(uuid=self.uuid)
+        uuid = value_or_resolve(self.uuid)
+        entities = self.ed.get_entities(uuid=uuid)
         if entities:
             return entities[0]
         else:
