@@ -245,7 +245,15 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('BRING_OBJECTS',
                                    states.navigation.NavigateToObserve(
                                        robot=robot, entity_designator=customer_designator,
-                                       radius=1.1),
+                                       radius=0.5),
+                                   transitions={'arrived': 'SAY_OBJECTS',
+                                                'unreachable': 'BRING_OBJECTS_FALLBACK',
+                                                'goal_not_defined': 'RETURN_TO_START'})
+
+            smach.StateMachine.add('BRING_OBJECTS_FALLBACK',
+                                   states.navigation.NavigateToObserve(
+                                       robot=robot, entity_designator=customer_designator,
+                                       radius=0.8),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_BRING_OBJECTS_FALLBACK',
                                                 'goal_not_defined': 'RETURN_TO_START'})
@@ -256,9 +264,9 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('TURN_AROUND_BRING_OBJECTS_FALLBACK',
                                    states.navigation.ForceDrive(robot, 0, 0, V_TH, (2 * math.pi) / V_TH),
-                                   transitions={'done': 'BRING_OBJECTS_FALLBACK'})
+                                   transitions={'done': 'BRING_OBJECTS_FALLBACK2'})
 
-            smach.StateMachine.add('BRING_OBJECTS_FALLBACK',
+            smach.StateMachine.add('BRING_OBJECTS_FALLBACK2',
                                    states.navigation.NavigateToObserve(
                                        robot=robot, entity_designator=customer_designator,
                                        radius=1.1),
