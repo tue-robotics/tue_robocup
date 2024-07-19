@@ -9,11 +9,13 @@ from math import pi
 import smach
 
 from ed.entity import Entity
+from robot_skills.classification_result import ClassificationResult
 from robot_skills.simulation import is_sim_mode
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic, GuideToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity, GiveDirections, AskYesNo, AskYesNoPicoVoice
 from robot_smach_states.utility import CheckTries, WriteDesignator
+from robot_smach_states.world_model.world_model import SegmentObjects
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitTime
 from smach import cb_interface, CBState
@@ -50,7 +52,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
-                                look_range=(pi*0.2, -pi*0.15),
+                                look_range=(-pi*0.15, pi*0.2),
                                 look_steps=4,
                                 search_timeout=25),
                 transitions={"found": "GOTO_PERSON", "failed": "done"}
@@ -134,7 +136,9 @@ class CheckForDrinks(smach.StateMachine):
                                                    reverse=False,
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room_des,
-                                                   search_timeout=25),
+                                                   search_timeout=25,
+                                                   look_range=(-pi*0.35, pi*0.35),
+                                                   look_steps=5),
                                    transitions={"found": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
 
@@ -243,6 +247,44 @@ class CheckForDrinks(smach.StateMachine):
                                    transitions={"spoken": "done"})
 
 
+class CheckForLitter(smach.StateMachine):
+    def __init__(self, robot, room_des):
+        smach.StateMachine.__init__(self, outcomes=["done"])
+
+        detected_litter = ds.VariableDesignator([], resolve_type=[ClassificationResult], name="detected_litter")
+        litter_item = ds.VariableDesignator(resolve_type=Entity, name="litter_item")
+
+        with self:
+            smach.StateMachine.add(
+                "FIND_LITTER",
+                SegmentObjects(robot, detected_litter.writeable, room_des, "on_top_of"),
+                transitions={"done": "FILTER_LITTER"}
+            )
+
+            @smach.cb_interface(outcomes=["done", "failed"])
+            def filter_litter(userdata=None):
+                detected_litter_items = detected_litter.resolve()
+                for item in detected_litter_items:
+                    if hasattr(item, "uuid") and item.uuid:
+                        litter_item.writeable.write(item)
+                        return "done"
+
+                return "failed"
+
+            smach.StateMachine.add("FILTER_LITTER",
+                                   CBState(filter_litter),
+                                   transitions={"done": "SAY_LITTER_FOUND",
+                                                "failed": "SAY_NO_LITTER"})
+
+            smach.StateMachine.add("SAY_LITTER_FOUND",
+                                   Say(robot, "I have found litter on the floor. I will pick it up", block=True),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("SAY_NO_LITTER",
+                                   Say(robot, "I have not found any litter on the floor", block=True),
+                                   transitions={"spoken": "done"})
+
+
 class Patrol(smach.StateMachine):
     def __init__(self, robot, room_des):
         """
@@ -280,7 +322,11 @@ class Patrol(smach.StateMachine):
 
             smach.StateMachine.add("CHECK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
                                    transitions={"yes": "CHECK_PEOPLE_IN_FORBIDDEN_ROOM",
-                                                "no": "SAY_PEOPLE_WITHOUT_DRINKS"})
+                                                "no": "CHECK_FOR_LITTER"})
+
+            smach.StateMachine.add("CHECK_FOR_LITTER",
+                                   CheckForLitter(robot, room_des),
+                                   transitions={"done": "SAY_PEOPLE_WITHOUT_DRINKS"})
 
             smach.StateMachine.add("CHECK_PEOPLE_IN_FORBIDDEN_ROOM",
                                    CheckPeopleInForbiddenRoom(robot_name=robot, room_des=room_des),
@@ -290,6 +336,7 @@ class Patrol(smach.StateMachine):
                                    Say(robot, "I'm Trying to find people without a drink",
                                        block=True),
                                    transitions={"spoken": "CHECK_FOR_DRINKS"})
+
             smach.StateMachine.add("CHECK_FOR_DRINKS",
-                                   CheckForDrinks(robot_name=robot, room_des=room_des),
+                                   CheckForDrinks(robot, room_des),
                                    transitions={"done": "done"})
