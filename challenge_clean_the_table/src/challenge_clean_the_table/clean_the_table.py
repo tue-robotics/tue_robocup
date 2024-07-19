@@ -11,7 +11,7 @@ from robot_smach_states.utility import WaitTime, CheckBool
 from smach import State, StateMachine
 from .knowledge import ITEMS
 from .navigate_to_and_open_dishwasher import NavigateToAndOpenDishwasher
-from .navigate_to_and_pick_item import NavigateToAndPickItem
+from .navigate_to_and_pick_item import NavigateToAndPickItem, NavigateToPickSpot
 from .navigate_to_and_place_item_in_dishwasher_rack import NavigateToAndPlaceItemInDishwasherRack
 
 
@@ -50,7 +50,7 @@ def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
 
-    skip_door = rospy.get_param("~skip_door", False)
+    skip_door = rospy.get_param("~skip_door", True)
 
     with state_machine:
         # Intro
@@ -64,7 +64,19 @@ def setup_statemachine(robot):
         StateMachine.add(
             "SAY_START",
             Say(robot, f"Lets cleanup the table baby!", block=False),
-            transitions={"spoken": "SKIP_DOOR"},
+            transitions={"spoken": "NAVIGATE_TO_PICK_SPOT"},
+        )
+
+        StateMachine.add(
+            "NAVIGATE_TO_PICK_SPOT",
+            NavigateToPickSpot(robot),
+            transitions={"succeeded": "SKIP_DOOR", "failed": "NAVIGATE_TO_PICK_SPOT_FAILED"},
+        )
+
+        StateMachine.add(
+            "NAVIGATE_TO_PICK_SPOT_FAILED",
+            WaitTime(robot, 2),
+            transitions={"waited": "NAVIGATE_TO_PICK_SPOT", "preempted": "done"},
         )
 
         StateMachine.add(

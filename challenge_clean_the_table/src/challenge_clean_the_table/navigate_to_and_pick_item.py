@@ -125,6 +125,27 @@ class NavigateToAndPickItem(StateMachine):
             StateMachine.add("PICK_ITEM", PickItem(robot), transitions={"succeeded": "succeeded", "failed": "failed"})
 
 
+class NavigateToPickSpot(StateMachine):
+    def __init__(self, robot):
+        StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        pick = EdEntityDesignator(robot=robot, uuid=PICK_ID)
+
+        with self:
+            StateMachine.add(
+                "NAVIGATE_TO_PICK",
+                NavigateToSymbolic(robot, {pick: PICK_AREA_ID}, pick),
+                transitions={"arrived": "succeeded", "unreachable": "NAVIGATE_TO_PICK_FAILED",
+                             "goal_not_defined": "failed"},
+            )
+
+            StateMachine.add(
+                "NAVIGATE_TO_PICK_FAILED",
+                ForceDrive(robot, 0.0, 0, 0.5, math.pi / 0.5),
+                transitions={"done": "NAVIGATE_TO_PICK"},
+            )
+
+
 if __name__ == "__main__":
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     robot_instance = get_robot("hero")
