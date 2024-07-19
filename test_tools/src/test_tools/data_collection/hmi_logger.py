@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 # import pyaudio
 # import wave
 import json
