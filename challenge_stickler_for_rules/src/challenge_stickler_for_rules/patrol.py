@@ -4,6 +4,9 @@ Module contains states to patrol the environment while navigating to a goal.
 from __future__ import absolute_import
 
 from math import pi
+from typing import List, Optional
+
+import rospy
 
 # ROS
 import smach
@@ -251,22 +254,39 @@ class CheckForLitter(smach.StateMachine):
     def __init__(self, robot, room_des):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
-        detected_litter = ds.VariableDesignator([], resolve_type=[ClassificationResult], name="detected_litter")
-        litter_item = ds.VariableDesignator(resolve_type=Entity, name="litter_item")
+        detected_litter: ds.Designator[List[ClassificationResult]] = ds.VariableDesignator([], resolve_type=[ClassificationResult], name="detected_litter")
+        litter_item: ds.Designator[Entity] = ds.VariableDesignator(resolve_type=Entity, name="litter_item")
 
         with self:
             smach.StateMachine.add(
                 "FIND_LITTER",
-                SegmentObjects(robot, detected_litter.writeable, room_des, "on_top_of"),
+                SegmentObjects(robot, detected_litter.writeable, room_des, segmentation_area="on_top_of", fit_supporting_entity=False),
                 transitions={"done": "FILTER_LITTER"}
             )
 
             @smach.cb_interface(outcomes=["done", "failed"])
             def filter_litter(userdata=None):
                 detected_litter_items = detected_litter.resolve()
+                item: ClassificationResult
                 for item in detected_litter_items:
                     if hasattr(item, "uuid") and item.uuid:
-                        litter_item.writeable.write(item)
+                        e: Optional[Entity] = robot.ed.get_entity(item.uuid)
+                        if e is None:
+                            rospy.logerr(f"Could not find entity with uuid {item.uuid}")
+                            continue
+
+                        x_size = e.shape.x_max - e.shape.x_min
+                        y_size = e.shape.y_max - e.shape.y_min
+                        z_size = e.shape.z_max - e.shape.z_min
+
+                        max_dim = max(x_size, y_size, z_size)
+                        if max_dim > 0.2:
+                            rospy.loginfo(f"Dropping litter item {item.uuid} because it is too big ({x_size}, {y_size}, {z_size})")
+                            continue
+
+                        rospy.loginfo(f"Found litter: {item.uuid}, {item.etype}")
+
+                        litter_item.writeable.write(e)
                         return "done"
 
                 return "failed"
