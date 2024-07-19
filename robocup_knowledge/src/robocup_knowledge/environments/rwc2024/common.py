@@ -38,7 +38,7 @@ objects = [
     {"name": "milk", "category": "drinks"},
     {"name": "big_coke", "category": "drinks"},
     {"name": "fanta", "category": "drinks"},
-    {"name": "double_fris", "category": "drinks"},
+    {"name": "dubbelfris", "category": "drinks"},
     {"name": "cornflakes", "category": "food"},
     {"name": "pea_soup", "category": "food"},
     {"name": "curry", "category": "food"},
