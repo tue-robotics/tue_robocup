@@ -1,4 +1,5 @@
 # System
+import os
 import time
 
 # ROS
@@ -220,6 +221,17 @@ class SegmentObjects(smach.State):
         else:
             rospy.logwarn(">> Tried to segment but no objects found")
             self.segmented_entity_ids_designator.write([])
+
+        try:
+            now = time.time()
+            path = "/home/amigo/MEGA/data/rwc2024/training_data/raw"
+            for f in os.listdir(path):
+                filename = os.path.join(path, f)
+                if os.stat(filename).st_mtime > now - 20:
+                    if os.path.isfile(filename):
+                        self.robot.hmi.show_image(filename, 5)
+        except:
+            pass
 
         # Cancel the head goal
         self.robot.head.cancel_goal()
