@@ -41,7 +41,7 @@ class TakeOrder(smach.State):
         self._entity_designator = entity_designator
         self._orders = orders
         self.number_of_tries = 0
-        self._max_tries = 2
+        self._max_tries = 3
 
     def _confirm(self):
         try:
