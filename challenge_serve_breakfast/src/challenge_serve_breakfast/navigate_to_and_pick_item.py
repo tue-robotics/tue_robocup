@@ -17,6 +17,7 @@ from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
 
+from robot_smach_states.utility import WaitTime
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 from robot_smach_states.util import designators as ds
@@ -157,7 +158,12 @@ class NavigateToAndPickItem(StateMachine):
 
             StateMachine.add('SEGMENT',
                                    SegmentObjects(robot, objectIDsDes.writeable, pick_spot, "on_top_of"),
-                                   transitions={'done': 'PICK_ITEM'})
+                                   transitions={'done': 'WAIT'})
+
+            StateMachine.add("WAIT",
+                                   WaitTime(robot, waittime=5),
+                                   transitions={"waited": "PICK_ITEM",
+                                                "preempted": "PICK_ITEM"})
 
             StateMachine.add("PICK_ITEM", PickItem(robot), transitions={"succeeded": "succeeded", "failed": "failed"})
 
