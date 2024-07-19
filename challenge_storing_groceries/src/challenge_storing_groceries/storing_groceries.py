@@ -105,7 +105,7 @@ def setup_statemachine(robot):
                                states.human_interaction.Say(robot, "Goodbye"),
                                transitions={'spoken': 'Done'})
 
-        ds.analyse_designators(state_machine, "manipulation")
+        # ds.analyse_designators(state_machine, "manipulation")
         states.utility.check_arm_requirements(state_machine, robot)
 
     return state_machine
