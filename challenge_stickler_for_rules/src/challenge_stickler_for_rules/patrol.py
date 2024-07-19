@@ -66,7 +66,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 NavigateToObserve(robot,
                                   violating_person,
                                   room=room,
-                                  radius=1.0,
+                                  radius=0.8,
                                   margin=0.2),
                 transitions={"arrived": "SAY_BEHAVE",
                              "unreachable": "SAY_BEHAVE",
@@ -77,7 +77,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 "SAY_BEHAVE",
                 Say(robot,
                     "You are breaking the forbidden room house rule. I'll leave you 10 seconds to leave this room",
-                    block=False),
+                    block=False,
+                    look_at_standing_person=True),
                 transitions={"spoken": "WAIT"},
             )
 
@@ -140,7 +141,7 @@ class CheckForDrinks(smach.StateMachine):
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room_des,
                                                    search_timeout=25,
-                                                   look_range=(-pi*0.35, pi*0.35),
+                                                   look_range=(-pi*0.45, pi*0.45),
                                                    look_steps=5),
                                    transitions={"found": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
@@ -168,7 +169,10 @@ class CheckForDrinks(smach.StateMachine):
                                                    strict=False,
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room_des,
-                                                   search_timeout=15),
+                                                   search_timeout=15,
+                                                   look_range=(-pi * 0.45, pi * 0.45),
+                                                   look_steps=5
+                                                   ),
                                    transitions={"found": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
                                    Say(robot=robot,
@@ -186,7 +190,8 @@ class CheckForDrinks(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
                                    NavigateToObserve(robot=robot, entity_designator=found_person,
-                                                     radius=1),
+                                                     radius=0.8,
+                                                     margin=0.2),
                                    transitions={"arrived": "SAY_BREAKING_RULE",
                                                 "unreachable": "SAY_NOT_REACHABLE",
                                                 "goal_not_defined": "SAY_NOT_REACHABLE"})
