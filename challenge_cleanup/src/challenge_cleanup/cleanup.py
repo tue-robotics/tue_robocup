@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 
 """ This challenge is described in the RoboCup@Home 2019 rulebook, around page 48.
 
