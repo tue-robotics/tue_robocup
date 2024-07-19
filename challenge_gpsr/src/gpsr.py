@@ -35,6 +35,9 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.tasks_to_be_done = 0
         self.tasks_done = 0
         self.finished = False
+
+        self.skip_speech = False
+
         self.start_time = rospy.get_time()
 
         self._tc_fuckup_time = 6.0  # The TC usually needs some time to get in position and out the way of the robot
@@ -143,27 +146,34 @@ class ConversationEngineWithHmi(ConversationEngine):
 
         self.wait_to_be_called()
 
-        self.robot.speech.speak("Please state your command into the microphone or show QR code.", block=True)
-
         while not rospy.is_shutdown():
+            self.robot.speech.speak("Please state your command into the microphone or show QR code.", block=True)
+
             try:
-                sentence, semantics = self.robot.hmi.query(description="",
-                                                           grammar=grammar,
-                                                           target=target)
-                if not self.is_text_valid_input(sentence):
-                    self._say_to_user("I don't understand what you're saying, please try again.")
-                    continue
+                sentence, _ = self.robot.hmi.query(description="",
+                                                   grammar=grammar,
+                                                   target=target)
 
                 self.timeout_count = 0
                 correct = True
                 if not self.test:
                     correct = self.heard_correct(sentence)
 
-                if correct:
-                    # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
-                    self.user_to_robot_text(sentence)
-                    rospy.sleep(self._tc_fuckup_time)
-                    break
+                if not correct:
+                    continue
+
+                if not self.is_text_valid_input(sentence):
+                    if self.skip_speech:
+                        self._say_to_user("Sorry! I don't know how to process your request. Please try again.")
+                        continue
+                    else:
+                        self._say_to_user("I don't understand what you're saying, please try again.")
+                        continue
+
+                # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
+                self.user_to_robot_text(sentence)
+                rospy.sleep(self._tc_fuckup_time)
+                break
             except hmi.TimeoutException as e:
                 rospy.logwarn("HMI failed when getting command: {}" .format(e))
                 self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
@@ -234,6 +244,7 @@ def main():
     no_of_tasks = rospy.get_param('~number_of_tasks', 999)
     test        = rospy.get_param('~test_mode', False)
     time_limit  = rospy.get_param('~time_limit', 999)
+    skip_speech = rospy.get_param('~skip_speech', True)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
@@ -256,6 +267,7 @@ def main():
     conversation_engine.skip = skip
     conversation_engine.tasks_to_be_done = no_of_tasks
     conversation_engine.time_limit = time_limit
+    conversation_engine.skip_speech = skip_speech
 
     if not skip and not restart:
 
