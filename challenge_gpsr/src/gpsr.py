@@ -14,6 +14,7 @@ import hmi
 from conversation_engine import ConversationEngine
 from robocup_knowledge import load_knowledge
 from robot_skills import get_robot
+from robot_skills.simulation.sim_mode import is_sim_mode
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
@@ -55,10 +56,10 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.finished = rospy.get_time() - self.start_time > (60 * self.time_limit - 45) and self.tasks_done >= 1
 
         if not self.skip and not self.finished:
-            self.robot.speech.speak("Moving to the meeting point.", block=False)
+            self.robot.speech.speak("Moving to the instruction point.", block=False)
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
-                                                                              uuid=self.knowledge.starting_pose),
+                                                                              uuid=self.knowledge.instruction_point),
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
@@ -142,7 +143,7 @@ class ConversationEngineWithHmi(ConversationEngine):
 
         self.wait_to_be_called()
 
-        self.robot.speech.speak("Please state your command clearly into the microphone after the ping!.", block=True)
+        self.robot.speech.speak("Please state your command into the microphone or show QR code.", block=True)
 
         while not rospy.is_shutdown():
             try:
@@ -193,15 +194,21 @@ class ConversationEngineWithHmi(ConversationEngine):
     def heard_correct(self, sentence):
         self.robot.speech.speak('I heard %s, is this correct? Please speak loudly into the microphone!' % sentence)
         try:
-            if 'no' == self.robot.hmi.query('', 'T -> yes | no', 'T').sentence:
-                self.robot.speech.speak('Sorry, please try again')
-                return False
+            if is_sim_mode():
+                answer = self.robot.hmi.query("", "T -> yes | no", "T")
             else:
+                answer = self.robot.picovoice.get_intent("yesOrNo")
+
+        except hmi.TimeoutException as e:
+            rospy.logwarn("HMI failed when getting confirmation: {}".format(e))
+            return True
+        else:
+            if (is_sim_mode() and answer.sentence == "yes") or (not is_sim_mode() and "yes" in answer.semantics):
                 rospy.loginfo("'{}' was correct".format(sentence))
                 return True
-        except hmi.TimeoutException as e:
-            rospy.logwarn("HMI failed when getting confirmation: {}" .format(e))
-            return True
+            else:
+                self.robot.speech.speak('Sorry, please try again')
+                return False
 
 
 def task_result_to_report(task_result):

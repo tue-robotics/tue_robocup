@@ -7,7 +7,7 @@ import rospy
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.startup import StartChallengeRobust
-from robot_smach_states.utility import WaitTime
+from robot_smach_states.utility import WaitTime, CheckBool
 from smach import State, StateMachine
 from .knowledge import ITEMS
 from .navigate_to_and_open_dishwasher import NavigateToAndOpenDishwasher
@@ -50,6 +50,8 @@ def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=["done"])
     state_machine.userdata["item_picked"] = None
 
+    skip_door = rospy.get_param("~skip_door", False)
+
     with state_machine:
         # Intro
 
@@ -62,7 +64,16 @@ def setup_statemachine(robot):
         StateMachine.add(
             "SAY_START",
             Say(robot, f"Lets cleanup the table baby!", block=False),
-            transitions={"spoken": "NAVIGATE_TO_AND_OPEN_DISHWASHER"},
+            transitions={"spoken": "SKIP_DOOR"},
+        )
+
+        StateMachine.add(
+            "SKIP_DOOR",
+            CheckBool(skip_door),
+            transitions={
+                "true": "NAVIGATE_AND_PICK_ITEM",
+                "false": "NAVIGATE_TO_AND_OPEN_DISHWASHER",
+            },
         )
 
         # First open the dishwasher
