@@ -35,6 +35,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 "NAVIGATE_TO_CHECK",
                 NavigateToWaypoint(robot,
                                    forbidden_room_waypoint,
+                                   look_at_designator=room_des,
                                    speak=False),
                 transitions={"arrived": "FIND_PEOPLE",
                              "unreachable": "FIND_PEOPLE",
@@ -47,7 +48,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
-                                search_timeout=30),
+                                search_timeout=25),
                 transitions={"found": "GOTO_PERSON", "failed": "done"}
             )
 
@@ -67,7 +68,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 "SAY_BEHAVE",
                 Say(robot,
                     "You are breaking the forbidden room house rule. I'll leave you 10 seconds to leave this room",
-                    block=True),
+                    block=False),
                 transitions={"spoken": "WAIT"},
             )
 
@@ -83,6 +84,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 "NAVIGATE_TO_CHECK_VERIFICATION",
                 NavigateToWaypoint(robot,
                                    forbidden_room_waypoint,
+                                   look_at_designator=room_des,
                                    speak=False),
                 transitions={"arrived": "VERIFY_PEOPLE",
                              "unreachable": "VERIFY_PEOPLE",
@@ -93,7 +95,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                 FindFirstPerson(robot=robot,
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
-                                speak=True),
+                                speak=True,
+                                search_timeout=15),
                 transitions={"found": "GOTO_PERSON",
                              "failed": "SAY_VERIFY_DONE"}
             )
@@ -129,9 +132,10 @@ class CheckForDrinks(smach.StateMachine):
                                                    reverse=True,
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room,
-                                                   search_timeout=30),
+                                                   search_timeout=25),
                                    transitions={"found": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
+
             # Detect fallback - detect waving people
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS_FAILED",
                                    Say(robot=robot,
@@ -139,6 +143,7 @@ class CheckForDrinks(smach.StateMachine):
                                        look_at_standing_person=True,
                                        block=True),
                                    transitions={"spoken": "ASK_FOR_WAVING"})
+
             smach.StateMachine.add("ASK_FOR_WAVING",
                                    Say(robot=robot,
                                        sentence="Hi Guests, It is mandatory to have a drink. "
@@ -147,6 +152,7 @@ class CheckForDrinks(smach.StateMachine):
                                        look_at_standing_person=True,
                                        block=True),
                                    transitions={"spoken": "DETECT_WAVING_PERSON"})
+
             smach.StateMachine.add("DETECT_WAVING_PERSON",
                                    FindFirstPerson(robot=robot,
                                                    properties={'tags': ['LWave', 'RWave']},
@@ -161,35 +167,42 @@ class CheckForDrinks(smach.StateMachine):
                                        look_at_standing_person=True,
                                        block=True),
                                    transitions={"spoken": "NAVIGATE_TO_PERSON"})
+
             smach.StateMachine.add("SAY_WAVING_FAILED",
                                    Say(robot=robot,
                                        sentence="Could not detect a waving person, I will continue my task",
                                        look_at_standing_person=False,
                                        block=False),
                                    transitions={"spoken": "done"})
+
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
                                    NavigateToObserve(robot=robot, entity_designator=found_person,
                                                      radius=1),
                                    transitions={"arrived": "SAY_BREAKING_RULE",
                                                 "unreachable": "SAY_NOT_REACHABLE",
                                                 "goal_not_defined": "SAY_NOT_REACHABLE"})
+
             smach.StateMachine.add("SAY_NOT_REACHABLE",
                                    Say(robot=robot,
                                        sentence="I cannot reach the guest, I will continue my task",
                                        look_at_standing_person=False,
                                        block=False),
                                    transitions={"spoken": "done"})
+
             smach.StateMachine.add("SAY_BREAKING_RULE",
                                    Say(robot, "You are breaking the 'mandatory hydration' rule", look_at_standing_person=True, block=True),
                                    transitions={"spoken": "SAY_GET_DRINK"})
+
             smach.StateMachine.add("SAY_GET_DRINK",
                                    Say(robot, f"You need to get a drink from the {drinks_entity_id}, I will tell you how to get there", look_at_standing_person=False,
                                        block=True),
                                    transitions={"spoken": "GIVE_DIRECTIONS"})
+
             smach.StateMachine.add("GIVE_DIRECTIONS",
                                    GiveDirections(robot, drinks_loc_des),
                                    transitions={"succeeded": "NEED_GUIDANCE",
                                                 "failed": "NEED_GUIDANCE"})
+
             smach.StateMachine.add("NEED_GUIDANCE",
                                    Say(robot, "Do you need guidance to get there? Yes or No",
                                        look_at_standing_person=True, block=True),
@@ -220,7 +233,7 @@ class CheckForDrinks(smach.StateMachine):
                                    transitions={"spoken": "done"})
 
             smach.StateMachine.add("SAY_NAV_FAILED",
-                                   Say(robot, "I cannot reach the drinks, I will continue my task", look_at_standing_person=False, block=True),
+                                   Say(robot, f"I cannot reach the drinks location, please look for the {drinks_entity_id} yourself, I will continue my task", look_at_standing_person=False, block=True),
                                    transitions={"spoken": "done"})
 
             smach.StateMachine.add("SAY_LOST_OPERATOR",
@@ -251,7 +264,7 @@ class Patrol(smach.StateMachine):
 
             @cb_interface(outcomes=["yes", "no"])
             def check_forbidden_room(userdata=None):
-                return "yes" if room_des.uuid == challenge_knowledge.forbidden_room else "no"
+                return "yes" if ds.value_or_resolve(room_des.uuid) == challenge_knowledge.forbidden_room else "no"
 
             smach.StateMachine.add("CHECK_IN_FORBIDDEN_ROOM", CBState(check_forbidden_room),
                                    transitions={"yes": "CHECK_PEOPLE_IN_FORBIDDEN_ROOM",

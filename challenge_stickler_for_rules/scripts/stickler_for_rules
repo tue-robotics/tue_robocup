@@ -6,6 +6,6 @@ from challenge_stickler_for_rules.stickler_for_rules import SticklerForRules
 
 if __name__ == "__main__":
 
-    rospy.init_node('state_machine')
+    rospy.init_node('stickler_for_rules')
 
     startup(SticklerForRules)
