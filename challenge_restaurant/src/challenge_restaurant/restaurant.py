@@ -300,9 +300,8 @@ class Restaurant(smach.StateMachine):
                                    transitions={'done': 'RETURN_TO_START_FALLBACK'})
 
             smach.StateMachine.add('RETURN_TO_START_FALLBACK',
-                                   states.navigation.NavigateToObserve(
-                                       robot=robot, entity_designator=customer_designator,
-                                       radius=0.7),
+                                   states.navigation.NavigateToPose(
+                                       robot=robot, x=start_x, y=start_y, rz=start_rz, radius=0.7),
                                    transitions={'arrived': 'SAY_WAVING_2',
                                                 'unreachable': 'SAY_WAVING_2',
                                                 'goal_not_defined': 'SAY_WAVING_2'})
