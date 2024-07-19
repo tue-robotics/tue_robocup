@@ -44,12 +44,12 @@ class SticklerForRules(smach.StateMachine):
                                    )
             smach.StateMachine.add("GO_TO_ROOM",
                                    Patrol(robot, EntityByIdDesignator(robot, uuid=waypoint_des)),
-                                   transitions={"done": "ITERATE_ROOMS"})
+                                   transitions={"done": "ITERATE_ROOMS",
+                                                "failed": "ITERATE_ROOMS"})
 
-
-            # Outro
-            smach.StateMachine.add(
-                "GOODBYE",
-                Say(robot, "I have had it with you naughty rulebreakers. Goodbye!"),
-                transitions={"spoken": "Done"},
-            )
+            # # Outro
+            # smach.StateMachine.add(
+            #     "GOODBYE",
+            #     Say(robot, "I have had it with you naughty rulebreakers. Goodbye!"),
+            #     transitions={"spoken": "Done"},
+            # )

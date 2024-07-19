@@ -3,8 +3,9 @@ Module contains states to patrol the environment while navigating to a goal.
 """
 from __future__ import absolute_import
 
+from math import pi
+
 # ROS
-import rospy
 import smach
 
 from ed.entity import Entity
@@ -12,6 +13,7 @@ from robot_skills.simulation import is_sim_mode
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic, GuideToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity, GiveDirections, AskYesNo, AskYesNoPicoVoice
+from robot_smach_states.utility import CheckTries, WriteDesignator
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitTime
 from smach import cb_interface, CBState
@@ -48,6 +50,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
+                                look_range=(pi*0.2, -pi*0.15),
+                                look_steps=4,
                                 search_timeout=25),
                 transitions={"found": "GOTO_PERSON", "failed": "done"}
             )
@@ -116,10 +120,8 @@ class CheckForDrinks(smach.StateMachine):
     :param robot: (Robot) robot api object
     """
 
-    def __init__(self, robot_name, room_des):
+    def __init__(self, robot, room_des):
         smach.StateMachine.__init__(self, outcomes=["done"])
-        robot = robot_name
-        room = room_des
         drinks_entity_id = challenge_knowledge.drinks_entity_id
         found_person = ds.VariableDesignator(resolve_type=Entity, name='found_people')
         drinks_loc_des = ds.EntityByIdDesignator(robot, uuid=drinks_entity_id)
@@ -131,7 +133,7 @@ class CheckForDrinks(smach.StateMachine):
                                                    strict=True,
                                                    reverse=False,
                                                    found_person_designator=found_person.writeable,
-                                                   query_entity_designator=room,
+                                                   query_entity_designator=room_des,
                                                    search_timeout=25),
                                    transitions={"found": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
@@ -158,7 +160,7 @@ class CheckForDrinks(smach.StateMachine):
                                                    properties={'tags': ['LWave', 'RWave']},
                                                    strict=False,
                                                    found_person_designator=found_person.writeable,
-                                                   query_entity_designator=room,
+                                                   query_entity_designator=room_des,
                                                    search_timeout=15),
                                    transitions={"found": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
@@ -248,18 +250,28 @@ class Patrol(smach.StateMachine):
 
         :param robot: (Robot) robot api object
         """
-        smach.StateMachine.__init__(self, outcomes=["done"])
+        smach.StateMachine.__init__(self, outcomes=["done", "failed"])
 
-        self.robot = robot
-        self.room_des = room_des
+        reset_des = ds.VariableDesignator(False, name="reset_des").writeable
 
         with self:
+            smach.StateMachine.add("RESET_TRIES",
+                                   WriteDesignator(reset_des, True),
+                                   transitions={"written": "CHECK_TRIES"}
+                                   )
+
+            smach.StateMachine.add("CHECK_TRIES",
+                                   CheckTries(max_tries=3, reset_des=reset_des),
+                                   transitions={"not_yet": "NAVIGATE_TO_ROOM",
+                                                "max_tries": "done"}
+                                   )
+
             smach.StateMachine.add(
                 "NAVIGATE_TO_ROOM",
                 NavigateToSymbolic(robot, {room_des: "in"}, room_des),
                 transitions={"arrived": "CHECK_IN_FORBIDDEN_ROOM",
-                             "unreachable": "CHECK_IN_FORBIDDEN_ROOM",
-                             "goal_not_defined": "CHECK_IN_FORBIDDEN_ROOM"},
+                             "unreachable": "CHECK_TRIES",
+                             "goal_not_defined": "failed"},
             )
 
             @cb_interface(outcomes=["yes", "no"])
@@ -271,7 +283,7 @@ class Patrol(smach.StateMachine):
                                                 "no": "SAY_PEOPLE_WITHOUT_DRINKS"})
 
             smach.StateMachine.add("CHECK_PEOPLE_IN_FORBIDDEN_ROOM",
-                                   CheckPeopleInForbiddenRoom(robot_name=self.robot, room_des=self.room_des),
+                                   CheckPeopleInForbiddenRoom(robot_name=robot, room_des=room_des),
                                    transitions={"done": "done"})
 
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS",
@@ -279,5 +291,5 @@ class Patrol(smach.StateMachine):
                                        block=True),
                                    transitions={"spoken": "CHECK_FOR_DRINKS"})
             smach.StateMachine.add("CHECK_FOR_DRINKS",
-                                   CheckForDrinks(robot_name=self.robot,room_des=self.room_des),
+                                   CheckForDrinks(robot_name=robot, room_des=room_des),
                                    transitions={"done": "done"})
