@@ -143,7 +143,7 @@ class Restaurant(smach.StateMachine):
                                        radius=0.8),
                                    transitions={'arrived': 'SAY_SPEAK_2',
                                                 'unreachable': 'SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
-                                                'goal_not_defined': 'SAY_WAVING_2'})
+                                                'goal_not_defined': 'RETURN_TO_START'})
 
             smach.StateMachine.add('SAY_SPEAK_2',
                                    states.human_interaction.Say(
