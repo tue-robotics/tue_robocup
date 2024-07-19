@@ -19,7 +19,12 @@ from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDet
 
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
+from robot_smach_states.util import designators as ds
+from robot_skills.classification_result import ClassificationResult
+from robot_smach_states.rise import RiseForInspect
+from robot_smach_states.world_model.world_model import SegmentObjects
 from smach import StateMachine, cb_interface, CBState
+
 
 item_img_dict = {
     "bowl": "images/bowl.jpg",
@@ -57,6 +62,13 @@ class PickItem(StateMachine):
                     rospy.logerr("Could not show image {}: {}".format(path, e))
             return "succeeded"
 
+        @cb_interface(outcomes=["spoken"])
+        def _say_i_have_found(_):
+            leftover_items = [item for item in REQUIRED_ITEMS if item not in picked_items]
+            item_name = leftover_items[0]
+            robot.speech.speak("I have detected a {}, but I'm unable to grab it".format(item_name), block=False)
+            return "spoken"
+
         @cb_interface(outcomes=["done"])
         def _rotate(_):
             arm.gripper.send_goal("close", timeout=0.0)
@@ -81,7 +93,7 @@ class PickItem(StateMachine):
 
             item_name = leftover_items[0]
 
-            robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
+            robot.speech.speak("Can you please put the {} in my gripper, like this".format(item_name), block=False)
             show_image("challenge_serve_breakfast", item_img_dict[item_name])
 
             send_gripper_goal("open")
@@ -105,6 +117,7 @@ class PickItem(StateMachine):
             return "done"
 
         with self:
+            self.add("SAY_I_HAVE_FOUND)", CBState(_say_i_have_found), transitions={"spoken": "ROTATE"})
             self.add("ROTATE", CBState(_rotate), transitions={"done": "HANDOVER_POSE"})
             self.add("HANDOVER_POSE", CBState(_handover_pose), transitions={"done": "ASK_USER"})
             self.add("ASK_USER", CBState(_ask_user),
@@ -129,12 +142,22 @@ class NavigateToAndPickItem(StateMachine):
 
         pick_spot = EdEntityDesignator(robot=robot, uuid=pick_spot_id)
 
+        objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult])
+
         with self:
             StateMachine.add(
                 "NAVIGATE_TO_PICK_SPOT",
                 NavigateToSymbolic(robot, {pick_spot: pick_spot_navigation_area}, pick_spot, speak=False),
-                transitions={"arrived": "PICK_ITEM", "unreachable": "failed", "goal_not_defined": "failed"},
+                transitions={"arrived": "RISE", "unreachable": "failed", "goal_not_defined": "failed"},
             )
+
+            StateMachine.add('RISE', RiseForInspect(robot, pick_spot,  "on_top_of"),
+                                   transitions={'succeeded': 'SEGMENT',
+                                                'failed': 'SEGMENT'})
+
+            StateMachine.add('SEGMENT',
+                                   SegmentObjects(robot, objectIDsDes.writeable, pick_spot, "on_top_of"),
+                                   transitions={'done': 'PICK_ITEM'})
 
             StateMachine.add("PICK_ITEM", PickItem(robot), transitions={"succeeded": "succeeded", "failed": "failed"})
 

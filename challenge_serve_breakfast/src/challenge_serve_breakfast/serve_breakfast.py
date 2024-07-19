@@ -18,7 +18,7 @@ from .navigate_to_and_pick_item import NavigateToAndPickItem, NavigateToSymbolic
 from .navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
 from .pick_pour_place_cereal import PickPourPlaceCereal
 from .tuning import REQUIRED_ITEMS
-from robocup_knowledge import load_knowledge
+
 class CheckIfWeHaveItAll(State):
     def __init__(self, robot, max_iterations=10):
         State.__init__(self, outcomes=["we_have_it_all", "keep_going"], input_keys=["item_picked"])
@@ -84,23 +84,13 @@ def setup_statemachine(robot):
         StateMachine.add(
             "NAVIGATE_TO_TABLE",
             NavigateToSymbolic(robot, {table_des:place_area_id}, table_des, speak=True),
-            transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "SAY_OPERATOR_WHERE_TO_STAND", "goal_not_defined": "SAY_OPERATOR_WHERE_TO_STAND"},
+            transitions={"arrived": "UPDATE_TABLE_POSE", "unreachable": "SAY_START", "goal_not_defined": "SAY_START"},
             )
 
         StateMachine.add(
             "UPDATE_TABLE_POSE",
             UpdateEntityPose(robot=robot, entity_designator=table_des),
-            transitions={"done": "SAY_OPERATOR_WHERE_TO_STAND"},
-        )
-
-        StateMachine.add(
-            "SAY_OPERATOR_WHERE_TO_STAND",
-            Say(
-                robot,
-                "Operator I'm unable to grab the objects I need your assistance in this, please stand at the RIGHT of the dishwasher",
-                block=False,
-            ),
-            transitions={"spoken": "SAY_START"},
+            transitions={"done": "SAY_START"},
         )
 
         StateMachine.add(
@@ -116,7 +106,7 @@ def setup_statemachine(robot):
         StateMachine.add(
             "DETERMINE_NEXT_PICK",
             CBState(determine_next_pick, input_keys=["item_picked"]),
-            transitions={"pick_drink": "SAY_OPERATOR_WHERE_TO_STAND_FOR_DRINK", "pick_food": "SAY_OPERATOR_WHERE_TO_STAND_FOR_FOOD",
+            transitions={"pick_drink": "NAVIGATE_AND_PICK_DRINK", "pick_food": "NAVIGATE_AND_PICK_FOOD",
                          "pick_other": "NAVIGATE_AND_PICK_DISHES"},
         )
 
