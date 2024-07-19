@@ -8,10 +8,11 @@ import math
 import rospy
 import smach
 import PyKDL as kdl
+from ed.entity import Entity
 from pykdl_ros import VectorStamped
 
 # Robot skills
-from ..util.designators import EdEntityDesignator
+from ..util.designators import Designator
 from . import navigation
 from .constraint_functions import symbolic_constraint, look_at_constraint, combine_constraints
 
@@ -393,9 +394,8 @@ class GuideToSymbolic(Guide):
     """
     Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
-    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
-                 operator_radius=0.5, describe_near_objects=True):
-        # type: (Robot, dict, EdEntityDesignator, float, float, bool) -> None
+    def __init__(self, robot, entity_designator_area_name_map: dict, entity_lookat_designator: Designator[Entity], operator_distance: float = 1.0,
+                 operator_radius: float = 0.5, describe_near_objects: bool = True):
         """
         Constructor
 
