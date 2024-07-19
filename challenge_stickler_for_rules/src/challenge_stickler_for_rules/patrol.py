@@ -215,7 +215,7 @@ class CheckForDrinks(smach.StateMachine):
             smach.StateMachine.add("NEED_GUIDANCE",
                                    Say(robot, "Do you need guidance to get there? Yes or No",
                                        look_at_standing_person=True, block=True),
-                                   transitions={"spoken": "done"})
+                                   transitions={"spoken": "ASK_YES_NO"})
             if is_sim_mode():
                 smach.StateMachine.add("ASK_YES_NO",
                                        AskYesNo(robot),
