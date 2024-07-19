@@ -80,6 +80,16 @@ class Api(RobotPart):
         compressed_image_msg = self.cv_bridge.cv2_to_compressed_imgmsg(cv2.imread(path_to_image))
         self._show_image(compressed_image_msg, seconds)
 
+    def show_image_from_array(self, image_array, seconds=5.0):
+        """
+        Show an image on the HMI display interface
+
+        :param image_array: numpy array with image data (rgb)
+        :param seconds: How many seconds you would like to display the image on the screen
+        """
+        compressed_image_msg = self.cv_bridge.cv2_to_compressed_imgmsg(image_array)
+        self._show_image(compressed_image_msg, seconds)
+
     def show_image_from_msg(self, msg, seconds=5.0):
         """
         Show an image on the HMI display interface
