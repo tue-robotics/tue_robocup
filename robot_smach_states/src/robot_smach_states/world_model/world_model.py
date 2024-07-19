@@ -227,9 +227,10 @@ class SegmentObjects(smach.State):
             path = "/home/amigo/MEGA/data/rwc2024/training_data/raw"
             for f in os.listdir(path):
                 filename = os.path.join(path, f)
-                if os.stat(filename).st_mtime > now - 20:
+                if os.stat(filename).st_mtime > now - 40:
                     if os.path.isfile(filename):
-                        self.robot.hmi.show_image(filename, 5)
+                        self.robot.hmi.show_image(filename, 3)
+                        rospy.sleep(3)
         except:
             pass
 
