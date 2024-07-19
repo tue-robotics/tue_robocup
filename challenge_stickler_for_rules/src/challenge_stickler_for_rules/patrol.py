@@ -4,19 +4,22 @@ Module contains states to patrol the environment while navigating to a goal.
 from __future__ import absolute_import
 
 from math import pi
-from typing import List, Optional
+from typing import List, Optional, Dict
 
+import numpy as np
 import rospy
 
 # ROS
 import smach
 
 from ed.entity import Entity
+from ed.volume import Volume
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.simulation import is_sim_mode
+from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic, GuideToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
-from robot_smach_states.human_interaction import Say, SetPoseFirstFoundPersonToEntity, GiveDirections, AskYesNo, AskYesNoPicoVoice
+from robot_smach_states.human_interaction import Say, GiveDirections, AskYesNo, AskYesNoPicoVoice, ShowImageArray
 from robot_smach_states.utility import CheckTries, WriteDesignator
 from robot_smach_states.world_model.world_model import SegmentObjects
 import robot_smach_states.util.designators as ds
@@ -262,10 +265,24 @@ class CheckForLitter(smach.StateMachine):
         detected_litter: ds.Designator[List[ClassificationResult]] = ds.VariableDesignator([], resolve_type=[ClassificationResult], name="detected_litter")
         litter_item: ds.Designator[Entity] = ds.VariableDesignator(resolve_type=Entity, name="litter_item")
 
+        def volume_filter(volumes: Dict[str, Volume]) -> List[str]:
+            return [k for k in volumes if k.startswith("on_top_of")]
+
+        on_top_of_volumes = ds.FuncDesignator(ds.AttrDesignator(room_des, "volumes", resolve_type=dict), volume_filter, resolve_type=[str])
+
+        area_des = ds.VariableDesignator(resolve_type=str, name="area_des")
+        image_des = ds.VariableDesignator(resolve_type=np.ndarray, name="image_des")
+
         with self:
+            smach.StateMachine.add("ITERATE_VOLUMES",
+                                   IterateDesignator(on_top_of_volumes, area_des.writeable),
+                                   transitions={"next": "FIND_LITTER",
+                                                "stop_iteration": "SAY_NO_LITTER"}
+                                   )
+
             smach.StateMachine.add(
                 "FIND_LITTER",
-                SegmentObjects(robot, detected_litter.writeable, room_des, segmentation_area="on_top_of", fit_supporting_entity=False),
+                SegmentObjects(robot, detected_litter.writeable, room_des, segmentation_area=area_des, fit_supporting_entity=False),
                 transitions={"done": "FILTER_LITTER"}
             )
 
@@ -285,13 +302,14 @@ class CheckForLitter(smach.StateMachine):
                         z_size = e.shape.z_max - e.shape.z_min
 
                         max_dim = max(x_size, y_size, z_size)
-                        if max_dim > 0.2:
+                        if max_dim > 0.17:
                             rospy.loginfo(f"Dropping litter item {item.uuid} because it is too big ({x_size}, {y_size}, {z_size})")
                             continue
 
-                        rospy.loginfo(f"Found litter: {item.uuid}, {item.etype}")
+                        rospy.loginfo(f"Found litter: {item.uuid}, {item.etype} ({x_size}, {y_size}, {z_size})")
 
                         litter_item.writeable.write(e)
+                        image_des.writeable.write(item.image)
                         return "done"
 
                 return "failed"
