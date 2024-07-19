@@ -455,8 +455,8 @@ class ED(RobotPart):
         posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
 
         # Filter on types if types is not None
-        return [ClassificationResult(uuid, exp_val, exp_prob, distr) for uuid, exp_val, exp_prob, distr
-                in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if
+        return [ClassificationResult(uuid, exp_val, exp_prob, distr, self._cv_bridge.imgmsg_to_cv2(image)) for uuid, exp_val, exp_prob, distr, image
+                in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors, res.images) if
                 types is None or exp_val in types]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
