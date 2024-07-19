@@ -43,7 +43,7 @@ Using `ls` in your terminal you can see that the file is green.
 * Open your file in [Pycharm](https://www.jetbrains.com/pycharm/) and add the following contents (N.B., you can easily install Pycharm on your system using `tue-get install pycharm`. N.N.B., open Pycharm from a terminal to make sure the [bashrc](https://superuser.com/questions/49289/what-is-the-bashrc-file) is sourced, open the `challenge_example` *folder*, and tick 'Add to currently opened projects' for convenience):
 
 ```python
-#!/usr/bin/python
+#! /usr/bin/env python
 
 # ROS
 import rospy
@@ -64,7 +64,7 @@ rosrun challenge_example challenge_example
 * Update your example script to:
 
 ```python
-#!/usr/bin/python
+#! /usr/bin/env python
 
 # ROS
 import rospy
@@ -145,7 +145,7 @@ class Example(smach.StateMachine):
 * Update `scripts/challenge_example` to:
 
 ```python
-#!/usr/bin/python
+#! /usr/bin/env python
 
 # ROS
 import rospy
@@ -181,7 +181,7 @@ chmod +x setup.py
 * Add the following contents to `setup.py` (look [here](https://docs.python.org/2/distutils/setupscript.html) for more info on Python setup):
 
 ```python
-#!/usr/bin/env python
+#! /usr/bin/env python
 
 from setuptools import setup
 from catkin_pkg.python_setup import generate_distutils_setup
