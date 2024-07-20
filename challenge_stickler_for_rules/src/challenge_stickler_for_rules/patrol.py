@@ -299,10 +299,15 @@ class CheckForLitter(smach.StateMachine):
         image_des = ds.VariableDesignator(resolve_type=np.ndarray, name="image_des")
 
         found_person = ds.VariableDesignator(resolve_type=Entity, name="found_person")
+        reset_des = ds.VariableDesignator(False, name="reset_des").writeable
 
         with self:
+            smach.StateMachine.add("RESET_VOLUMES",
+                                   WriteDesignator(reset_des, True),
+                                   transitions={"written": "ITERATE_VOLUMES"})
+
             smach.StateMachine.add("ITERATE_VOLUMES",
-                                   IterateDesignator(on_top_of_volumes, area_des.writeable),
+                                   IterateDesignator(on_top_of_volumes, area_des.writeable, reset_des),
                                    transitions={"next": "FIND_LITTER",
                                                 "stop_iteration": "SAY_NO_LITTER"}
                                    )
