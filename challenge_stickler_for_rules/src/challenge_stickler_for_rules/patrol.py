@@ -61,7 +61,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
-                                look_range=(-pi*0.25, pi*0.25),
+                                look_range=(-pi*0.35, pi*0.35),
                                 look_steps=5,
                                 search_timeout=25),
                 transitions={"found": "GOTO_PERSON", "failed": "done"}
@@ -112,6 +112,8 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
+                                look_range=(-pi * 0.35, pi * 0.35),
+                                look_steps=5,
                                 search_timeout=15),
                 transitions={"found": "GOTO_PERSON",
                              "failed": "SAY_VERIFY_DONE"}
@@ -162,7 +164,7 @@ class CheckForDrinks(smach.StateMachine):
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room_des,
                                                    search_timeout=25,
-                                                   look_range=(-pi*0.45, pi*0.45),
+                                                   look_range=(-pi*0.5, pi*0.5),
                                                    look_steps=5),
                                    transitions={"found": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
@@ -191,7 +193,7 @@ class CheckForDrinks(smach.StateMachine):
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room_des,
                                                    search_timeout=15,
-                                                   look_range=(-pi * 0.45, pi * 0.45),
+                                                   look_range=(-pi * 0.5, pi * 0.5),
                                                    look_steps=5
                                                    ),
                                    transitions={"found": "SAY_I_HAVE_SEEN", "failed": "SAY_WAVING_FAILED"})
@@ -365,7 +367,7 @@ class CheckForLitter(smach.StateMachine):
                                                    found_person_designator=found_person.writeable,
                                                    query_entity_designator=room_des,
                                                    search_timeout=15,
-                                                   look_range=(-pi * 0.45, pi * 0.45),
+                                                   look_range=(-pi * 0.5, pi * 0.5),
                                                    look_steps=5
                                                    ),
                                    transitions={"found": "NAVIGATE_TO_PERSON",
