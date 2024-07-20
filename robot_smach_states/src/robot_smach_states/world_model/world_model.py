@@ -253,7 +253,9 @@ class Inspect(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         if not objectIDsDes:
-            objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult])
+            objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult]).writeable
+
+        ds.is_writeable(objectIDsDes)
 
         with self:
             if navigation_area:
@@ -274,7 +276,7 @@ class Inspect(smach.StateMachine):
                                                 'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
-                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
+                                   SegmentObjects(robot, objectIDsDes, entityDes, searchArea,
                                                   unknown_threshold=unknown_threshold,
                                                   filter_threshold=filter_threshold,
                                                   fit_supporting_entity=fit_supporting_entity),
