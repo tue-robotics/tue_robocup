@@ -184,7 +184,7 @@ class ExecutePlanGuidance(smach.State):
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for
     operator" is returned.
     """
-    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5, describe_near_objects=True):
+    def __init__(self, robot, operator_distance=1.0, operator_radius=1.0, describe_near_objects=True):
         # type: (Robot, float, float, bool) -> None
         """
         :param robot: (Robot) robot api object
@@ -195,7 +195,7 @@ class ExecutePlanGuidance(smach.State):
         """
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
-        self._distance_threshold = 1.0  # Only check if the operator is there once we've driven for this distance
+        self._distance_threshold = 2.5  # Only check if the operator is there once we've driven for this distance
         self._operator_distance = operator_distance  # Operator is expected to follow the robot around this distance
         self._operator_radius = operator_radius  # Operator is expected to be within this radius around the position
         self.describe_near_objects = describe_near_objects
@@ -318,7 +318,7 @@ class WaitForOperator(smach.State):
 
 
 class Guide(smach.StateMachine):
-    def __init__(self, robot, constraint_function, operator_distance=1.0, operator_radius=0.5,
+    def __init__(self, robot, constraint_function, operator_distance=1.0, operator_radius=1.0,
                  describe_near_objects=True):
         # type: (Robot, function, float, float, bool) -> None
         """
@@ -395,7 +395,7 @@ class GuideToSymbolic(Guide):
     Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
     def __init__(self, robot, entity_designator_area_name_map: dict, entity_lookat_designator: Designator[Entity], operator_distance: float = 1.0,
-                 operator_radius: float = 0.5, describe_near_objects: bool = True):
+                 operator_radius: float = 1.0, describe_near_objects: bool = True):
         """
         Constructor
 
