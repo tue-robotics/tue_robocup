@@ -24,7 +24,7 @@ from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
 from robot_smach_states.human_interaction import Say, GiveDirections, AskYesNo, AskYesNoPicoVoice, ShowImageArray,ShowImage
 from robot_smach_states.utility import CheckTries, WriteDesignator
-from robot_smach_states.world_model.world_model import SegmentObjects
+from robot_smach_states.world_model.world_model import Inspect
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitTime
 from smach import cb_interface, CBState
@@ -284,12 +284,19 @@ class CheckForLitter(smach.StateMachine):
         litter_item: ds.Designator[Entity] = ds.VariableDesignator(resolve_type=Entity, name="litter_item")
 
         def volume_filter(volumes: Dict[str, Volume]) -> List[str]:
-            return [k for k in volumes if k.startswith("on_top_of")]
+            return [k for k in volumes if k.startswith("on_top_of") and not k.endswith("_nav")]
+
+        def nav_volume(vol_des: ds.Designator[str]) -> str:
+            vol = ds.value_or_resolve(vol_des)
+            return vol + "_nav"
 
         on_top_of_volumes = ds.FuncDesignator(ds.AttrDesignator(room_des, "volumes", resolve_type=dict), volume_filter, resolve_type=[str])
 
         area_des = ds.VariableDesignator(resolve_type=str, name="area_des")
+        nav_area_des = ds.FuncDesignator(area_des, nav_volume, resolve_type=str)
         image_des = ds.VariableDesignator(resolve_type=np.ndarray, name="image_des")
+
+        found_person = ds.VariableDesignator(resolve_type=Entity, name="found_person")
 
         with self:
             smach.StateMachine.add("ITERATE_VOLUMES",
@@ -300,8 +307,9 @@ class CheckForLitter(smach.StateMachine):
 
             smach.StateMachine.add(
                 "FIND_LITTER",
-                SegmentObjects(robot, detected_litter.writeable, room_des, segmentation_area=area_des, fit_supporting_entity=False),
-                transitions={"done": "FILTER_LITTER"}
+                Inspect(robot, room_des, detected_litter.writeable, searchArea=area_des, navigation_area=nav_area_des, fit_supporting_entity=False, room=room_des),
+                transitions={"done": "FILTER_LITTER",
+                             "failed": "ITERATE_VOLUMES"}
             )
 
             @smach.cb_interface(outcomes=["done", "failed"])
@@ -339,16 +347,56 @@ class CheckForLitter(smach.StateMachine):
 
 
             smach.StateMachine.add("SHOW_LITTER_IMAGE",
-                                   ShowImageArray(robot, image_des),
+                                   ShowImageArray(robot, image_des, duration=10),
                                    transitions={"succeeded": "SAY_LITTER_FOUND",
                                                 "failed": "SAY_LITTER_FOUND"})
 
             smach.StateMachine.add("SAY_LITTER_FOUND",
-                                   Say(robot, "I have found litter on the floor. I will pick it up", block=True),
-                                   transitions={"spoken": "done"})
+                                   Say(robot, "I have found litter on the floor. Let's find someone to pick it up", block=True),
+                                   transitions={"spoken": "FIND_PERSON_TO_CLEAN"})
 
             smach.StateMachine.add("SAY_NO_LITTER",
                                    Say(robot, "I have not found any litter on the floor", block=True),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("FIND_PERSON_TO_CLEAN",
+                                   FindFirstPerson(robot=robot,
+                                                   strict=False,
+                                                   found_person_designator=found_person.writeable,
+                                                   query_entity_designator=room_des,
+                                                   search_timeout=15,
+                                                   look_range=(-pi * 0.45, pi * 0.45),
+                                                   look_steps=5
+                                                   ),
+                                   transitions={"found": "NAVIGATE_TO_PERSON",
+                                                "failed": "SAY_NO_PERSON"})
+
+            smach.StateMachine.add("SAY_NO_PERSON",
+                                   Say(robot, "I could not find anyone to pick up the litter", block=True),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("NAVIGATE_TO_PERSON",
+                                   NavigateToObserve(robot=robot, entity_designator=found_person,
+                                                     radius=0.8,
+                                                     margin=0.2),
+                                   transitions={"arrived": "SHOW_LITTER_IMAGE2",
+                                                "unreachable": "SAY_NOT_REACHABLE",
+                                                "goal_not_defined": "SAY_NOT_REACHABLE"})
+
+            smach.StateMachine.add("SAY_NOT_REACHABLE",
+                                   Say(robot, "I cannot reach the guest, I will continue my task", look_at_standing_person=False, block=False),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("SHOW_LITTER_IMAGE2",
+                                   ShowImageArray(robot, image_des, duration=10),
+                                   transitions={"succeeded": "SAY_CLEAN_LITTER",
+                                                "failed": "SAY_CLEAN_LITTER"})
+
+            smach.StateMachine.add("SAY_CLEAN_LITTER",
+                                   Say(robot,
+                                       "Please pick up the litter from the floor in the {room}, the item is shown on my screen",
+                                       room=ds.AttrDesignator(room_des, "uuid", resolve_type=str),
+                                       block=True),
                                    transitions={"spoken": "done"})
 
 
