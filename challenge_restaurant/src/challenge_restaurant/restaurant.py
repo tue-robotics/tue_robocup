@@ -82,8 +82,8 @@ class Restaurant(smach.StateMachine):
                                        properties={'tags': ['LWaving', 'RWaving']},
                                        strict=False, nearest=True,
                                        speak=True,
-                                       look_range=(-np.pi / 4, np.pi / 4),
-                                       look_steps=4,
+                                       look_range=(-np.pi / 3, np.pi / 3),
+                                       look_steps=5,
                                        search_timeout=600),  # 10 minutes
                                    transitions={'found': 'GET_CUSTOMER_IMAGE',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})

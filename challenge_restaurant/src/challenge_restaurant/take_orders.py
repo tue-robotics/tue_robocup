@@ -148,8 +148,8 @@ class ReciteOrders(smach.State):
         self._robot.speech.speak(sentence, block=True)
         rospy.sleep(5)
 
-        if "red_wine" in self._orders or "red wine" in self._orders or "orange_juice" in self._orders or "orange juice" in self._orders:
-            water_sentence = "I am too weak to carry the red wine or orange juicy, please bring that yourself. And please make me stronger."
+        if "big_coke" in self._orders or "big coke" in self._orders or "orange_juice" in self._orders or "orange juice" in self._orders:
+            water_sentence = "I am too weak to carry the big coke, please bring that yourself. And please make me stronger."
             self._robot.speech.speak(water_sentence)
 
         self._robot.head.cancel_goal()
