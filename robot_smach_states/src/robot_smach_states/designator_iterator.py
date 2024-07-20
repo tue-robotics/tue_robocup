@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from typing import Optional
+
 import smach
 import rospy
 
@@ -8,7 +10,7 @@ from robot_smach_states.util.designators import is_writeable
 
 
 class IterateDesignator(smach.State):
-    def __init__(self, collection_des, element_des):
+    def __init__(self, collection_des, element_des, reset_des: Optional[ds.Designator[bool]] = None):
         """
         Iterate over a designator that resolves to a collection.
 
@@ -94,6 +96,10 @@ class IterateDesignator(smach.State):
         smach.State.__init__(self, outcomes=['next', 'stop_iteration'])
 
         is_writeable(element_des)
+        if reset_des is None:
+            reset_des = ds.VariableDesignator(False).writeable
+
+        is_writeable(reset_des)
 
         assert hasattr(collection_des, 'resolve'), "collection_des should have attribute 'resolve'"
         assert hasattr(collection_des.resolve_type, '__iter__') and \
@@ -106,11 +112,17 @@ class IterateDesignator(smach.State):
 
         self.collection_des = collection_des
         self.element_des = element_des
+        self.reset_des = reset_des
 
         self._current_collection = None
         self._current_elements = None
 
     def execute(self, userdata=None):
+        if self.reset_des.resolve():
+            rospy.loginfo("Resetting iterator")
+            self._current_collection = None
+            self._current_elements = None
+            self.reset_des.write(False)
         collection = self.collection_des.resolve()
         if collection != self._current_collection:
             rospy.loginfo(f"Collection has changed, current elements: {collection}")
