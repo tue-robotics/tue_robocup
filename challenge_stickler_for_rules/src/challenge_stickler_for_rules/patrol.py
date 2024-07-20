@@ -372,7 +372,7 @@ class CheckForLitter(smach.StateMachine):
                                                 "failed": "SAY_NO_PERSON"})
 
             smach.StateMachine.add("SAY_NO_PERSON",
-                                   Say(robot, "I could not find anyone to pick up the litter", block=True),
+                                   Say(robot, "I could not find anyone to pick up the litter. I will continue my task", block=True),
                                    transitions={"spoken": "done"})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
