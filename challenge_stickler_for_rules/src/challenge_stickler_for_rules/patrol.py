@@ -152,7 +152,7 @@ class CheckForDrinks(smach.StateMachine):
                                            "images",
                                            "hold_drink.jpeg"
                                        ),
-                                       duration=25),
+                                       duration=10),
                                    transitions={'succeeded': 'FIND_PERSON_WITHOUT_DRINK',
                                                 'failed': 'FIND_PERSON_WITHOUT_DRINK'})
 
