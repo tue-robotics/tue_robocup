@@ -61,7 +61,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
-                                look_range=(-pi*0.35, pi*0.35),
+                                look_range=(-pi*0.5, pi*0.5),
                                 look_steps=5,
                                 search_timeout=25),
                 transitions={"found": "GOTO_PERSON", "failed": "done"}
@@ -112,7 +112,7 @@ class CheckPeopleInForbiddenRoom(smach.StateMachine):
                                 query_entity_designator=room,
                                 found_person_designator=violating_person.writeable,
                                 speak=True,
-                                look_range=(-pi * 0.35, pi * 0.35),
+                                look_range=(-pi * 0.5, pi * 0.5),
                                 look_steps=5,
                                 search_timeout=15),
                 transitions={"found": "GOTO_PERSON",
