@@ -401,10 +401,15 @@ class CheckForLitter(smach.StateMachine):
 
             smach.StateMachine.add("SAY_CLEAN_LITTER",
                                    Say(robot,
-                                       "Please pick up the litter from the floor in the {room}, the item is shown on my screen",
+                                       "Please pick up the litter from the floor in the {room}, the item is shown on my screen. I will wait 10 seconds",
                                        room=ds.AttrDesignator(room_des, "uuid", resolve_type=str),
+                                       look_at_standing_person=True,
                                        block=True),
-                                   transitions={"spoken": "FIND_LITTER2"})
+                                   transitions={"spoken": "WAIT_FOR_CLEANUP"})
+
+            smach.StateMachine.add("WAIT_FOR_CLEANUP",
+                                   WaitTime(robot, waittime=10),
+                                   transitions={"waited": "FIND_LITTER2"})
 
             smach.StateMachine.add(
                 "FIND_LITTER2",
