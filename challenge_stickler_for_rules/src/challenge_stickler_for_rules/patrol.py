@@ -5,9 +5,12 @@ from __future__ import absolute_import
 
 from math import pi
 from typing import List, Optional, Dict
+import os.path
 
 import numpy as np
 import rospy
+import rospkg
+
 
 # ROS
 import smach
@@ -19,7 +22,7 @@ from robot_skills.simulation import is_sim_mode
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic, GuideToSymbolic
 from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
-from robot_smach_states.human_interaction import Say, GiveDirections, AskYesNo, AskYesNoPicoVoice, ShowImageArray
+from robot_smach_states.human_interaction import Say, GiveDirections, AskYesNo, AskYesNoPicoVoice, ShowImageArray,ShowImage
 from robot_smach_states.utility import CheckTries, WriteDesignator
 from robot_smach_states.world_model.world_model import SegmentObjects
 import robot_smach_states.util.designators as ds
@@ -136,6 +139,21 @@ class CheckForDrinks(smach.StateMachine):
         drinks_loc_des = ds.EntityByIdDesignator(robot, uuid=drinks_entity_id)
 
         with self:
+            smach.StateMachine.add("SAY_HOLD_DRINK",
+                                   Say(robot, "Please make sure that you hold your drink in front of you chest."
+                                              "Like shown on my screen",
+                                       block=True),
+                                   transitions={"spoken": "SHOW_IMAGE"})
+
+            smach.StateMachine.add('SHOW_IMAGE', ShowImage(robot, os.path.join(
+                                           rospkg.RosPack().get_path('challenge_stickler_for_rules'),
+                                           "images",
+                                           "hold_drink.jpeg"
+                                       ),
+                                       duration=25),
+                                   transitions={'succeeded': 'FIND_PERSON_WITHOUT_DRINK',
+                                                'failed': 'FIND_PERSON_WITHOUT_DRINK'})
+
             smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
                                    FindFirstPerson(robot=robot,
                                                    properties={'tags': ['LNotHolding', 'RNotHolding']},
