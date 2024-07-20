@@ -334,6 +334,11 @@ class CheckForLitter(smach.StateMachine):
                             rospy.loginfo(f"Dropping litter item {item.uuid} because it is too big ({x_size}, {y_size}, {z_size})")
                             continue
 
+                        min_dim = min(x_size, y_size, z_size)
+                        if min_dim < 0.01:
+                            rospy.loginfo(f"Dropping litter item {item.uuid} because it is too small ({x_size}, {y_size}, {z_size})")
+                            continue
+
                         rospy.loginfo(f"Found litter: {item.uuid}, {item.etype} ({x_size}, {y_size}, {z_size})")
 
                         litter_item.writeable.write(e)
