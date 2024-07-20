@@ -397,6 +397,48 @@ class CheckForLitter(smach.StateMachine):
                                        "Please pick up the litter from the floor in the {room}, the item is shown on my screen",
                                        room=ds.AttrDesignator(room_des, "uuid", resolve_type=str),
                                        block=True),
+                                   transitions={"spoken": "FIND_LITTER2"})
+
+            smach.StateMachine.add(
+                "FIND_LITTER2",
+                Inspect(robot, room_des, detected_litter.writeable, searchArea=area_des, navigation_area=nav_area_des, fit_supporting_entity=False, room=room_des),
+                transitions={"done": "FILTER_LITTER2",
+                             "failed": "done"}
+            )
+
+            smach.StateMachine.add("FILTER_LITTER2",
+                                   CBState(filter_litter),
+                                   transitions={"done": "SHOW_LITTER_IMAGE3",
+                                                "failed": "LITTER_GONE"})
+
+            smach.StateMachine.add("LITTER_GONE",
+                                   Say(robot, "The litter has been cleaned up. I will continue my task", block=True),
+                                   transitions={"spoken": "done"})
+
+            smach.StateMachine.add("SHOW_LITTER_IMAGE3",
+                                   ShowImageArray(robot, image_des, duration=10),
+                                   transitions={"succeeded": "SAY_LITTER_FOUND2",
+                                                "failed": "SAY_LITTER_FOUND2"})
+
+            smach.StateMachine.add("SAY_LITTER_FOUND2",
+                                      Say(robot, "The litter is still there, asking again", block=True),
+                                      transitions={"spoken": "NAVIGATE_TO_PERSON2"})
+
+            smach.StateMachine.add("NAVIGATE_TO_PERSON2",
+                                   NavigateToObserve(robot=robot, entity_designator=found_person,
+                                                     radius=0.8,
+                                                     margin=0.2),
+                                   transitions={"arrived": "SHOW_LITTER_IMAGE4",
+                                                "unreachable": "SAY_NOT_REACHABLE",
+                                                "goal_not_defined": "SAY_NOT_REACHABLE"})
+
+            smach.StateMachine.add("SHOW_LITTER_IMAGE4",
+                                   ShowImageArray(robot, image_des, duration=10),
+                                   transitions={"succeeded": "SAY_LITTER_FOUND3",
+                                                "failed": "SAY_LITTER_FOUND3"})
+
+            smach.StateMachine.add("SAY_LITTER_FOUND3",
+                                   Say(robot, "The litter is still there, please clean it up this time. I will continue my task", block=True),
                                    transitions={"spoken": "done"})
 
 
