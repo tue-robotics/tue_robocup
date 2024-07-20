@@ -409,7 +409,8 @@ class CheckForLitter(smach.StateMachine):
 
             smach.StateMachine.add("WAIT_FOR_CLEANUP",
                                    WaitTime(robot, waittime=10),
-                                   transitions={"waited": "FIND_LITTER2"})
+                                   transitions={"waited": "FIND_LITTER2",
+                                                "preempted": "FIND_LITTER2"})
 
             smach.StateMachine.add(
                 "FIND_LITTER2",
