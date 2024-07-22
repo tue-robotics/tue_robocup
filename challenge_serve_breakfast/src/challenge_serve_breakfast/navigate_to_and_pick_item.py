@@ -10,7 +10,8 @@ import rospy
 
 from challenge_serve_breakfast.tuning import REQUIRED_ITEMS, JOINTS_HANDOVER
 from robot_skills import get_robot
-# ROS
+from robot_skills.arm.armgs import GripperTypes
+
 from pykdl_ros import VectorStamped
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.manipulation.active_grasp_detector import ActiveGraspDetector
