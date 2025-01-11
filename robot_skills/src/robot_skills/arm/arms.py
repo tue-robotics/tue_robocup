@@ -3,11 +3,13 @@ from typing import Callable, List, Optional, Set, Union
 
 import time
 
+import tf2_ros
 import PyKDL as kdl
 
 # ROS
 import rospy
 import visualization_msgs.msg
+from geometry_msgs.msg import TransformStamped
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -435,7 +437,20 @@ class Arm(RobotPart):
 
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
         frame_in_baselink = self.tf_buffer.transform(frameStamped, self.robot_name + "/base_link")
-
+        br = tf2_ros.TransformBroadcaster()
+        tf = TransformStamped()
+        tf.header.stamp = rospy.Time.now()
+        tf.header.frame_id = self.robot_name + "/base_link"
+        tf.child_frame_id = "gripper_goal"
+        tf.transform.translation.x = frame_in_baselink.frame.p.x()
+        tf.transform.translation.y = frame_in_baselink.frame.p.y()
+        tf.transform.translation.z = frame_in_baselink.frame.p.z()
+        rot = frame_in_baselink.frame.M.GetQuaternion()
+        tf.transform.rotation.x = rot[0]
+        tf.transform.rotation.y = rot[1]
+        tf.transform.rotation.z = rot[2]
+        tf.transform.rotation.w = rot[3]
+        br.sendTransform(tf)
         self._publish_marker(frameStamped, [1, 0, 0], "grasp_point")
 
         end_effector_frame = frame_in_baselink.frame * self.offset
