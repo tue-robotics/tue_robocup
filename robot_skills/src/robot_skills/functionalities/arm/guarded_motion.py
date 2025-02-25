@@ -14,6 +14,8 @@ class GuardedMotionFunc(RobotFunc):
                                                 Arm,
                                                 {
                                                     "move_down_until_force_sensor_edge_up": move_down_until_force_sensor_edge_up,
+                                                    "move_down_until_force_sensor_double_edge_up": move_down_until_force_sensor_double_edge_up,
+                                                    "move_down_until_force_sensor_overload": move_down_until_force_sensor_overload,
                                                     "_create_lower_force_sensing_goal": _create_lower_force_sensing_goal,
                                                     "_create_retract_force_sensing_goal": _create_retract_force_sensing_goal
                                                 })
@@ -53,6 +55,71 @@ def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, re
         force_sensor.wait_for_edge_up(timeout)
     except TimeOutException:
         rospy.loginfo("No edge up detected within timeout")
+        pass
+    self.cancel_goals()
+
+    goal = self._create_retract_force_sensing_goal(retract_distance, timeout)
+    self._ac_joint_traj.send_goal(goal)
+    
+    
+def move_down_until_force_sensor_double_edge_up(self, force_sensor=None, timeout=10, retract_distance=0.01,
+                                         distance_move_down=10.0):
+    """
+    Move down the arm (hero specific, only joint arm_lift_joint) until one of 2 things:
+        - Force sensor detects two edge up
+        - Timeout
+
+    A 'force_sensor.TimeOutException' will be raised if no edge up is detected within timeout
+
+    :param force_sensor: ForceSensor of the arm
+    :param timeout: Max duration for edge up detection
+    :param retract_distance: How much to retract if we have reached a surface
+    :param distance_move_down: Maximum distance to move down the arm_lift_joint
+    """
+    if force_sensor is None:
+        force_sensor = self.parts["force_sensor"]
+
+    # Fill with required joint names (desired in hardware / gazebo impl)
+    goal = self._create_lower_force_sensing_goal(distance_move_down, timeout)
+    self._ac_joint_traj.send_goal(goal)
+
+    try:
+        force_sensor.wait_for_double_edge_up(timeout)
+    except TimeOutException:
+        rospy.loginfo("No edge up detected within timeout")
+        pass
+    self.cancel_goals()
+
+    goal = self._create_retract_force_sensing_goal(retract_distance, timeout)
+    self._ac_joint_traj.send_goal(goal)
+    
+    
+def move_down_until_force_sensor_overload(self, force_sensor=None, max_force=0.1, timeout=10, retract_distance=0.01,
+                                         distance_move_down=10.0):
+    """
+    Move down the arm (hero specific, only joint arm_lift_joint) until one of 2 things:
+        - Force sensor detects overloading
+        - Timeout
+
+    A 'force_sensor.TimeOutException' will be raised if no edge up is detected within timeout
+
+    :param force_sensor: ForceSensor of the arm
+    :param timeout: Max duration for overload detection
+    :param max_force: force threshold
+    :param retract_distance: How much to retract if we have reached a surface
+    :param distance_move_down: Maximum distance to move down the arm_lift_joint
+    """
+    if force_sensor is None:
+        force_sensor = self.parts["force_sensor"]
+
+    # Fill with required joint names (desired in hardware / gazebo impl)
+    goal = self._create_lower_force_sensing_goal(distance_move_down, timeout)
+    self._ac_joint_traj.send_goal(goal)
+
+    try:
+        force_sensor.wait_for_overload(max_force, timeout)
+    except TimeOutException:
+        rospy.loginfo("No overload detected within timeout")
         pass
     self.cancel_goals()
 

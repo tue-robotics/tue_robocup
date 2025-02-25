@@ -25,6 +25,8 @@ class ForceSensor(RobotPart):
 
         self._calibrated_msg = None
         self._edge_up = False
+        self._overload = False
+        self._overload_threshold = 0.0
         self._force_norm_threshold = force_norm_threshold
 
     def _wrench_callback(self, msg):
@@ -35,6 +37,9 @@ class ForceSensor(RobotPart):
         :param msg: WrenchStamped to see if it goes over self.force_norm_threshold
         :return: None but sets self.edge_up
         """
+        def _norm(v):
+            return np_norm(np_array([v.x, v.y, v.z]))
+            
         def _detect_edge_up(calibrated_msg, msg):
             """
             Determine if the difference between calibrated_msg and msg is larger than self._force_norm_threshold
@@ -43,13 +48,12 @@ class ForceSensor(RobotPart):
             :param msg: Comparision message, to be compared with the reference message
             :return: bool if the difference is larger than the threshold.
             """
-            def _norm(v):
-                return np_norm(np_array([v.x, v.y, v.z]))
 
             calibrated_force_norm = _norm(calibrated_msg.wrench.force)
             force_norm = _norm(msg.wrench.force)
-
-            rospy.logdebug("Force norm: %.2f", force_norm - calibrated_force_norm)
+            # TODO: Turn these logging to debug
+            rospy.loginfo("Force norm: %.2f", force_norm)
+            rospy.loginfo("Force diff: %.2f", force_norm - calibrated_force_norm)
 
             return abs(force_norm - calibrated_force_norm) > self._force_norm_threshold
 
@@ -57,6 +61,9 @@ class ForceSensor(RobotPart):
             self._calibrated_msg = msg
         else:
             self._edge_up = _detect_edge_up(self._calibrated_msg, msg)
+            
+        if _norm(msg.wrench.force) > self._overload_threshold:
+            self._overload = True
 
     def wait_for_edge_up(self, timeout=10.0):
         """
@@ -71,7 +78,48 @@ class ForceSensor(RobotPart):
         end_time = rospy.Time.now() + rospy.Duration.from_sec(timeout)
         while not rospy.is_shutdown() and not self._edge_up:
             if rospy.Time.now() > end_time:
+                subscriber.unregister()
                 raise TimeOutException("Force sensor edge up detection timeout of {} exceeded".format(timeout))
             rospy.Rate(10).sleep()
         subscriber.unregister()
         rospy.loginfo("Edge up detected!")
+        
+    def wait_for_double_edge_up(self, timeout=10.0):
+        """
+        Returns if edge up twice
+        
+        :param timeout: Edge up wait patience, each
+        """
+        
+        self.wait_for_edge_up(timeout)
+        self.wait_for_edge_up(timeout)
+        
+    def wait_for_overload(self, max_force=0.1, timeout=10.0):
+        """
+        Returns if high force detected. Will raise a TimeOutException if no edge up is detected within timeout.
+
+        :param max_force: force threshold
+        :param timeout: Edge up wait patience
+        """
+        self._edge_up = False
+        self._overload = False
+        self._overload_threshold = max_force
+        self._calibrated_msg = None
+        subscriber = rospy.Subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
+
+        end_time = rospy.Time.now() + rospy.Duration.from_sec(timeout)
+        # Waiting for edge up
+        while not rospy.is_shutdown() and not self._edge_up:
+            if rospy.Time.now() > end_time:
+                raise TimeOutException("Force sensor edge up detection timeout of {} exceeded".format(timeout))
+            rospy.Rate(10).sleep()
+        
+        # After detected an edge up, waiting for overload
+        while not rospy.is_shutdown() and not self._overload:
+            if rospy.Time.now() > end_time:
+                subscriber.unregister()
+                raise TimeOutException("Force sensor edge up detection timeout of {} exceeded".format(timeout))
+            rospy.Rate(10).sleep()
+        
+        subscriber.unregister()
+        rospy.loginfo("Overload detected!")

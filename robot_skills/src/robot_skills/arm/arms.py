@@ -194,6 +194,24 @@ class PublicArm(object):
         return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout,
                                                               retract_distance=retract_distance,
                                                               distance_move_down=distance_move_down)
+        
+    def move_down_until_force_sensor_double_edge_up(self, timeout: float = 10, retract_distance: float = 0.01,
+                                             distance_move_down: Optional[float] = None) -> bool:
+        self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
+                       "Specify get_arm(..., force_sensor_required=True)")
+        return self._arm.move_down_until_force_sensor_double_edge_up(timeout=timeout,
+                                                              retract_distance=retract_distance,
+                                                              distance_move_down=distance_move_down)
+        
+    def move_down_until_force_sensor_overload(self, max_force: float = 0.1,
+                                            timeout: float = 10, retract_distance: float = 0.01,
+                                            distance_move_down: Optional[float] = None) -> bool:
+        self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
+                       "Specify get_arm(..., force_sensor_required=True)")
+        return self._arm.move_down_until_force_sensor_overload(max_force=max_force,
+                                                              timeout=timeout,
+                                                              retract_distance=retract_distance,
+                                                              distance_move_down=distance_move_down)
 
     # salvaged deprecated functionality
     def send_gripper_goal(self, state: str, timeout: float = 5.0, gripper_type: Optional[str] = None,
