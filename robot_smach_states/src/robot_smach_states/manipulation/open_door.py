@@ -352,7 +352,7 @@ class UnlatchHandle(smach.State):
             rospy.logerr("Could not resolve arm")
             return None
 
-        # arm.send_gripper_goal('close', max_torque=1.0)
+        arm.cancel_goals()
 
         current_pose = self._robot.tf_buffer.lookup_transform(self._robot.base_link_frame, 'hand_palm_link', rospy.Time(0))
 
@@ -375,7 +375,6 @@ class UnlatchHandle(smach.State):
         # result = arm.send_goal(next_pose, allowed_touch_objects=allowed_touch_objects, pre_grasp=False)
         result = arm.move_down_until_force_sensor_overload(max_force=100.0, timeout=10, retract_distance=0, distance_move_down=self._move_dist)
         # result = arm.move_down_until_force_sensor_double_edge_up(timeout=10, retract_distance=0, distance_move_down=self._move_dist)
-        return "succeeded"
         if result:
             return "succeeded"
         return "failed"
