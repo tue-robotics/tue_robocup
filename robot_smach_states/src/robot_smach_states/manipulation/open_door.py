@@ -383,7 +383,6 @@ class UnlatchHandle(smach.State):
 class DetermineDoorDirection(smach.State):
     def __init__(self, robot, door_des):
         """
-
         :param robot: robot object
         """
         smach.State.__init__(self, outcomes=['outward', 'inward', 'failed'])
@@ -404,7 +403,6 @@ class DetermineDoorDirection(smach.State):
 class PushDoorOpen(smach.State):
     def __init__(self, robot, door_des, arm_des, rot_radius=0.8):
         """
-
         :param robot: robot object
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'],
