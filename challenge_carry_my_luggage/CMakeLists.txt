@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(challenge_carry_my_luggage)
 
 find_package(catkin REQUIRED COMPONENTS
