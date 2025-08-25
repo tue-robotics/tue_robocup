@@ -63,8 +63,9 @@ def load_robot(robot_name, *args, **kwargs):
 
 if __name__ == "__main__":
     __doc__ = __doc__.format(DEFAULT_CONNECTION_TIMEOUT)
+    myargv = rospy.myargv(argv=sys.argv)
     try:
-        arguments = docopt(__doc__)
+        arguments = docopt(__doc__, argv=myargv[1:])
         if arguments["--help"]:
             print(__doc__)
             sys.exit(0)
