@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 room = "livingroom"
 grannies_table = "couchtable"
 bottle_shelf = "cupboard"

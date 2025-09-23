@@ -1,4 +1,5 @@
 # SERVING DRINKS KNOWLEDGE FILE ROBOTICS_TESTLABS
+from robocup_knowledge import knowledge_functions
 
 # Bar where the drinks are located
 #TODO:Check

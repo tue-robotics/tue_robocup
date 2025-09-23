@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 commands = {
     'follow':               ["follow"],    # 'Robot, follow me'
     'follow_or_remember':   ["follow",     # 'Robot, follow me'

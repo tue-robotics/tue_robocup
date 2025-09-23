@@ -3,10 +3,7 @@
 from __future__ import print_function
 
 # TU/e Robotics
-from robocup_knowledge import knowledge_loader
-
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 grammar_target = "T"
 
@@ -16,18 +13,18 @@ T[A] -> COURTESY_PREFIX VP[A] | VP[A]
 COURTESY_PREFIX -> robot please | could you | could you please | please
 """
 
-for loc in common.location_rooms:
+for loc in knowledge_functions.location_rooms:
     location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
 
-for loc in common.location_names:
+for loc in knowledge_functions.location_names:
     location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
 
-for loc in common.object_names:
-    category = common.get_object_category(loc)
-    if category not in common.category_locations:
+for loc in knowledge_functions.object_names:
+    category = knowledge_functions.get_object_category(loc)
+    if category not in knowledge_functions.category_locations:
         continue
 
-    entity_id = common.get_object_category_location(category)[0]
+    entity_id = knowledge_functions.get_object_category_location(category)[0]
 
     location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (entity_id, loc)
 

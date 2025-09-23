@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 ''' Cabinet used for the challenge '''
 cabinet = "bookcase"
 
@@ -14,7 +16,7 @@ place_shelf = cabinet + "/shelf5"
 room = "hallway"
 
 '''Object types that can be recognized'''
-object_types = ['pure_milk', 'orange_juice', 'sponge', 'papaya_milk', 'apple', 'tomato_chips', 'lemon', 'toothpaste', 
-                 'chocolates', 'bowl', 'beer', 'toilet_paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth', 
-                 'green_tea', 'gram_soup', 'bubble_gum', 'bean_sauce', 'barbecue_chips', 'tray', 'coconut_cereals', 
+object_types = ['pure_milk', 'orange_juice', 'sponge', 'papaya_milk', 'apple', 'tomato_chips', 'lemon', 'toothpaste',
+                 'chocolates', 'bowl', 'beer', 'toilet_paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth',
+                 'green_tea', 'gram_soup', 'bubble_gum', 'bean_sauce', 'barbecue_chips', 'tray', 'coconut_cereals',
                  'egg_stars', 'honey_chips', 'coco_balls', 'biscuits']

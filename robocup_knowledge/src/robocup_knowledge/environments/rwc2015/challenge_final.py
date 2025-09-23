@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 initial_pose_amigo = "initial_pose_amigo"
 operator_id = "operator"
 

@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 ''' Shelves where objects might be '''
 object_shelves=["right_bookcase/shelf3","right_bookcase/shelf4","right_bookcase/shelf5"]
 

@@ -1,8 +1,5 @@
 # TU/e Robotics
-from robocup_knowledge import knowledge_loader
-
-# Load the common knowledge
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 initial_pose = "initial_pose"
 meeting_point = "final_meeting_point"

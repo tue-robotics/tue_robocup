@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 not_understood_sentences = [
         "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
@@ -39,19 +38,19 @@ DET -> the | a | an | some
 MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
 """
 
-for room in common.location_rooms:
+for room in knowledge_functions.location_rooms:
     grammar += '\nROOMS[%s] -> %s' % (room, room)
-for loc in common.get_locations():
+for loc in knowledge_functions.get_locations():
     grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
 grammar += '\n ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]'
-for obj in common.object_names:
+for obj in knowledge_functions.object_names:
     grammar += '\nOBJECT_NAMES[%s] -> %s' % (obj, obj)
-for loc in common.get_locations(pick_location=True, place_location=True):
+for loc in knowledge_functions.get_locations(pick_location=True, place_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATIONS[%s] -> MANIPULATION_AREA_DESCRIPTIONS the %s' % (loc, loc)
-for cat in common.object_categories:
+for cat in knowledge_functions.object_categories:
     grammar += '\nOBJECT_CATEGORIES[%s] -> %s' % (cat, cat)
 grammar += '\nOBJECT_CATEGORIES[objects] -> objects'
-for place in common.location_names:
+for place in knowledge_functions.location_names:
     grammar += '\n PLACEMENTS_AND_BEACONS[%s] -> %s' % (place, place)
 
 ##############################################################################

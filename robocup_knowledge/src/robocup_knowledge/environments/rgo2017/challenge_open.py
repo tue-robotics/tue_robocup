@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 starting_point = "initial_pose"
 
 ask_waypoint = "challenge_open_ask_waypoint"

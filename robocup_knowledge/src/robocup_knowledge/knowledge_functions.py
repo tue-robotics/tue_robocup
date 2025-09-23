@@ -1,8 +1,10 @@
 # Inspired by https://stackoverflow.com/questions/9937279/can-modules-have-properties
 # and https://stackoverflow.com/questions/880530/can-modules-have-properties-the-same-way-that-objects-can
-import copy
+
 import importlib
+import os
 import sys
+from collections.abc import Iterable
 
 # ToDo: add typing
 
@@ -23,15 +25,15 @@ class KnowledgeFunctions(sys.__class__):
     def __init__(self):
         # ToDo: no hardcoding.
 
-        print("Loading knowledge functions")
-        common = importlib.import_module(".common", "robocup_knowledge.environments.impuls")
+        robot_env = os.environ.get('ROBOT_ENV')
+        common = importlib.import_module(".common", f"robocup_knowledge.environments.{robot_env}")
 
         # Add expected knowledge to self
         for key in EXPECTED_KNOWLEDGE:
             setattr(self, key, getattr(common, key))
 
     @property
-    def names(self):
+    def names(self) -> Iterable:
         return self.female_names + self.male_names
 
     @property
@@ -153,12 +155,6 @@ class KnowledgeFunctions(sys.__class__):
 
     def get_object_category_location(self, obj_cat):
         return next(iter(self.category_locations[obj_cat].items()))
-
-
-
-
-
-
 
 
 sys.modules[__name__] = KnowledgeFunctions()

@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 target1 = {
     'near' : 'small_table',
     'in' : 'hall',
