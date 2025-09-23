@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 cabinet = "right_bookcase"
 table1  = "dinnertable"
 table2  = "bookcase"

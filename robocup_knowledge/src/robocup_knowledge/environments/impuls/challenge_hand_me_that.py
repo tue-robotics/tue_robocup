@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 starting_point = "initial_pose"
 home_location = "rips_point_1"
 room = "dining_room"

@@ -1,5 +1,4 @@
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 starting_point = "initial_pose"
 ask_waypoint = "gpsr_meeting_point"

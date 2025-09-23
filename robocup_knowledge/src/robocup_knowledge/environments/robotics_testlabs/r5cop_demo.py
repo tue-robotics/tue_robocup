@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 starting_point = "initial_pose"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)

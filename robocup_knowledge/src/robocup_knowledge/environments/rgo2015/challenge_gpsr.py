@@ -1,4 +1,5 @@
 # GERMAN OPEN 2015
+from robocup_knowledge import knowledge_functions
 
 #locations:
 starting_point = "initial_pose_door_A"
@@ -19,7 +20,7 @@ location_placement =   ['left bedside table', 'dinnertable', 'cupboard',
                         'bed', 'sink', 'desk', 'small table',
                         'kitchencounter', 'cabinet', 'couchtable', 'right bedside table', 'right bookcase']
 
-##NEW, location_types:  
+##NEW, location_types:
 location_types = ['', 'shelf', 'appliance', 'seat', 'table', 'utility']
 
 rooms = ["kitchen", "livingroom", "hall", "bedroom", "office"]
@@ -39,7 +40,7 @@ spec = "("+spec_get_deliver+"|"+spec_goroom_findobj+"|"+spec_findperson_talk+")"
 #spec = spec_get_deliver
 
 choices = {'1_location':location_placement,
-'2_vb_take':['take', 'grasp', 'get'],   
+'2_vb_take':['take', 'grasp', 'get'],
 '2_object':objects_known,
 '3_vb_deliver': ['bring', 'carry', 'deliver', 'take'],
 '3_person_me':['me'],

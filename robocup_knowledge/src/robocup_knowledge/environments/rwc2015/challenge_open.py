@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 ''' Hardcoded exploration targets '''
 exploration_targets=["explore1",
                      "explore2",

@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 # Tunable params
 find_person = {                 # This needs to be updated according to the environment
     'within_range' : 2.0,
@@ -25,7 +27,7 @@ initial_pose = "initial_pose"
 bed = 'bed'                     # This needs to be updated according to the environment
 matress_height = 0.70           #TODO: Set matress height or even better: get from models
 
-bed_nav_goal = {        
+bed_nav_goal = {
     'near' : bed,
     'in' : 'bedroom',
     'lookat' : 'bed',

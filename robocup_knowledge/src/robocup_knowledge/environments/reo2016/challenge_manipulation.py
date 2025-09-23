@@ -1,5 +1,4 @@
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 ''' Cabinet used for the challenge '''
 cabinet = "bookcase"
@@ -17,7 +16,7 @@ place_shelf = "shelf2"
 room = "livingroom"
 
 '''Object types that can be recognized'''
-object_types = [o["name"] for o in common.objects if o["category"] != "container"]
+object_types = [o["name"] for o in knowledge_functions.objects if o["category"] != "container"]
 
 # ToDo: make nice
 min_grasp_height = 0.73  # area_bottom_height - 4 cm

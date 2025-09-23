@@ -1,4 +1,5 @@
 from __future__ import print_function
+from robocup_knowledge import knowledge_functions
 
 ''' colors from printing on screen '''
 class bcolors:
