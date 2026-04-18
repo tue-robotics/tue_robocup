@@ -192,23 +192,34 @@ class SegmentObjects(smach.State):
 
         if segmented_object_ids:
             _color_info(">> Segmented %d objects!" % len(segmented_object_ids))
-            # Classify and update IDs
-            object_classifications = self.robot.ed.classify(uuids=segmented_object_ids, unknown_threshold=self.unknown_threshold)
 
-            if object_classifications:
-                for idx, obj in enumerate(object_classifications):
-                    _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.etype, obj.uuid))
+            # Types are assigned by YOLO inside `/ed/kinect/update` and stored on the ED entity.
+            # Read them back instead of calling the legacy `ed.classify` (TensorFlow) service.
+            object_classifications = []
+            for obj_id in segmented_object_ids:
+                entity = self.robot.ed.get_entity(uuid=obj_id)
+                if entity is not None and entity.etype:
+                    object_classifications.append(
+                        ClassificationResult(uuid=obj_id, etype=entity.etype, probability=1.0, distribution={})
+                    )
+                else:
+                    object_classifications.append(
+                        ClassificationResult(uuid=obj_id, etype="unknown", probability=0.0, distribution={})
+                    )
 
-                if self.filter_threshold:
-                    over_threshold = [obj for obj in object_classifications if
-                                      obj.probability >= self.filter_threshold]
+            for idx, obj in enumerate(object_classifications):
+                _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.etype, obj.uuid))
 
-                    dropped = {obj.uuid: obj.probability for obj in object_classifications if
-                               obj.probability < self.filter_threshold}
-                    rospy.loginfo("Dropping {ln} entities due to low class. score (< {th}): {dropped}"
-                                  .format(th=self.filter_threshold, dropped=dropped, ln=len(dropped)))
+            if self.filter_threshold:
+                over_threshold = [obj for obj in object_classifications if
+                                  obj.probability >= self.filter_threshold]
 
-                    object_classifications = over_threshold
+                dropped = {obj.uuid: obj.probability for obj in object_classifications if
+                           obj.probability < self.filter_threshold}
+                rospy.loginfo("Dropping {ln} entities due to low class. score (< {th}): {dropped}"
+                              .format(th=self.filter_threshold, dropped=dropped, ln=len(dropped)))
+
+                object_classifications = over_threshold
 
                 self.segmented_entity_ids_designator.write(object_classifications)
             else:
