@@ -9,7 +9,7 @@ from robot_skills.classification_result import ClassificationResult
 
 class CountObjectsOnLocation(smach.State):
     def __init__(self, robot, location, segmented_objects_designator, num_objects_designator,
-                 segmentation_area='on_top_of', object_type='', threshold=0.0):
+                 segmentation_area='on_top_of', object_type=''):
         """ Constructor
 
         :param robot: robot object
@@ -19,14 +19,11 @@ class CountObjectsOnLocation(smach.State):
         :param num_objects_designator: a VariableDesignator(resolve_type=int).writeable() that will store the number
             of objects
         :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param threshold: float for classification score. Entities whose classification score is lower are ignored
-            (i.e. are not added to the segmented_entity_ids_designator)
         """
         smach.State.__init__(self, outcomes=['done', 'failed'])
         self.robot = robot
         self.location = location
         self.segmentation_area = segmentation_area
-        self.threshold = threshold
         self.object_type = object_type
 
         ds.checks.is_writeable(num_objects_designator)
@@ -41,15 +38,7 @@ class CountObjectsOnLocation(smach.State):
         if object_classifications:
 
             for idx, obj in enumerate(object_classifications):
-                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.etype,
-                                                                                        id=obj.uuid, p=obj.probability))
-
-            over_threshold = [obj for obj in object_classifications if obj.probability >= self.threshold]
-
-            dropped = {obj.uuid: obj.probability for obj in object_classifications if obj.probability < self.threshold}
-            rospy.debug("Dropping {l} entities due to low class. score (< {th}): {dropped}"
-                        .format(th=self.threshold, dropped=dropped, l=len(dropped)))
-            object_classifications = over_threshold
+                rospy.loginfo("   - Object {i} is a '{t}' (ID: {id})".format(i=idx, t=obj.etype, id=obj.uuid))
 
             list_objects = [obj for obj in object_classifications if obj.etype == self.object_type.resolve()]
             num_objects = len(list_objects)
