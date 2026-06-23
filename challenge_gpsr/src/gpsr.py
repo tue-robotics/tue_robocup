@@ -8,10 +8,10 @@ import random
 import sys
 
 import rospy
-from action_server import Client as ActionClient, TaskOutcome
+from action_server import Client as ActionClient
 
 import hmi
-from conversation_engine import ConversationEngine, ConversationState
+from conversation_engine import ConversationEngine
 from robocup_knowledge import load_knowledge
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToWaypoint
@@ -37,85 +37,10 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.start_time = rospy.get_time()
 
         self._tc_fuckup_time = 6.0  # The TC usually needs some time to get in position and out the way of the robot
-        self._done_continuation_timer = None
-        self._done_continuation_delay = rospy.Duration(0.1)
 
     def _say_to_user(self, message):
         rospy.loginfo("_say_to_user('{}')".format(message))
         self.robot.speech.speak(message)
-
-    def _schedule_after_action_done(self, callback, *args):
-        """
-        Run GPSR HMI work after actionlib has finished the previous goal transition.
-
-        rospy sets SimpleActionClient.simple_state to DONE after done_cb returns.
-        GPSR can send a new task from its HMI loop, so that loop must not run
-        synchronously inside the previous task's done_cb.
-        """
-        if self._done_continuation_timer is not None:
-            self._done_continuation_timer.shutdown()
-
-        def _timer_cb(_event):
-            self._done_continuation_timer = None
-            callback(*args)
-
-        self._done_continuation_timer = rospy.Timer(self._done_continuation_delay,
-                                                    _timer_cb,
-                                                    oneshot=True)
-
-    def _continue_terminal_outcome(self, outcome_cb, message):
-        self._state = ConversationState()
-        self._latest_feedback = None
-        outcome_cb(message)
-
-        if self.skip and not (self.tasks_done >= self.tasks_to_be_done or self.finished):
-            self._say_ready_for_command()
-            self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
-
-    def _on_task_outcome_other(self, message):
-        rospy.loginfo("Action result: other")
-        self._say_to_user(message)
-        self.task_finished(message)
-
-    def _done_cb(self, task_outcome):
-        """
-        Defer GPSR's blocking HMI loops until after actionlib's done_cb returns.
-        """
-        rospy.loginfo("_done_cb: Task done -> {to}".format(to=task_outcome))
-        assert isinstance(task_outcome, TaskOutcome)
-
-        self._latest_feedback = None
-
-        if task_outcome.succeeded:
-            rospy.loginfo("Action succeeded")
-            self._schedule_after_action_done(self._continue_terminal_outcome,
-                                             self._on_task_successful,
-                                             " ".join(task_outcome.messages))
-        elif task_outcome.result == TaskOutcome.RESULT_MISSING_INFORMATION:
-            rospy.loginfo("Action needs more info from user")
-
-            sentence = "".join(task_outcome.messages)
-            target = self._get_grammar_target(task_outcome.missing_field)
-            self._state.wait_for_user(target=target,
-                                      missing_field=task_outcome.missing_field)
-            self._schedule_after_action_done(self._on_request_missing_information,
-                                             sentence,
-                                             self._grammar,
-                                             target)
-        elif task_outcome.result == TaskOutcome.RESULT_TASK_EXECUTION_FAILED:
-            rospy.loginfo("Action execution failed")
-            self._schedule_after_action_done(self._continue_terminal_outcome,
-                                             self._on_task_outcome_failed,
-                                             "".join(task_outcome.messages))
-        elif task_outcome.result == TaskOutcome.RESULT_UNKNOWN:
-            rospy.loginfo("Action result: unknown")
-            self._schedule_after_action_done(self._continue_terminal_outcome,
-                                             self._on_task_outcome_unknown,
-                                             "".join(task_outcome.messages))
-        else:
-            self._schedule_after_action_done(self._continue_terminal_outcome,
-                                             self._on_task_outcome_other,
-                                             "".join(task_outcome.messages))
 
     def _on_task_successful(self, message):
         rospy.loginfo("_on_task_successful('{}')".format(message))
