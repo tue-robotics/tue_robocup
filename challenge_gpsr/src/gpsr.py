@@ -4,14 +4,16 @@
 # By Rokus Ottervanger, 2017
 # ------------------------------------------------------------------------------------------------------------------------
 
+import queue
 import random
 import sys
+import traceback
 
 import rospy
-from action_server import Client as ActionClient
+from action_server import Client as ActionClient, TaskOutcome
 
 import hmi
-from conversation_engine import ConversationEngine
+from conversation_engine import ConversationEngine, ConversationState
 from robocup_knowledge import load_knowledge
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToWaypoint
@@ -37,10 +39,80 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.start_time = rospy.get_time()
 
         self._tc_fuckup_time = 6.0  # The TC usually needs some time to get in position and out the way of the robot
+        self._continuations = queue.Queue()
 
     def _say_to_user(self, message):
         rospy.loginfo("_say_to_user('{}')".format(message))
         self.robot.speech.speak(message)
+
+    def _enqueue_continuation(self, callback, *args):
+        self._continuations.put((callback, args))
+
+    def spin(self):
+        while not rospy.is_shutdown():
+            try:
+                callback, args = self._continuations.get(timeout=0.1)
+            except queue.Empty:
+                continue
+
+            try:
+                callback(*args)
+            except Exception:
+                rospy.logerr("[GPSR] continuation failed:\n{}".format(traceback.format_exc()))
+
+    def _continue_terminal_outcome(self, outcome_cb, message):
+        self._state = ConversationState()
+        self._latest_feedback = None
+        outcome_cb(message)
+
+        if self.skip and not (self.tasks_done >= self.tasks_to_be_done or self.finished):
+            self._say_ready_for_command()
+            self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
+
+    def _on_task_outcome_other(self, message):
+        rospy.loginfo("Action result: other")
+        self._say_to_user(message)
+        self.task_finished(message)
+
+    def _done_cb(self, task_outcome):
+        """
+        Defer GPSR's blocking HMI loops until after actionlib's done_cb returns.
+        """
+        rospy.loginfo("_done_cb: Task done -> {to}".format(to=task_outcome))
+        assert isinstance(task_outcome, TaskOutcome)
+
+        self._latest_feedback = None
+
+        if task_outcome.succeeded:
+            rospy.loginfo("Action succeeded")
+            self._enqueue_continuation(self._continue_terminal_outcome,
+                                       self._on_task_successful,
+                                       " ".join(task_outcome.messages))
+        elif task_outcome.result == TaskOutcome.RESULT_MISSING_INFORMATION:
+            rospy.loginfo("Action needs more info from user")
+
+            sentence = "".join(task_outcome.messages)
+            target = self._get_grammar_target(task_outcome.missing_field)
+            self._state.wait_for_user(target=target,
+                                      missing_field=task_outcome.missing_field)
+            self._enqueue_continuation(self._on_request_missing_information,
+                                       sentence,
+                                       self._grammar,
+                                       target)
+        elif task_outcome.result == TaskOutcome.RESULT_TASK_EXECUTION_FAILED:
+            rospy.loginfo("Action execution failed")
+            self._enqueue_continuation(self._continue_terminal_outcome,
+                                       self._on_task_outcome_failed,
+                                       "".join(task_outcome.messages))
+        elif task_outcome.result == TaskOutcome.RESULT_UNKNOWN:
+            rospy.loginfo("Action result: unknown")
+            self._enqueue_continuation(self._continue_terminal_outcome,
+                                       self._on_task_outcome_unknown,
+                                       "".join(task_outcome.messages))
+        else:
+            self._enqueue_continuation(self._continue_terminal_outcome,
+                                       self._on_task_outcome_other,
+                                       "".join(task_outcome.messages))
 
     def _on_task_successful(self, message):
         rospy.loginfo("_on_task_successful('{}')".format(message))
@@ -271,7 +343,7 @@ def main():
         robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
 
     conversation_engine._start_wait_for_command(knowledge.grammar, knowledge.grammar_target)
-    rospy.spin()
+    conversation_engine.spin()
 
 
 if __name__ == "__main__":
