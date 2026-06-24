@@ -1,3 +1,5 @@
+from itertools import chain
+
 # ROS
 import rospy
 import smach
@@ -6,7 +8,7 @@ import smach
 from ed.entity import Entity
 
 from robot_smach_states.navigation import NavigateToSymbolic, NavigateToObserve
-from robot_smach_states.util.designators import Designator, VariableDesignator, check_type
+from robot_smach_states.util.designators import Designator, VariableDesignator, check_resolve_type, check_type
 from robot_smach_states.world_model import SegmentObjects
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.rise import RiseForInspect
@@ -57,7 +59,7 @@ class InspectAreas(smach.StateMachine):
 
         check_type(entityDes, Entity)
 
-        if not objectIDsDes:
+        if objectIDsDes is None:
             objectIDsDes = VariableDesignator([], resolve_type=[ClassificationResult])
 
         if searchAreas:
@@ -70,6 +72,8 @@ class InspectAreas(smach.StateMachine):
 
         rospy.loginfo("searchAreas: {}".format(searchAreas.resolve()))
         searchArea = VariableDesignator(resolve_type=str)
+
+        found_object_ids = VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
             if navigation_area:
@@ -96,10 +100,29 @@ class InspectAreas(smach.StateMachine):
                                                 'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
-                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
+                                   SegmentObjects(robot, found_object_ids.writeable, entityDes, searchArea,
                                                   unknown_threshold=unknown_threshold,
                                                   filter_threshold=filter_threshold),
-                                   transitions={'done': 'ITERATE_AREA'})
+                                   transitions={'done': 'APPEND_OBJECT_IDS'})
+
+            @smach.cb_interface(outcomes=["done"])
+            def append_object_ids(_, stored_objects, segmented_objects):
+                """
+                @param stored_objects: is the new list of objects we have seen,
+                @param segmented_objects: the list of the segmented objects which will be appended in the stored_objects
+                """
+                check_resolve_type(stored_objects, [ClassificationResult])
+                check_resolve_type(segmented_objects, [ClassificationResult])
+                objects_dict = {}
+                for item in chain(stored_objects.resolve(), segmented_objects.resolve()):
+                    objects_dict[item.uuid] = item
+                all_objects = list(objects_dict.values())
+                stored_objects.write(all_objects)
+                return "done"
+
+            smach.StateMachine.add("APPEND_OBJECT_IDS",
+                                   smach.CBState(append_object_ids, cb_args=[objectIDsDes.writeable, found_object_ids]),
+                                   transitions={"done": "ITERATE_AREA"})
 
 
 if __name__ == "__main__":

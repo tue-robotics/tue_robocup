@@ -186,26 +186,23 @@ class OpenDoor(smach.State):
 
 
 class OpenDoorMachine(smach.StateMachine):
-    def __init__(self, robot, shelf_designator, cabinet_navigate_area="in_front_of"):
+    def __init__(self, robot, shelf_designator, cabinet_navigate_area: str = "in_front_of", cabinet_inspect_area: str = "on_top_of"):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
-
-        self.shelfDes = shelf_designator
-        cabinet_inspect_area = "Todo"
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_CABINET",
-                                   states.navigation.NavigateToSymbolic(robot, {self.shelfDes: cabinet_navigate_area}, self.shelfDes),
+                                   states.navigation.NavigateToSymbolic(robot, {shelf_designator: cabinet_navigate_area}, shelf_designator),
                                    transitions={'arrived': 'UPDATE_CABINET_POSE',
                                                 'unreachable': 'failed',
                                                 'goal_not_defined': 'failed'})
 
             smach.StateMachine.add("UPDATE_CABINET_POSE",
-                                   UpdateCabinetPose(robot, self.shelfDes, cabinet_inspect_area),
+                                   UpdateCabinetPose(robot, shelf_designator, cabinet_inspect_area),
                                    transitions={'succeeded': 'OPEN_DOOR',
                                                 'failed': 'failed'})
 
             smach.StateMachine.add("OPEN_DOOR",
-                                   OpenDoor(robot, self.shelfDes),
+                                   OpenDoor(robot, shelf_designator),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'})
 
