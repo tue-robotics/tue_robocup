@@ -6,10 +6,7 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import FrameStamped
-from robocup_knowledge import knowledge_loader
-
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 # Detection
 cabinet_amcl = ["kitchen_shelf", "kitchen_shelf"]
@@ -20,7 +17,7 @@ cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, -0.0, 0.1292
                                               kdl.Vector(-2.27, -7.55, 0.0)),
                               frame_id="map")]
 object_shelves = ["shelf2", "shelf3", "shelf4", "shelf5"]
-object_types = [obj["name"] for obj in common.objects]
+object_types = [obj["name"] for obj in knowledge_functions.objects]
 
 # Grasping
 grasp_surface = ["kitchen_table", "bistro_table"]

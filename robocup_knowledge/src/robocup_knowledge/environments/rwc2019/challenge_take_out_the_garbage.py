@@ -1,9 +1,5 @@
 # TAKE OUT THE GARBAGE KNOWLEDGE FILE RWC2019
-# TU/e Robotics
-from robocup_knowledge import knowledge_loader
-
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 starting_point = "initial_pose"
 trashbin_id = "trash_bin"

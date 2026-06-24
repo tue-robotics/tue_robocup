@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 starting_point = "initial_pose"
 
 intermediate_1 = "registration_table1"

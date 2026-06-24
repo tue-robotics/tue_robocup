@@ -1,4 +1,5 @@
-# RIPS KNOWLEDGE FILE RWC2018
+#RIPS KNOWLEDGE FILE RWC2018
+from robocup_knowledge import knowledge_functions
 
 starting_point = "initial_pose"
 

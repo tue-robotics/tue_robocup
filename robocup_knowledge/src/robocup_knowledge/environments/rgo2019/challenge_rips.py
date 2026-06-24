@@ -1,4 +1,5 @@
 # RIPS KNOWLEDGE FILE RGO2019
+from robocup_knowledge import knowledge_functions
 
 starting_point = "initial_pose"
 

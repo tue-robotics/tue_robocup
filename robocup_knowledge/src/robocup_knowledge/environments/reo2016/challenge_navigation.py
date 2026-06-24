@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 target1 = "navigation_waypoint_1"
 target1_radius1 = 0.1
 target1_radius2 = 0.3

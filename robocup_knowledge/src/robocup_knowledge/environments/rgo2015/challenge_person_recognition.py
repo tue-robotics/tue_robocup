@@ -1,5 +1,6 @@
 # PERSON RECOGNITION RGO2015
 from __future__ import print_function
+from robocup_knowledge import knowledge_functions
 
 names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah","Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
 

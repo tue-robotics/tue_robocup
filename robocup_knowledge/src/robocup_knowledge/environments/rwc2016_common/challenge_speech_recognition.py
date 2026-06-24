@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 choice_answer_mapping = {
     "Who are the inventors of the C programming language":"Ken Thompson and Dennis Ritchie ",
     "Who is the inventor of the Python programming language":"Guido van Rossum",

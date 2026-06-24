@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 choice_answer_mapping = {
         "Which American state is nearest to the former Soviet Union ":"ALASKA",
         "How many tentacles does a squid have ":"TEN",

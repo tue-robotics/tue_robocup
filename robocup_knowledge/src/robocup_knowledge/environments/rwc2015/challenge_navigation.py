@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 target1 = "navigation1"
 target2 = {
     'in_front_of_pos2' : 'dinnertable',

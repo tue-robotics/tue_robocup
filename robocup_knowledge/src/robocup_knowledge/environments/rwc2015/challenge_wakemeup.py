@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 # Tunable params
 find_person = {
     'within_range' : 2.0,
@@ -23,9 +25,9 @@ order_confirmation_limit = 3
 initial_pose = "initial_pose_door_A"
 
 bed = 'bed'
-matress_height = 0.51
+mattress_height = 0.51
 
-bed_nav_goal = {        
+bed_nav_goal = {
     'near' : bed,
     'at_bedside' : bed,
     'in' : 'bedroom', # Maybe define a bedside to get a good vantage point and position for handing over the newspaper
@@ -45,7 +47,7 @@ kitchen_nav_goal = {
 }
 
 # This also defines the order in which to pick the items!!!
-generic_items = [ "milk", "fruit", "cereal"] 
+generic_items = [ "milk", "fruit", "cereal"]
 # TODO: Pour Cereal
 
 milk_shelf = "kitchentable"

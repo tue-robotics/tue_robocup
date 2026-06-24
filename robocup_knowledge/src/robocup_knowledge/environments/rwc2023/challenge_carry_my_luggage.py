@@ -1,4 +1,3 @@
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 starting_point = "starting_pose"

@@ -6,12 +6,9 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import FrameStamped
-from robocup_knowledge import knowledge_loader
 from collections import namedtuple
 
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
-
+from robocup_knowledge import knowledge_functions
 # Detection
 cabinet_amcl = ["cabinet", "storage_shelf"]
 cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0), kdl.Vector(0.144, 3.274, 0.0)),
@@ -19,14 +16,14 @@ cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0), kdl
                  FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi), kdl.Vector(4.8, 2.5, 0.0)),
                               frame_id="map")]
 object_shelves = ["shelf3", "shelf4", "shelf5"]
-object_types = [obj["name"] for obj in common.objects]
+object_types = [obj["name"] for obj in knowledge_functions.objects]
 
 # Placing
 default_place_entity = cabinet_amcl
 
 
 """
-EntityConfiguration defines a name, an pose estimate for the Entity and which volumes of that entity to use for 
+EntityConfiguration defines a name, an pose estimate for the Entity and which volumes of that entity to use for
 manipulation
 """
 EntityConfiguration = namedtuple("EntityConfiguration", ["entity_id", "pose_estimate", "manipulation_volumes"])

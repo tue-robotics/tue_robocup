@@ -1,6 +1,6 @@
 ''' colors from printing on screen '''
 from __future__ import print_function
-
+from robocup_knowledge import knowledge_functions
 
 class bcolors:
     HEADER = '\033[95m'

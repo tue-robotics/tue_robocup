@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 # Initial pose
 initial_pose = "initial_pose_exit"
 

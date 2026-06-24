@@ -1,0 +1,1 @@
+from robocup_knowledge import knowledge_functions

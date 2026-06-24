@@ -1,4 +1,5 @@
 from robocup_knowledge.environments.rwc2016a.common import *
+from robocup_knowledge import knowledge_functions
 
 del locations[:]
 locations += [
