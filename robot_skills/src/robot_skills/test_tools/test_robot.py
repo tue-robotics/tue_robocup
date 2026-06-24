@@ -44,6 +44,7 @@ class TestRobot(unittest.TestCase):
         rospy.init_node("test_robot")
         robot = self.ROBOT_CLASS()
         self.lights(robot)
+        self.speech(robot)
 
     def part_commons(self, part):
         self.assert_has_attr(part, "close")
@@ -54,6 +55,11 @@ class TestRobot(unittest.TestCase):
         self.part_commons(robot.lights)
         self.assert_has_attr(robot.lights, "set_color")
         self.assert_has_attr(robot.lights, "set_color_rgba_msg")
+
+    def speech(self, robot):
+        self.assert_has_attr(robot, "speech")
+        self.part_commons(robot.speech)
+        self.assert_has_attr(robot.speech, "speak")
 
     def assert_has_attr(self, obj, intended_attr):
         test_bool = hasattr(obj, intended_attr)

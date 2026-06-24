@@ -10,6 +10,9 @@ from robot_skills import api, base, ebutton, head, ears, lights, perception, pic
 from robot_skills.arm import arms, force_sensor, gripper, handover_detector, gripper_position_detector
 from robot_skills.simulation import is_sim_mode, SimEButton, SimPicoVoice
 
+# Hero skills
+from .tmc_speech import TmcSpeech
+
 
 class Hero(robot.Robot):
     """Hero"""
@@ -56,7 +59,12 @@ class Hero(robot.Robot):
                 self.robot_name, self.tf_buffer, '/hero/command_status_led_rgb'
             )
         )
-        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_buffer,
+        if is_sim_mode():
+            self.add_body_part('speech', speech.TueSpeech(self.robot_name, self.tf_buffer,
+                                                          lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
+                                                          lambda: self.lights.set_color_rgba_msg(lights.RESET)))
+        else:
+            self.add_body_part('speech', TmcSpeech(self.robot_name, self.tf_buffer,
                                                    lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
                                                    lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
