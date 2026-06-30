@@ -65,9 +65,17 @@ class TestSegmentObjects(unittest.TestCase):
             return UpdateResponse(new_ids=["foobar"])
         self.robot.ed.update_kinect = _update_kinect
 
-        def _classify(*args, **kwargs):
-            return [ClassificationResult("foobar", "bar", 0.5, None)]
-        self.robot.ed.classify = _classify
+        self.robot.ed._entities["foobar"] = Entity(
+            identifier="foobar",
+            object_type="bar",
+            frame_id="map",
+            pose=kdl.Frame(),
+            shape=None,
+            volumes={},
+            super_types=[],
+            last_update_time=rospy.Time(),
+            existence_probability=0.42,
+        )
 
         state = SegmentObjects(
             robot=self.robot,
@@ -76,6 +84,7 @@ class TestSegmentObjects(unittest.TestCase):
         )
         self.assertEqual(state.execute(), "done", "SegmentObjects did not return 'done'")
         self.assertEqual(self.storage_designator._current[0].uuid, "foobar")
+        self.assertAlmostEqual(self.storage_designator._current[0].probability, 0.42)
 
     @unittest.skip("test_overwrite: is not (yet) implemented correctly in SegmentObjects")
     def test_overwrite(self):
