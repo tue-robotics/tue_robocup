@@ -37,7 +37,7 @@ class InspectAreas(smach.StateMachine):
     """
 
     def __init__(self, robot, entityDes, objectIDsDes=None, roomDes=None, searchAreas=None, navigation_area=None,
-                 knowledge=None, unknown_threshold=0.0, filter_threshold=0.0):
+                 knowledge=None):
         """
         Constructor
 
@@ -49,9 +49,6 @@ class InspectAreas(smach.StateMachine):
             if none is provided we will use the knowledge to decide them
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
             If left empty, NavigateToObserve is used.
-        :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
-        :param filter_threshold: Entities whose classification score is lower than this float are ignored
-            (i.e. are not added to the segmented_entity_ids_designator)
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -96,9 +93,7 @@ class InspectAreas(smach.StateMachine):
                                                 'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
-                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
-                                                  unknown_threshold=unknown_threshold,
-                                                  filter_threshold=filter_threshold),
+                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea),
                                    transitions={'done': 'ITERATE_AREA'})
 
 
