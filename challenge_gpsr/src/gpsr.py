@@ -61,14 +61,11 @@ class ConversationEngineWithHmi(ConversationEngine):
                                                                               uuid=self.knowledge.starting_pose),
                                      radius=0.3)
             nwc.execute()
-            # Report to the user and ask for a new task
-            #  Report to the user
+            # Report to the user. The ConversationEngine asks for a new task afterwards, in _start_new_conversation
             self.robot.head.look_at_standing_person()
             self._say_to_user(message)
             self._say_to_user("I performed {} {} so far, still going strong!".format(self.tasks_done, "tasks" if self.tasks_done == 1 else "tasks"))
             self.timeout_count = 0
-
-            self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
         else:
             rospy.logwarn("Not going to meeting point, challenge has param skip:=true set")
 
