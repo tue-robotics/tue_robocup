@@ -5,3 +5,4 @@ from .place import *
 from .manipulation import *
 from .point_at import *
 from .open_door import *
+from .vla_grasp import *

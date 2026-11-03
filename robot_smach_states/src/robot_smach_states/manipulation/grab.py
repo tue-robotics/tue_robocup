@@ -15,8 +15,10 @@ from ..utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
+from ..manipulation.vla_grasp import VLAGrasp
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
+from ..util.designators.utility import FuncDesignator
 
 
 class PrepareEdGrasp(smach.State):
@@ -308,7 +310,10 @@ class ResetOnFailure(smach.State):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, room: Designator = None):
+    VLA_MODES = ('off', 'fallback', 'primary')
+
+    def __init__(self, robot: Robot, item: Designator, arm: ArmDesignator, room: Designator = None,
+                 vla_mode: str = None):
         """
         Let the given robot move to an entity and grab that entity using some arm
 
@@ -316,6 +321,9 @@ class Grab(smach.StateMachine):
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. E.g. UnoccupiedArmDesignator
         :param room: Designator that resolves to the room where the robot has to stay in. E.g. EntityByIdDesignator
+        :param vla_mode: how to use the VLA policy (see VLAGrasp): 'off' (geometric grasp only), 'fallback' (VLA
+            when the geometric grasp fails) or 'primary' (VLA instead of the geometric grasp). Defaults to the ROS
+            parameter /<robot>/skills/vla/grasp_mode, or 'off'.
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -323,6 +331,16 @@ class Grab(smach.StateMachine):
         check_type(item, Entity)
         check_type(arm, PublicArm)
         check_type(room, Entity, type(None))
+
+        if vla_mode is None:
+            vla_mode = rospy.get_param("/{}/skills/vla/grasp_mode".format(robot.robot_name), 'off')
+        if vla_mode not in self.VLA_MODES:
+            rospy.logerr("Unknown VLA grasp mode '{}', using 'off'".format(vla_mode))
+            vla_mode = 'off'
+        if vla_mode != 'off' and not hasattr(robot, 'vla'):
+            rospy.logwarn("Robot {} has no 'vla' part, VLA grasp mode '{}' ignored".format(robot.robot_name, vla_mode))
+            vla_mode = 'off'
+        self.vla_mode = vla_mode
 
         with self:
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
@@ -335,14 +353,32 @@ class Grab(smach.StateMachine):
                                                 'arrived': 'PREPARE_GRASP'})
 
             smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
-                                   transitions={'succeeded': 'GRAB',
+                                   transitions={'succeeded': 'VLA_GRASP' if vla_mode == 'primary' else 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
-                                   transitions={'succeeded': 'done',
-                                                'failed': 'RESET_FAILURE'})
+            if vla_mode != 'primary':
+                smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
+                                       transitions={'succeeded': 'done',
+                                                    'failed': 'VLA_GRASP' if vla_mode == 'fallback' else 'RESET_FAILURE'})
+
+            if vla_mode != 'off':
+                instruction = FuncDesignator(item, self._instruction_for, resolve_type=str)
+                param_ns = "/{}/skills/vla/".format(robot.robot_name)
+                smach.StateMachine.add('VLA_GRASP',
+                                       VLAGrasp(robot, arm, instruction, grab_entity=item, execute=True,
+                                                max_duration=rospy.get_param(param_ns + "max_duration", 30.0),
+                                                steps_per_chunk=rospy.get_param(param_ns + "steps_per_chunk", 15)),
+                                       transitions={'succeeded': 'done',
+                                                    'timeout': 'RESET_FAILURE',
+                                                    'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
         check_arm_requirements(self, robot)
+
+    @staticmethod
+    def _instruction_for(entity: Entity) -> str:
+        """Natural-language instruction for the VLA policy, e.g. "pick up the coke" """
+        name = entity.etype.replace("_", " ") if entity.etype else "object"
+        return "pick up the {}".format(name)

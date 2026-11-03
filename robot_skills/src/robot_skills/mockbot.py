@@ -11,6 +11,7 @@ import PyKDL as kdl
 # ROS
 import geometry_msgs
 import mock
+import numpy as np
 import rospy
 import six
 from std_msgs.msg import String
@@ -148,6 +149,7 @@ class Arm(MockedRobotPart):
         self.send_joint_trajectory = AlteredMagicMock()
         self.reset = AlteredMagicMock()
         self._send_joint_trajectory = AlteredMagicMock()
+        self.send_joint_positions_timed = AlteredMagicMock()
         self._publish_marker = AlteredMagicMock()
         self.wait_for_motion_done = AlteredMagicMock()
 
@@ -183,6 +185,8 @@ class Base(MockedRobotPart):
         self.move = AlteredMagicMock()
         self.turn_towards = AlteredMagicMock()
         self.force_drive = AlteredMagicMock()
+        self.send_velocity = AlteredMagicMock()
+        self.stop = AlteredMagicMock()
         self.get_location = lambda: FrameStamped(random_kdl_frame(), rospy.Time(), "map")
         self.set_initial_pose = AlteredMagicMock()
         self.wait_for_motion_done = AlteredMagicMock()
@@ -290,6 +294,21 @@ class Torso(MockedRobotPart):
         self._receive_torso_measurement = AlteredMagicMock()
         self.get_position = AlteredMagicMock()
         self.wait_for_motion_done = AlteredMagicMock()
+
+
+class VLAPolicy(MockedRobotPart):
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(VLAPolicy, self).__init__(robot_name, tf_buffer)
+
+        self.arm_joint_names = ["arm_lift_joint", "arm_flex_joint", "arm_roll_joint", "wrist_flex_joint",
+                                "wrist_roll_joint"]
+        self.state_joint_names = self.arm_joint_names + ["hand_motor_joint", "head_pan_joint", "head_tilt_joint"]
+        self.server_url = "ws://mockbot:8000"
+        self.close = AlteredMagicMock()
+        self.get_state = AlteredMagicMock(return_value=[0.0] * len(self.state_joint_names))
+        self.get_images = AlteredMagicMock()
+        self.get_observation = AlteredMagicMock()
+        self.predict = AlteredMagicMock(return_value=np.zeros((50, 11), dtype=np.float32))
 
 
 class ED(MockedRobotPart):
@@ -439,6 +458,7 @@ class Mockbot(robot.Robot):
         # Reasoning/world modeling
         self.add_body_part('ed', ED(self.robot_name, self.tf_buffer))
         self.add_body_part('perception', Perception(self.robot_name, self.tf_buffer))
+        self.add_body_part('vla', VLAPolicy(self.robot_name, self.tf_buffer))
 
         # Miscellaneous
         self.pub_target = AlteredMagicMock()

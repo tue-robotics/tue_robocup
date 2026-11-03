@@ -335,6 +335,24 @@ class Base(RobotPart):
 
         return True
 
+    def send_velocity(self, vx, vy, vth):
+        """ Publishes a single command velocity to the base controller. N.B.: all collision avoidance is bypassed and
+        the caller is responsible for the publishing rate and for calling stop() afterwards.
+
+        :param vx: forward velocity [m/s]
+        :param vy: sideways velocity [m/s]
+        :param vth: rotational velocity [rad/s]
+        """
+        v = Twist()
+        v.linear.x = vx
+        v.linear.y = vy
+        v.angular.z = vth
+        self._cmd_vel.publish(v)
+
+    def stop(self):
+        """ Sends a zero command velocity to the base controller """
+        self._cmd_vel.publish(Twist())
+
     def get_location(self) -> FrameStamped:
         """ Returns a FrameStamped with the robot pose
 

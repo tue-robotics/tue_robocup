@@ -6,7 +6,7 @@ import rospy
 
 # TU/e Robotics
 from robot_skills import api, base, ebutton, head, ears, lights, perception, picovoice, robot, speech, \
-    topological_planner, torso, world_model_ed
+    topological_planner, torso, vla_policy, world_model_ed
 from robot_skills.arm import arms, force_sensor, gripper, handover_detector, gripper_position_detector
 from robot_skills.simulation import is_sim_mode, SimEButton, SimPicoVoice
 
@@ -49,6 +49,11 @@ class Hero(robot.Robot):
                                                                "/hero/head_rgbd_sensor/rgb/image_raw",
                                                                "/hero/head_rgbd_sensor/project_2d_to_3d",
                                                                camera_base_ns='hero/head_rgbd_sensor'))
+        # Vision-Language-Action policy client; the policy server itself runs outside ROS, see robot_skills.vla_policy
+        self.add_body_part('vla', vla_policy.VLAPolicy(self.robot_name, self.tf_buffer, self.get_joint_states,
+                                                       arm_joint_names,
+                                                       "/hero/head_rgbd_sensor/rgb/image_rect_color",
+                                                       "/hero/hand_camera/image_raw"))
 
         # Human Robot Interaction
         self.add_body_part(

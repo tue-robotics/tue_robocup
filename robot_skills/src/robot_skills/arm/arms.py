@@ -149,6 +149,9 @@ class PublicArm(object):
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
                                                max_joint_vel=max_joint_vel)
 
+    def send_joint_positions_timed(self, positions: List[List[float]], times_from_start: List[float]) -> None:
+        return self._arm.send_joint_positions_timed(positions, times_from_start)
+
     def send_goal(self, frame_stamped: FrameStamped, timeout: float = 30.0, pre_grasp: bool = False,
                   first_joint_pos_only: bool = False, allowed_touch_objects: Optional[List[str]] = None) -> bool:
         if allowed_touch_objects is None:
@@ -611,6 +614,23 @@ class Arm(RobotPart):
             return done
         else:
             return False
+
+    def send_joint_positions_timed(self, positions: List[List[float]], times_from_start: List[float]) -> None:
+        """
+        Send a joint trajectory with explicit timing without waiting for the result.
+
+        Meant for streaming short trajectories from a learned policy, where the timing follows from the rate
+        of the policy instead of from a maximum joint velocity as in _send_joint_trajectory.
+
+        :param positions: joint configurations in the order of self.joint_names
+        :param times_from_start: time [s] at which each configuration should be reached
+        """
+        if len(positions) != len(times_from_start):
+            raise ValueError("Got {} positions but {} times".format(len(positions), len(times_from_start)))
+        points = [JointTrajectoryPoint(positions=list(position), time_from_start=rospy.Duration.from_sec(t))
+                  for position, t in zip(positions, times_from_start)]
+        goal = FollowJointTrajectoryGoal(trajectory=JointTrajectory(joint_names=self.joint_names, points=points))
+        self._ac_joint_traj.send_goal(goal)
 
     def wait_for_motion_done(self, timeout: float = 10.0, cancel: bool = False) -> bool:
         """
