@@ -20,9 +20,10 @@ from robot_smach_states.util.designators import EntityByIdDesignator
 
 
 class ConversationEngineWithHmi(ConversationEngine):
-    def __init__(self, robot, grammar, command_target, knowledge):
+    def __init__(self, robot, grammar, command_target, knowledge, parser="ner", llm_fallback_to_ner=True):
         client = ActionClient(robot.robot_name)
-        super(ConversationEngineWithHmi, self).__init__(client, grammar, command_target, give_examples=False)
+        super(ConversationEngineWithHmi, self).__init__(client, grammar, command_target, give_examples=False,
+                                                        parser=parser, llm_fallback_to_ner=llm_fallback_to_ner)
 
         self.robot = robot
         self.knowledge = knowledge
@@ -227,9 +228,14 @@ def main():
     no_of_tasks = rospy.get_param('~number_of_tasks', 999)
     test        = rospy.get_param('~test_mode', False)
     time_limit  = rospy.get_param('~time_limit', 999)
+    # What turns a command into a task: 'ner' (the NER model) or 'llm' (a language model, see action_server.llm)
+    parser      = rospy.get_param('~parser', 'ner')
+    # With 'llm': parse a command with the NER model when the language model cannot be used
+    llm_fallback_to_ner = rospy.get_param('~llm_fallback_to_ner', True)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
+    rospy.loginfo("[GPSR] parser = {}".format(parser))
     if skip:
         rospy.loginfo("[GPSR] skip = {}".format(skip))
     if no_of_tasks:
@@ -244,7 +250,8 @@ def main():
     robot = get_robot(robot_name)
     knowledge = load_knowledge('challenge_gpsr')
 
-    conversation_engine = ConversationEngineWithHmi(robot, knowledge.grammar, knowledge.grammar_target, knowledge)
+    conversation_engine = ConversationEngineWithHmi(robot, knowledge.grammar, knowledge.grammar_target, knowledge,
+                                                    parser=parser, llm_fallback_to_ner=llm_fallback_to_ner)
     conversation_engine.test = test
     conversation_engine.skip = skip
     conversation_engine.tasks_to_be_done = no_of_tasks
