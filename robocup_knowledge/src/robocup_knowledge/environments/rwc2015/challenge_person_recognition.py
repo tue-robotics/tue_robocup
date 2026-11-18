@@ -1,3 +1,4 @@
+from robocup_knowledge import knowledge_functions
 from __future__ import print_function
 
 ''' colors from printing on screen '''

@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 not_understood_sentences = [
         "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
@@ -48,26 +47,26 @@ MEETING_PP -> at | in
 MANIPULATION_PP -> on
 """
 
-for room in common.location_rooms:
+for room in knowledge_functions.location_rooms:
     grammar += "\nROOM[{'type': 'room', 'id': '%s'}] -> %s" % (room, room)
 
-for loc in common.get_locations():
+for loc in knowledge_functions.get_locations():
     grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
 
 grammar += '\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]'
 
-for obj in common.object_names:
+for obj in knowledge_functions.object_names:
     grammar += "\nNAMED_OBJECT[{'type': '%s'}] -> %s" % (obj, obj)
 
-for loc in common.get_locations(pick_location=True, place_location=True):
+for loc in knowledge_functions.get_locations(pick_location=True, place_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATION[{"id": "%s"}] -> MANIPULATION_PP the %s' % (loc, loc)
 
-for cat in common.object_categories:
+for cat in knowledge_functions.object_categories:
     grammar += "\nOBJECT_CATEGORY[{'category': '%s'}] -> %s" % (cat, cat)
 
-for name in common.names:
+for name in knowledge_functions.names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
-    for loc in common.get_locations():
+    for loc in knowledge_functions.get_locations():
         grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
 
 grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'

@@ -1,7 +1,6 @@
 # RECEPTIONIST KNOWLEDGE FILE RGO2019
 
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 operator_name = "john"
 

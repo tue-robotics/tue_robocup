@@ -1,3 +1,6 @@
+from robocup_knowledge import knowledge_functions
+
+
 choice_answer_mapping = {
 "What shape is this building" : " UFO",
 "Who was beaten by AlphaGo" : " Lee Sedol",

@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 default_item = "coke"
 default_place = "couch_table"
 default_area = "on_top_of"

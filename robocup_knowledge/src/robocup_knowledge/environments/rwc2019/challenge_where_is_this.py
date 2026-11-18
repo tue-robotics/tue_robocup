@@ -2,9 +2,7 @@ from __future__ import print_function
 
 # System
 from collections import namedtuple
-
-# TU/e Robotics
-from robocup_knowledge import knowledge_loader
+from robocup_knowledge import knowledge_functions
 
 BackupScenario = namedtuple("BackupScenario", ["entity_id", "sentence"])
 
@@ -17,16 +15,13 @@ backup_scenarios = [
 information_point_id = "where_is_this_information_point"
 initial_pose_id = "initial_pose"
 
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
-
 grammar_target = "T"
 
 starting_point_grammar = """
 T[A] -> LOCATION[A]
 """
 
-for loc in common.location_names:
+for loc in knowledge_functions.location_names:
     starting_point_grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
 location_grammar = """
@@ -35,18 +30,18 @@ T[A] -> COURTESY_PREFIX VP[A] | VP[A]
 COURTESY_PREFIX -> robot please | could you | could you please | please
 """
 
-for loc in common.location_rooms:
+for loc in knowledge_functions.location_rooms:
     location_grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
-for loc in common.location_names:
+for loc in knowledge_functions.location_names:
     location_grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
-for loc in common.object_names:
-    category = common.get_object_category(loc)
-    if category not in common.category_locations:
+for loc in knowledge_functions.object_names:
+    category = knowledge_functions.get_object_category(loc)
+    if category not in knowledge_functions.category_locations:
         continue
 
-    entity_id = common.get_object_category_location(category)[0]
+    entity_id = knowledge_functions.get_object_category_location(category)[0]
 
     location_grammar += '\nLOCATION[%s] -> %s' % (entity_id, loc)
 

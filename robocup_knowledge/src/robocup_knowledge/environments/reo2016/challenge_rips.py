@@ -1,3 +1,4 @@
+from robocup_knowledge import knowledge_functions
 starting_point = "initial_pose_door_B"
 
 intermediate_1 = "rips1"

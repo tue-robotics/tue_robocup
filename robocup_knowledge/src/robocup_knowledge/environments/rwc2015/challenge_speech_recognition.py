@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 choice_answer_mapping = {
 "Which German Count invented the zeppelin":"Count von Zeppelin",
 "Who was the first president of the USA":"George Washington",

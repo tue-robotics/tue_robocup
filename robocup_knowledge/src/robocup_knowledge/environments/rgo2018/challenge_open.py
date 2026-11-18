@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 names = ['josja', 'lars', 'janno', 'loy', 'rein', 'kevin', 'ramon', 'max', 'matthijs', 'raphael']
 
@@ -48,21 +47,21 @@ NUMBER -> one | two | three
 MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 
-for room in common.location_rooms:
+for room in knowledge_functions.location_rooms:
     grammar += "\nROOM[{'type': 'room', 'id': '%s'}] -> %s" % (room, room)
 
-for loc in common.get_locations():
+for loc in knowledge_functions.get_locations():
     grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
 
 grammar += '\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]'
 
-for obj in common.object_names:
+for obj in knowledge_functions.object_names:
     grammar += "\nNAMED_OBJECT[{'type': '%s'}] -> %s" % (obj, obj)
 
-for loc in common.get_locations(pick_location=True, place_location=True):
+for loc in knowledge_functions.get_locations(pick_location=True, place_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATION[{"id": "%s"}] -> MANIPULATION_AREA_DESCRIPTION the %s' % (loc, loc)
 
-for cat in common.object_categories:
+for cat in knowledge_functions.object_categories:
     grammar += "\nOBJECT_CATEGORY[{'category': '%s'}] -> %s" % (cat, cat)
 
 for name in names:
@@ -223,7 +222,7 @@ VP[{"action": "hand-over", "target-location": X, "object": Z}] -> V_BRING OBJECT
 
 for name in names:
     grammar += '\nBRING_PERSON[{"type": "person", "id": "%s"}] -> %s' % (name, name)
-    for loc in common.get_locations():
+    for loc in knowledge_functions.get_locations():
         grammar += '\nBRING_PERSON[{"type": "person", "id": "%s", "location": %s}] -> %s MANIPULATION_AREA_DESCRIPTION the %s' % (name, loc, name, loc)
 
 ##############################################################################

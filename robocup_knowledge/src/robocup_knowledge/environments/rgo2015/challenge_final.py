@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 initial_pose_sergio = "initial_pose_door_B"
 
 initial_pose_amigo = "initial_pose_door_B"

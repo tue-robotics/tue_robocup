@@ -2,8 +2,7 @@
 
 from __future__ import print_function
 
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 """
 Local knowledge info needed:
@@ -48,13 +47,13 @@ trashbin_id = "trash_bin"
 grammar_target = "T"
 
 grammar = ""
-for room in common.location_rooms:
+for room in knowledge_functions.location_rooms:
     grammar += "\nT[{0}] -> {0}".format(room)
 
 category_grammar = """
 T[P] -> CATEGORY[P] | it is a CATEGORY[P] | the category is CATEGORY[P]
 """
-for l in common.category_locations:
+for l in knowledge_functions.category_locations:
     category_grammar += "\nCATEGORY[{}] -> {}".format(l, l.replace('_', ' '))
 
 category_grammar += "\nCATEGORY[{}] -> {}".format("trash", "trash".replace('_', ' '))

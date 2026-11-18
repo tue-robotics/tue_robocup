@@ -1,12 +1,11 @@
 from itertools import groupby
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 # initial pose
 starting_point = "initial_pose_door_A"
 exit_waypoint = "exit_door_B1"
 
-rooms = common.rooms + ["entrance", "exit"]
+rooms = knowledge_functions.rooms + ["entrance", "exit"]
 
 translations = { "bookcase" : "bocase" }
 

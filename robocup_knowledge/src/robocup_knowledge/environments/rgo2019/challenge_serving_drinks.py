@@ -1,4 +1,5 @@
 # SERVING DRINKS KNOWLEDGE FILE RGO2019
+from robocup_knowledge import knowledge_functions
 
 # Bar where the drinks are located
 bar_id = "bar_table"

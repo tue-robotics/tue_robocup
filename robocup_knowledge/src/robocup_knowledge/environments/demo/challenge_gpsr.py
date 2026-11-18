@@ -1,7 +1,5 @@
 from __future__ import print_function
-
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 not_understood_sentences = [
         "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
@@ -38,19 +36,21 @@ NUMBER -> one | two | three
 MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 
-for loc in common.get_locations():
-    grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
+# object_names = knowledge_functions.get_object_names()
 
-for obj in common.object_names:
-    grammar += '\nNAMED_OBJECT[%s] -> %s' % (obj, obj)
+# for loc in knowledge_functions.get_locations():
+#     grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
-for loc in common.get_locations(pick_location=True, place_location=True):
-    grammar += '\nMANIPULATION_AREA_LOCATION[%s] -> MANIPULATION_AREA_DESCRIPTION the %s' % (loc, loc)
+# for obj in object_names:
+#     grammar += '\nNAMED_OBJECT[%s] -> %s' % (obj, obj)
 
-for cat in common.object_categories:
+# for loc in knowledge_functions.get_locations(pick_location=True, place_location=True):
+#     grammar += '\nMANIPULATION_AREA_LOCATION[%s] -> MANIPULATION_AREA_DESCRIPTION the %s' % (loc, loc)
+
+for cat in knowledge_functions.object_categories:
     grammar += '\nOBJECT_CATEGORY[%s] -> %s' % (cat, cat)
 
-for name in common.names:
+for name in knowledge_functions.names:
     grammar += '\nNAMED_PERSON[%s] -> %s' % (name, name)
 
 ###############################################################################
@@ -151,7 +151,7 @@ VP["action": "bring", "target-location": {"type": "person", "id": Y}, "object": 
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the LOCATION[X]
 """
 
-for name in common.names:
+for name in knowledge_functions.names:
     grammar += '\nBRING_PERSON[%s] -> %s' % (name, name)
 
 ##############################################################################
@@ -193,11 +193,15 @@ if __name__ == "__main__":
     from grammar_parser.cfgparser import CFGParser
 
     import sys
-    if sys.argv[1] == "object":
-        grammar_parser = CFGParser.fromstring(obj_grammar)
-    elif sys.argv[1] == "location":
-        grammar_parser = CFGParser.fromstring(loc_grammar)
-    elif sys.argv[1] == "full":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "object":
+            grammar_parser = CFGParser.fromstring(obj_grammar)
+        elif sys.argv[1] == "location":
+            grammar_parser = CFGParser.fromstring(loc_grammar)
+        elif sys.argv[1] == "full":
+            grammar_parser = CFGParser.fromstring(grammar)
+
+    else:
         grammar_parser = CFGParser.fromstring(grammar)
 
     if len(sys.argv) > 2:

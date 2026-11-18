@@ -1,3 +1,5 @@
+from robocup_knowledge import knowledge_functions
+
 # Entity where the shelves are part of
 cabinet_slam = "bookcase"
 cabinet_amcl = "bookcase"

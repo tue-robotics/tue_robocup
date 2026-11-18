@@ -1,4 +1,4 @@
-from robocup_knowledge import knowledge_loader
+from robocup_knowledge import knowledge_functions
 
 # Do not alter the keys please :)
 guiding_spec = "Guide me back"

@@ -1,1 +1,2 @@
 from robocup_knowledge.environments.rwc2016_common.challenge_navigation import *
+from robocup_knowledge import knowledge_functions

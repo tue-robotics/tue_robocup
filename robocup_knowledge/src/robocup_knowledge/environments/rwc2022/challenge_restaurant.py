@@ -1,8 +1,4 @@
-# TU/e Robotics
-from robocup_knowledge import knowledge_loader
-
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 order_grammar = """
 O[P] -> ORDER[P]
@@ -13,7 +9,7 @@ ITEM3[{"item1": F1, "item2": F2, "item3": F3}] -> ITEM[F1] ITEM[F2] and ITEM[F3]
 """
 
 # Create grammar
-for d in common.objects:
+for d in knowledge_functions.objects:
     if d["category"] in ["drink", "fruit", "snack"] or d["name"] == "corn_flakes":
         name = d["name"]
         order_grammar += f"\nITEM['{name}'] -> {name}"

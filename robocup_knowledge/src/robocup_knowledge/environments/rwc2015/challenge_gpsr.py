@@ -1,9 +1,11 @@
-# RWC2015 
+# RWC2015
+from robocup_knowledge import knowledge_functions
+
 from robocup_knowledge import knowledge_loader
 challenge_speech_recognition_data = knowledge_loader.load_knowledge("challenge_speech_recognition")
 
-spec_questions = challenge_speech_recognition_data.spec 
-choices_questions = challenge_speech_recognition_data.choices 
+spec_questions = challenge_speech_recognition_data.spec
+choices_questions = challenge_speech_recognition_data.choices
 
 #locations: # TO BE DEFINED IN model.yaml!
 starting_point = "initial_pose_door_A"
@@ -16,9 +18,9 @@ rooms_detailed = {  'kitchen':['kitchentable','kitchencounter', 'cupboard'], # f
                     'bedroom':['left_bedside_table','right_bedside_table','desk','bed'],# bed has two spots
                     'hallway':['hallwaytable', 'bookcase/shelf1','bookcase/shelf2','bookcase/shelf3','bookcase/shelf4','bookcase/shelf5','bookcase/shelf6','bookcase/shelf7','bookcase/shelf8']} #,'bookcase']} # both locations have multiple spots.
 
-objects_known_recognize = ['pure_milk', 'orange_juice', 'sponge', 'papaya_milk', 'apple', 'tomato_chips', 'lemon', 'toothpaste', 
-                 'chocolates', 'bowl', 'beer', 'toilet_paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth', 
-                 'green_tea', 'gram_soup', 'bubble_gum', 'bean_sauce', 'barbecue_chips', 'tray', 'coconut_cereals', 
+objects_known_recognize = ['pure_milk', 'orange_juice', 'sponge', 'papaya_milk', 'apple', 'tomato_chips', 'lemon', 'toothpaste',
+                 'chocolates', 'bowl', 'beer', 'toilet_paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth',
+                 'green_tea', 'gram_soup', 'bubble_gum', 'bean_sauce', 'barbecue_chips', 'tray', 'coconut_cereals',
                  'egg_stars', 'honey_chips', 'coco_balls', 'biscuits']
 
 ###############################################
@@ -27,12 +29,12 @@ objects_known_recognize = ['pure_milk', 'orange_juice', 'sponge', 'papaya_milk',
 
 #data for speech recognition
 
-objects_known = ['pure milk', 'orange juice', 'sponge', 'papaya milk', 'apple', 'tomato chips', 'lemon', 'toothpaste', 
-                 'chocolates', 'bowl', 'beer', 'toilet paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth', 
-                 'green tea', 'gram soup', 'bubble gum', 'bean sauce', 'barbecue chips', 'tray', 'coconut cereals', 
+objects_known = ['pure milk', 'orange juice', 'sponge', 'papaya milk', 'apple', 'tomato chips', 'lemon', 'toothpaste',
+                 'chocolates', 'bowl', 'beer', 'toilet paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth',
+                 'green tea', 'gram soup', 'bubble gum', 'bean sauce', 'barbecue chips', 'tray', 'coconut cereals',
                  'egg stars', 'honey chips', 'coco balls', 'biscuits']
 
-location_placement = ['kitchentable', 'kitchencounter', 'cupboard', 'bar', 'couchtable', 'dinnertable', 'sofa', 
+location_placement = ['kitchentable', 'kitchencounter', 'cupboard', 'bar', 'couchtable', 'dinnertable', 'sofa',
                       'left bedside table', 'right bedside table', 'desk', 'bed', 'bookcase', 'hallwaytable']
 
 #location_placement = ['kitchentable','dinnertable']
@@ -40,8 +42,8 @@ location_placement = ['kitchentable', 'kitchencounter', 'cupboard', 'bar', 'couc
 rooms = ["kitchen", "hallway", "livingroom", "bedroom"]
 #rooms = ["hallway"]
 
-persons_women = ["Alex","Angel","Eve","Jamie","Jane","Liza","Melissa","Tracy","Robin","Sophia"] 
-persons_men = ["Alex","Angel","Edward","Homer","Jamie","John","Kevin","Kurt","Tracy","Robin"] 
+persons_women = ["Alex","Angel","Eve","Jamie","Jane","Liza","Melissa","Tracy","Robin","Sophia"]
+persons_men = ["Alex","Angel","Edward","Homer","Jamie","John","Kevin","Kurt","Tracy","Robin"]
 
 #spec_get_and_deliver
 spec_get_deliver = "(<2_vb_take> the <2_object> from the <1_location> and <3_vb_deliver> it to (<3_person_me>|(the <3_place_location>)|(<3_person> (at|in|(which is in)) the <3_room>)))"
@@ -57,7 +59,7 @@ spec = "("+spec_get_deliver+"|"+spec_goroom_findobj+"|"+spec_findperson_talk+")"
 #spec = spec_get_deliver
 
 choices = {'1_location':location_placement,
-'2_vb_take':['take', 'grasp', 'get'],   
+'2_vb_take':['take', 'grasp', 'get'],
 '2_object':objects_known,
 '3_vb_deliver': ['bring', 'carry', 'deliver', 'take'],
 '3_person_me':['me'],

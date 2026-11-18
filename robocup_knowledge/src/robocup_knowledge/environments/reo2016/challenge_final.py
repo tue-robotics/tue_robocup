@@ -1,6 +1,5 @@
 from itertools import groupby
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 # initial pose
 starting_point = "initial_pose_door_A"

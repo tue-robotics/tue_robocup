@@ -1,8 +1,4 @@
-# TU/e Robotics
-from robocup_knowledge import knowledge_loader
-
-# Common knowledge
-common = knowledge_loader.load_knowledge("common")
+from robocup_knowledge import knowledge_functions
 
 # General
 starting_point = 'stickler_for_rules_starting_point'

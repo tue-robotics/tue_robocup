@@ -1,7 +1,7 @@
 from __future__ import print_function
+from robocup_knowledge.knowledge_functions import KnowledgeFunctions
 
-from robocup_knowledge import knowledge_loader
-common = knowledge_loader.load_knowledge("common")
+kf = KnowledgeFunctions()
 
 not_understood_sentences = [
         "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
@@ -35,19 +35,19 @@ DET -> the | a | an | some
 MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 
-for loc in common.get_locations():
+for loc in kf.get_locations():
     grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
-for obj in common.object_names:
+for obj in kf.object_names:
     grammar += '\nNAMED_OBJECT[%s] -> %s' % (obj, obj)
 
-for loc in common.get_locations(pick_location=True, place_location=True):
+for loc in kf.get_locations(pick_location=True, place_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATION[%s] -> MANIPULATION_AREA_DESCRIPTION the %s' % (loc, loc)
 
-for cat in common.object_categories:
+for cat in kf.object_categories:
     grammar += '\nOBJECT_CATEGORY[%s] -> %s' % (cat, cat)
 
-for name in common.names:
+for name in kf.names:
     grammar += '\nNAMED_PERSON[%s] -> %s' % (name, name)
 
 ###############################################################################
