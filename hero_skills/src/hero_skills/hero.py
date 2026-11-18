@@ -1,9 +1,12 @@
 # System
+from typing import Union
 import math
 
 # Third party
+import PyKDL as kdl
 import rospy
 
+from pykdl_ros import VectorStamped
 # TU/e Robotics
 from robot_skills import api, base, ebutton, head, ears, lights, perception, picovoice, robot, speech, \
     topological_planner, torso, world_model_ed
@@ -94,15 +97,17 @@ class Hero(robot.Robot):
 
         self.configure()
 
-    def move_to_inspect_pose(self, inspect_target):
+    def move_to_inspect_pose(self, inspect_target: Union[kdl.Vector, VectorStamped]):
         """
         This poses the robot for an inspect.
 
         :param inspect_target: kdl.Frame with the pose of the entity to be inspected.
         :return: boolean, false if something went wrong.
         """
+        if isinstance(inspect_target, kdl.Vector):
+            inspect_target = VectorStamped(inspect_target, rospy.Time.now(), "map")
         # calculate the arm_lift_link which must be sent
-        z_head = inspect_target.z() + self.z_over
+        z_head = inspect_target.vector.z() + self.z_over
 
         # check whether moving the arm is necessary
         if z_head < 1.3:
@@ -121,7 +126,7 @@ class Hero(robot.Robot):
         # noinspection PyProtectedMember
         arm._arm._send_joint_trajectory([pose])
 
-        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "map", 1.57)
+        self.base.turn_towards(inspect_target.vector.x(), inspect_target.vector.y(), inspect_target.header.frame_id, 1.57)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True
