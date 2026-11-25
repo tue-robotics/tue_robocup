@@ -8,19 +8,19 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    {'name': 'dinner_table',    'room': 'dining_room', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'dinner_table',    'room': 'dining_room', 'category': 'table',   'manipulation': 'yes', 'aliases': ['dining table']},
     {'name': 'cabinet',         'room': 'dining_room', 'category': 'shelf',   'manipulation': 'yes'},
     {'name': 'bookcase',        'room': 'dining_room', 'category': 'shelf',   'manipulation': 'yes'},
 
     {'name': 'kitchen_cabinet', 'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
-    {'name': 'fridge',          'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
+    {'name': 'fridge',          'room': 'kitchen',     'category': 'utility', 'manipulation': 'no', 'aliases': ['refrigerator']},
 
-    {'name': 'salon_table',     'room': 'living_room', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'couch_long',      'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
-    {'name': 'couch_short',     'room': 'living_room', 'category': 'utility', 'manipulation': 'no'},
+    {'name': 'salon_table',     'room': 'living_room', 'category': 'table',   'manipulation': 'yes', 'aliases': ['dining table']},
+    {'name': 'couch_long',      'room': 'living_room', 'category': 'utility', 'manipulation': 'no', 'aliases': ['couch']},
+    {'name': 'couch_short',     'room': 'living_room', 'category': 'utility', 'manipulation': 'no', 'aliases': ['couch']},
 
-    {'name': 'work_bench1',     'room': 'office',      'category': 'table',   'manipulation': 'yes'},
-    {'name': 'work_bench2',     'room': 'office',      'category': 'table',   'manipulation': 'yes'},
+    {'name': 'work_bench1',     'room': 'office',      'category': 'table',   'manipulation': 'yes', 'aliases': ['dining table']},
+    {'name': 'work_bench2',     'room': 'office',      'category': 'table',   'manipulation': 'yes', 'aliases': ['dining table']},
     {'name': 'closet',          'room': 'office',      'category': 'shelf',   'manipulation': 'yes'},
 ]
 
@@ -67,6 +67,13 @@ objects = [
     {'category': 'cutlery',             'name': 'knife',            'color': 'brownish',        'volume': 5,        'weight': 100},
     {'category': 'cutlery',             'name': 'chopsticks',       'color': 'brownish',        'volume': 20,       'weight': 100}
 ]
+
+# Labels of object detectors (see robocup_knowledge/detector_labels.py). Labels that only tell the category of an
+# object map to that category; furniture labels are the 'aliases' of the locations above; these labels are dropped.
+category_aliases = {
+    "drink": ["bottle", "wine glass"],
+}
+detector_ignore = ["person"]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))

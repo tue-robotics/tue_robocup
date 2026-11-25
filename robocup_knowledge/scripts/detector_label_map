@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""
+The translation of detector labels into the object list of ROBOT_ENV (see robocup_knowledge.detector_labels).
+
+Check what a model can tell with the object list, e.g. during the setup days:
+
+    rosrun robocup_knowledge detector_label_map --labels <model folder>/coco.names
+
+Write the map ED's rgbd plugin reads, and then run a command (world_model.launch configures ED this way, so the map
+is current before ED reads it):
+
+    rosrun robocup_knowledge detector_label_map --out ~/.ros/detector_label_map.yaml -- rosrun ed configure <config>
+
+When the map cannot be made, the error is printed, any old map is removed and the command still runs: ED then uses
+the labels of the model as they are.
+"""
+import argparse
+import os
+import subprocess
+import sys
+
+from robocup_knowledge import knowledge_loader
+from robocup_knowledge.detector_labels import (LabelMapError, build_label_map, coverage, read_model_labels,
+                                               to_yaml)
+
+
+def print_coverage(label_map, common, labels_file):
+    rows, undetectable = coverage(label_map, common, read_model_labels(labels_file))
+    width = max(len(label) for label, _ in rows) if rows else 0
+    for label, target in rows:
+        print("  {:{}}  ->  {}".format(label, width, target if target is not None else "(no type)"))
+    matched = sum(1 for _, target in rows if target is not None)
+    print("\n{} of {} labels of the model match the object list.".format(matched, len(rows)))
+    print("Objects no label names ({}): {}".format(len(undetectable), ", ".join(undetectable) or "none"))
+
+
+def write_map(label_map, environment, path):
+    path = os.path.expanduser(path)
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(to_yaml(label_map, environment))
+    os.replace(tmp, path)
+    print("detector_label_map: wrote {} labels of environment '{}' to {}".format(len(label_map), environment, path))
+
+
+def remove_map(path):
+    path = os.path.expanduser(path)
+    if os.path.exists(path):
+        os.remove(path)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--env", help="environment, default $ROBOT_ENV")
+    parser.add_argument("--labels", help="class-name file of a model (coco.names / coco.yaml): print what it matches")
+    parser.add_argument("--out", help="write the map to this file")
+    argv = rospy_free_argv(sys.argv[1:])
+    command = []
+    if "--" in argv:  # everything after '--' is the command to run afterwards
+        command = argv[argv.index("--") + 1:]
+        argv = argv[:argv.index("--")]
+    args = parser.parse_args(argv)
+
+    if args.env:
+        os.environ["ROBOT_ENV"] = args.env
+    environment = os.environ.get("ROBOT_ENV", "")
+
+    ok = True
+    try:
+        common = knowledge_loader.load_knowledge("common")
+        label_map = build_label_map(common)
+        if args.out:
+            write_map(label_map, environment, args.out)
+        if args.labels:
+            print_coverage(label_map, common, args.labels)
+    except (LabelMapError, RuntimeError, KeyError, OSError) as e:
+        ok = False
+        print("detector_label_map: {}".format(e), file=sys.stderr)
+        if args.out:
+            remove_map(args.out)
+            print("detector_label_map: no map; ED uses the labels of the model as they are", file=sys.stderr)
+
+    if command:
+        sys.exit(subprocess.call(command))
+    sys.exit(0 if ok else 1)
+
+
+def rospy_free_argv(argv):
+    """roslaunch appends __name:=... and __log:=...; they are not for this script"""
+    return [a for a in argv if not (a.startswith("__") and ":=" in a)]
+
+
+if __name__ == "__main__":
+    main()
