@@ -12,8 +12,22 @@ Last updated: 2026-11-24
 |---|---|---|
 | action_server | `feature/llm` | Planner in `action_server/src/action_server/llm/`. Settings in `action_server/.env/llm.env` (not committed). |
 | conversation_engine | `feature/llm` | `parser: llm` uses the planner, `llm_fallback_to_ner` falls back to the NER model. |
-| tue_robocup | `feature/llm` | Local merge of `fix/gpsr-python-interpreter` (`SegmentObjects` uses the YOLO labels instead of ED's removed `classify` service). Not pushed. |
-| hero_bringup | `feature/llm` | `parameters/interaction/conversation_engine.yaml` (parser), `parameters/llm/task_planner.md` (instructions for the model). |
+| tue_robocup | `feature/llm` | Includes `fix/gpsr-python-interpreter` (`SegmentObjects` uses the YOLO labels instead of ED's removed `classify` service). `robocup_knowledge`: detector label map (section 5). `Find`: category matching. |
+| hero_bringup | `feature/llm` | `parameters/interaction/conversation_engine.yaml` (parser), `parameters/llm/task_planner.md` (instructions for the model), rgbd plugin: label map and threshold. |
+| ed_sensor_integration | `feature/llm` (from `master`) | Detector labels into the object list, vote per entity. |
+| ed_python | `feature/llm` (from `master`) | `Entity.existence_probability`. |
+| yolo_onnx_ros | `feature/llm` (from `ros1`; `master` is ROS 2) | Configurable confidence threshold. |
+| robot_launch_files | `feature/llm` (from `ros1`; `master` is ROS 2) | Writes the detector label map before ED is configured. |
+
+To switch all of them, from the `tue_robocup` repository:
+
+```bash
+challenge_gpsr/scripts/checkout_llm_branches.sh --check   # only report
+challenge_gpsr/scripts/checkout_llm_branches.sh           # check, then check out feature/llm; then tue-make
+```
+
+It checks every repository first and checks out nothing when one has uncommitted changes, commits that are not on
+GitHub (except on `feature/llm` itself), a detached HEAD, or no `feature/llm` branch.
 
 For development the planner runs on the Claude Code CLI with its own login (`LLM_PROVIDER=claude_code`, `LLM_MODEL=sonnet`,
 `LLM_TIMEOUT=60`, `LLM_EFFORT=low`). A command takes about 3 to 4 s and 5,200 tokens.
@@ -26,6 +40,10 @@ Running GPSR in simulation:
 3. `hero-rviz`
 4. `rosrun challenge_gpsr gpsr.py _robot_name:=hero _test_mode:=true _skip:=true _number_of_tasks:=3 _time_limit:=5 _parser:=llm _llm_fallback_to_ner:=false`
 5. Give a command: `hero-hear could you get me a pepsi`
+
+In simulation the HMI also runs `random_answerer` (`hmi/tools/random_answerer`, started when `ROBOT_REAL` is not set),
+which answers GPSR's questions with random grammar sentences and races typed commands. Stop it after free mode is up:
+`rosnode kill /hero/hmi/random_answerer`.
 
 Decisions so far:
 
@@ -180,71 +198,70 @@ preconditions (e.g. holding an object) and its effects:
 4. Step results (variables) and the missing actions.
 5. A world-state query for planning; plan the three commands together for the interleaving bonus.
 
-## 5. Plan: connect the detector to the object list
+## 5. Detector labels and the object list (implemented)
 
-**Goal.** The detector's classes are exactly the object names of `robocup_knowledge/<ROBOT_ENV>/common.py`. A detected
-object then gets an ED type that is a name the planner knows, so "bring me a coke" can be found. The planner, the
-grammar, the NER linker and the detector use one object list.
+Decided on 2026-11-25 (design session Q1 to Q27), implemented on the `feature/llm` branches.
 
-**Approach.** YOLOE-26, open vocabulary, with the object names as text prompts baked into the model at export. No
-fine-tuning.
+**Principle.** The object list (`robocup_knowledge/environments/<ROBOT_ENV>/common.py`) is the truth. Every label of the
+detector is translated once, where it enters ED, into an object of the list, a category of the list, *drop*, or no type.
+ED then only holds names of the object list, so `Find`, the challenges and the planner speak one vocabulary. The same
+design takes a model with more classes, a fine-tuned model (labels equal the names) or an open-vocabulary model (labels
+generated from the names): only its files and its configuration change.
 
-What makes this a small change:
+```
+ launch: common.py (ROBOT_ENV) ──► detector_label_map ──► ~/.ros/detector_label_map.yaml ──► ED rgbd plugin
+ run:    camera ─► YOLO "bottle" ─► map: drink ─► vote per entity ─► ED type "drink"
+         GPSR / action_server / Find read common.py directly and compare with the ED types
+```
 
-- `ultralytics` 8.4.14 is installed in the venv and ships `cfg/models/26/yoloe-26.yaml`: a detection-only head
-  (`YOLOEDetect`), end-to-end (NMS-free), text encoder `mobileclip2:b`. It downloads `yoloe-26{n,s,m,l,x}-seg.pt`.
-- `set_classes(names)` turns the names into text embeddings, and the exporter fuses them into the head
-  (`m.fuse(model.pe)` in `engine/exporter.py`). The exported ONNX is an ordinary detector with our classes; the text
-  encoder is only needed at export time.
-- A detection-only export has one output `[1, 300, 6]`, the same as our YOLO26. `yolo_onnx_ros` (ONNX backend) and
-  YOLOs-CPP (TensorRT backend) already parse that, and both take the number of classes from the model.
-- Class names are read from the model's folder: `coco.yaml` (ONNX backend, `names:` as `0: name` or `- name`) or
-  `coco.names` (TensorRT backend, one name per line).
-- So: no C++ changes, one new export script, new model files, one line of configuration.
+| Part | Repository | What |
+|---|---|---|
+| Object list | tue_robocup `robocup_knowledge` | Optional fields in `common.py`: `aliases` on objects ("cola" for "coke"), `aliases` on locations (furniture labels, dropped), `category_aliases` (`drink: ["bottle", "wine glass"]`), `detector_ignore` (`["person"]`). Set for `impuls`. |
+| Label map | tue_robocup `robocup_knowledge` | `detector_labels.py` and `rosrun robocup_knowledge detector_label_map`: builds the map (normalised: lower case, spaces, `-` and `_` alike); a label with two different meanings is an error, furniture sharing a label is not; an object named like its category wins. `--labels <model>/coco.names` prints what a model matches and which objects it cannot name; `--out <file> -- <command>` writes the map and runs the command. |
+| Launch | robot_launch_files | `world_model.launch`: `ed_configure` runs through `detector_label_map`, so the map is current before ED is configured. If the map cannot be made, ED is configured anyway and uses the model's labels. |
+| ED plugin | ed_sensor_integration | `labels.h/.cpp`: the map, and a vote per entity (confidence-weighted, totals fade by 0.9 per detection, a tie goes to the latest; a type that loses is removed from the entity). `sam_seg_module.cpp` translates labels after YOLO and drops boxes before SAM. `surface_label_map` removed (the drop list replaces it). |
+| Threshold | yolo_onnx_ros, hero_bringup | `yolo_confidence_threshold` (0.4) in `world_model_plugin_rgbd.yaml`, used by both backends. |
+| Probability | ed_python | `Entity.existence_probability` (merged `feature/entity-existence-probability-update`). |
+| Find | tue_robocup `robot_smach_states` | `navigation/find.py`: an entity matches a category when it is an object of it, or when its type is the category itself. A named object stays strict: "the coke" never accepts a `drink`. |
 
-Steps:
+Check what a model can tell during the setup days:
 
-1. **Export script** (new, e.g. `yolo_onnx_ros/scripts/export_yoloe.py`). Input: a list of `name` or `name: prompt` lines,
-   by default the object names of `robocup_knowledge` for `ROBOT_ENV`. It:
-   - builds the prompts: the name with `_` as spaces, or a more descriptive prompt when given
-     (`red_bull: red bull energy drink can`);
-   - `model = YOLOE("yoloe-26m.yaml").load("yoloe-26m-seg.pt")` (detection head with the segmentation checkpoint's
-     weights), `model.set_classes(prompts)`, `model.export(format="onnx", imgsz=640)`;
-   - writes `coco.names` and `coco.yaml` with the knowledge names (not the prompts) in the same order, so ED gets
-     `red_bull`, not "red bull energy drink can";
-   - checks the result with onnxruntime: one output `[1, 300, 6]`, highest class id below the number of names.
-   Output folder: `build/yolo_onnx_ros/resources/yoloe26m_<ROBOT_ENV>/`.
-2. **Verify the detection-only load first.** If loading the `-seg` checkpoint into `yoloe-26.yaml` does not transfer
-   the weights, export the segmentation model and keep only the first 6 columns of its first output (ONNX graph edit).
-   Do not use a two-output model: YOLOs-CPP takes a model with two outputs for YOLO-NAS.
-3. **Run with the ONNX backend first**: in `hero_bringup/parameters/world_modeling/world_model_plugin_rgbd.yaml` set
-   `yolo_backend: onnx` and `yolo_model: .../yoloe26m_<env>/yoloe26m.onnx`. No engine to build; slower, enough to check.
-4. **TensorRT engine** once it works: build it on the robot's machine (an engine only runs on the TensorRT version and
-   GPU it was built with) with YOLOs-CPP's `tools/onnx2trt.cpp` (`onnx2trt model.onnx model.trt --fp16`, not built by
-   our CMake yet) or `trtexec`, and set `yolo_backend: tensorRT`.
-5. **Check in simulation and on the robot**:
-   - `SegmentObjects` logs "Object N is a '<name>'" with knowledge names; ED entity types are those names.
-   - GPSR: "bring me the coke from the dinner table" finds and picks the coke.
-   - Tune the confidence threshold (`rectConfidenceThreshold`, now 0.1 for ONNX): open-vocabulary scores are lower than
-     closed-set scores.
-   - Measure per object how often it is found and named correctly; that list decides what to fine-tune later.
-6. **For a competition**: update the objects in `robocup_knowledge/<env>/common.py` from the official `objects.md`, run
-   the export again, and build the engine.
+```bash
+rosrun robocup_knowledge detector_label_map --labels $TUE_ENV_WS_DIR/build/yolo_onnx_ros/resources/yolo26m/coco.names
+```
 
-Nothing else changes: the planner already takes its object names from the same `common.py`.
+For COCO and `impuls`: 14 of the 80 labels match (8 objects: apple, banana, orange, bowl, cup, fork, knife, spoon;
+`bottle` and `wine glass` → drink; `person`, `dining table`, `couch`, `refrigerator` dropped). 28 objects cannot be
+named by this model.
 
-Risks and open points:
+Tests:
 
-- Open-vocabulary detection of brand items (coke against pepsi against red bull, white against grey shirt) may be
-  weak; OK-Robot found retrieval "dependent on the quality of query strings". Measure, then fine-tune or try visual
-  prompts: every official object comes with a picture, and YOLOE also accepts example images. Whether visual-prompt
-  embeddings can be baked into an export the same way is not verified.
-- The surface filter (`surface_label_map`, `dining table`) stops working, because furniture is no longer a class. That
-  is harmless (only objects are detected); add a furniture prompt if surfaces show up as objects.
-- People are no longer detected by this pipeline (no `person` class). People recognition is a separate pipeline.
-- Export needs internet once, for the YOLOE weights and the MobileCLIP text encoder. The venv's torch is CPU-only, which
-  is enough to export.
-- The files have to be called `coco.names` / `coco.yaml`. A later C++ change could read `<model>.names` first.
+- `robocup_knowledge/test/test_detector_labels.py` (13): normalisation, objects, categories, drops, ambiguity, and the
+  map of every environment.
+- `ed_sensor_integration/test/test_labels.cpp` (7): normalisation, loading the map, and the vote (10× drink + 1× dog
+  stays drink; a tie goes to the latest; a cup replaced by a bowl becomes a bowl after at most 6 detections).
+- `robot_smach_states/test/navigation/test_find.py` (3): category matching and strict named objects.
+
+Results in simulation (`impuls`): see the progress log.
+
+Known limits:
+
+- COCO is coarse: in simulation it sees the coke can as `cup` (0.41) and only weakly as `bottle` (0.05), and no banana
+  at all from the inspection view. "Bring me the coke" cannot work with this model; that needs one of the models below.
+- The existence probability is the winner's share of the vote: an entity seen with one type only gets 1.0, however low
+  the detection confidence was. The threshold filters weak detections.
+- The planner only uses categories in `find`; "bring me something to drink" makes it choose one drink by name.
+
+## 5b. Next: a model that names the competition objects
+
+The design above takes these as configuration:
+
+- **Open vocabulary (YOLOE-26).** `ultralytics` 8.4.14 (installed) has a detection-only config `yoloe-26.yaml`;
+  `set_classes(prompts)` and the exporter bake the prompts into an ordinary detector with one `[1, 300, 6]` output, which
+  our C++ already reads. Prompts come from the object names, or from aliases (a descriptive prompt such as "red bull
+  energy drink can" as alias of `red_bull`), so the labels map back through the label map. Check per object with the
+  check command. Brand items may be weak; every official object comes with a picture for visual prompts.
+- **Fine-tuned on the announced objects.** The labels are the object names; the label map matches them by name.
 
 ## 6. Object lists
 
@@ -283,6 +300,22 @@ Other competition data in the same organization: [GermanOpen2026](https://github
 - 2026-11-24: Planner runs in simulation with the `claude_code` backend; GPSR plans and executes "grab the apple from
   the dining table" after merging the YOLO/SAM `SegmentObjects` fix. Waypoint vocabulary tried and reverted. Design
   discussion recorded (section 3). Plan for the detector written (section 5); nothing implemented yet.
+- 2026-11-25: Design of the detector labels decided (Q1 to Q27) and implemented on the `feature/llm` branches of eight
+  repositories (section 5). Unit tests: 13 Python (label map, every environment), 7 C++ (map and vote), 3 + 3 Python
+  (`Find`, `SegmentObjects`). In simulation, the map is written at launch and loaded by ED (59 labels; 14 of the 80
+  COCO labels match `impuls`). Recipes sent to the action server, same order as a baseline run before the change:
+
+  | Recipe | Before | After |
+  |---|---|---|
+  | find apple on the dinner table | ✓ | ✓ |
+  | find a drink on the dinner table | ✗ | ✗ (COCO sees the coke can as `cup`, 0.41) |
+  | find the coke on the dinner table | ✗ | ✗ (expected: a named object is strict) |
+  | pick up the apple, place it on the salon table | ✗ (arm) | ✓ |
+
+  GPSR with the LLM (Claude Code): "is there some food on the dinner table" → `find {category: food}` → succeeded
+  ("I found a food"). "put the apple from the dinner table on the salon table" → found and grabbed the apple, then the
+  drive to the salon table hung; "grab the apple from the dining table" → the drive to the dinner table hung. Both hangs
+  are the known navigation/localisation issue, not the labels.
 
 ## Sources
 
