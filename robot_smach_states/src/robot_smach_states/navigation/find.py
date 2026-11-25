@@ -35,7 +35,10 @@ def entities_from_description(robot, knowledge, entity_description, list_of_enti
     if entity_description.get('type'):
         entities = [e for e in entities if e.etype == entity_description['type']]
     elif entity_description.get('category'):
-        entities = [e for e in entities if knowledge.get_object_category(e.etype) == entity_description['category']]
+        # An entity matches when it is an object of the category, or when its type is the category itself: a detector
+        # that only tells the category ("bottle" is some drink) gives the entity the category as type
+        category = entity_description['category']
+        entities = [e for e in entities if e.etype == category or knowledge.get_object_category(e.etype) == category]
     else:
         return []
 

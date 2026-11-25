@@ -65,7 +65,8 @@ class TestSegmentObjects(unittest.TestCase):
             return UpdateResponse(new_ids=["foobar"])
         self.robot.ed.update_kinect = _update_kinect
 
-        self.robot.ed._entities["foobar"] = Entity(
+        # _entities is a copy; get_entity reads the dynamic entities
+        self.robot.ed._dynamic_entities["foobar"] = Entity(
             identifier="foobar",
             object_type="bar",
             frame_id="map",
