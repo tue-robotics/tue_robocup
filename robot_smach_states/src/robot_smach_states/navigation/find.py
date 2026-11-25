@@ -35,8 +35,14 @@ def entities_from_description(robot, knowledge, entity_description, list_of_enti
     if entity_description.get('type'):
         entities = [e for e in entities if e.etype == entity_description['type']]
     elif entity_description.get('category'):
-        # An entity matches when it is an object of the category, or when its type is the category itself: a detector
-        # that only tells the category ("bottle" is some drink) gives the entity the category as type
+        # An entity matches a category in two ways:
+        # - its type is an object of the category: a request for {'category': 'drink'} matches an entity of type
+        #   'coke', because the object list says coke is a drink (get_object_category('coke') == 'drink');
+        # - its type is the category itself: a detector that can only tell the category gives the entity the category
+        #   as type (COCO says 'bottle', which the label map translates into 'drink', so ED holds type 'drink').
+        #   get_object_category('drink') is None, because no object is called 'drink', so this needs its own check.
+        # Example, a dinner table with entities of type 'coke', 'drink' and 'apple': {'category': 'drink'} matches the
+        # 'coke' and the 'drink' entity, {'type': 'coke'} only the 'coke' entity.
         category = entity_description['category']
         entities = [e for e in entities if e.etype == category or knowledge.get_object_category(e.etype) == category]
     else:

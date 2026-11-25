@@ -13,6 +13,10 @@ is current before ED reads it):
 
 When the map cannot be made, the error is printed, any old map is removed and the command still runs: ED then uses
 the labels of the model as they are.
+
+This file is a command, not a module, so it has no .py extension, like the other executables in the scripts folders
+of ROS packages: it is run as `rosrun robocup_knowledge detector_label_map`. The code it uses is in the module
+robocup_knowledge/detector_labels.py.
 """
 import argparse
 import os
@@ -25,6 +29,23 @@ from robocup_knowledge.detector_labels import (LabelMapError, build_label_map, c
 
 
 def print_coverage(label_map, common, labels_file):
+    """
+    Print what each label of a model means, and which objects it cannot name (the check of the setup days). For
+    COCO and impuls the output starts with:
+
+          person          ->  drop
+          bicycle         ->  (no type)
+          ...
+          bottle          ->  category(drink)
+          cup             ->  object(cup)
+
+        14 of 80 labels of the model match the object list.
+        Objects no label names (28): mango, cereal, corn, ...
+
+    :param label_map: dict normalized label -> Target, from build_label_map
+    :param common: the 'common' knowledge of the environment
+    :param labels_file: class-name file of the model (coco.names or coco.yaml)
+    """
     rows, undetectable = coverage(label_map, common, read_model_labels(labels_file))
     width = max(len(label) for label, _ in rows) if rows else 0
     for label, target in rows:
@@ -35,6 +56,14 @@ def print_coverage(label_map, common, labels_file):
 
 
 def write_map(label_map, environment, path):
+    """
+    Write the map ED's rgbd plugin reads. The file is written next to its destination and then renamed, so that ED
+    never reads a half-written file.
+
+    :param label_map: dict normalized label -> Target, from build_label_map
+    :param environment: name of the environment, recorded in the file
+    :param path: where to write it; '~' is expanded and missing folders are made
+    """
     path = os.path.expanduser(path)
     directory = os.path.dirname(path)
     if directory:
@@ -47,12 +76,26 @@ def write_map(label_map, environment, path):
 
 
 def remove_map(path):
+    """
+    Remove the map file, if there is one. Used when a new map cannot be made: an old map may belong to another
+    environment or to an object list that has since changed, so ED is better off with the model's own labels.
+
+    :param path: the map file; '~' is expanded
+    """
     path = os.path.expanduser(path)
     if os.path.exists(path):
         os.remove(path)
 
 
 def main():
+    """
+    Parse the arguments, build the map of ROBOT_ENV (or --env), then write it (--out) and/or print what a model
+    matches (--labels), and finally run the command after '--', if any.
+
+    The command after '--' always runs, also when the map could not be made, and its exit code becomes the exit code
+    of this script: when world_model.launch configures ED through this script, a broken object list must not leave ED
+    unconfigured. Without a command, the exit code is 1 when the map could not be made.
+    """
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--env", help="environment, default $ROBOT_ENV")
     parser.add_argument("--labels", help="class-name file of a model (coco.names / coco.yaml): print what it matches")
@@ -89,7 +132,13 @@ def main():
 
 
 def rospy_free_argv(argv):
-    """roslaunch appends __name:=... and __log:=...; they are not for this script"""
+    """
+    The arguments without the ones roslaunch adds to every node it starts (__name:=..., __log:=...); they would
+    otherwise be passed on to the command after '--'.
+
+    >>> rospy_free_argv(["--out", "map.yaml", "--", "rosrun", "ed", "configure", "__name:=ed_configure"])
+    ['--out', 'map.yaml', '--', 'rosrun', 'ed', 'configure']
+    """
     return [a for a in argv if not (a.startswith("__") and ":=" in a)]
 
 

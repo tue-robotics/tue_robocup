@@ -18,6 +18,28 @@ The labels are matched against the names in ``common.py`` and these optional fie
 - ``category_aliases``: ``{category: [labels]}`` for labels that only tell the category ("bottle" for "drink").
 - ``detector_ignore``: other labels to drop ("person").
 
+For example, with this object list::
+
+    objects = [{'name': 'coke', 'category': 'drink', 'aliases': ['cola']},
+               {'name': 'cup', 'category': 'container'}]
+    locations = [{'name': 'dinner_table', 'room': 'dining_room', 'aliases': ['dining table']}]
+    category_aliases = {'drink': ['bottle']}
+    detector_ignore = ['person']
+
+the labels of a detector mean:
+
+    ============== =================== ==================================================
+    detector label meaning             why
+    ============== =================== ==================================================
+    "cup"          object cup          an object name
+    "cola"         object coke         an alias of coke
+    "bottle"       category drink      a category alias: some drink, not known which
+    "drink"        category drink      a category name
+    "dining table" drop                an alias of the furniture dinner_table
+    "person"       drop                in detector_ignore
+    "laptop"       (none)              matches nothing: an object without a type
+    ============== =================== ==================================================
+
 The map depends only on the object list, not on the model, so the same map works for every model; ``coverage``
 tells which labels of a given model match what.
 """
@@ -31,38 +53,65 @@ _SEPARATORS = re.compile(r"[\s_\-]+")
 
 
 class LabelMapError(Exception):
-    """The object list gives one label two different meanings"""
+    """The object list gives one label two different meanings, e.g. "can" is an alias of both coke and red_bull"""
 
 
 class Target(object):
-    """What a label means: ``kind`` is OBJECT, CATEGORY or DROP; ``name`` is the object or category name"""
+    """
+    What a detector label means.
+
+    :ivar kind: OBJECT, CATEGORY or DROP
+    :ivar name: the object or category name of the object list; empty for DROP
+
+    >>> Target(CATEGORY, "drink")
+    category(drink)
+    >>> Target(DROP, "ignored")   # a drop has no name
+    drop
+    """
 
     def __init__(self, kind, name=""):
         self.kind = kind
         self.name = name if kind != DROP else ""
 
     def __eq__(self, other):
+        """Two targets are equal when they mean the same: same kind and same name"""
         return isinstance(other, Target) and (self.kind, self.name) == (other.kind, other.name)
 
     def __hash__(self):
+        """Hash of (kind, name), consistent with __eq__"""
         return hash((self.kind, self.name))
 
     def __repr__(self):
+        """'kind(name)', or only the kind when there is no name: shown by the check command"""
         return "{}({})".format(self.kind, self.name) if self.name else self.kind
 
 
 def normalize(label):
     """
-    The form in which labels and names are compared: lower case, with spaces, '-' and '_' as one '_'.
-    The C++ side (ed_sensor_integration, label_map.cpp) does the same.
+    The form in which labels and names are compared: lower case, with every run of spaces, '-' and '_' as one '_', and
+    no separators at the start or the end. COCO writes "dining table", the object list writes "dining_table"; both
+    become "dining_table". The C++ side (ed_sensor_integration, src/kinect/labels.cpp, normalizeLabel) does the same.
 
     >>> normalize(" Dining  Table ")
     'dining_table'
+    >>> normalize("hair-gel")
+    'hair_gel'
     """
     return _SEPARATORS.sub("_", label.strip().lower()).strip("_")
 
 
 def _categories(common):
+    """
+    The categories of the object list, in order of first appearance: the categories of the objects, then the
+    categories that only appear in ``category_aliases``.
+
+    >>> from types import SimpleNamespace
+    >>> _categories(SimpleNamespace(objects=[{'name': 'coke', 'category': 'drink'},
+    ...                                      {'name': 'apple', 'category': 'food'},
+    ...                                      {'name': 'water', 'category': 'drink'}],
+    ...                             category_aliases={'fabric': ['towel']}))
+    ['drink', 'food', 'fabric']
+    """
     categories = []
     for o in getattr(common, "objects", []):
         category = o.get("category")
@@ -75,15 +124,23 @@ def _categories(common):
 
 
 def _entries(common):
-    """Yield (label, Target, where) for every name and alias of the object list"""
+    """
+    Every label the object list defines, with what it means and where it comes from (for error messages).
+
+    One entry per object name and object alias, per category name and category alias, per location name and location
+    alias, and per detector_ignore label. Old environments list locations as plain names; those are accepted too.
+
+    A category named like one of its objects ("bowl" in category "bowl", in rgo2015) does not claim that name: the
+    label means the object, which is found through its category as well.
+
+    :return: generator of (label, Target, where), e.g. ("cola", object(coke), "object 'coke'")
+    """
     object_names = set()
     for o in getattr(common, "objects", []):
         object_names.add(normalize(o["name"]))
         for label in [o["name"]] + list(o.get("aliases", [])):
             yield label, Target(OBJECT, o["name"]), "object '{}'".format(o["name"])
     for category in _categories(common):
-        # A category named like an object ("bowl" in category "bowl") does not claim that name: the label means the
-        # object, which is found through its category as well
         names = [] if normalize(category) in object_names else [category]
         for label in names + list(getattr(common, "category_aliases", {}).get(category, [])):
             yield label, Target(CATEGORY, category), "category '{}'".format(category)
@@ -98,10 +155,24 @@ def _entries(common):
 
 def build_label_map(common):
     """
-    :param common: the 'common' knowledge of an environment (module or object with the fields above)
+    The meaning of every label the object list defines, as a dict from normalized label to Target. This is the map
+    the check command prints and ED's rgbd plugin loads.
+
+    A label that would mean two different things is an error, because the robot would not know what it sees: an alias
+    "can" on both coke and red_bull, or "cup" as an object name and as a category alias. Two pieces of furniture with
+    the same label are fine, because both mean drop: COCO calls every table "dining table".
+
+    >>> from types import SimpleNamespace
+    >>> common = SimpleNamespace(objects=[{'name': 'cup', 'category': 'container'}],
+    ...                          locations=[{'name': 'dinner_table', 'aliases': ['dining table']},
+    ...                                     {'name': 'salon_table', 'aliases': ['dining table']}],
+    ...                          category_aliases={'drink': ['bottle']})
+    >>> sorted(build_label_map(common).items())
+    [('bottle', category(drink)), ('container', category(container)), ('cup', object(cup)), ('dining_table', drop), ('dinner_table', drop), ('drink', category(drink)), ('salon_table', drop)]
+
+    :param common: the 'common' knowledge of an environment (module or object with the fields of the module docstring)
     :return: dict normalized label -> Target
-    :raises LabelMapError: when a label would mean two different things, e.g. an object and a category. Several
-        pieces of furniture sharing a label is fine: they all mean drop.
+    :raises LabelMapError: listing every label with two different meanings
     """
     label_map, origin, errors = {}, {}, []
     for label, target, where in _entries(common):
@@ -120,18 +191,37 @@ def build_label_map(common):
 
 def lookup(label_map, label):
     """
-    :return: the Target of a detector label; None when it matches nothing (an object without a type)
+    What one detector label means. The label is normalized first, so the spelling of the model does not matter.
+
+    >>> label_map = {'dining_table': Target(DROP), 'bottle': Target(CATEGORY, 'drink')}
+    >>> lookup(label_map, 'Dining Table')
+    drop
+    >>> lookup(label_map, 'laptop') is None
+    True
+
+    :return: the Target of the label; None when it matches nothing (an object without a type)
     """
     return label_map.get(normalize(label))
 
 
 def coverage(label_map, common, model_labels):
     """
-    What a model can tell with this object list.
+    What a model can tell with this object list: the meaning of each of its labels, and the objects it cannot name.
+    The check command prints this, so that the aliases can be fixed during the setup days.
+
+    >>> from types import SimpleNamespace
+    >>> common = SimpleNamespace(objects=[{'name': 'cup', 'category': 'container'},
+    ...                                   {'name': 'coke', 'category': 'drink'}],
+    ...                          category_aliases={'drink': ['bottle']}, detector_ignore=['person'])
+    >>> coverage(build_label_map(common), common, ['person', 'bottle', 'cup', 'laptop'])
+    ([('person', drop), ('bottle', category(drink)), ('cup', object(cup)), ('laptop', None)], ['coke'])
+
+    Here coke is undetectable by name: a detection of it can only be a "bottle", so it can be found as a drink but
+    never as "the coke".
 
     :param model_labels: the labels of the model, in class order
     :return: (rows, undetectable) with rows a list of (label, Target or None) per model label, and undetectable the
-        objects no label of the model names (they can at most be found through their category)
+        objects that no label of the model names
     """
     rows = [(label, lookup(label_map, label)) for label in model_labels]
     named = {target.name for _, target in rows if target is not None and target.kind == OBJECT}
@@ -141,8 +231,24 @@ def coverage(label_map, common, model_labels):
 
 def read_model_labels(path):
     """
-    :param path: a class-name file of a detector: one name per line (coco.names), or a YAML file with a 'names:'
-        section as '0: name' or '- name' lines (coco.yaml), like yolo_onnx_ros reads them
+    The labels of a model, read from its class-name file, the same files yolo_onnx_ros reads:
+
+    - ``coco.names``: one label per line, in class order::
+
+          person
+          bicycle
+
+    - ``coco.yaml`` (any file ending in .yaml or .yml): the 'names:' section, as '<index>: <label>' or '- <label>'
+      lines; the section ends at the next top-level key::
+
+          names:
+            0: person
+            1: bicycle
+          download: ...
+
+    Both examples give ['person', 'bicycle'].
+
+    :param path: the class-name file
     :return: the labels in class order
     """
     with open(path) as f:
@@ -169,7 +275,18 @@ def read_model_labels(path):
 
 def to_yaml(label_map, environment):
     """
-    :return: the label map as the YAML ED's rgbd plugin reads: a list of {label, kind, name}, sorted by label
+    The label map as the YAML file ED's rgbd plugin reads (ed_sensor_integration, LabelMap::load): a list of
+    {label, kind, name}, sorted by label, with name left out for a drop. For example::
+
+        environment: impuls
+        labels:
+          - {label: "bottle", kind: category, name: "drink"}
+          - {label: "cup", kind: object, name: "cup"}
+          - {label: "dining_table", kind: drop}
+
+    :param label_map: dict normalized label -> Target, from build_label_map
+    :param environment: name of the environment, written in the file so that it shows where the map comes from
+    :return: the text of the file
     """
     lines = ["# Generated by robocup_knowledge detector_label_map from environment '{}'. Do not edit: change the"
              .format(environment),

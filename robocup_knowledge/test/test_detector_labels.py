@@ -102,6 +102,15 @@ class TestFiles(unittest.TestCase):
         self.assertIn('- {label: "cola", kind: object, name: "coke"}', text)
 
 
+class TestDocstrings(unittest.TestCase):
+    def test_examples_in_the_docstrings(self):
+        import doctest
+        from robocup_knowledge import detector_labels
+        failed, tried = doctest.testmod(detector_labels)
+        self.assertGreater(tried, 0)
+        self.assertEqual(0, failed)
+
+
 class TestEnvironments(unittest.TestCase):
     def test_every_environment_has_an_unambiguous_map(self):
         """The check of the setup days, for every environment with a common.py"""
