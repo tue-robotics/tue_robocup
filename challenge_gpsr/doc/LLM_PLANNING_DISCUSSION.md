@@ -193,7 +193,7 @@ preconditions (e.g. holding an object) and its effects:
 ## 4. Order of work
 
 1. Connect the detector to the object list (section 5). Fine-tuning on the announced objects comes later.
-2. Descriptor attributes for entities (schema, action server `EntityDescription`, `find`), starting with people.
+2. Descriptions for entities (schema, action server `EntityDescription`, `find`), starting with people. Done, see 5c.
 3. Execute one step at a time with feedback.
 4. Step results (variables) and the missing actions.
 5. A world-state query for planning; plan the three commands together for the interleaving bonus.
@@ -274,6 +274,43 @@ The design above takes these as configuration:
   energy drink can" as alias of `red_bull`), so the labels map back through the label map. Check per object with the
   check command. Brand items may be weak; every official object comes with a picture for visual prompts.
 - **Fine-tuned on the announced objects.** The labels are the object names; the label map matches them by name.
+
+## 5c. Descriptions for entities (implemented)
+
+Decided on 2026-11-26 (design session Q1 to Q25), implemented and pushed on the `feature/llm` branches (action_server,
+tue_robocup, hero_bringup, people_recognition). Terms: GLOSSARY.md (Description, Attribute, Skill, Sub-goal); decisions
+that are hard to reverse: adr/0001 and adr/0002; what is still wrong: KNOWN_ISSUES.md.
+
+**Principle.** A step describes the object or person it needs ("a drink", "the waving person in the kitchen"); HERO
+picks the entity that fits when it sees what is there. The planner never names an object it has not seen (adr/0001).
+
+| # | Decision |
+|---|---|
+| Q1 | The category fix (category in pick-up, hand-over, place) is the object half of this feature, done first. |
+| Q2 | The planner passes descriptions on; it never picks a concrete object itself. |
+| Q3 | Terms: **Description** (what a step says about the entity it needs) and **Attribute** (one property of it, from a fixed list). Not "descriptor" or "filter". Examples in the glossary and in the code. |
+| Q4 | Attributes are closed lists from the rulebook: gesture, pose, clothing colour, garment. Free text may come later as one more attribute. |
+| Q5 | The plan keeps its frame (action + roles); the object and person roles become descriptions. Check the regression of every producer and challenge first. |
+| Q6 | For now GPSR handles commands and the challenges keep their state machines (A); later their parts become skills (B), see Q17. |
+| Q7 | Docs first local, then into a shared repo (now `challenge_gpsr/doc`). |
+| Q8 | The next feature is honest outcomes and feedback (order of work item 3). |
+| Q9 | An `attributes` dict is added inside the existing entity description; no key is renamed, older producers keep working. |
+| Q10 | Attribute values perception cannot check (garment) stay in the schema; HERO matches on what it can check and says what it could not. |
+| Q11 | Cheap perception gaps closed in people_recognition: standing, pointing left/right, raising left/right arm. |
+| Q12 | Objects get only the category now; colour and comparisons (biggest, heaviest) come with step results (item 4). |
+| Q13 | Every action that takes a person finds a described person the same way; the find and follow bugs that defeated this were fixed. |
+| Q14 | One matching rule (`robot_smach_states/util/entity_descriptions.py`), case- and order-insensitive, with unit tests. |
+| Q15 | The dummy people recognition in simulation reports fixed people from a parameter, so sim tests repeat. |
+| Q16 | Long-term architecture: (f) hybrid (research note `docs/research/hierarchical-task-planning.md`), in increments: 1. honest outcomes, 2. replan a failed step, 3. values between steps and bounded "for each", 4. sub-goals after an inspection. |
+| Q17 | Pilot for long-horizon planning: the 2027 Pick and Place Challenge, with parts of existing challenges as skills (A+B hybrid). |
+| Q18 | No offline fallback for long tasks now; developers use Claude, the real robot will need a local LLM (evaluate in Q23). The NER model stays the GPSR fallback (adr/0003). |
+| Q19 | A regression harness first: recipes configured on the mock robot, no roscore, with a time limit, run in CI. Sim tests stay out of CI. |
+| Q20 | Fixed in this feature: the configure loop limit (hang), `None == None` matches, place with a category, arrival checks by id. |
+| Q21 | "Already holding it" compares descriptions while configuring (`description_satisfies`); the entity rule decides at runtime. |
+| Q22 | `FindPeople` itself uses the new rule, with tests for the filters of receptionist, stickler_for_rules and restaurant. |
+| Q23 | Local models are chosen by measuring them on our commands (validity, correctness, latency with perception running), on the robot's GPU, not on a laptop. Not started. |
+| Q24 | Terms: **Action** (what a step does), **Skill** (an action that runs a tested state machine inside), **Sub-goal**. |
+| Q25 | The two ADRs written; rule: every new branch is `feature/llm` and goes into `checkout_llm_branches.sh`. |
 
 ## 6. Object lists
 
