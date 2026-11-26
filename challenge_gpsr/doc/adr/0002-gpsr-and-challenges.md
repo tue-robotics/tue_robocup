@@ -1,0 +1,3 @@
+# GPSR plans commands; challenges keep their state machines and lend their parts as skills
+
+GPSR, with the LLM task planner and the action server, handles commands. The existing challenges keep their own state machines, which already work, rather than being rewritten as GPSR commands. Parts of them that are tested and reusable (open the dishwasher, pour cereal, take out a bag) become skills the planner can call, so new tasks without a state machine, such as the 2027 Pick and Place Challenge, are planned from those skills plus the generic actions. Rewriting every challenge as plans of small generic actions was rejected for now: the plan format has no loops, branches or stored answers yet (17 and 13 of 27 challenges need these), and it would throw away tested behaviour.

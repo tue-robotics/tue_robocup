@@ -1,0 +1,3 @@
+# The planner passes descriptions; HERO picks the entity
+
+When a command asks for a kind of thing or a person by appearance ("grab a fruit from the dinner table", "guide the waving person"), the task planner passes that description on ({category: fruit}, {gesture: waving}) and HERO picks the entity that fits when it sees what is there. The planner never names an object or person it has not seen: before this, the planner turned "a fruit" into "apple" without looking, and the task failed whenever the table held a banana. A world-state query during planning could also solve this, but it goes stale and is a larger change; it may come later for commands that depend on the current state ("is there a coke in the kitchen?").
