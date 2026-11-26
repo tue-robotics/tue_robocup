@@ -24,6 +24,7 @@ REPOS=(
     ed_python             # Entity.existence_probability
     yolo_onnx_ros         # configurable confidence threshold
     robot_launch_files    # writes the detector label map before ED is configured
+    people_recognition    # person posture and pointing direction; fixed people in the simulation
 )
 
 CHECK_ONLY=false

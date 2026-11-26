@@ -1,7 +1,8 @@
 import unittest
 from types import SimpleNamespace
 
-from robot_smach_states.util.entity_descriptions import description_satisfies, entity_matches
+from robot_smach_states.util.entity_descriptions import PERSON_ATTRIBUTES, description_satisfies, \
+    entity_matches, person_matches
 
 KNOWLEDGE = SimpleNamespace(get_object_category={"coke": "drink", "water": "drink", "apple": "food"}.get)
 
@@ -74,6 +75,46 @@ class TestDescriptionSatisfies(unittest.TestCase):
 
     def test_held_type_wins_over_held_category(self):
         self.assertTrue(self.satisfies({"type": "coke", "category": "drink"}, {"type": "coke"}))
+
+
+def props(tags=(), posture="", shirt_colors=()):
+    return SimpleNamespace(tags=list(tags), posture=posture, shirt_colors=list(shirt_colors))
+
+
+class TestPersonMatches(unittest.TestCase):
+    def test_every_gesture(self):
+        expected = {"waving": ["LWaving"], "raising_left_arm": ["LWaving"], "raising_right_arm": ["RWaving"],
+                    "pointing_left": ["LPointing", "PointingLeft"], "pointing_right": ["PointingRight"]}
+        self.assertEqual(set(PERSON_ATTRIBUTES["gesture"]), set(expected))
+        for gesture, tags in expected.items():
+            self.assertEqual((True, []), person_matches(props(tags), {"gesture": gesture}), gesture)
+            self.assertEqual((False, []), person_matches(props(["RNotHolding"]), {"gesture": gesture}), gesture)
+
+    def test_raising_one_arm_is_not_the_other(self):
+        self.assertFalse(person_matches(props(["LWaving"]), {"gesture": "raising_right_arm"})[0])
+
+    def test_pose_from_the_posture_or_the_tags(self):
+        self.assertTrue(person_matches(props(posture="standing"), {"pose": "standing"})[0])
+        self.assertFalse(person_matches(props(posture="sitting"), {"pose": "standing"})[0])
+        self.assertTrue(person_matches(props(["RLaying"]), {"pose": "lying"})[0])  # no posture measured
+
+    def test_standing_without_a_posture_is_unchecked(self):
+        self.assertEqual((True, ["pose"]), person_matches(props(), {"pose": "standing"}))
+
+    def test_clothing_color(self):
+        self.assertTrue(person_matches(props(shirt_colors=["Red", "black"]), {"clothing_color": "red"})[0])
+        self.assertTrue(person_matches(props(shirt_colors=["grey"]), {"clothing_color": "gray"})[0])
+        self.assertFalse(person_matches(props(shirt_colors=["blue"]), {"clothing_color": "red"})[0])
+
+    def test_garment_is_unchecked(self):
+        self.assertEqual((True, ["garment"]), person_matches(props(), {"garment": "jacket"}))
+
+    def test_a_person_without_properties_does_not_fit(self):
+        self.assertEqual((False, []), person_matches(None, {"gesture": "waving"}))
+        self.assertEqual((True, ["garment"]), person_matches(None, {"garment": "jacket"}))
+
+    def test_none_values_are_ignored(self):
+        self.assertEqual((True, []), person_matches(props(), {"gesture": None, "pose": None}))
 
 
 if __name__ == "__main__":

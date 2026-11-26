@@ -17,6 +17,75 @@ from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoin
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.world_model.world_model import UpdateDestEntityPoseWithSrcEntity
+from robot_smach_states.util.entity_descriptions import person_matches
+
+
+def _lower(value):
+    return value.lower() if isinstance(value, str) else value
+
+
+def check_person_property(person, prop_name, prop_value, strict=True, reverse=False):
+    """
+    Whether a person has a property, as FindPeople filters on its 'properties'. Names and values are compared without
+    regard to case, and a strict list check does not depend on the order of the values.
+
+    - prop_value None: the person has some value for the property.
+    - strict (and not reverse): a list property must contain all values ({'tags': ['LWaving', 'RWaving']}: waving with
+      both arms); another property must equal the value.
+    - otherwise: a list property must contain one of the values, another property must be one of them.
+    - 'id' is the person's id or name ({'id': 'anna'}).
+
+    :param person: person entity (ed_python Entity with person_properties)
+    :return: True when the person has the property
+    """
+    if prop_name == "id":
+        names = {_lower(person.uuid), _lower(getattr(person.person_properties, "name", None))}
+        return _lower(prop_value) in names if prop_value else True
+    if person.person_properties is None:
+        return False
+    person_attr_val = getattr(person.person_properties, prop_name)
+    rospy.logdebug("For person {}: {} is {}".format(person.uuid, prop_name, person_attr_val))
+    if not prop_value:
+        return bool(person_attr_val)
+
+    wanted = [_lower(v) for v in prop_value] if isinstance(prop_value, (list, tuple, set)) else _lower(prop_value)
+    if isinstance(person_attr_val, list):
+        have = {_lower(v) for v in person_attr_val}
+        if strict and not reverse:
+            return set(wanted if isinstance(wanted, list) else [wanted]) <= have
+        return bool(have & set(wanted if isinstance(wanted, list) else [wanted]))
+    have = _lower(person_attr_val)
+    if strict and not reverse:
+        return have == wanted
+    return have in wanted if have is not None else False
+
+
+def filter_people(people, properties=None, strict=True, reverse=False, attributes=None):
+    """
+    The people that have the properties and fit the attributes, as FindPeople selects them.
+
+    Example: filter_people(people, properties={'tags': ['LWaving', 'RWaving']}, strict=False) keeps the people waving
+    with either arm (challenge restaurant); with reverse=True, the people who do not (challenge stickler_for_rules:
+    the people not holding a drink). attributes={'gesture': 'waving', 'pose': 'sitting'} keeps the people that fit
+    them (see robot_smach_states.util.entity_descriptions.person_matches).
+
+    :param people: person entities
+    :param properties: dict property -> value(s) of the person_properties, see check_person_property
+    :param attributes: dict attribute -> value of a description, see PERSON_ATTRIBUTES
+    :return: the remaining people
+    """
+    if properties:
+        for k, v in properties.items():
+            found_people_temp = [x for x in people if check_person_property(x, k, v, strict, reverse)]
+            if reverse:
+                people = list(set(people) - set(found_people_temp))
+            else:
+                people = found_people_temp
+            rospy.loginfo("{} people remaining after {}={} check".format(len(people), k, v))
+    if attributes:
+        people = [p for p in people if person_matches(p.person_properties, attributes)[0]]
+        rospy.loginfo("{} people remaining after the attributes {}".format(len(people), attributes))
+    return people
 
 
 class FindPeople(smach.State):
@@ -40,7 +109,7 @@ class FindPeople(smach.State):
     def __init__(self, robot, properties=None, query_entity_designator=None,
                  found_people_designator=None, look_distance=10.0, speak=False,
                  strict=True, reverse=False, nearest=False, attempts=1, search_timeout=60,
-                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8, attributes=None):
         """
         Initialization method
 
@@ -78,8 +147,11 @@ class FindPeople(smach.State):
         :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
             robot search
         :param look_steps: (int) (default: 8) How many steps does it take in that range
+        :param attributes: (dict) (default: None) attributes of a description the people must fit, e.g.
+            {'gesture': 'waving'} (see robot_smach_states.util.entity_descriptions.person_matches)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
+        self._attributes = attributes
 
         self._robot = robot
 
@@ -174,14 +246,8 @@ class FindPeople(smach.State):
 
             rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
 
-            if self._properties:
-                for k, v in self._properties.items():
-                    found_people_temp = [x for x in found_people if self._check_person_property(x, k, v)]
-                    if self._reverse:
-                        found_people = list(set(found_people) - set(found_people_temp))
-                    else:
-                        found_people = found_people_temp
-                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
+            found_people = filter_people(found_people, self._properties, self._strict, self._reverse,
+                                         self._attributes)
 
             result_people = []
 
@@ -228,29 +294,7 @@ class FindPeople(smach.State):
         return 'failed'
 
     def _check_person_property(self, person, prop_name, prop_value):
-        person_attr_val = getattr(person.person_properties, prop_name)
-        rospy.loginfo("For person {}: {} is {}".format(person.uuid, prop_name, person_attr_val))
-        if prop_value:
-            if self._strict and not self._reverse:
-                # Making the conditon less strict to increase search domain
-                rospy.loginfo("Executing strict=True")
-                if isinstance(person_attr_val, list):
-                    sub_list = [x for x in person_attr_val if x in prop_value]
-                    return sub_list == prop_value
-                else:
-                    return person_attr_val == prop_value
-            else:
-                rospy.loginfo("Executing strict=False")
-                if (isinstance(person_attr_val, list)
-                        and [x for x in person_attr_val if x in prop_value]
-                    ) or person_attr_val in prop_value:
-                    return True
-        else:
-            if person_attr_val:
-                rospy.loginfo("By passing strict check")
-                return True
-
-        return False
+        return check_person_property(person, prop_name, prop_value, self._strict, self._reverse)
 
 
 class FindFirstPerson(smach.StateMachine):
@@ -270,7 +314,8 @@ class FindFirstPerson(smach.StateMachine):
                  attempts=1,
                  search_timeout=60,
                  look_range=(-np.pi/2, np.pi/2),
-                 look_steps=8):
+                 look_steps=8,
+                 attributes=None):
         """
         Initialization method
 
@@ -305,6 +350,8 @@ class FindFirstPerson(smach.StateMachine):
         :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
             robot search
         :param look_steps: (int) (default: 8) How many steps does it take in that range
+        :param attributes: (dict) (default: None) attributes of a description the person must fit, e.g.
+            {'gesture': 'waving'}
         """
         super(FindFirstPerson, self).__init__(outcomes=["found", "failed"])
         ds.is_writeable(found_person_designator)
@@ -327,7 +374,8 @@ class FindFirstPerson(smach.StateMachine):
                          attempts=attempts,
                          search_timeout=search_timeout,
                          look_range=look_range,
-                         look_steps=look_steps),
+                         look_steps=look_steps,
+                         attributes=attributes),
                      transitions={
                          'found': 'GET_FIRST_ITERATE',
                          'failed': 'failed'

@@ -16,6 +16,7 @@ from pykdl_ros import VectorStamped
 from ..navigation.navigate_to_waypoint import NavigateToWaypoint
 from ..navigation.navigate_to_symbolic import NavigateToRoom
 from ..util.designators import check_type, EntityByIdDesignator, is_writeable
+from .find_people_in_room import FindFirstPerson
 
 
 class FindPerson(smach.State):
@@ -188,7 +189,7 @@ class FindPersonInRoom(smach.StateMachine):
     """
 
     def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None,
-                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8, attributes=None):
         """
         Constructor
 
@@ -198,6 +199,8 @@ class FindPersonInRoom(smach.StateMachine):
         :param name: (str) Name of the person to look for
         :param discard_other_labels: (bool) Whether or not to discard faces based on label
         :param found_entity_designator: (Designator) A designator that will resolve to the found object
+        :param attributes: (dict) attributes of the person to look for instead of a name, e.g. {'gesture': 'waving'}:
+            the robot then takes the nearest person in the room who fits them (see FindFirstPerson)
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
@@ -225,12 +228,19 @@ class FindPersonInRoom(smach.StateMachine):
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            # Wait for the operator to appear and detect what he's pointing at
-            smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name,
-                                                             discard_other_labels=discard_other_labels,
-                                                             found_entity_designator=found_entity_designator,
-                                                             look_range=look_range,
-                                                             look_steps=look_steps),
+            if attributes:
+                # "The waving person": the nearest person in the room who fits the attributes
+                find_person = FindFirstPerson(robot=robot, found_person_designator=found_entity_designator,
+                                              query_entity_designator=room_designator, nearest=True,
+                                              attributes=attributes, look_range=look_range, look_steps=look_steps)
+            else:
+                # Wait for the operator to appear and detect what he's pointing at
+                find_person = FindPerson(robot=robot, person_label=name,
+                                         discard_other_labels=discard_other_labels,
+                                         found_entity_designator=found_entity_designator,
+                                         look_range=look_range,
+                                         look_steps=look_steps)
+            smach.StateMachine.add("FIND_PERSON", find_person,
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
