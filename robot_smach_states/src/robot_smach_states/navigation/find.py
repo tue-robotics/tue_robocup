@@ -8,6 +8,7 @@ import rospy
 from robot_skills.classification_result import ClassificationResult
 from robot_smach_states.world_model.world_model import Inspect
 from ..util.designators import VariableDesignator
+from ..util.entity_descriptions import entity_matches
 
 
 def entities_from_description(robot, knowledge, entity_description, list_of_entity_ids=None):
@@ -31,22 +32,16 @@ def entities_from_description(robot, knowledge, entity_description, list_of_enti
     # Get all entities from the world model
     entities = robot.ed.get_entities()
 
-    # Select entities based on the description
-    if entity_description.get('type'):
-        entities = [e for e in entities if e.etype == entity_description['type']]
-    elif entity_description.get('category'):
-        # An entity matches a category in two ways:
-        # - its type is an object of the category: a request for {'category': 'drink'} matches an entity of type
-        #   'coke', because the object list says coke is a drink (get_object_category('coke') == 'drink');
-        # - its type is the category itself: a detector that can only tell the category gives the entity the category
-        #   as type (COCO says 'bottle', which the label map translates into 'drink', so ED holds type 'drink').
-        #   get_object_category('drink') is None, because no object is called 'drink', so this needs its own check.
-        # Example, a dinner table with entities of type 'coke', 'drink' and 'apple': {'category': 'drink'} matches the
-        # 'coke' and the 'drink' entity, {'type': 'coke'} only the 'coke' entity.
-        category = entity_description['category']
-        entities = [e for e in entities if e.etype == category or knowledge.get_object_category(e.etype) == category]
-    else:
+    # Select entities based on the description (see util/entity_descriptions.py, entity_matches):
+    # - a type asks for exactly that type: {'type': 'coke'} matches only entities of type 'coke';
+    # - a category asks for an object of it, or an entity only known by the category: {'category': 'drink'} matches
+    #   an entity of type 'coke' (the object list says coke is a drink) and one of type 'drink' (the detector could only
+    #   tell the category: COCO says 'bottle', which the label map translates into 'drink').
+    # Example, a dinner table with entities of type 'coke', 'drink' and 'apple': {'category': 'drink'} matches the
+    # 'coke' and the 'drink' entity, {'type': 'coke'} only the 'coke' entity.
+    if not (entity_description.get('type') or entity_description.get('category')):
         return []
+    entities = [e for e in entities if entity_matches(e.etype, entity_description, knowledge)]
 
         # If we have a list of entities to choose from, select based on that list
     if list_of_entity_ids:
