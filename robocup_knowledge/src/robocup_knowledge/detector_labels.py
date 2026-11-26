@@ -40,8 +40,8 @@ the labels of a detector mean:
     "laptop"       (none)              matches nothing: an object without a type
     ============== =================== ==================================================
 
-The map depends only on the object list, not on the model, so the same map works for every model; ``coverage``
-tells which labels of a given model match what.
+The map depends only on the object list, not on the model (e.g. YOLO), so the same map works for every model;
+``coverage`` tells which labels of a given model match what.
 """
 import re
 
