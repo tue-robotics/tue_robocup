@@ -198,6 +198,18 @@ preconditions (e.g. holding an object) and its effects:
 4. Step results (variables) and the missing actions.
 5. A world-state query for planning; plan the three commands together for the interleaving bonus.
 
+## 4.1. First list of bottlenecks toward "GPSR runs every challenge"
+
+1. The plan runs open-loop. The planner makes the whole plan up front and a failed step ends the task. There is no feedback, no replanning and no asking.
+2. The planner picks objects it hasn't seen. That's the fruit→apple problem: it has no world state while planning.
+3. No descriptions. A step can only name an object or a person, not "the waving person" or "the red cup".
+4. No step results. "Ask her name and tell it to me" can't be expressed.
+5. Missing actions: counting people, comparing objects, greeting a described person, passing information between people, opening doors, answering questions.
+6. Detector vocabulary. COCO names 14 of our 42 impuls objects, so 28 can't be detected.
+7. Execution reliability. Navigation hangs that never return (what we saw) and pick-up failures. Steps need timeouts and clear failure reports.
+8. Continuous behaviours such as following, waiting for a door, or "all objects" loops don't fit a fixed list of steps.
+9. Where the LLM runs at the competition. claude_code is for development, a plan takes about 5 s, and venue internet is uncertain. < it should run locally. A smaller LLM. Would this be a problem or there are capable models for this (so they can plan and interact on closed-loop setting)? We have a good 4060RTX GPU.>
+
 ## 5. Detector labels and the object list (implemented)
 
 Decided on 2026-11-25 (design session Q1 to Q27), implemented on the `feature/llm` branches.

@@ -16,6 +16,10 @@ _Avoid_: recipe, task, semantics
 One action of a plan with its roles (object, person, source, destination, sentence).
 _Avoid_: task, subtask
 
+**Parser**:
+What turns a command into a plan: the language model (the task planner), or the NER model as its fallback. Every parser writes the same plan.
+_Avoid_: planner (when the NER model is meant too), interpreter
+
 **Action**:
 What one step does, from the fixed set HERO offers the planner.
 Example: find, pick-up, place, hand-over, say, guide.
