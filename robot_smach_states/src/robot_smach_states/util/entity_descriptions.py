@@ -4,13 +4,25 @@ Whether an entity, or another description, fits a description.
 A description is what a step of a task says about the object it needs, without naming one entity: {'type': 'coke'}
 asks for a coke, {'category': 'drink'} for any drink. HERO picks the entity that fits when it sees what is there.
 
-There are two rules, so that every action decides "does this fit" the same way:
+There are three rules, so that every action decides "does this fit" the same way:
 
 - entity_matches: while the task runs, does a seen entity fit the description? Used by Find.
 - description_satisfies: while the task is set up, before anything is seen, does the object that an earlier step
   will hold fit what a later step asks for? Used by pick-up, hand-over and place to decide whether they still need
   to fetch the object.
 - person_matches: does a seen person fit the attributes of a description ("the waving person")? Used by FindPeople.
+
+Example, "find a drink on the dinner table and give it to me", with the object list saying coke is a drink:
+
+- entity_matches, while HERO looks at the table: an entity of type 'coke' fits {'category': 'drink'}, and so does one
+  of type 'drink' (the detector only knew "a bottle"); one of type 'apple' does not.
+      entity_matches('coke', {'category': 'drink'}, knowledge)  -> True
+      entity_matches('apple', {'category': 'drink'}, knowledge) -> False
+- description_satisfies, while the task is set up: the hand-over asks for {'category': 'drink'}, the find before it
+  will give {'category': 'drink'}, so nothing more has to be fetched. Had the hand-over asked for {'type': 'coke'},
+  the found drink might be a water, so HERO must still fetch a coke.
+      description_satisfies({'category': 'drink'}, {'category': 'drink'}, knowledge) -> True
+      description_satisfies({'category': 'drink'}, {'type': 'coke'}, knowledge)      -> False
 
 Descriptions are dicts, or objects with the same attributes (the action server's EntityDescription). Names are
 compared without regard to case, because the action server lowercases the whole task.
@@ -135,6 +147,8 @@ def _lower_set(values):
     return {str(v).lower() for v in (values or [])}
 
 
+# WARN: vibe coded. Written with an AI assistant (feature/llm) and not yet reviewed by someone who knows the people
+# detection code; covered by test/util/test_entity_descriptions.py. Review before relying on it.
 def person_matches(person_properties, attributes):
     """
     Whether a person fits the attributes of a description, as far as perception can tell.
@@ -166,7 +180,7 @@ def person_matches(person_properties, attributes):
         if name in UNCHECKABLE_PERSON_ATTRIBUTES or name not in PERSON_ATTRIBUTES:
             unchecked.append(name)
             continue
-        if person_properties is None:  # perception told nothing about this person: do not take them for "the waving one"
+        if person_properties is None:  # perception told nothing about them: do not take them for "the waving one"
             return False, unchecked
         tags = _lower_set(getattr(person_properties, "tags", None))
         if name == "gesture":

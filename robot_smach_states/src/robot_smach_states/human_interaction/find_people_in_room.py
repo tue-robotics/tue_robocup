@@ -1,29 +1,31 @@
 
 # System
-from contextlib import redirect_stdout
 import math
+from contextlib import redirect_stdout
+
 import numpy as np
 
 # ROS
 import rospy
 import smach
 
-from pykdl_ros import VectorStamped
-
 # TU/e Robotics
 from ed.entity import Entity
+
 import robot_smach_states.util.designators as ds
-from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
-from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
+from pykdl_ros import VectorStamped
 from robot_smach_states.designator_iterator import IterateDesignator
-from robot_smach_states.world_model.world_model import UpdateDestEntityPoseWithSrcEntity
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToRoom
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.util.entity_descriptions import person_matches
+from robot_smach_states.world_model.world_model import UpdateDestEntityPoseWithSrcEntity
 
 
 def _lower(value):
     return value.lower() if isinstance(value, str) else value
 
 
+# WARN: vibe coded. Covered by test/human_interaction/test_find_people_filter.py.
 def check_person_property(person, prop_name, prop_value, strict=True, reverse=False):
     """
     Whether a person has a property, as FindPeople filters on its 'properties'. Names and values are compared without
@@ -60,6 +62,7 @@ def check_person_property(person, prop_name, prop_value, strict=True, reverse=Fa
     return have in wanted if have is not None else False
 
 
+# WARN: vibe coded. Covered by test/human_interaction/test_find_people_filter.py.
 def filter_people(people, properties=None, strict=True, reverse=False, attributes=None):
     """
     The people that have the properties and fit the attributes, as FindPeople selects them.
